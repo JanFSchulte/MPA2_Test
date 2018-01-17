@@ -1,5 +1,5 @@
 from d19cScripts.fc7_daq_methods import *
-
+from d19cScripts.MPA_SSA_BoardControl import *
 #####################
 # START HERE
 #####################
@@ -67,3 +67,18 @@ def send_test():
 
 def reset():
     SendCommand_CTRL("global_reset")
+
+def write_I2C (chip, address, data, frequency = 4):
+    i2cmux = 0
+    MPA = 11
+    SSA = 12
+    write = 0
+    read = 1
+    SetSlaveMap()
+    Configure_MPA_SSA_I2C_Master(1, frequency)
+    Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x04) #enable only MPA-SSA chip I2C
+    if (chip == 'MPA'):
+        Send_MPA_SSA_I2C_Command(MPA, 0, write, address, data) #enable only MPA-SSA chip I2C
+    elif (chip == 'SSA'):
+        Send_MPA_SSA_I2C_Command(SSA, 0, write, address, data)
+    Configure_MPA_SSA_I2C_Master(0, 4)

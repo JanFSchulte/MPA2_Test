@@ -55,6 +55,8 @@ def SetSlaveMap():
 	i2c_slave_map[8].SetValues(0b1000100, 1, 2, 2, 0, 1, "INA226")
 	i2c_slave_map[9].SetValues(0b1000101, 1, 2, 2, 0, 1, "INA226")
 	i2c_slave_map[10].SetValues(0b1000110, 1, 2, 2, 0, 1, "INA226")
+	i2c_slave_map[11].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA")
+	i2c_slave_map[12].SetValues(0b0100000, 2, 1, 1, 1, 0, "SSA")
 	i2c_slave_map[15].SetValues(0b1011111, 1, 1, 1, 1, 0, "CBC3")
 
 	# updating the slave id table
@@ -106,6 +108,11 @@ def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data):
 	# composing the word
 	word_0 = shifted_command_type + shifted_word_id_0 + shifted_slave_id + shifted_board_id + shifted_read + shifted_register_address
 	word_1 = shifted_command_type + shifted_word_id_1 + shifted_data
+	#print bin(shifted_command_type)
+	#print bin(shifted_word_id_0)
+	#print bin(shifted_slave_id)
+	#print bin(word_0)
+	#print bin(word_1)
 
 	# writing the command
 	fc7.write("ctrl_command_i2c_command_fifo", word_0)
