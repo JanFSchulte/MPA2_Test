@@ -1,13 +1,13 @@
 # basic d19c methods include
 from fc7_daq_methods import *
 
-##----- begin methods definition 
+##----- begin methods definition
 
 # define the i2c slave map signle item
 class I2C_SlaveMapItem:
 	def __init__(self):
-        	self.i2c_address = 0
-        	self.register_address_nbytes = 0
+        self.i2c_address = 0
+        self.register_address_nbytes = 0
 		self.data_wr_nbytes = 1
 		self.data_rd_nbytes = 1
 		self.stop_for_rd_en = 0
@@ -16,7 +16,7 @@ class I2C_SlaveMapItem:
 		self.chip_name = "UNKNOWN"
 	def SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en, chip_type, chip_name):
 		self.i2c_address = i2c_address
-        	self.register_address_nbytes = register_address_nbytes
+        self.register_address_nbytes = register_address_nbytes
 		self.data_wr_nbytes = data_wr_nbytes
 		self.data_rd_nbytes = data_rd_nbytes
 		self.stop_for_rd_en = stop_for_rd_en
@@ -29,14 +29,14 @@ i2c_slave_map = [I2C_SlaveMapItem() for i in range(31)]
 
 # encode slave map item:
 def EncodeSlaveMapItem(slave_item):
-	
+
 	# this peace of code just shifts the data, also checks if it fits the field
 	shifted_i2c_address = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
 	shifted_register_address_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
 	shifted_data_wr_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes)
 	shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
 	shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
-	shifted_nack_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)  
+	shifted_nack_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
 
 	final_command = shifted_i2c_address + shifted_register_address_nbytes + shifted_data_wr_nbytes + shifted_data_rd_nbytes + shifted_stop_for_rd_en + shifted_nack_en
 
@@ -57,7 +57,7 @@ def SetSlaveMap():
 
 # this method overrides the number of the data bytes to be written/read - used for sequential data read/write
 def SetNumberOfDataBytes(slave_id, data_wr_nbytes, data_rd_nbytes):
-	
+
 	#set the numbers
 	i2c_slave_map[slave_id].data_wr_nbytes = data_wr_nbytes
 	i2c_slave_map[slave_id].data_rd_nbytes = data_rd_nbytes
@@ -67,7 +67,7 @@ def SetNumberOfDataBytes(slave_id, data_wr_nbytes, data_rd_nbytes):
 
 # set the default data sizes
 def SetDefaultNumberOfDataBytes(slave_id):
-	
+
 	# set default values
 	if (i2c_slave_map[slave_id].chip_type == "CBC" or i2c_slave_map[slave_id].chip_type == "MPA"):
 		i2c_slave_map[slave_id].data_wr_nbytes = 1
@@ -104,7 +104,7 @@ def SendCommand_I2C_SeqWrite(command, hybrid_id, chip_id, register_address, data
   # now iterate
   byte_counter = 0
   word_counter = 1
-  while (byte_counter<nbytes): 
+  while (byte_counter<nbytes):
 	raw_word_id = fc7AddrTable.getItem("ctrl_command_i2c_command_word_id").shiftDataToMask(word_counter % 2)
 	raw_data = 0
 	i = 0
@@ -137,7 +137,7 @@ def ReadChipDataNEW(nbytes = 1):
 		register = DataFromMask(reply, "ctrl_command_i2c_reply_register")
 		data = DataFromMask(reply, "ctrl_command_i2c_reply_data")
 
-		# first byte is always in the first word 
+		# first byte is always in the first word
 		print '   | %s %-12i || %s %-12i || %s %-12s || %-12s |' % ("Hybrid #", hybrid_id, "Chip #", chip_id, "Register #", hex(register)[:4], hex(data)[:4])
 		byte_counter = byte_counter + 1
 		register = register + 1
@@ -148,7 +148,7 @@ def ReadChipDataNEW(nbytes = 1):
 			while(fc7.read("stat_command_i2c_fifo_replies_empty") == 1):
 				print "debug: waiting next word, should not happen"
 				sleep(1)
-			
+
 			reply = fc7.read("ctrl_command_i2c_reply_fifo")
 			data1 = (reply & 0x000000FF) >> 0
 			data2 = (reply & 0x0000FF00) >> 8
@@ -169,10 +169,10 @@ def ReadChipDataNEW(nbytes = 1):
 				print '   | %s %-12i || %s %-12i || %s %-12s || %-12s |' % ("Hybrid #", hybrid_id, "Chip #", chip_id, "Register #", hex(register)[:4], hex(data3)[:4])
 				byte_counter = byte_counter + 1
 				register = register + 1
-				
-				
 
-	
+
+
+
 	print "    -----------------------------------------------------------------------------------------"
 	print "   ====================================================   "
 
@@ -237,9 +237,3 @@ ReadChipDataNEW(4)
 SetDefaultNumberOfDataBytes(0)
 
 #######
-
-
-
-
-
-
