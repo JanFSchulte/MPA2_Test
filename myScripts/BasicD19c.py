@@ -68,6 +68,30 @@ def send_test():
 def reset():
     SendCommand_CTRL("global_reset")
 
+
+
+class I2C_MainSlaveMapItem:
+    def __init__(self):
+        self.i2c_address = 0
+        self.register_address_nbytes = 0
+        self.data_wr_nbytes = 1
+        self.data_rd_nbytes = 1
+        self.stop_for_rd_en = 0
+        self.nack_en = 0
+        self.chip_type = "UNKNOWN"
+        self.chip_name = "UNKNOWN"
+    def SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en, chip_type, chip_name):
+        self.i2c_address = i2c_address
+        self.register_address_nbytes = register_address_nbytes
+        self.data_wr_nbytes = data_wr_nbytes
+        self.data_rd_nbytes = data_rd_nbytes
+        self.stop_for_rd_en = stop_for_rd_en
+        self.nack_en = nack_en
+        self.chip_type = chip_type
+        self.chip_name = chip_name
+
+# define the i2c map instance
+
 def SetNumberOfDataBytes(slave_id, data_wr_nbytes, data_rd_nbytes):
 
 	#set the numbers
@@ -75,7 +99,7 @@ def SetNumberOfDataBytes(slave_id, data_wr_nbytes, data_rd_nbytes):
 	i2c_slave_map[slave_id].data_rd_nbytes = data_rd_nbytes
 
 	# update the map
-	fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeSlaveMapItem(i2c_slave_map[slave_id]))
+	fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 
 # set the default data sizes
 def SetDefaultNumberOfDataBytes(slave_id):
@@ -88,7 +112,7 @@ def SetDefaultNumberOfDataBytes(slave_id):
 		print "Wrong chip type"
 
 	# update the map
-	fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeSlaveMapItem(i2c_slave_map[slave_id]))
+	fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 
 # Combine and Send sequential I2C write Command
 def SendCommand_I2C_SeqWrite(command, hybrid_id, chip_id, register_address, data):
@@ -187,12 +211,47 @@ def ReadChipDataNEW(nbytes = 1):
 
 	print "    -----------------------------------------------------------------------------------------"
 	print "   ====================================================   "
+'''
+SetSlaveMap()
+Configure_MPA_SSA_I2C_Master(1, 0)
+Send_MPA_SSA_I2C_Command(0, 0, 0, 0, 0x00)
+write_I2C('SSA', 0b1010101010101010, 0x5)
 
+'''
+
+def EncodeMainSlaveMapItem(slave_item):
+
+	# this peace of code just shifts the data, also checks if it fits the field
+	shifted_i2c_address = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
+	shifted_register_address_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
+	shifted_data_wr_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes)
+	shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
+	shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
+	shifted_nack_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
+
+	final_command = shifted_i2c_address + shifted_register_address_nbytes + shifted_data_wr_nbytes + shifted_data_rd_nbytes + shifted_stop_for_rd_en + shifted_nack_en
+
+	return final_command
+
+i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
+# setting the i2c slave map
+def SetMainSlaveMap():
+    # define the map itself
+    #i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
+    # set the values
+    # --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
+    #i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA", "MPA0")
+    i2c_slave_map[0].SetValues(0b0100000, 2, 1, 1, 1, 0, "SSA", "SSA0")
+
+    # updating the slave id table
+    print "---> Updating the Slave ID Map"
+    for slave_id in range(2):
+        fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 
 def write_I2C (chip, address, data, frequency = 0):
     i2cmux = 0
-    MPA = 11
-    SSA = 12
+    MPA = 0
+    SSA = 1
     command_type = 0
     read = 1
     write = 0
@@ -201,6 +260,7 @@ def write_I2C (chip, address, data, frequency = 0):
     Configure_MPA_SSA_I2C_Master(1, frequency)
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x04) #enable only MPA-SSA chip I2C
     Configure_MPA_SSA_I2C_Master(0, frequency)
+    SetMainSlaveMap()
     if (chip == 'MPA'):
         SendCommand_I2C  (command_type, 0, MPA, 0, write, address, data, readback)
     elif (chip == 'SSA'):
@@ -208,8 +268,8 @@ def write_I2C (chip, address, data, frequency = 0):
 
 def read_I2C (chip, address, data = 0, frequency = 0):
     i2cmux = 0
-    MPA = 11
-    SSA = 12
+    MPA = 0
+    SSA = 1
     command_type = 0
     read = 1
     write = 0
@@ -218,6 +278,7 @@ def read_I2C (chip, address, data = 0, frequency = 0):
     Configure_MPA_SSA_I2C_Master(1, frequency)
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x04) #enable only MPA-SSA chip I2C
     Configure_MPA_SSA_I2C_Master(0, frequency)
+    SetMainSlaveMap()
     if (chip == 'MPA'):
         SendCommand_I2C(command_type, 0, MPA, 0, read, address, data, readback)
     elif (chip == 'SSA'):

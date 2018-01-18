@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-if ! ifconfig | grep 'eno1:1'; then
+if ! ifconfig | grep 'em1:1'; then
 	sudo /usr/sbin/rarpd -a
 	sudo ifconfig em1:1 192.168.01.81
 fi
