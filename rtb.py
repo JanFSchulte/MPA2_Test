@@ -19,15 +19,26 @@ import ConfigParser
 # basic d19c methods include
 from d19cScripts.fc7_daq_methods import *
 
+from d19cScripts import *
+from myScripts import *
+  
+
 #
 ########################################
 # define fc7 object
 ########################################
-fc7AddrTable = AddressTable("./fc7AddrTable.dat")
-f = open('./d19cScripts/ipaddr.dat', 'r')
-ipaddr = f.readline()
-f.close()
-fc7 = ChipsBusUdp(fc7AddrTable, ipaddr, 50001)
+
+#fc7AddrTable = AddressTable("./fc7AddrTable.dat")
+#f = open('./d19cScripts/ipaddr.dat', 'r')
+#ipaddr = f.readline()
+#f.close()
+#fc7 = ChipsBusUdp(fc7AddrTable, ipaddr, 50001)
+
+print '\n'
+text = raw_input("Select board: mpa or ssa: ") 
+ipaddr, fc7AddrTable, fc7 = SelectBoard(text) 
+print '\n\n\n'
+
 ########################################
 class BControl():
     def __init__(self):
