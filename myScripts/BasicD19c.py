@@ -211,6 +211,7 @@ def ReadChipDataNEW(nbytes = 1):
 
 	print "    -----------------------------------------------------------------------------------------"
 	print "   ====================================================   "
+
 '''
 SetSlaveMap()
 Configure_MPA_SSA_I2C_Master(1, 0)
@@ -282,5 +283,5 @@ def read_I2C (chip, address, data = 0, frequency = 0):
     if (chip == 'MPA'):
         SendCommand_I2C(command_type, 0, MPA, 0, read, address, data, readback)
     elif (chip == 'SSA'):
-        SendCommand_I2C(command_type, 0, SSA, 0, read, address, data, readback)
+        SendCommand_I2C(command_type, 0, MPA, 0, read, address, data, readback)
     return ReadChipDataNEW()

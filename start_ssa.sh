@@ -13,7 +13,11 @@ echo "____________________________________________________"
 echo ""
 echo "from d19cScripts import *"                        >  LaunchPy.py
 echo "from myScripts import *"                          >> LaunchPy.py
+echo "from ssa_methods import *"                        >> LaunchPy.py
 echo "  "                                               >> LaunchPy.py
 echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('SSA') "  >> LaunchPy.py
+echo "  "                                               >> LaunchPy.py
+echo "ssa = SSA_handle() "                              >> LaunchPy.py
+
 cp ./myScripts/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
 python -i LaunchPy.py
