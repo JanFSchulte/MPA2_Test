@@ -215,7 +215,7 @@ def ReadChipDataNEW(nbytes = 1):
 SetSlaveMap()
 Configure_MPA_SSA_I2C_Master(1, 0)
 Send_MPA_SSA_I2C_Command(0, 0, 0, 0, 0x00)
-write_I2C('SSA', 0b1010101010101010, 0x5)
+write_I2C('MPA', 0b1010101010101010, 0x5)
 
 '''
 
@@ -240,8 +240,8 @@ def SetMainSlaveMap():
     #i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
     # set the values
     # --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
-    #i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA", "MPA0")
-    i2c_slave_map[0].SetValues(0b0100000, 2, 1, 1, 1, 0, "SSA", "SSA0")
+    i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA", "MPA0")
+    #i2c_slave_map[0].SetValues(0b0100000, 2, 1, 1, 1, 0, "SSA", "SSA0")
 
     # updating the slave id table
     print "---> Updating the Slave ID Map"
