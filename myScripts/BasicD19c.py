@@ -62,8 +62,17 @@ def read_regs():
 def send_trigger():
     SendCommand_CTRL("fast_trigger")
 
+def open_shutter():
+    SendCommand_CTRL("fast_trigger")
+
 def send_test():
     SendCommand_CTRL("fast_test_pulse")
+
+def orbit_reset():
+    SendCommand_CTRL("fast_orbit_reset")
+
+def close_shutter():
+    SendCommand_CTRL("fast_orbit_reset")
 
 def reset():
     SendCommand_CTRL("global_reset")
@@ -213,11 +222,12 @@ def ReadChipDataNEW(nbytes = 1):
 	print "   ====================================================   "
 
 '''
+fc7.write("cnfg_phy_i2c_freq",0)
 SetSlaveMap()
 Configure_MPA_SSA_I2C_Master(1, 0)
 Send_MPA_SSA_I2C_Command(0, 0, 0, 0, 0x00)
-write_I2C('MPA', 0b1010101010101010, 0x5)
-
+write_I2C('MPA', 0xAAAA, 0)
+read_I2C('MPA', 0x1, 0)
 '''
 
 def EncodeMainSlaveMapItem(slave_item):
@@ -284,4 +294,5 @@ def read_I2C (chip, address, data = 0, frequency = 0):
         SendCommand_I2C(command_type, 0, MPA, 0, read, address, data, readback)
     elif (chip == 'SSA'):
         SendCommand_I2C(command_type, 0, MPA, 0, read, address, data, readback)
+    sleep(1)
     return ReadChipDataNEW()
