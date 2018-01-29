@@ -5,11 +5,11 @@ mpa_pixel_reg_map = {'test': 0xfff}
 ################# Strip register map #########################
 
 mpa_pixel_reg_map['ENFLAGS']            = 0b0000
-mpa_pixel_reg_map['SAMPLINGMODE']       = 0b0001
-mpa_pixel_reg_map['GAINTRIMMING']       = 0b0010
+mpa_pixel_reg_map['ModeSel']            = 0b0001
+mpa_pixel_reg_map['TrimDAC']            = 0b0010
 mpa_pixel_reg_map['ClusterCut']         = 0b0011
-mpa_pixel_reg_map['HIPCUT']             = 0b0100
-mpa_pixel_reg_map['DigCalibPattern']    = 0b0101
+mpa_pixel_reg_map['HipCut']             = 0b0100
+mpa_pixel_reg_map['DigPattern']         = 0b0101
 mpa_pixel_reg_map['ReadCounter_LSB']    = 0b1001
 mpa_pixel_reg_map['ReadCounter_MSB']    = 0b1010
 

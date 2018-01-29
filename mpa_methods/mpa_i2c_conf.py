@@ -30,7 +30,7 @@ class mpa_i2c_conf:
 
 		#return rep
 
-	def peri_read(self, register):
+	def peri_read(self, register, timeout = 0.001):
 
 		if register not in self.mpa_peri_reg_map.keys():
 			print "Register name not found"
@@ -40,9 +40,8 @@ class mpa_i2c_conf:
 			base = mpa_peri_reg_map[register]
 			#adr  = (base & 0xfff) | 0b0001000000000000
 			adr   = base
-			rep  = read_I2C('MPA', adr, 0, self.freq)
-
-	#	return rep
+			rep  = read_I2C('MPA', adr, timeout)
+		return rep
 
 	def pixel_write(self, register, row, pixel, data):
 
@@ -53,13 +52,13 @@ class mpa_i2c_conf:
 		else:
 			pixel_id = pixel if (pixel is not 'all') else 0b00000000
 			base = mpa_pixel_reg_map[register]
-			adr  = ((row & 0x0000f) << 11 ) | ((base & 0x000f) << 7 ) | (pixel_id & 0b01111111)
-			print bin(adr)
+			adr  = ((row & 0x0001f) << 11 ) | ((base & 0x000f) << 7 ) | (pixel_id & 0xfffffff)
+			#print bin(adr)
 			rep  = write_I2C('MPA', adr, data, self.freq)
 
 		#return rep
 
-	def pixel_read(self, register, row, pixel):
+	def pixel_read(self, register, row, pixel, timeout = 0.001):
 
 		if register not in self.mpa_pixel_reg_map.keys():
 			print "Register name not found"
@@ -68,10 +67,9 @@ class mpa_i2c_conf:
 		else:
 			pixel_id = pixel if (pixel is not 'all') else 0b00000000
 			base = mpa_pixel_reg_map[register]
-			adr  = ((row & 0x0000f) << 11 ) | ((base & 0x000f) << 7 ) | (pixel_id & 0b01111111)
-			print bin(adr)
-			rep  = read_I2C('MPA', adr, 0, self.freq)
-
-		#return rep
+			adr  = ((row & 0x0001f) << 11 ) | ((base & 0x000f) << 7 ) | (pixel_id & 0xfffffff)
+			#print bin(adr)
+			rep  = read_I2C('MPA', adr, timeout)
+		return rep
 
 I2C=mpa_i2c_conf()

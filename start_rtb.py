@@ -15,8 +15,6 @@ echo "from d19cScripts import *"                        >  LaunchPy.py
 echo "from myScripts import *"                          >> LaunchPy.py
 echo "  "                                               >> LaunchPy.py
 echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('MPA') "  >> LaunchPy.py
-echo "from mpa_methods.cal_utility import * "  >> LaunchPy.py
-echo "from mpa_methods.mpa_i2c_conf import *"  >> LaunchPy.py
-echo "from mpa_methods.fast_readout_utility import *"  >> LaunchPy.py
 cp ./myScripts/ipaddr_mpa.dat  d19cScripts/ipaddr.dat
-python -i LaunchPy.py
+python LaunchPy.py
+python rtb.py

@@ -35,7 +35,7 @@ def SendCommand_I2C(command, hybrid_id, chip_id, page, read, register_address, d
 
   #print hex(cmd)
   if(read == 1):
-  	fc7.write("ctrl_command_i2c_command_fifo", cmd0)
+	fc7.write("ctrl_command_i2c_command_fifo", cmd0)
   else:
 	fc7.write("ctrl_command_i2c_command_fifo", cmd0)
 	sleep(0.01)
@@ -48,37 +48,43 @@ def DataFromMask(data, mask_name):
 
 # Send command ctrl
 def SendCommand_CTRL(name = "none"):
-    if name == "none":
-        print "Sending nothing"
-    elif name == "global_reset":
-	fc7.write("ctrl_command_global_reset", 1)
-	sleep(0.5)
-    elif name == "reset_trigger":
-	fc7.write("ctrl_fast_reset", 1)
-    elif name == "start_trigger":
-	fc7.write("ctrl_fast_start", 1)
-    elif name == "stop_trigger":
-	fc7.write("ctrl_fast_stop", 1)
-    elif name == "load_trigger_config":
-	fc7.write("ctrl_fast_load_config", 1)
-    elif name == "reset_i2c":
-	fc7.write("ctrl_command_i2c_reset", 1)
-    elif name == "reset_i2c_fifos":
-	fc7.write("ctrl_command_i2c_reset_fifos", 1)
-    elif name == "fast_orbit_reset":
-	fc7.write("ctrl_fast_signal_orbit_reset", 1)
-    elif name == "fast_fast_reset":
-	fc7.write("ctrl_fast_signal_fast_reset", 1)
-    elif name == "fast_trigger":
-	fc7.write("ctrl_fast_signal_trigger", 1)
-    elif name == "fast_test_pulse":
-	fc7.write("ctrl_fast_signal_test_pulse", 1)
-    elif name == "fast_i2c_refresh":
-	fc7.write("ctrl_fast_signal_i2c_refresh", 1)
-    elif name == "load_dio5_config":
-	fc7.write("ctrl_dio5_load_config", 1)
-    else:
-        print "Unknown Command", name
+	if name == "none":
+		print "Sending nothing"
+	elif name == "global_reset":
+		fc7.write("ctrl_command_global_reset", 1)
+		sleep(0.5)
+	elif name == "reset_trigger":
+		fc7.write("ctrl_fast_reset", 1)
+	elif name == "start_trigger":
+		fc7.write("ctrl_fast_start", 1)
+	elif name == "stop_trigger":
+		fc7.write("ctrl_fast_stop", 1)
+	elif name == "load_trigger_config":
+		fc7.write("ctrl_fast_load_config", 1)
+	elif name == "reset_i2c":
+		fc7.write("ctrl_command_i2c_reset", 1)
+	elif name == "reset_i2c_fifos":
+		fc7.write("ctrl_command_i2c_reset_fifos", 1)
+	elif name == "fast_orbit_reset":
+		fc7.write("ctrl_fast_signal_orbit_reset", 1)
+	elif name == "fast_fast_reset":
+		fc7.write("ctrl_fast_signal_fast_reset", 1)
+	elif name == "fast_trigger":
+		fc7.write("ctrl_fast_signal_trigger", 1)
+	elif name == "fast_test_pulse":
+		fc7.write("ctrl_fast_signal_test_pulse", 1)
+	elif name == "fast_i2c_refresh":
+		fc7.write("ctrl_fast_signal_i2c_refresh", 1)
+	elif name == "load_dio5_config":
+		fc7.write("ctrl_dio5_load_config", 1)
+	elif name == "load_dio5_config":
+		fc7.write("ctrl_dio5_load_config", 1)
+	elif name == "clear_counters":
+		fc7.queueWrite("ctrl_fast_signal_orbit_reset", 1)
+		fc7.queueWrite("ctrl_fast_signal_trigger", 2)
+		fc7.queueRun()
+	else:
+		print "Unknown Command", name
 
 # Data Readout
 def to_str(i):
@@ -177,16 +183,16 @@ def ShiftDataToMask(mask, data):
 	shiftingMask = mask
 	bitShiftRequired = 0
 	while (shiftingMask & 0x1) == 0:
-	    shiftingMask >>= 1
-	    bitShiftRequired += 1
+		shiftingMask >>= 1
+		bitShiftRequired += 1
 	return (data & 0xff) << bitShiftRequired
 
 # class used for setting the map of different CBC parameters
 class Parameter():
 	def __init__(self, page_i, reg_address_str, mask_str):
 		self.page = page_i-1
-      		self.reg_address = int(reg_address_str,0)
-      		self.mask = int(mask_str,16)
+		self.reg_address = int(reg_address_str,0)
+		self.mask = int(mask_str,16)
 
 # writing parameter to all cbc
 def SetParameterI2C(parameter_name, data):
@@ -263,7 +269,7 @@ def ReadStatus(name = "Current Status"):
   error_counter = fc7.read("stat_error_counter")
   print "   -> Error Counter: ", error_counter
   if error_counter > 0:
-  	  for i in range (0,error_counter):
+	  for i in range (0,error_counter):
 		  error_full = fc7.read("stat_error_full")
 		  error_block_id = DataFromMask(error_full,"stat_error_block_id");
 		  error_code = DataFromMask(error_full,"stat_error_code");
@@ -274,28 +280,28 @@ def ReadStatus(name = "Current Status"):
   temp_source = fc7.read("stat_fast_fsm_source")
   temp_source_name = "Unknown"
   if temp_source == 1:
-    temp_source_name = "L1-Trigger"
+	temp_source_name = "L1-Trigger"
   elif temp_source == 2:
-    temp_source_name = "Stubs"
+	temp_source_name = "Stubs"
   elif temp_source == 3:
-    temp_source_name = "User Frequency"
+	temp_source_name = "User Frequency"
   elif temp_source == 4:
-    temp_source_name = "TLU"
+	temp_source_name = "TLU"
   elif temp_source == 5:
-    temp_source_name = "EXT DIO5"
+	temp_source_name = "EXT DIO5"
   elif temp_source == 6:
-    temp_source_name = "Test Pulse Trigger"
+	temp_source_name = "Test Pulse Trigger"
   elif temp_source == 7:
-    temp_source_name = "Antenna Trigger"
+	temp_source_name = "Antenna Trigger"
   print "   -> trigger source:", temp_source_name
   temp_state = fc7.read("stat_fast_fsm_state")
   temp_state_name = "Unknown"
   if temp_state == 0:
-    temp_state_name = "Idle"
+	temp_state_name = "Idle"
   elif temp_state == 1:
-    temp_state_name = "Running"
+	temp_state_name = "Running"
   elif temp_state == 2:
-    temp_state_name = "Paused. Waiting for readout"
+	temp_state_name = "Paused. Waiting for readout"
   print "   -> trigger state:", temp_state_name
   print "   -> trigger configured:", fc7.read("stat_fast_fsm_configured")
   print	"   -> --------------------------------"
@@ -322,19 +328,19 @@ def ReadChipData(checking, expected_value):
   print "   =========================================================================================="
 
   while fc7.read("stat_command_i2c_fifo_replies_empty") == 0:
-      numberOfReads = numberOfReads + 1
-      reply = fc7.read("ctrl_command_i2c_reply_fifo")
-      hybrid_id = DataFromMask(reply, "ctrl_command_i2c_reply_hybrid_id")
-      chip_id = DataFromMask(reply, "ctrl_command_i2c_reply_chip_id")
-      data = DataFromMask(reply, "ctrl_command_i2c_reply_data")
-      register = DataFromMask(reply, "ctrl_command_i2c_reply_register")
-      #print bin(fc7.read("ctrl_i2c_command_fifo"))
-      #print bin(reply)[4:12]
-      print '   | %s %-12i || %s %-12i || %s %-12s || %-12s |' % ("Hybrid #", hybrid_id, "Chip #", chip_id, "Register #", hex(register)[:4], hex(data)[:4])
-      if(checking and data != expected_value and register != 0):
-         print '!!!!!!!!!!!!!!!!!!!!!!! problem on write-read sequence. Expected value is: ' , expected_value
-         sys.exit()
-      print "    -----------------------------------------------------------------------------------------"
+	  numberOfReads = numberOfReads + 1
+	  reply = fc7.read("ctrl_command_i2c_reply_fifo")
+	  hybrid_id = DataFromMask(reply, "ctrl_command_i2c_reply_hybrid_id")
+	  chip_id = DataFromMask(reply, "ctrl_command_i2c_reply_chip_id")
+	  data = DataFromMask(reply, "ctrl_command_i2c_reply_data")
+	  register = DataFromMask(reply, "ctrl_command_i2c_reply_register")
+	  #print bin(fc7.read("ctrl_i2c_command_fifo"))
+	  #print bin(reply)[4:12]
+	  print '   | %s %-12i || %s %-12i || %s %-12s || %-12s |' % ("Hybrid #", hybrid_id, "Chip #", chip_id, "Register #", hex(register)[:4], hex(data)[:4])
+	  if(checking and data != expected_value and register != 0):
+		 print '!!!!!!!!!!!!!!!!!!!!!!! problem on write-read sequence. Expected value is: ' , expected_value
+		 sys.exit()
+	  print "    -----------------------------------------------------------------------------------------"
   print "   =========================================================================================="
   print "the number of reads is = ", numberOfReads
 
@@ -362,7 +368,7 @@ def I2CTester():
 
 	num_i2c_registersPage1 = 35
 	num_i2c_registersPage2 = 2
-       #                       i2c_command , hybrid_id ,  chip_id, page , read , register_address , data;
+	   #                       i2c_command , hybrid_id ,  chip_id, page , read , register_address , data;
 
 	for i in range(0, num_i2c_registersPage1):
 		SendCommand_I2C(          2,         0,       0,    0, read,        1,    10, ReadBack)
