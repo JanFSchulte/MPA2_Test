@@ -5,6 +5,7 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from mpa_methods.mpa_i2c_conf import *
+from mpa_methods.fast_readout_utility import *
 import numpy as np
 import time
 import sys
@@ -25,6 +26,30 @@ def set_threshold(th):
 	I2C.peri_write('ThDAC4',th)
 	I2C.peri_write('ThDAC5',th)
 	I2C.peri_write('ThDAC6',th)
+
+def disable_test():
+	I2C.peri_write('TESTMUX',0b00000000)
+	I2C.peri_write('TEST0',0b00000000)
+	I2C.peri_write('TEST1',0b00000000)
+	I2C.peri_write('TEST2',0b00000000)
+	I2C.peri_write('TEST3',0b00000000)
+	I2C.peri_write('TEST4',0b00000000)
+	I2C.peri_write('TEST5',0b00000000)
+	I2C.peri_write('TEST6',0b00000000)
+
+def enable_test(block, point):
+	test = "TEST" + str(block)
+	I2C.peri_write('TESTMUX',0b00000001 << block)
+	I2C.peri_write(test, 0b00000001 << point)
+
+#def set_DAC(block, point, value):
+#	test = "TEST" + str(block)
+#	I2C.peri_write('TESTMUX',0b00000001 << block)
+#	I2C.peri_write(test, 0b00000001 << point)
+#	nameDAC = ["A", "B", "C", "D", "E", "F"]
+#	DAC = nameDAC[block] + str(point)
+#	I2C.peri_write(test, 0b00000001 << point)
+
 
 def activate_async():
 	I2C.peri_write('ReadoutMode',0b01)
@@ -173,6 +198,41 @@ def s_curve_rbr(n_pulse, cal, row, step = 1, start = 0, stop = 256, print_file =
 			clear_counters()
 			clear_counters()
 			count_th += 1
+	if print_file:
+		CSV.ArrayToCSV (data_array, str(filename) + "_cal_" + str(cal) + ".csv")
+	t1 = time.time()
+	print "END"
+	print "Elapsed Time: " + str(t1 - t0)
+	return data_array
+
+def s_curve_rbr_fr(n_pulse = 1000, cal = 50, row = range(1,17), step = 1, start = 0, stop = 256, print_file =1, filename = "../cernbox/MPA_Results/scurve_fr_"):
+	t0 = time.time()
+	clear_counters()
+	clear_counters()
+	activate_I2C_chip()
+	row = np.array(row)
+	nrow = int(row.shape[0])
+	data_array = np.zeros((2040, ((stop-start)/step+1)), dtype = np.int16 )
+	#data_array[0,0] = n_pulse
+	#data_array = np.zeros(((stop-start)/step+1, nrow*118), dtype = np.int )
+	activate_async()
+	set_calibration(cal)
+	count_th = 0
+	sys.stdout.write("Progress Scurve: ")
+	sys.stdout.flush()
+	for th in range(start, stop, step): # Temoporary: need to add clear counter fast command
+		set_threshold(th)
+		sys.stdout.write(str(count_th*100/((stop-start)/step+2)) + "% | ")
+		sys.stdout.flush()
+		for r in row:
+			disable_pixel(0, 0)
+			enable_pix_counter(r, 0)
+			send_pulses(n_pulse)
+		temp = ReadoutCounters()
+		data_array [:, count_th]= temp
+		clear_counters()
+		clear_counters()
+		count_th += 1
 	if print_file:
 		CSV.ArrayToCSV (data_array, str(filename) + "_cal_" + str(cal) + ".csv")
 	t1 = time.time()

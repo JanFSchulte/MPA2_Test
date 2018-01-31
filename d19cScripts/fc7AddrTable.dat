@@ -52,7 +52,7 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1
    cnfg_i2c_settings_map_slave_0_config_register_address_nbytes 40011000	00000C00	1     1
    cnfg_i2c_settings_map_slave_0_config_data_wr_nbytes		40011000	000003E0	1     1
    cnfg_i2c_settings_map_slave_0_config_data_rd_nbytes		40011000	0000001F	1     1
-   cnfg_i2c_settings_map_slave_1_config				40011001	FFFFFFFF	1     1		
+   cnfg_i2c_settings_map_slave_1_config				40011001	FFFFFFFF	1     1
    cnfg_fast_triggers_to_accept 	40012000    ffffffff	 1     1
    cnfg_fast_user_frequency     	40012001    ffffffff	 1     1
    cnfg_fast_source_full		40012002    ffffffff	 1     1
@@ -124,8 +124,8 @@ ipb_daq_system_ctrl			40020000    ffffffff     1     1
    ctrl_slvs_debug_fifo1_data           40023001    ffffffff     1     0
    ctrl_slvs_debug_fifo2_data           40023002    ffffffff     1     0
    ctrl_dio5_load_config		40026000    00000001	 1     1
-
-
+   ctrl_phy_tune_again      40023000    00000002     1     1
+   stat_phy_hardware_ready  40033002    00010000     1     0
 ipb_daq_system_stat			40030000    ffffffff     1     0
    stat_error_full			40030001    00000fff     1     0
    stat_error_block_id			40030001    0000000f     1     0

@@ -1,0 +1,2049 @@
+../d19c_MPAdev/:
+total 91560
+-rw-r--r--. 1 dceresa_local dceresa_local 18735004 Jan 16 15:20 d19c_DAQ.bin
+-rw-r--r--. 1 dceresa_local dceresa_local 18735004 Jan 16 14:41 d19c_DAQ_CERN.bin
+-rw-r--r--. 1 dceresa_local dceresa_local      534 Jan 16 14:41 d19c_DAQ_CERN.cfi
+-rw-r--r--. 1 dceresa_local dceresa_local      807 Jan 16 14:41 d19c_DAQ_CERN.prm
+-rw-r--r--. 1 dceresa_local dceresa_local      529 Jan 16 15:20 d19c_DAQ.cfi
+-rw-r--r--. 1 dceresa_local dceresa_local      797 Jan 16 15:20 d19c_DAQ.prm
+-rw-r--r--. 1 dceresa_local dceresa_local 18735004 Dec 18 17:48 d19c_SENDER.bin
+-rw-r--r--. 1 dceresa_local dceresa_local      532 Dec 18 17:48 d19c_SENDER.cfi
+-rw-r--r--. 1 dceresa_local dceresa_local      799 Dec 18 17:48 d19c_SENDER.prm
+drwxrwxr-x. 2 dceresa_local dceresa_local     4096 Dec 14 13:06 doc
+drwxrwxr-x. 4 dceresa_local dceresa_local       28 Dec 14 13:06 fw
+-rw-r--r--. 1 dceresa_local dceresa_local 18735004 Jan 22 17:33 I2Cfix.bin
+-rw-r--r--. 1 dceresa_local dceresa_local      527 Jan 22 17:33 I2Cfix.cfi
+-rw-r--r--. 1 dceresa_local dceresa_local      793 Jan 22 17:33 I2Cfix.prm
+-rw-r--r--. 1 dceresa_local dceresa_local        0 Jan 16 14:38 _impact.cmd
+-rw-r--r--. 1 dceresa_local dceresa_local     6962 Jan 16 15:20 _impact.log
+drwxrwxr-x. 3 dceresa_local dceresa_local       22 Dec 14 13:06 ipbus_2_0_v1
+-rw-rw-r--. 1 dceresa_local dceresa_local     2769 Dec 14 13:06 README.md
+-rw-r--r--. 1 dceresa_local dceresa_local 18735004 Jan 26 18:18 SSA_DAQ.bin
+-rw-r--r--. 1 dceresa_local dceresa_local      528 Jan 26 18:18 SSA_DAQ.cfi
+-rw-r--r--. 1 dceresa_local dceresa_local      795 Jan 26 18:18 SSA_DAQ.prm
+drwxrwxr-x. 3 dceresa_local dceresa_local       28 Dec 14 13:06 sw
+-rw-r--r--. 1 dceresa_local dceresa_local      898 Jan 16 15:00 vivado.jou
+-rw-r--r--. 1 dceresa_local dceresa_local     2294 Jan 16 15:00 vivado.log
+-rw-r--r--. 1 dceresa_local dceresa_local    16186 Jan 16 18:30 vivado_pid20509.str
+
+../d19c_MPAdev/doc:
+total 2832
+-rw-rw-r--. 1 dceresa_local dceresa_local  594842 Dec 14 13:06 fc7_top-level_schematic_09-02-17.pdf
+-rw-rw-r--. 1 dceresa_local dceresa_local  589113 Dec 14 13:06 fc7_top-level-schematic.pdf
+-rw-rw-r--. 1 dceresa_local dceresa_local 1058074 Dec 14 13:06 fc7_user_manual.pdf
+-rw-rw-r--. 1 dceresa_local dceresa_local  409033 Dec 14 13:06 impl_clk_dist.png
+-rw-rw-r--. 1 dceresa_local dceresa_local   38179 Dec 14 13:06 impl_clk_mgt.png
+-rw-rw-r--. 1 dceresa_local dceresa_local  162293 Dec 14 13:06 impl_clk_mon.png
+-rw-rw-r--. 1 dceresa_local dceresa_local    1949 Dec 14 13:06 IPAddress_Tutorial.md
+-rw-rw-r--. 1 dceresa_local dceresa_local    5392 Dec 14 13:06 IPBus_Tutorial.md
+-rw-rw-r--. 1 dceresa_local dceresa_local    6927 Dec 14 13:06 Middleware_Short_Guide.md
+-rw-rw-r--. 1 dceresa_local dceresa_local    5292 Dec 14 13:06 Version_Control_IP_Tutorial.md
+-rw-rw-r--. 1 dceresa_local dceresa_local    6416 Dec 14 13:06 wireshark_broadcast_mac.png
+
+../d19c_MPAdev/fw:
+total 0
+drwxrwxr-x. 6 dceresa_local dceresa_local 91 Dec 14 13:06 prj
+drwxrwxr-x. 4 dceresa_local dceresa_local 28 Dec 14 13:06 src
+
+../d19c_MPAdev/fw/prj:
+total 4
+drwxrwxr-x. 2 dceresa_local dceresa_local   42 Dec 14 13:06 cpld_fc7
+drwxrwxr-x. 6 dceresa_local dceresa_local 4096 Dec 15 18:41 fpga_fc7_daq_firmware
+drwxrwxr-x. 2 dceresa_local dceresa_local   31 Dec 14 13:06 fpga_fc7_ddr3_viv
+drwxrwxr-x. 5 dceresa_local dceresa_local   90 Dec 14 13:06 mmc_fc7
+
+../d19c_MPAdev/fw/prj/cpld_fc7:
+total 180
+-rw-rw-r--. 1 dceresa_local dceresa_local  23028 Dec 14 13:06 cpld_fc7.xise
+-rw-rw-r--. 1 dceresa_local dceresa_local 158839 Dec 14 13:06 top.jed
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware:
+total 340
+drwxrwxr-x. 2 dceresa_local dceresa_local     59 Dec 14 13:06 build_configure
+-rw-rw-r--. 1 dceresa_local dceresa_local    358 Dec 14 13:06 create_simulation_general.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local    106 Dec 14 13:06 create_vivado_project.sh
+drwxr-xr-x. 7 dceresa_local dceresa_local    216 Jan 26 17:52 fpga_fc7_daq_firmware
+-rw-rw-r--. 1 dceresa_local dceresa_local 183725 Dec 14 13:06 fpga_fc7_daq_firmware_create_vivado_project.tcl
+drwxrwxr-x. 2 dceresa_local dceresa_local     51 Dec 14 13:06 generate_ip
+-rw-rw-r--. 1 dceresa_local dceresa_local    174 Dec 14 13:06 ignore_drc.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local    863 Dec 14 13:06 simulate_all.sh
+-rw-r--r--. 1 dceresa_local dceresa_local   1347 Dec 15 17:00 vivado.jou
+-rw-r--r--. 1 dceresa_local dceresa_local 140717 Dec 15 18:41 vivado.log
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/build_configure:
+total 12
+-rw-rw-r--. 1 dceresa_local dceresa_local 6506 Dec 14 13:06 build_configure.py
+-rw-rw-r--. 1 dceresa_local dceresa_local 1809 Dec 14 13:06 build_configure.tcl
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware:
+total 100
+drwxr-xr-x. 5 dceresa_local dceresa_local     48 Jan 26 17:52 fpga_fc7_daq_firmware.cache
+drwxr-xr-x. 2 dceresa_local dceresa_local     39 Jan 26 17:52 fpga_fc7_daq_firmware.hw
+drwxr-xr-x. 2 dceresa_local dceresa_local      6 Jan 26 17:52 fpga_fc7_daq_firmware.ip_user_files
+drwxr-xr-x. 5 dceresa_local dceresa_local     48 Jan 26 17:55 fpga_fc7_daq_firmware.runs
+drwxr-xr-x. 2 dceresa_local dceresa_local      6 Jan 26 17:52 fpga_fc7_daq_firmware.sim
+-rw-r--r--. 1 dceresa_local dceresa_local 101185 Jan 26 17:55 fpga_fc7_daq_firmware.xpr
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.cache:
+total 0
+drwxr-xr-x. 9 dceresa_local dceresa_local 105 Dec 18 17:26 compile_simlib
+drwxr-xr-x. 3 dceresa_local dceresa_local  20 Dec 15 09:41 ip
+drwxr-xr-x. 2 dceresa_local dceresa_local 154 Dec 15 09:53 wt
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.cache/compile_simlib:
+total 0
+drwxr-xr-x. 2 dceresa_local dceresa_local 6 Dec 18 17:26 activehdl
+drwxr-xr-x. 2 dceresa_local dceresa_local 6 Dec 18 17:26 ies
+drwxr-xr-x. 2 dceresa_local dceresa_local 6 Dec 18 17:26 modelsim
+drwxr-xr-x. 2 dceresa_local dceresa_local 6 Dec 18 17:26 questa
+drwxr-xr-x. 2 dceresa_local dceresa_local 6 Dec 18 17:26 riviera
+drwxr-xr-x. 2 dceresa_local dceresa_local 6 Dec 18 17:26 vcs
+drwxr-xr-x. 2 dceresa_local dceresa_local 6 Dec 18 17:26 xcelium
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.cache/compile_simlib/activehdl:
+total 0
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.cache/compile_simlib/ies:
+total 0
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.cache/compile_simlib/modelsim:
+total 0
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.cache/compile_simlib/questa:
+total 0
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.cache/compile_simlib/riviera:
+total 0
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.cache/compile_simlib/vcs:
+total 0
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.cache/compile_simlib/xcelium:
+total 0
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.cache/ip:
+total 0
+drwxr-xr-x. 2 dceresa_local dceresa_local 6 Dec 15 09:41 2017.3
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.cache/ip/2017.3:
+total 0
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.cache/wt:
+total 28
+-rw-r--r--. 1 dceresa_local dceresa_local 2305 Jan 26 17:55 gui_handlers.wdf
+-rw-r--r--. 1 dceresa_local dceresa_local  515 Jan 26 17:55 java_command_handlers.wdf
+-rw-r--r--. 1 dceresa_local dceresa_local  118 Jan 26 18:08 project.wpc
+-rw-r--r--. 1 dceresa_local dceresa_local   97 Jan 26 17:58 synthesis_details.wdf
+-rw-r--r--. 1 dceresa_local dceresa_local 5355 Jan 26 18:02 synthesis.wdf
+-rw-r--r--. 1 dceresa_local dceresa_local 2804 Jan 26 17:55 webtalk_pa.xml
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.hw:
+total 4
+-rw-r--r--. 1 dceresa_local dceresa_local 284 Dec 15 09:41 fpga_fc7_daq_firmware.lpr
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.ip_user_files:
+total 0
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.runs:
+total 8
+drwxr-xr-x. 3 dceresa_local dceresa_local 4096 Jan 26 18:08 impl_1
+drwxr-xr-x. 4 dceresa_local dceresa_local 4096 Jan 26 18:02 synth_1
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.runs/impl_1:
+total 70348
+-rw-r--r--. 1 dceresa_local dceresa_local 18735004 Jan 26 18:08 fc7_top.bin
+-rw-r--r--. 1 dceresa_local dceresa_local 18735109 Jan 26 18:08 fc7_top.bit
+-rw-r--r--. 1 dceresa_local dceresa_local  7717452 Jan 26 18:04 fc7_top_opt.dcp
+-rw-r--r--. 1 dceresa_local dceresa_local 11481456 Jan 26 18:06 fc7_top_placed.dcp
+-rw-r--r--. 1 dceresa_local dceresa_local 14603879 Jan 26 18:07 fc7_top_routed.dcp
+-rw-r--r--. 1 dceresa_local dceresa_local     8428 Jan 26 17:55 fc7_top.tcl
+-rw-r--r--. 1 dceresa_local dceresa_local   105225 Jan 26 18:08 fc7_top.vdi
+-rw-r--r--. 1 dceresa_local dceresa_local    69042 Jan 26 17:55 gen_run.xml
+-rw-r--r--. 1 dceresa_local dceresa_local      376 Jan 26 17:55 htr.txt
+-rw-r--r--. 1 dceresa_local dceresa_local     5946 Jan 26 18:03 init_design.pb
+-rwxr-xr-x. 1 dceresa_local dceresa_local     7308 Jan 26 17:55 ISEWrap.js
+-rwxr-xr-x. 1 dceresa_local dceresa_local     1623 Jan 26 17:55 ISEWrap.sh
+-rw-r--r--. 1 dceresa_local dceresa_local    34961 Jan 26 18:04 opt_design.pb
+-rw-r--r--. 1 dceresa_local dceresa_local    77699 Jan 26 18:06 place_design.pb
+-rw-r--r--. 1 dceresa_local dceresa_local     3601 Jan 26 17:55 project.wdf
+-rw-r--r--. 1 dceresa_local dceresa_local    17932 Jan 26 18:07 route_design.pb
+-rw-r--r--. 1 dceresa_local dceresa_local     1522 Jan 26 17:55 rundef.js
+-rw-r--r--. 1 dceresa_local dceresa_local      257 Jan 26 17:55 runme.bat
+-rw-r--r--. 1 dceresa_local dceresa_local   104708 Jan 26 18:08 runme.log
+-rwxr--r--. 1 dceresa_local dceresa_local     1118 Jan 26 17:55 runme.sh
+-rw-r--r--. 1 dceresa_local dceresa_local    81637 Jan 26 18:08 usage_statistics_webtalk.html
+-rw-r--r--. 1 dceresa_local dceresa_local   134271 Jan 26 18:08 usage_statistics_webtalk.xml
+-rw-r--r--. 1 dceresa_local dceresa_local      894 Jan 26 18:02 vivado.jou
+-rw-r--r--. 1 dceresa_local dceresa_local      149 Jan 26 18:08 vivado.pb
+-rw-r--r--. 1 dceresa_local dceresa_local    52120 Jan 26 18:08 write_bitstream.pb
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.runs/synth_1:
+total 12352
+-rw-r--r--. 1 dceresa_local dceresa_local 7468706 Jan 26 18:02 fc7_top.dcp
+-rw-r--r--. 1 dceresa_local dceresa_local   22573 Jan 26 17:55 fc7_top.tcl
+-rw-r--r--. 1 dceresa_local dceresa_local 1502980 Jan 26 18:02 fc7_top.vds
+-rw-r--r--. 1 dceresa_local dceresa_local    3398 Jan 26 17:58 fsm_encoding.os
+-rw-r--r--. 1 dceresa_local dceresa_local   65083 Jan 26 17:55 gen_run.xml
+-rw-r--r--. 1 dceresa_local dceresa_local     368 Jan 26 17:55 htr.txt
+-rwxr-xr-x. 1 dceresa_local dceresa_local    7308 Jan 26 17:55 ISEWrap.js
+-rwxr-xr-x. 1 dceresa_local dceresa_local    1623 Jan 26 17:55 ISEWrap.sh
+-rwxr-xr-x. 1 dceresa_local dceresa_local    2479 Jan 26 18:02 planAhead.ngc2edif.log
+-rw-r--r--. 1 dceresa_local dceresa_local    1455 Jan 26 17:55 rundef.js
+-rw-r--r--. 1 dceresa_local dceresa_local     257 Jan 26 17:55 runme.bat
+-rw-r--r--. 1 dceresa_local dceresa_local 1502460 Jan 26 18:02 runme.log
+-rwxr--r--. 1 dceresa_local dceresa_local    1059 Jan 26 17:55 runme.sh
+-rw-r--r--. 1 dceresa_local dceresa_local     889 Jan 26 17:55 vivado.jou
+-rw-r--r--. 1 dceresa_local dceresa_local 2038206 Jan 26 18:02 vivado.pb
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware/fpga_fc7_daq_firmware.sim:
+total 0
+
+../d19c_MPAdev/fw/prj/fpga_fc7_daq_firmware/generate_ip:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 2073 Dec 14 13:06 generate_ip.sh
+-rw-rw-r--. 1 dceresa_local dceresa_local  339 Dec 14 13:06 generate_ip.tcl
+
+../d19c_MPAdev/fw/prj/fpga_fc7_ddr3_viv:
+total 44
+-rw-rw-r--. 1 dceresa_local dceresa_local 42604 Dec 14 13:06 fpga_fc7_ddr3.xpr
+
+../d19c_MPAdev/fw/prj/mmc_fc7:
+total 48
+-rw-rw-r--. 1 dceresa_local dceresa_local   898 Dec 14 13:06 fc7_mmc.atsln
+-rw-rw-r--. 1 dceresa_local dceresa_local 42518 Dec 14 13:06 fc7_mmc.cppproj
+drwxrwxr-x. 3 dceresa_local dceresa_local    26 Dec 14 13:06 include
+drwxrwxr-x. 2 dceresa_local dceresa_local    44 Dec 14 13:06 RunFC7
+drwxrwxr-x. 3 dceresa_local dceresa_local    17 Dec 14 13:06 src
+
+../d19c_MPAdev/fw/prj/mmc_fc7/include:
+total 0
+drwxrwxr-x. 3 dceresa_local dceresa_local 17 Dec 14 13:06 imperial_mmc
+
+../d19c_MPAdev/fw/prj/mmc_fc7/include/imperial_mmc:
+total 0
+drwxrwxr-x. 4 dceresa_local dceresa_local 26 Dec 14 13:06 fc7
+
+../d19c_MPAdev/fw/prj/mmc_fc7/include/imperial_mmc/fc7:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 107 Dec 14 13:06 r0
+drwxrwxr-x. 2 dceresa_local dceresa_local 107 Dec 14 13:06 r2
+
+../d19c_MPAdev/fw/prj/mmc_fc7/include/imperial_mmc/fc7/r0:
+total 40
+-rw-rw-r--. 1 dceresa_local dceresa_local  2208 Dec 14 13:06 board.arch.h
+-rw-rw-r--. 1 dceresa_local dceresa_local  5160 Dec 14 13:06 board.fru.h
+-rw-rw-r--. 1 dceresa_local dceresa_local 17989 Dec 14 13:06 board.sdr.h
+-rw-rw-r--. 1 dceresa_local dceresa_local  1179 Dec 14 13:06 board.sensors.h
+-rw-rw-r--. 1 dceresa_local dceresa_local   258 Dec 14 13:06 board.user.h
+
+../d19c_MPAdev/fw/prj/mmc_fc7/include/imperial_mmc/fc7/r2:
+total 44
+-rw-rw-r--. 1 dceresa_local dceresa_local  2208 Dec 14 13:06 board.arch.h
+-rw-rw-r--. 1 dceresa_local dceresa_local  5193 Dec 14 13:06 board.fru.h
+-rw-rw-r--. 1 dceresa_local dceresa_local 20590 Dec 14 13:06 board.sdr.h
+-rw-rw-r--. 1 dceresa_local dceresa_local  1106 Dec 14 13:06 board.sensors.h
+-rw-rw-r--. 1 dceresa_local dceresa_local   258 Dec 14 13:06 board.user.h
+
+../d19c_MPAdev/fw/prj/mmc_fc7/RunFC7:
+total 51424
+-rw-rw-r--. 1 dceresa_local dceresa_local 52289419 Dec 14 13:06 fc7_mmc.elf
+-rw-rw-r--. 1 dceresa_local dceresa_local   367511 Dec 14 13:06 fc7_mmc.hex
+
+../d19c_MPAdev/fw/prj/mmc_fc7/src:
+total 0
+drwxrwxr-x. 4 dceresa_local dceresa_local 26 Dec 14 13:06 fc7
+
+../d19c_MPAdev/fw/prj/mmc_fc7/src/fc7:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 46 Dec 14 13:06 r0
+drwxrwxr-x. 2 dceresa_local dceresa_local 46 Dec 14 13:06 r2
+
+../d19c_MPAdev/fw/prj/mmc_fc7/src/fc7/r0:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local 9811 Dec 14 13:06 avr32_arch.c
+-rw-rw-r--. 1 dceresa_local dceresa_local  857 Dec 14 13:06 avr32_user.c
+
+../d19c_MPAdev/fw/prj/mmc_fc7/src/fc7/r2:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local 10762 Dec 14 13:06 avr32_arch.c
+-rw-rw-r--. 1 dceresa_local dceresa_local   857 Dec 14 13:06 avr32_user.c
+
+../d19c_MPAdev/fw/src:
+total 4
+drwxrwxr-x. 15 dceresa_local dceresa_local  161 Dec 14 13:06 sys
+drwxrwxr-x. 23 dceresa_local dceresa_local 4096 Dec 14 13:06 usr
+
+../d19c_MPAdev/fw/src/sys:
+total 4
+drwxrwxr-x. 4 dceresa_local dceresa_local   63 Dec 14 13:06 cdce
+drwxrwxr-x. 2 dceresa_local dceresa_local   38 Dec 14 13:06 cpld
+drwxrwxr-x. 7 dceresa_local dceresa_local 4096 Dec 14 13:06 ddr3_ls
+drwxrwxr-x. 2 dceresa_local dceresa_local   78 Dec 14 13:06 fmc
+drwxrwxr-x. 2 dceresa_local dceresa_local  130 Dec 14 13:06 i2c
+drwxrwxr-x. 2 dceresa_local dceresa_local  179 Dec 14 13:06 icap
+drwxrwxr-x. 4 dceresa_local dceresa_local  252 Dec 14 13:06 ipb_fc7
+drwxrwxr-x. 2 dceresa_local dceresa_local   37 Dec 14 13:06 led
+drwxrwxr-x. 2 dceresa_local dceresa_local   22 Dec 14 13:06 prbs
+drwxrwxr-x. 2 dceresa_local dceresa_local  181 Dec 14 13:06 regs
+drwxrwxr-x. 2 dceresa_local dceresa_local  108 Dec 14 13:06 sys
+drwxrwxr-x. 2 dceresa_local dceresa_local   72 Dec 14 13:06 ucf
+drwxrwxr-x. 2 dceresa_local dceresa_local   58 Dec 14 13:06 wb
+
+../d19c_MPAdev/fw/src/sys/cdce:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 6716 Dec 14 13:06 cdce_synchronizer.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local  112 Dec 14 13:06 phase_mon
+drwxrwxr-x. 2 dceresa_local dceresa_local   28 Dec 14 13:06 spi
+
+../d19c_MPAdev/fw/src/sys/cdce/phase_mon:
+total 32
+-rw-rw-r--. 1 dceresa_local dceresa_local  235 Dec 14 13:06 coregen.cgp
+-rw-rw-r--. 1 dceresa_local dceresa_local 7598 Dec 14 13:06 phase_mon_clk_manager.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 8212 Dec 14 13:06 phase_mon_clk_manager.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local 4493 Dec 14 13:06 phase_mon.vhd
+
+../d19c_MPAdev/fw/src/sys/cdce/spi:
+total 12
+-rw-rw-r--. 1 dceresa_local dceresa_local 9078 Dec 14 13:06 spi_master.vhd
+
+../d19c_MPAdev/fw/src/sys/cpld:
+total 24
+-rw-rw-r--. 1 dceresa_local dceresa_local 12211 Dec 14 13:06 cpld.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local 11506 Dec 14 13:06 cpld.vhd
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls:
+total 64
+drwxrwxr-x. 2 dceresa_local dceresa_local    48 Dec 14 13:06 commons
+drwxrwxr-x. 2 dceresa_local dceresa_local   108 Dec 14 13:06 constraints
+-rw-rw-r--. 1 dceresa_local dceresa_local  5391 Dec 14 13:06 external_memory_interface_definitions.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 13777 Dec 14 13:06 external_memory_interface_wrapper.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 13875 Dec 14 13:06 external_memory_interface_wrapper_viv.vhd
+drwxrwxr-x. 5 dceresa_local dceresa_local    80 Dec 14 13:06 external_memory_wrapper
+drwxrwxr-x. 3 dceresa_local dceresa_local  4096 Dec 14 13:06 ipcore_dir
+drwxrwxr-x. 3 dceresa_local dceresa_local    27 Dec 14 13:06 ipcore_viv
+-rw-rw-r--. 1 dceresa_local dceresa_local 19588 Dec 14 13:06 memory_interface_controller.vhd
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/commons:
+total 12
+-rw-rw-r--. 1 dceresa_local dceresa_local 1383 Dec 14 13:06 asym_spram.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 5792 Dec 14 13:06 syncfifo.vhd
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/constraints:
+total 64
+-rw-rw-r--. 1 dceresa_local dceresa_local 25161 Dec 14 13:06 ddr3_controller.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local  9520 Dec 14 13:06 ddr3_pin_mapping.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local   357 Dec 14 13:06 sys_ddr3_clk.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local 18298 Dec 14 13:06 sys_ddr3_io.ucf
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/external_memory_wrapper:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 77 Dec 14 13:06 access_scheduler
+drwxrwxr-x. 2 dceresa_local dceresa_local 29 Dec 14 13:06 MIG_utilities
+drwxrwxr-x. 2 dceresa_local dceresa_local 68 Dec 14 13:06 user_design_interface
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/external_memory_wrapper/access_scheduler:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local 5147 Dec 14 13:06 DDR3_operations_queuer.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 4951 Dec 14 13:06 DDR3_operations_scheduler.vhd
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/external_memory_wrapper/MIG_utilities:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 2778 Dec 14 13:06 fifo_status.vhd
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/external_memory_wrapper/user_design_interface:
+total 24
+-rw-rw-r--. 1 dceresa_local dceresa_local 15263 Dec 14 13:06 DDR3_MI_interface.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  4376 Dec 14 13:06 RAM_read_data_handler.vhd
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/ipcore_dir:
+total 812
+-rw-rw-r--. 1 dceresa_local dceresa_local    235 Dec 14 13:06 coregen.cgp
+drwxrwxr-x. 3 dceresa_local dceresa_local     25 Dec 14 13:06 ddr3_controller
+-rw-rw-r--. 1 dceresa_local dceresa_local   1447 Dec 14 13:06 ddr3_controller.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  29883 Dec 14 13:06 ddr3_controller.xise
+-rw-rw-r--. 1 dceresa_local dceresa_local 119109 Dec 14 13:06 FIFO_ddr3_intf_addr.ngc
+-rw-rw-r--. 1 dceresa_local dceresa_local  10780 Dec 14 13:06 FIFO_ddr3_intf_addr.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   7313 Dec 14 13:06 FIFO_ddr3_intf_addr.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local   4887 Dec 14 13:06 FIFO_ddr3_intf_addr.xise
+-rw-rw-r--. 1 dceresa_local dceresa_local 252676 Dec 14 13:06 FIFO_ddr3_intf_data_addr.ngc
+-rw-rw-r--. 1 dceresa_local dceresa_local  10836 Dec 14 13:06 FIFO_ddr3_intf_data_addr.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   7320 Dec 14 13:06 FIFO_ddr3_intf_data_addr.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local   4922 Dec 14 13:06 FIFO_ddr3_intf_data_addr.xise
+-rw-rw-r--. 1 dceresa_local dceresa_local 323738 Dec 14 13:06 FIFO_sclk_288b_32w_FWFT.ngc
+-rw-rw-r--. 1 dceresa_local dceresa_local  10685 Dec 14 13:06 FIFO_sclk_288b_32w_FWFT.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   7325 Dec 14 13:06 FIFO_sclk_288b_32w_FWFT.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local   4915 Dec 14 13:06 FIFO_sclk_288b_32w_FWFT.xise
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/ipcore_dir/ddr3_controller:
+total 0
+drwxrwxr-x. 3 dceresa_local dceresa_local 17 Dec 14 13:06 user_design
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/ipcore_dir/ddr3_controller/user_design:
+total 0
+drwxrwxr-x. 8 dceresa_local dceresa_local 113 Dec 14 13:06 rtl
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/ipcore_dir/ddr3_controller/user_design/rtl:
+total 80
+drwxrwxr-x. 2 dceresa_local dceresa_local   155 Dec 14 13:06 clocking
+drwxrwxr-x. 2 dceresa_local dceresa_local  4096 Dec 14 13:06 controller
+-rw-rw-r--. 1 dceresa_local dceresa_local 72442 Dec 14 13:06 ddr3_controller.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local   152 Dec 14 13:06 ecc
+drwxrwxr-x. 2 dceresa_local dceresa_local    84 Dec 14 13:06 ip_top
+drwxrwxr-x. 2 dceresa_local dceresa_local  4096 Dec 14 13:06 phy
+drwxrwxr-x. 2 dceresa_local dceresa_local   146 Dec 14 13:06 ui
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/ipcore_dir/ddr3_controller/user_design/rtl/clocking:
+total 60
+-rw-rw-r--. 1 dceresa_local dceresa_local  4796 Dec 14 13:06 mig_7series_v1_9_clk_ibuf.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 24158 Dec 14 13:06 mig_7series_v1_9_infrastructure.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  9718 Dec 14 13:06 mig_7series_v1_9_iodelay_ctrl.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 15167 Dec 14 13:06 mig_7series_v1_9_tempmon.v
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/ipcore_dir/ddr3_controller/user_design/rtl/controller:
+total 356
+-rw-rw-r--. 1 dceresa_local dceresa_local 19702 Dec 14 13:06 mig_7series_v1_9_arb_mux.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 18940 Dec 14 13:06 mig_7series_v1_9_arb_row_col.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 26779 Dec 14 13:06 mig_7series_v1_9_arb_select.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 25941 Dec 14 13:06 mig_7series_v1_9_bank_cntrl.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 18372 Dec 14 13:06 mig_7series_v1_9_bank_common.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 10847 Dec 14 13:06 mig_7series_v1_9_bank_compare.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 31504 Dec 14 13:06 mig_7series_v1_9_bank_mach.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 23288 Dec 14 13:06 mig_7series_v1_9_bank_queue.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 36754 Dec 14 13:06 mig_7series_v1_9_bank_state.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 16676 Dec 14 13:06 mig_7series_v1_9_col_mach.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 42050 Dec 14 13:06 mig_7series_v1_9_mc.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 22688 Dec 14 13:06 mig_7series_v1_9_rank_cntrl.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 20487 Dec 14 13:06 mig_7series_v1_9_rank_common.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 12347 Dec 14 13:06 mig_7series_v1_9_rank_mach.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  7553 Dec 14 13:06 mig_7series_v1_9_round_robin_arb.v
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/ipcore_dir/ddr3_controller/user_design/rtl/ecc:
+total 32
+-rw-rw-r--. 1 dceresa_local dceresa_local 6293 Dec 14 13:06 mig_7series_v1_9_ecc_buf.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 6656 Dec 14 13:06 mig_7series_v1_9_ecc_dec_fix.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 7915 Dec 14 13:06 mig_7series_v1_9_ecc_gen.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 5947 Dec 14 13:06 mig_7series_v1_9_ecc_merge_enc.v
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/ipcore_dir/ddr3_controller/user_design/rtl/ip_top:
+total 76
+-rw-rw-r--. 1 dceresa_local dceresa_local 36333 Dec 14 13:06 mig_7series_v1_9_memc_ui_top_std.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 40945 Dec 14 13:06 mig_7series_v1_9_mem_intfc.v
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/ipcore_dir/ddr3_controller/user_design/rtl/phy:
+total 1160
+-rw-rw-r--. 1 dceresa_local dceresa_local  19285 Dec 14 13:06 mig_7series_v1_9_ddr_byte_group_io.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  28458 Dec 14 13:06 mig_7series_v1_9_ddr_byte_lane.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  76571 Dec 14 13:06 mig_7series_v1_9_ddr_calib_top.v
+-rw-rw-r--. 1 dceresa_local dceresa_local   8325 Dec 14 13:06 mig_7series_v1_9_ddr_if_post_fifo.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  88862 Dec 14 13:06 mig_7series_v1_9_ddr_mc_phy.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  66993 Dec 14 13:06 mig_7series_v1_9_ddr_mc_phy_wrapper.v
+-rw-rw-r--. 1 dceresa_local dceresa_local   8144 Dec 14 13:06 mig_7series_v1_9_ddr_of_pre_fifo.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  76687 Dec 14 13:06 mig_7series_v1_9_ddr_phy_4lanes.v
+-rw-rw-r--. 1 dceresa_local dceresa_local   8853 Dec 14 13:06 mig_7series_v1_9_ddr_phy_ck_addr_cmd_delay.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  51690 Dec 14 13:06 mig_7series_v1_9_ddr_phy_dqs_found_cal_hr.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  51392 Dec 14 13:06 mig_7series_v1_9_ddr_phy_dqs_found_cal.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 195803 Dec 14 13:06 mig_7series_v1_9_ddr_phy_init.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  52217 Dec 14 13:06 mig_7series_v1_9_ddr_phy_oclkdelay_cal.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  39156 Dec 14 13:06 mig_7series_v1_9_ddr_phy_prbs_rdlvl.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 144853 Dec 14 13:06 mig_7series_v1_9_ddr_phy_rdlvl.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  13336 Dec 14 13:06 mig_7series_v1_9_ddr_phy_tempmon.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  97631 Dec 14 13:06 mig_7series_v1_9_ddr_phy_top.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  53935 Dec 14 13:06 mig_7series_v1_9_ddr_phy_wrcal.v
+-rw-rw-r--. 1 dceresa_local dceresa_local   8955 Dec 14 13:06 mig_7series_v1_9_ddr_phy_wrlvl_off_delay.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  50415 Dec 14 13:06 mig_7series_v1_9_ddr_phy_wrlvl.v
+-rw-rw-r--. 1 dceresa_local dceresa_local   7727 Dec 14 13:06 mig_7series_v1_9_ddr_prbs_gen.v
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/ipcore_dir/ddr3_controller/user_design/rtl/ui:
+total 72
+-rw-rw-r--. 1 dceresa_local dceresa_local 11377 Dec 14 13:06 mig_7series_v1_9_ui_cmd.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 19522 Dec 14 13:06 mig_7series_v1_9_ui_rd_data.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 14966 Dec 14 13:06 mig_7series_v1_9_ui_top.v
+-rw-rw-r--. 1 dceresa_local dceresa_local 21329 Dec 14 13:06 mig_7series_v1_9_ui_wr_data.v
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/ipcore_viv:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 65 Dec 14 13:06 mig_7series_0
+
+../d19c_MPAdev/fw/src/sys/ddr3_ls/ipcore_viv/mig_7series_0:
+total 180
+-rw-rw-r--. 1 dceresa_local dceresa_local 159260 Dec 14 13:06 mig_7series_0.xci
+-rw-rw-r--. 1 dceresa_local dceresa_local  11611 Dec 14 13:06 mig_a.prj
+-rw-rw-r--. 1 dceresa_local dceresa_local  11612 Dec 14 13:06 mig_b.prj
+
+../d19c_MPAdev/fw/src/sys/fmc:
+total 20
+-rw-rw-r--. 1 dceresa_local dceresa_local 4147 Dec 14 13:06 fmc_io_buffers.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 6942 Dec 14 13:06 fmc_io_pair.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  424 Dec 14 13:06 fmc_package.vhd
+
+../d19c_MPAdev/fw/src/sys/i2c:
+total 52
+-rw-rw-r--. 1 dceresa_local dceresa_local  8151 Dec 14 13:06 i2c_bitwise.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 16897 Dec 14 13:06 i2c_ctrl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  8283 Dec 14 13:06 i2c_eep_autoread.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  5590 Dec 14 13:06 i2c_master_core.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2571 Dec 14 13:06 i2c_master_top.vhd
+
+../d19c_MPAdev/fw/src/sys/icap:
+total 48
+-rw-rw-r--. 1 dceresa_local dceresa_local  4858 Dec 14 13:06 icap_interface_fsm.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  4287 Dec 14 13:06 icap_interface_ioControl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  6598 Dec 14 13:06 icap_interface.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  5594 Dec 14 13:06 icap_interface_wrapper.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  3252 Dec 14 13:06 icap_package.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 11117 Dec 14 13:06 k7_icap_fsm.vhd
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7:
+total 56
+-rw-rw-r--. 1 dceresa_local dceresa_local 3823 Dec 14 13:06 clocks_7s_serdes_fc7.vhd
+drwxrwxr-x. 4 dceresa_local dceresa_local   32 Dec 14 13:06 ethernet
+-rw-rw-r--. 1 dceresa_local dceresa_local 1094 Dec 14 13:06 ipbus_addr_decode.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2270 Dec 14 13:06 ipbus_sys_fabric.vhd
+drwxrwxr-x. 3 dceresa_local dceresa_local 4096 Dec 14 13:06 ipcore_dir
+-rw-rw-r--. 1 dceresa_local dceresa_local 7008 Dec 14 13:06 ip_mac_select.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 5009 Dec 14 13:06 trans_buffer.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2023 Dec 14 13:06 uc_if.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 6844 Dec 14 13:06 uc_pipe_interface.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 9749 Dec 14 13:06 uc_spi_interface.vhd
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ethernet:
+total 4
+drwxrwxr-x. 9 dceresa_local dceresa_local  191 Dec 14 13:06 gen_hdl
+drwxrwxr-x. 2 dceresa_local dceresa_local 4096 Dec 14 13:06 hdl
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ethernet/gen_hdl:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 100 Dec 14 13:06 gig_eth_pcs_pma_v11_4
+drwxrwxr-x. 2 dceresa_local dceresa_local  55 Dec 14 13:06 gig_eth_pcs_pma_v11_5
+drwxrwxr-x. 2 dceresa_local dceresa_local 233 Dec 14 13:06 gtwizard_v2_3_gbe
+drwxrwxr-x. 2 dceresa_local dceresa_local 257 Dec 14 13:06 gtwizard_v2_3_gbe_gth
+drwxrwxr-x. 2 dceresa_local dceresa_local  30 Dec 14 13:06 v5_emac_v1_8
+drwxrwxr-x. 2 dceresa_local dceresa_local 199 Dec 14 13:06 v5_emac_v1_8_serdes
+drwxrwxr-x. 2 dceresa_local dceresa_local  42 Dec 14 13:06 v6_emac_v2_3_sgmii
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ethernet/gen_hdl/gig_eth_pcs_pma_v11_4:
+total 64
+-rw-rw-r--. 1 dceresa_local dceresa_local 29657 Dec 14 13:06 gig_eth_pcs_pma_v11_4_transceiver_gth.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 30231 Dec 14 13:06 gig_eth_pcs_pma_v11_4_transceiver.vhd
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ethernet/gen_hdl/gig_eth_pcs_pma_v11_5:
+total 32
+-rw-rw-r--. 1 dceresa_local dceresa_local 32402 Dec 14 13:06 gig_eth_pcs_pma_v11_5_transceiver_gth.vhd
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ethernet/gen_hdl/gtwizard_v2_3_gbe:
+total 204
+-rw-rw-r--. 1 dceresa_local dceresa_local 45209 Dec 14 13:06 gtwizard_v2_3_gbe_gt.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 49330 Dec 14 13:06 gtwizard_v2_3_gbe_init.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 17121 Dec 14 13:06 gtwizard_v2_3_gbe_recclk_monitor.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 27153 Dec 14 13:06 gtwizard_v2_3_gbe_rx_startup_fsm.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 20740 Dec 14 13:06 gtwizard_v2_3_gbe_tx_startup_fsm.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 30071 Dec 14 13:06 gtwizard_v2_3_gbe.vhd
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ethernet/gen_hdl/gtwizard_v2_3_gbe_gth:
+total 196
+-rw-rw-r--. 1 dceresa_local dceresa_local 52132 Dec 14 13:06 gtwizard_v2_3_gbe_gth_gt.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 41244 Dec 14 13:06 gtwizard_v2_3_gbe_gth_init.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 17141 Dec 14 13:06 gtwizard_v2_3_gbe_gth_recclk_monitor.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 27173 Dec 14 13:06 gtwizard_v2_3_gbe_gth_rx_startup_fsm.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 20760 Dec 14 13:06 gtwizard_v2_3_gbe_gth_tx_startup_fsm.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 28140 Dec 14 13:06 gtwizard_v2_3_gbe_gth.vhd
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ethernet/gen_hdl/v5_emac_v1_8:
+total 24
+-rw-rw-r--. 1 dceresa_local dceresa_local 23606 Dec 14 13:06 v5_emac_v1_8.vhd
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ethernet/gen_hdl/v5_emac_v1_8_serdes:
+total 168
+-rw-rw-r--. 1 dceresa_local dceresa_local 21310 Dec 14 13:06 gtx_dual_1000X_ch1.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 21303 Dec 14 13:06 gtx_dual_1000X.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 40215 Dec 14 13:06 rocketio_wrapper_gtx_tile.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 20997 Dec 14 13:06 rocketio_wrapper_gtx.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 26372 Dec 14 13:06 v5_emac_v1_8_serdes_block.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 25251 Dec 14 13:06 v5_emac_v1_8_serdes.vhd
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ethernet/gen_hdl/v6_emac_v2_3_sgmii:
+total 28
+-rw-rw-r--. 1 dceresa_local dceresa_local 27827 Dec 14 13:06 v6_emac_v2_3_sgmii_block.vhd
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ethernet/hdl:
+total 88
+-rw-rw-r--. 1 dceresa_local dceresa_local  595 Dec 14 13:06 emac_hostbus_decl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 5834 Dec 14 13:06 eth_7s_1000basex_gth.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 6789 Dec 14 13:06 eth_7s_1000basex.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 7505 Dec 14 13:06 eth_7s_gmii.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2252 Dec 14 13:06 eth_err_inject.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1534 Dec 14 13:06 eth_mac_shim.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 4820 Dec 14 13:06 eth_s6_1000basex.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 7344 Dec 14 13:06 eth_s6_gmii.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3675 Dec 14 13:06 eth_v5_1000basex.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 5254 Dec 14 13:06 eth_v5_gmii.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2648 Dec 14 13:06 eth_v6_basex.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 5189 Dec 14 13:06 eth_v6_gmii.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2853 Dec 14 13:06 eth_v6_sgmii.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  442 Dec 14 13:06 mac_arbiter_decl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1817 Dec 14 13:06 mac_arbiter.vhd
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ipcore_dir:
+total 1764
+drwxrwxr-x. 3 dceresa_local dceresa_local     28 Dec 14 13:06 gig_eth_pcs_pma_v11_4
+-rw-rw-r--. 1 dceresa_local dceresa_local  95283 Dec 14 13:06 gig_eth_pcs_pma_v11_4.ngc
+-rw-rw-r--. 1 dceresa_local dceresa_local 175400 Dec 14 13:06 gig_eth_pcs_pma_v11_4.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   1684 Dec 14 13:06 gig_eth_pcs_pma_v11_4.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  25018 Dec 14 13:06 sdpram_16x10_32x9.ngc
+-rw-rw-r--. 1 dceresa_local dceresa_local   6019 Dec 14 13:06 sdpram_16x10_32x9.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   3306 Dec 14 13:06 sdpram_16x10_32x9.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  24858 Dec 14 13:06 sdpram_32x9_16x10.ngc
+-rw-rw-r--. 1 dceresa_local dceresa_local   6019 Dec 14 13:06 sdpram_32x9_16x10.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   3305 Dec 14 13:06 sdpram_32x9_16x10.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local   7205 Dec 14 13:06 syspll.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   8191 Dec 14 13:06 syspll.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local 503343 Dec 14 13:06 tri_mode_eth_mac_v5_5.ngc
+-rw-rw-r--. 1 dceresa_local dceresa_local 920993 Dec 14 13:06 tri_mode_eth_mac_v5_5.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   1772 Dec 14 13:06 tri_mode_eth_mac_v5_5.xco
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ipcore_dir/gig_eth_pcs_pma_v11_4:
+total 0
+drwxrwxr-x. 3 dceresa_local dceresa_local 251 Dec 14 13:06 example_design
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ipcore_dir/gig_eth_pcs_pma_v11_4/example_design:
+total 100
+-rw-rw-r--. 1 dceresa_local dceresa_local 19435 Dec 14 13:06 gig_eth_pcs_pma_v11_4_block.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 30703 Dec 14 13:06 gig_eth_pcs_pma_v11_4_example_design.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  4526 Dec 14 13:06 gig_eth_pcs_pma_v11_4_reset_sync.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  4451 Dec 14 13:06 gig_eth_pcs_pma_v11_4_sync_block.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 25808 Dec 14 13:06 gig_eth_pcs_pma_v11_4_tx_elastic_buffer.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local  4096 Dec 14 13:06 transceiver
+
+../d19c_MPAdev/fw/src/sys/ipb_fc7/ipcore_dir/gig_eth_pcs_pma_v11_4/example_design/transceiver:
+total 200
+-rw-rw-r--. 1 dceresa_local dceresa_local 44599 Dec 14 13:06 gig_eth_pcs_pma_v11_4_gtwizard_gt.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 36822 Dec 14 13:06 gig_eth_pcs_pma_v11_4_gtwizard_init.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 20416 Dec 14 13:06 gig_eth_pcs_pma_v11_4_gtwizard.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 19647 Dec 14 13:06 gig_eth_pcs_pma_v11_4_gtwizard.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local 26857 Dec 14 13:06 gig_eth_pcs_pma_v11_4_rx_startup_fsm.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 30219 Dec 14 13:06 gig_eth_pcs_pma_v11_4_transceiver.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 20294 Dec 14 13:06 gig_eth_pcs_pma_v11_4_tx_startup_fsm.vhd
+
+../d19c_MPAdev/fw/src/sys/led:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 970 Dec 14 13:06 blink.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 658 Dec 14 13:06 hb.vhd
+
+../d19c_MPAdev/fw/src/sys/prbs:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 3529 Dec 14 13:06 prbs.vhd
+
+../d19c_MPAdev/fw/src/sys/regs:
+total 32
+-rw-rw-r--. 1 dceresa_local dceresa_local 2513 Dec 14 13:06 ipb_ram.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 5189 Dec 14 13:06 ipb_ttc_clk_bridge.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2945 Dec 14 13:06 ipbus_syncreg_v_ctrl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3385 Dec 14 13:06 ipbus_syncreg_v_stat_n_ctrl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2570 Dec 14 13:06 ipbus_syncreg_v_stat.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 5339 Dec 14 13:06 system_regs.vhd
+
+../d19c_MPAdev/fw/src/sys/sys:
+total 64
+-rw-rw-r--. 1 dceresa_local dceresa_local 21657 Dec 14 13:06 fc7_top.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 31635 Dec 14 13:06 system_core.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1430 Dec 14 13:06 system_package.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   579 Dec 14 13:06 system_version_package.vhd
+
+../d19c_MPAdev/fw/src/sys/ucf:
+total 40
+-rw-rw-r--. 1 dceresa_local dceresa_local   342 Dec 14 13:06 sys_floorplanning.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local 17888 Dec 14 13:06 sys_no_loc.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local 16223 Dec 14 13:06 sys.xdc
+
+../d19c_MPAdev/fw/src/sys/wb:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 2994 Dec 14 13:06 ipbus_to_wb_bridge.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  721 Dec 14 13:06 wb_package.vhd
+
+../d19c_MPAdev/fw/src/usr:
+total 8
+drwxrwxr-x.  3 dceresa_local dceresa_local   51 Dec 14 13:06 amc13
+drwxrwxr-x.  2 dceresa_local dceresa_local   37 Dec 14 13:06 be_data_buffer
+drwxrwxr-x. 11 dceresa_local dceresa_local  227 Dec 14 13:06 be_proc
+drwxrwxr-x.  3 dceresa_local dceresa_local   48 Dec 14 13:06 clock_generator
+drwxrwxr-x.  5 dceresa_local dceresa_local  133 Dec 14 13:06 command_processor
+drwxrwxr-x.  2 dceresa_local dceresa_local  162 Dec 14 13:06 dio5
+drwxrwxr-x.  4 dceresa_local dceresa_local   88 Dec 14 13:06 fast_command
+drwxrwxr-x.  2 dceresa_local dceresa_local   29 Dec 14 13:06 hybrid
+drwxrwxr-x.  2 dceresa_local dceresa_local   46 Dec 14 13:06 ipb
+drwxrwxr-x.  3 dceresa_local dceresa_local  138 Dec 14 13:06 ipbus_slaves
+drwxrwxr-x.  3 dceresa_local dceresa_local   22 Dec 14 13:06 ipcore_dir
+drwxrwxr-x.  3 dceresa_local dceresa_local   22 Dec 14 13:06 ipcore_viv
+drwxrwxr-x.  2 dceresa_local dceresa_local  156 Dec 14 13:06 mpa_ssa_board
+drwxrwxr-x.  9 dceresa_local dceresa_local 4096 Dec 14 13:06 phy
+drwxrwxr-x.  2 dceresa_local dceresa_local   46 Dec 14 13:06 prbs
+drwxrwxr-x.  2 dceresa_local dceresa_local   72 Dec 14 13:06 stub_counter
+drwxrwxr-x.  3 dceresa_local dceresa_local   23 Dec 14 13:06 test_ddr
+drwxrwxr-x.  2 dceresa_local dceresa_local   26 Dec 14 13:06 tlu
+drwxrwxr-x.  4 dceresa_local dceresa_local   57 Dec 14 13:06 ttc_dec
+drwxrwxr-x.  2 dceresa_local dceresa_local 4096 Dec 14 13:06 ucf
+drwxrwxr-x.  4 dceresa_local dceresa_local  241 Dec 14 13:06 usr
+
+../d19c_MPAdev/fw/src/usr/amc13:
+total 12
+-rw-rw-r--. 1 dceresa_local dceresa_local 6792 Dec 14 13:06 amc13_block.vhd
+drwxrwxr-x. 3 dceresa_local dceresa_local 4096 Dec 14 13:06 amc13_daq_link
+
+../d19c_MPAdev/fw/src/usr/amc13/amc13_daq_link:
+total 320
+-rw-rw-r--. 1 dceresa_local dceresa_local  2565 Dec 14 13:06 crc16D16.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 48441 Dec 14 13:06 daqlink_7s_gt.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 40946 Dec 14 13:06 daqlink_7s_init.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 29638 Dec 14 13:06 daqlink_7s_rx_startup_fsm.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  4772 Dec 14 13:06 daqlink_7s_sync_block.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 22313 Dec 14 13:06 daqlink_7s_tx_startup_fsm.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 31656 Dec 14 13:06 daqlink_7s.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 61962 Dec 14 13:06 DAQ_Link_7S.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 16545 Dec 14 13:06 DAQ_LINK_Kintex.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local    28 Dec 14 13:06 empty_evt
+-rw-rw-r--. 1 dceresa_local dceresa_local 13496 Dec 14 13:06 EthernetCRCD32.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1442 Dec 14 13:06 FIFO_RESET_7S.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1453 Dec 14 13:06 Hamming.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2532 Dec 14 13:06 RAM32x6Db.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local    89 Dec 14 13:06 readme_iphc.txt
+-rw-rw-r--. 1 dceresa_local dceresa_local  2579 Dec 14 13:06 ReleaseNoteKintex.txt
+-rw-rw-r--. 1 dceresa_local dceresa_local  9496 Dec 14 13:06 TTS_TRIG_if.vhd
+
+../d19c_MPAdev/fw/src/usr/amc13/amc13_daq_link/empty_evt:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 2566 Dec 14 13:06 EmptyEvent.vhd
+
+../d19c_MPAdev/fw/src/usr/be_data_buffer:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 1019 Dec 14 13:06 be_data_buffer_core.vhd
+
+../d19c_MPAdev/fw/src/usr/be_proc:
+total 56
+-rw-rw-r--.  1 dceresa_local dceresa_local 26258 Dec 14 13:06 be_proc.vhd
+drwxrwxr-x.  2 dceresa_local dceresa_local    29 Dec 14 13:06 BX_cnt
+drwxrwxr-x.  3 dceresa_local dceresa_local   102 Dec 14 13:06 cbc3
+-rw-rw-r--.  1 dceresa_local dceresa_local  4869 Dec 14 13:06 data_buffer.vhd
+drwxrwxr-x.  2 dceresa_local dceresa_local    31 Dec 14 13:06 evnt_cnt
+drwxrwxr-x. 17 dceresa_local dceresa_local  4096 Dec 14 13:06 ip
+drwxrwxr-x.  2 dceresa_local dceresa_local    72 Dec 14 13:06 ipb_slaves
+drwxrwxr-x.  3 dceresa_local dceresa_local    37 Dec 14 13:06 readout
+-rw-rw-r--.  1 dceresa_local dceresa_local  9486 Dec 14 13:06 suppression_package.vhd
+drwxrwxr-x.  2 dceresa_local dceresa_local    30 Dec 14 13:06 TDC_cnt
+drwxrwxr-x.  2 dceresa_local dceresa_local    39 Dec 14 13:06 test
+-rw-rw-r--.  1 dceresa_local dceresa_local  3235 Dec 14 13:06 tlu_fifo_core.vhd
+drwxrwxr-x.  3 dceresa_local dceresa_local   142 Dec 14 13:06 tmp
+
+../d19c_MPAdev/fw/src/usr/be_proc/BX_cnt:
+total 12
+-rw-rw-r--. 1 dceresa_local dceresa_local 9359 Dec 14 13:06 BX_cnt_proc.vhd
+
+../d19c_MPAdev/fw/src/usr/be_proc/cbc3:
+total 28
+-rw-rw-r--. 1 dceresa_local dceresa_local 6173 Dec 14 13:06 cbc3_data_proc.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 8677 Dec 14 13:06 cbc3_stubdata_proc.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 8133 Dec 14 13:06 cbc3_trigdata_proc.vhd
+drwxrwxr-x. 3 dceresa_local dceresa_local   33 Dec 14 13:06 ip
+
+../d19c_MPAdev/fw/src/usr/be_proc/cbc3/ip:
+total 0
+drwxrwxr-x. 3 dceresa_local dceresa_local 132 Dec 14 13:06 cbc3_stubdata_shift
+
+../d19c_MPAdev/fw/src/usr/be_proc/cbc3/ip/cbc3_stubdata_shift:
+total 1244
+-rw-rw-r--. 1 dceresa_local dceresa_local   60216 Dec 14 13:06 cbc3_stubdata_shiftc_shift_ram_v12_0_10.edn
+-rw-rw-r--. 1 dceresa_local dceresa_local 1197026 Dec 14 13:06 cbc3_stubdata_shift.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local    9724 Dec 14 13:06 cbc3_stubdata_shift.xci
+drwxrwxr-x. 2 dceresa_local dceresa_local      37 Dec 14 13:06 synth
+
+../d19c_MPAdev/fw/src/usr/be_proc/cbc3/ip/cbc3_stubdata_shift/synth:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 6514 Dec 14 13:06 cbc3_stubdata_shift.vhd
+
+../d19c_MPAdev/fw/src/usr/be_proc/evnt_cnt:
+total 12
+-rw-rw-r--. 1 dceresa_local dceresa_local 8419 Dec 14 13:06 evnt_cnt_proc.vhd
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 81 Dec 14 13:06 buf1_size1024
+drwxrwxr-x. 2 dceresa_local dceresa_local 81 Dec 14 13:06 buf1_size2048
+drwxrwxr-x. 2 dceresa_local dceresa_local 78 Dec 14 13:06 buf1_size256
+drwxrwxr-x. 2 dceresa_local dceresa_local 81 Dec 14 13:06 buf1_size4096
+drwxrwxr-x. 2 dceresa_local dceresa_local 78 Dec 14 13:06 buf1_size512
+drwxrwxr-x. 2 dceresa_local dceresa_local 93 Dec 14 13:06 tdc_fifo_size1024
+drwxrwxr-x. 2 dceresa_local dceresa_local 93 Dec 14 13:06 tdc_fifo_size2048
+drwxrwxr-x. 2 dceresa_local dceresa_local 90 Dec 14 13:06 tdc_fifo_size256
+drwxrwxr-x. 2 dceresa_local dceresa_local 93 Dec 14 13:06 tdc_fifo_size4096
+drwxrwxr-x. 2 dceresa_local dceresa_local 90 Dec 14 13:06 tdc_fifo_size512
+drwxrwxr-x. 2 dceresa_local dceresa_local 93 Dec 14 13:06 tlu_fifo_size1024
+drwxrwxr-x. 2 dceresa_local dceresa_local 93 Dec 14 13:06 tlu_fifo_size2048
+drwxrwxr-x. 2 dceresa_local dceresa_local 90 Dec 14 13:06 tlu_fifo_size256
+drwxrwxr-x. 2 dceresa_local dceresa_local 93 Dec 14 13:06 tlu_fifo_size4096
+drwxrwxr-x. 2 dceresa_local dceresa_local 90 Dec 14 13:06 tlu_fifo_size512
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/buf1_size1024:
+total 2192
+-rw-rw-r--. 1 dceresa_local dceresa_local 1839797 Dec 14 13:06 buf1_size1024.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  340430 Dec 14 13:06 buf1_size1024.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   55619 Dec 14 13:06 buf1_size1024.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/buf1_size2048:
+total 2740
+-rw-rw-r--. 1 dceresa_local dceresa_local 2244064 Dec 14 13:06 buf1_size2048.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  503397 Dec 14 13:06 buf1_size2048.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   56205 Dec 14 13:06 buf1_size2048.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/buf1_size256:
+total 1860
+-rw-rw-r--. 1 dceresa_local dceresa_local 1603829 Dec 14 13:06 buf1_size256.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  240874 Dec 14 13:06 buf1_size256.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   56188 Dec 14 13:06 buf1_size256.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/buf1_size4096:
+total 3680
+-rw-rw-r--. 1 dceresa_local dceresa_local 2906433 Dec 14 13:06 buf1_size4096.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  799041 Dec 14 13:06 buf1_size4096.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   56204 Dec 14 13:06 buf1_size4096.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/buf1_size512:
+total 1948
+-rw-rw-r--. 1 dceresa_local dceresa_local 1672461 Dec 14 13:06 buf1_size512.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  260728 Dec 14 13:06 buf1_size512.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   56188 Dec 14 13:06 buf1_size512.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/tdc_fifo_size1024:
+total 636
+-rw-rw-r--. 1 dceresa_local dceresa_local 395953 Dec 14 13:06 tdc_fifo_size1024.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 195638 Dec 14 13:06 tdc_fifo_size1024.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56064 Dec 14 13:06 tdc_fifo_size1024.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/tdc_fifo_size2048:
+total 672
+-rw-rw-r--. 1 dceresa_local dceresa_local 425483 Dec 14 13:06 tdc_fifo_size2048.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 203543 Dec 14 13:06 tdc_fifo_size2048.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56067 Dec 14 13:06 tdc_fifo_size2048.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/tdc_fifo_size256:
+total 556
+-rw-rw-r--. 1 dceresa_local dceresa_local 334274 Dec 14 13:06 tdc_fifo_size256.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 175767 Dec 14 13:06 tdc_fifo_size256.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56051 Dec 14 13:06 tdc_fifo_size256.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/tdc_fifo_size4096:
+total 712
+-rw-rw-r--. 1 dceresa_local dceresa_local 450823 Dec 14 13:06 tdc_fifo_size4096.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 215219 Dec 14 13:06 tdc_fifo_size4096.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56067 Dec 14 13:06 tdc_fifo_size4096.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/tdc_fifo_size512:
+total 636
+-rw-rw-r--. 1 dceresa_local dceresa_local 394344 Dec 14 13:06 tdc_fifo_size512.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 194841 Dec 14 13:06 tdc_fifo_size512.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56051 Dec 14 13:06 tdc_fifo_size512.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/tlu_fifo_size1024:
+total 664
+-rw-rw-r--. 1 dceresa_local dceresa_local 423392 Dec 14 13:06 tlu_fifo_size1024.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 194499 Dec 14 13:06 tlu_fifo_size1024.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56068 Dec 14 13:06 tlu_fifo_size1024.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/tlu_fifo_size2048:
+total 724
+-rw-rw-r--. 1 dceresa_local dceresa_local 469309 Dec 14 13:06 tlu_fifo_size2048.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 211816 Dec 14 13:06 tlu_fifo_size2048.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56072 Dec 14 13:06 tlu_fifo_size2048.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/tlu_fifo_size256:
+total 584
+-rw-rw-r--. 1 dceresa_local dceresa_local 361745 Dec 14 13:06 tlu_fifo_size256.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 174800 Dec 14 13:06 tlu_fifo_size256.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56055 Dec 14 13:06 tlu_fifo_size256.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/tlu_fifo_size4096:
+total 804
+-rw-rw-r--. 1 dceresa_local dceresa_local 524876 Dec 14 13:06 tlu_fifo_size4096.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 235195 Dec 14 13:06 tlu_fifo_size4096.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56071 Dec 14 13:06 tlu_fifo_size4096.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ip/tlu_fifo_size512:
+total 660
+-rw-rw-r--. 1 dceresa_local dceresa_local 421815 Dec 14 13:06 tlu_fifo_size512.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 193874 Dec 14 13:06 tlu_fifo_size512.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56055 Dec 14 13:06 tlu_fifo_size512.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/ipb_slaves:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 1442 Dec 14 13:06 ipb_be_proc_ctrl_regs.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1236 Dec 14 13:06 ipb_be_proc_stat_regs.vhd
+
+../d19c_MPAdev/fw/src/usr/be_proc/readout:
+total 8
+drwxrwxr-x. 4 dceresa_local dceresa_local  112 Dec 14 13:06 fifo
+-rw-rw-r--. 1 dceresa_local dceresa_local 7693 Dec 14 13:06 readout.vhd
+
+../d19c_MPAdev/fw/src/usr/be_proc/readout/fifo:
+total 44
+drwxrwxr-x. 9 dceresa_local dceresa_local   191 Dec 14 13:06 ip
+-rw-rw-r--. 1 dceresa_local dceresa_local  8432 Dec 14 13:06 readout_by_fifo.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  5051 Dec 14 13:06 readout_fifo_block.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 20804 Dec 14 13:06 readout_fifo_ctrl.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local    77 Dec 14 13:06 tb
+
+../d19c_MPAdev/fw/src/usr/be_proc/readout/fifo/ip:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 99 Dec 14 13:06 readout_fifo_32x16k
+drwxrwxr-x. 2 dceresa_local dceresa_local 96 Dec 14 13:06 readout_fifo_32x1k
+drwxrwxr-x. 2 dceresa_local dceresa_local 96 Dec 14 13:06 readout_fifo_32x2k
+drwxrwxr-x. 2 dceresa_local dceresa_local 99 Dec 14 13:06 readout_fifo_32x32k
+drwxrwxr-x. 2 dceresa_local dceresa_local 96 Dec 14 13:06 readout_fifo_32x4k
+drwxrwxr-x. 2 dceresa_local dceresa_local 99 Dec 14 13:06 readout_fifo_32x64k
+drwxrwxr-x. 2 dceresa_local dceresa_local 96 Dec 14 13:06 readout_fifo_32x8k
+
+../d19c_MPAdev/fw/src/usr/be_proc/readout/fifo/ip/readout_fifo_32x16k:
+total 2376
+-rw-rw-r--. 1 dceresa_local dceresa_local 1702911 Dec 14 13:06 readout_fifo_32x16k.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  671375 Dec 14 13:06 readout_fifo_32x16k.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   57055 Dec 14 13:06 readout_fifo_32x16k.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/readout/fifo/ip/readout_fifo_32x1k:
+total 1064
+-rw-rw-r--. 1 dceresa_local dceresa_local 733962 Dec 14 13:06 readout_fifo_32x1k.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 294335 Dec 14 13:06 readout_fifo_32x1k.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  57048 Dec 14 13:06 readout_fifo_32x1k.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/readout/fifo/ip/readout_fifo_32x2k:
+total 1192
+-rw-rw-r--. 1 dceresa_local dceresa_local 825146 Dec 14 13:06 readout_fifo_32x2k.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 334336 Dec 14 13:06 readout_fifo_32x2k.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  57160 Dec 14 13:06 readout_fifo_32x2k.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/readout/fifo/ip/readout_fifo_32x32k:
+total 3668
+-rw-rw-r--. 1 dceresa_local dceresa_local 2660085 Dec 14 13:06 readout_fifo_32x32k.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 1035868 Dec 14 13:06 readout_fifo_32x32k.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   57055 Dec 14 13:06 readout_fifo_32x32k.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/readout/fifo/ip/readout_fifo_32x4k:
+total 1364
+-rw-rw-r--. 1 dceresa_local dceresa_local 954300 Dec 14 13:06 readout_fifo_32x4k.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 382277 Dec 14 13:06 readout_fifo_32x4k.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  57045 Dec 14 13:06 readout_fifo_32x4k.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/readout/fifo/ip/readout_fifo_32x64k:
+total 6316
+-rw-rw-r--. 1 dceresa_local dceresa_local 4648399 Dec 14 13:06 readout_fifo_32x64k.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 1758248 Dec 14 13:06 readout_fifo_32x64k.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   57055 Dec 14 13:06 readout_fifo_32x64k.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/readout/fifo/ip/readout_fifo_32x8k:
+total 1804
+-rw-rw-r--. 1 dceresa_local dceresa_local 1278028 Dec 14 13:06 readout_fifo_32x8k.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  505044 Dec 14 13:06 readout_fifo_32x8k.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   57160 Dec 14 13:06 readout_fifo_32x8k.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/readout/fifo/tb:
+total 20
+-rw-rw-r--. 1 dceresa_local dceresa_local 5238 Dec 14 13:06 tb_readout_fifo_ctrl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 8309 Dec 14 13:06 WAVES_tb_readout_fifo_ctrl.wcfg
+
+../d19c_MPAdev/fw/src/usr/be_proc/TDC_cnt:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 4619 Dec 14 13:06 TDC_cnt_proc.vhd
+
+../d19c_MPAdev/fw/src/usr/be_proc/test:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 4750 Dec 14 13:06 internal_trigger_proc.vhd
+
+../d19c_MPAdev/fw/src/usr/be_proc/tmp:
+total 36
+-rw-rw-r--. 1 dceresa_local dceresa_local  4856 Dec 14 13:06 cbc3_data_sys_proc.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  5042 Dec 14 13:06 data_packer.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 15182 Dec 14 13:06 user_pkg_be_proc.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   481 Dec 14 13:06 user_pkg_cfg_modules.vhd
+drwxrwxr-x. 4 dceresa_local dceresa_local   167 Dec 14 13:06 zero_suppressed
+
+../d19c_MPAdev/fw/src/usr/be_proc/tmp/zero_suppressed:
+total 56
+-rw-rw-r--. 1 dceresa_local dceresa_local  7273 Dec 14 13:06 cbc_cluster_finder_single_unit.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 12265 Dec 14 13:06 cbc_cluster_finder.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  5967 Dec 14 13:06 cbc_stub_finder.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local    59 Dec 14 13:06 cluster_finder_sim
+drwxrwxr-x. 7 dceresa_local dceresa_local   142 Dec 14 13:06 ip
+-rw-rw-r--. 1 dceresa_local dceresa_local 25862 Dec 14 13:06 zs_data_packer.vhd
+
+../d19c_MPAdev/fw/src/usr/be_proc/tmp/zero_suppressed/cluster_finder_sim:
+total 20
+-rw-rw-r--. 1 dceresa_local dceresa_local 12932 Dec 14 13:06 sim_be_proc_behav.wcfg
+-rw-rw-r--. 1 dceresa_local dceresa_local  4079 Dec 14 13:06 sim_be_proc.vhd
+
+../d19c_MPAdev/fw/src/usr/be_proc/tmp/zero_suppressed/ip:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local  99 Dec 14 13:06 zs_packer_fifo_1024
+drwxrwxr-x. 2 dceresa_local dceresa_local 102 Dec 14 13:06 zs_packer_fifo_16384
+drwxrwxr-x. 2 dceresa_local dceresa_local  99 Dec 14 13:06 zs_packer_fifo_2048
+drwxrwxr-x. 2 dceresa_local dceresa_local  99 Dec 14 13:06 zs_packer_fifo_4096
+drwxrwxr-x. 2 dceresa_local dceresa_local  99 Dec 14 13:06 zs_packer_fifo_8192
+
+../d19c_MPAdev/fw/src/usr/be_proc/tmp/zero_suppressed/ip/zs_packer_fifo_1024:
+total 692
+-rw-rw-r--. 1 dceresa_local dceresa_local 461813 Dec 14 13:06 zs_packer_fifo_1024.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 186690 Dec 14 13:06 zs_packer_fifo_1024.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56195 Dec 14 13:06 zs_packer_fifo_1024.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/tmp/zero_suppressed/ip/zs_packer_fifo_16384:
+total 1864
+-rw-rw-r--. 1 dceresa_local dceresa_local 1325120 Dec 14 13:06 zs_packer_fifo_16384.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  522711 Dec 14 13:06 zs_packer_fifo_16384.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   56204 Dec 14 13:06 zs_packer_fifo_16384.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/tmp/zero_suppressed/ip/zs_packer_fifo_2048:
+total 784
+-rw-rw-r--. 1 dceresa_local dceresa_local 526219 Dec 14 13:06 zs_packer_fifo_2048.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 215789 Dec 14 13:06 zs_packer_fifo_2048.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56195 Dec 14 13:06 zs_packer_fifo_2048.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/tmp/zero_suppressed/ip/zs_packer_fifo_4096:
+total 916
+-rw-rw-r--. 1 dceresa_local dceresa_local 622569 Dec 14 13:06 zs_packer_fifo_4096.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 255579 Dec 14 13:06 zs_packer_fifo_4096.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56194 Dec 14 13:06 zs_packer_fifo_4096.xci
+
+../d19c_MPAdev/fw/src/usr/be_proc/tmp/zero_suppressed/ip/zs_packer_fifo_8192:
+total 1304
+-rw-rw-r--. 1 dceresa_local dceresa_local 906631 Dec 14 13:06 zs_packer_fifo_8192.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 366201 Dec 14 13:06 zs_packer_fifo_8192.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56194 Dec 14 13:06 zs_packer_fifo_8192.xci
+
+../d19c_MPAdev/fw/src/usr/clock_generator:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 6809 Dec 14 13:06 clock_generator_core.vhd
+drwxrwxr-x. 4 dceresa_local dceresa_local   50 Dec 14 13:06 ip
+
+../d19c_MPAdev/fw/src/usr/clock_generator/ip:
+total 0
+drwxrwxr-x. 3 dceresa_local dceresa_local 18 Dec 14 13:06 clock_gen_ip
+drwxrwxr-x. 2 dceresa_local dceresa_local 90 Dec 14 13:06 clock_ref_gen_ip
+
+../d19c_MPAdev/fw/src/usr/clock_generator/ip/clock_gen_ip:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 78 Dec 14 13:06 mmcm
+
+../d19c_MPAdev/fw/src/usr/clock_generator/ip/clock_gen_ip/mmcm:
+total 108
+-rw-rw-r--. 1 dceresa_local dceresa_local 13317 Dec 14 13:06 clock_gen_ip.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  7220 Dec 14 13:06 clock_gen_ip.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 84239 Dec 14 13:06 clock_gen_ip.xci
+
+../d19c_MPAdev/fw/src/usr/clock_generator/ip/clock_ref_gen_ip:
+total 100
+-rw-rw-r--. 1 dceresa_local dceresa_local 11358 Dec 14 13:06 clock_ref_gen_ip.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  6630 Dec 14 13:06 clock_ref_gen_ip.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 80956 Dec 14 13:06 clock_ref_gen_ip.xci
+
+../d19c_MPAdev/fw/src/usr/command_processor:
+total 44
+-rw-rw-r--. 1 dceresa_local dceresa_local 32864 Dec 14 13:06 cmd_i2c_master.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  6108 Dec 14 13:06 command_processor_core.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local    93 Dec 14 13:06 i2c_commands_fifo
+drwxrwxr-x. 3 dceresa_local dceresa_local    54 Dec 14 13:06 i2c_replies_fifo
+drwxrwxr-x. 2 dceresa_local dceresa_local   113 Dec 14 13:06 simulation
+
+../d19c_MPAdev/fw/src/usr/command_processor/i2c_commands_fifo:
+total 1004
+-rw-rw-r--. 1 dceresa_local dceresa_local 680350 Dec 14 13:06 i2c_commands_fifo.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 286105 Dec 14 13:06 i2c_commands_fifo.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  57033 Dec 14 13:06 i2c_commands_fifo.xci
+
+../d19c_MPAdev/fw/src/usr/command_processor/i2c_replies_fifo:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 3705 Dec 14 13:06 i2c_replies_fifo.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local   78 Dec 14 13:06 replies_bram
+
+../d19c_MPAdev/fw/src/usr/command_processor/i2c_replies_fifo/replies_bram:
+total 4588
+-rw-rw-r--. 1 dceresa_local dceresa_local 3338242 Dec 14 13:06 replies_bram.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 1330179 Dec 14 13:06 replies_bram.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   23946 Dec 14 13:06 replies_bram.xci
+
+../d19c_MPAdev/fw/src/usr/command_processor/simulation:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local 1464 Dec 14 13:06 answer_block.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2952 Dec 14 13:06 sim_command_processor_core_behav.wcfg
+-rw-rw-r--. 1 dceresa_local dceresa_local 6887 Dec 14 13:06 sim_command_processor_core.vhd
+
+../d19c_MPAdev/fw/src/usr/dio5:
+total 44
+-rw-rw-r--. 1 dceresa_local dceresa_local  1758 Dec 14 13:06 dio5ch_core.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  7638 Dec 14 13:06 dio5ch_i2c_cnfg.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  6735 Dec 14 13:06 dio5ch_io_mapping.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 11153 Dec 14 13:06 dio5ch_package.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  7979 Dec 14 13:06 i2c_master_simple.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2665 Dec 14 13:06 small_fifo.vhd
+
+../d19c_MPAdev/fw/src/usr/fast_command:
+total 32
+-rw-rw-r--. 1 dceresa_local dceresa_local  1780 Dec 14 13:06 clock_divider.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 27307 Dec 14 13:06 fast_command_core.vhd
+drwxrwxr-x. 3 dceresa_local dceresa_local    28 Dec 14 13:06 ip
+drwxrwxr-x. 2 dceresa_local dceresa_local    79 Dec 14 13:06 simulation
+
+../d19c_MPAdev/fw/src/usr/fast_command/ip:
+total 0
+drwxrwxr-x. 3 dceresa_local dceresa_local 117 Dec 14 13:06 shift_stub_req
+
+../d19c_MPAdev/fw/src/usr/fast_command/ip/shift_stub_req:
+total 76
+-rw-rw-r--. 1 dceresa_local dceresa_local  4024 Dec 14 13:06 shift_stub_reqc_shift_ram_v12_0_10.edn
+-rw-rw-r--. 1 dceresa_local dceresa_local 57510 Dec 14 13:06 shift_stub_req.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  9478 Dec 14 13:06 shift_stub_req.xci
+drwxrwxr-x. 2 dceresa_local dceresa_local    32 Dec 14 13:06 synth
+
+../d19c_MPAdev/fw/src/usr/fast_command/ip/shift_stub_req/synth:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 6174 Dec 14 13:06 shift_stub_req.vhd
+
+../d19c_MPAdev/fw/src/usr/fast_command/simulation:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local 4306 Dec 14 13:06 sim_fast_command_core_behav.wcfg
+-rw-rw-r--. 1 dceresa_local dceresa_local 5054 Dec 14 13:06 sim_fast_command_core.vhd
+
+../d19c_MPAdev/fw/src/usr/hybrid:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 998 Dec 14 13:06 hybrid_core.vhd
+
+../d19c_MPAdev/fw/src/usr/ipb:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local 5484 Dec 14 13:06 ipb_ddr3.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 6136 Dec 14 13:06 ipb_regs.vhd
+
+../d19c_MPAdev/fw/src/usr/ipbus_slaves:
+total 104
+drwxrwxr-x. 3 dceresa_local dceresa_local    31 Dec 14 13:06 ip
+-rw-rw-r--. 1 dceresa_local dceresa_local 35772 Dec 14 13:06 ipbus_decoder_cnfg.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 26564 Dec 14 13:06 ipbus_decoder_ctrl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 27879 Dec 14 13:06 ipbus_decoder_stat.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  8964 Dec 14 13:06 register_map_package.vhd
+
+../d19c_MPAdev/fw/src/usr/ipbus_slaves/ip:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 93 Dec 14 13:06 global_error_fifo
+
+../d19c_MPAdev/fw/src/usr/ipbus_slaves/ip/global_error_fifo:
+total 552
+-rw-rw-r--. 1 dceresa_local dceresa_local 335136 Dec 14 13:06 global_error_fifo.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 169975 Dec 14 13:06 global_error_fifo.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56285 Dec 14 13:06 global_error_fifo.xci
+
+../d19c_MPAdev/fw/src/usr/ipcore_dir:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 46 Dec 14 13:06 ddr3_pll
+
+../d19c_MPAdev/fw/src/usr/ipcore_dir/ddr3_pll:
+total 20
+-rw-rw-r--. 1 dceresa_local dceresa_local 7918 Dec 14 13:06 ddr3_pll.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 8200 Dec 14 13:06 ddr3_pll.xco
+
+../d19c_MPAdev/fw/src/usr/ipcore_viv:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 26 Dec 14 13:06 ddr3_pll
+
+../d19c_MPAdev/fw/src/usr/ipcore_viv/ddr3_pll:
+total 72
+-rw-rw-r--. 1 dceresa_local dceresa_local 70053 Dec 14 13:06 ddr3_pll.xci
+
+../d19c_MPAdev/fw/src/usr/mpa_ssa_board:
+total 52
+-rw-rw-r--. 1 dceresa_local dceresa_local  5863 Dec 14 13:06 mpa_ssa_board_core.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 27885 Dec 14 13:06 mpa_ssa_board_i2c_master.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  9995 Dec 14 13:06 mpa_ssa_board_i2c_wrapper.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  4030 Dec 14 13:06 mpa_ssa_board_slow_control_muxdemux.vhd
+
+../d19c_MPAdev/fw/src/usr/phy:
+total 308
+-rw-rw-r--. 1 dceresa_local dceresa_local  3352 Dec 14 13:06 bitslip_fsm.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  3035 Dec 14 13:06 cbc2_connect.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  6221 Dec 14 13:06 cbc3_connect.vhd
+drwxrwxr-x. 3 dceresa_local dceresa_local  4096 Dec 14 13:06 CBC3Emulator
+-rw-rw-r--. 1 dceresa_local dceresa_local 18483 Dec 14 13:06 data_delay.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  3625 Dec 14 13:06 fast_cmd_block.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local  4096 Dec 14 13:06 fmcio_mapping
+-rw-rw-r--. 1 dceresa_local dceresa_local 13749 Dec 14 13:06 idelay_tune.vhd
+drwxrwxr-x. 8 dceresa_local dceresa_local   236 Dec 14 13:06 ip
+-rw-rw-r--. 1 dceresa_local dceresa_local  1713 Dec 14 13:06 long_reset_ent.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   922 Dec 14 13:06 long_reset.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local    36 Dec 14 13:06 MPA
+-rw-rw-r--. 1 dceresa_local dceresa_local  9750 Dec 14 13:06 mpa_connect.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 25647 Dec 14 13:06 phy_core.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 24432 Dec 14 13:06 phy_i2c_master_old.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 28090 Jan 22 17:15 phy_i2c_master.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 12568 Dec 14 13:06 phy_i2c_wrapper.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local    38 Dec 14 13:06 pkg
+-rw-rw-r--. 1 dceresa_local dceresa_local  5432 Dec 14 13:06 slow_control_muxdemux.vhd
+drwxrwxr-x. 3 dceresa_local dceresa_local   162 Dec 14 13:06 slvs_debug
+drwxrwxr-x. 3 dceresa_local dceresa_local    49 Dec 14 13:06 SSA
+-rw-rw-r--. 1 dceresa_local dceresa_local  3110 Dec 14 13:06 stub_data_all_CBC2.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1821 Dec 14 13:06 stub_data_all_CBCs.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1810 Dec 14 13:06 stub_data_all_MPAs.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 41631 Dec 14 13:06 stub_data_readout_MPA.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  7216 Dec 14 13:06 stub_data_readout.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2787 Dec 14 13:06 tb_stub_readout.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2264 Dec 14 13:06 trig_data_mpa.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2226 Dec 14 13:06 trigger_data_cbc2_readout_wrapper.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2106 Dec 14 13:06 trigger_data_readout_wrapper_mpa.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1948 Dec 14 13:06 trigger_data_readout_wrapper.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2735 Dec 14 13:06 triggered_data_all_CBCs.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  4504 Dec 14 13:06 triggered_data_all_MPAs.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  5820 Dec 14 13:06 triggered_data_CBC2_readout.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 11025 Dec 14 13:06 triggered_data_readout_mpa.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  4036 Dec 14 13:06 triggered_data_readout.vhd
+
+../d19c_MPAdev/fw/src/usr/phy/CBC3Emulator:
+total 11552
+-rw-rw-r--. 1 dceresa_local dceresa_local     6838 Dec 14 13:06 buffer_fifo_mpa.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     5933 Dec 14 13:06 buffer_fifo.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     3898 Dec 14 13:06 CBC3_generator.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 11661819 Dec 14 13:06 cbc3_i2c_registers.xcix
+-rw-rw-r--. 1 dceresa_local dceresa_local    17651 Dec 14 13:06 CBC3_i2c_slave.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local       81 Dec 14 13:06 cbc3_pipeline
+-rw-rw-r--. 1 dceresa_local dceresa_local     2859 Dec 14 13:06 CBC3_top.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local    13253 Dec 14 13:06 fast_cmd.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     5545 Dec 14 13:06 generate_data_mpa.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     1133 Dec 14 13:06 generate_data.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     3664 Dec 14 13:06 i2c_bram_registers_init.coe
+-rw-rw-r--. 1 dceresa_local dceresa_local    21566 Dec 14 13:06 i2c_slave.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     4419 Dec 14 13:06 MPA_generator.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     3751 Dec 14 13:06 MPA_top.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     8821 Dec 14 13:06 stub_data_output_mpa.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     8348 Dec 14 13:06 stub_data_output.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     7817 Dec 14 13:06 tb_top.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     4220 Dec 14 13:06 trig_data_pipeline_mpa.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     4032 Dec 14 13:06 trig_data_pipeline.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local     1686 Dec 14 13:06 trig_data.vhd
+
+../d19c_MPAdev/fw/src/usr/phy/CBC3Emulator/cbc3_pipeline:
+total 1108
+-rw-rw-r--. 1 dceresa_local dceresa_local 979691 Dec 14 13:06 cbc3_pipeline.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 125424 Dec 14 13:06 cbc3_pipeline.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  23828 Dec 14 13:06 cbc3_pipeline.xci
+
+../d19c_MPAdev/fw/src/usr/phy/fmcio_mapping:
+total 324
+-rw-rw-r--. 1 dceresa_local dceresa_local 11256 Dec 14 13:06 fmciomap_cbc3_emulator.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 16136 Dec 14 13:06 fmciomap_cbc3emulator.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 20473 Dec 14 13:06 fmciomap_emulator.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  9330 Dec 14 13:06 fmcio_mapping_buf_gen.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 15541 Dec 14 13:06 fmcio_mapping_buf_gen_with_phase_tuning.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 22766 Dec 18 17:28 fmcio_mapping_core.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 34150 Dec 14 13:06 fmcio_mapping_emulator.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  4910 Dec 14 13:06 fmcio_mapping_misc.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 45583 Dec 14 13:06 fmcio_mapping_one_hybrid.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1486 Dec 14 13:06 fmcio_mapping_spares.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 67202 Dec 15 16:59 fmcio_package_emulator.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 59778 Dec 14 13:06 fmcio_package.vhd
+
+../d19c_MPAdev/fw/src/usr/phy/ip:
+total 84
+drwxrwxr-x. 2 dceresa_local dceresa_local    75 Dec 14 13:06 cbc3_serdes
+-rw-rw-r--. 1 dceresa_local dceresa_local 85352 Dec 14 13:06 clk40_for_cbc3_emulator_fast_command_iserdes.xcix
+drwxrwxr-x. 2 dceresa_local dceresa_local    78 Dec 14 13:06 delay_serdes
+drwxrwxr-x. 2 dceresa_local dceresa_local    99 Dec 14 13:06 fifo_cbc3_trig_data
+drwxrwxr-x. 3 dceresa_local dceresa_local    54 Dec 14 13:06 fifo_mpa_trig_data
+drwxrwxr-x. 3 dceresa_local dceresa_local    43 Dec 14 13:06 mmcm_for_fast_command_phase_tuning
+drwxrwxr-x. 3 dceresa_local dceresa_local    30 Dec 14 13:06 pipeline_mpa_emulator_trig_data
+
+../d19c_MPAdev/fw/src/usr/phy/ip/cbc3_serdes:
+total 52
+-rw-rw-r--. 1 dceresa_local dceresa_local 22234 Dec 14 13:06 cbc3_serdes.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  7649 Dec 14 13:06 cbc3_serdes.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 18741 Dec 14 13:06 cbc3_serdes.xci
+
+../d19c_MPAdev/fw/src/usr/phy/ip/delay_serdes:
+total 52
+-rw-rw-r--. 1 dceresa_local dceresa_local 21343 Dec 14 13:06 delay_serdes.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  7379 Dec 14 13:06 delay_serdes.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 18076 Dec 14 13:06 delay_serdes.xci
+
+../d19c_MPAdev/fw/src/usr/phy/ip/fifo_cbc3_trig_data:
+total 1140
+-rw-rw-r--. 1 dceresa_local dceresa_local 962888 Dec 14 13:06 fifo_cbc3_trig_data.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 141295 Dec 14 13:06 fifo_cbc3_trig_data.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  56273 Dec 14 13:06 fifo_cbc3_trig_data.xci
+
+../d19c_MPAdev/fw/src/usr/phy/ip/fifo_mpa_trig_data:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 110 Dec 14 13:06 fifo_mpa_trigdata_common_clock_block_ram
+
+../d19c_MPAdev/fw/src/usr/phy/ip/fifo_mpa_trig_data/fifo_mpa_trigdata_common_clock_block_ram:
+total 4080
+-rw-rw-r--. 1 dceresa_local dceresa_local 3813430 Dec 14 13:06 fifo_mpa_trigdata_common_clock_block_ram.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  358813 Dec 14 13:06 fifo_mpa_trigdata_common_clock_block_ram.vhd
+
+../d19c_MPAdev/fw/src/usr/phy/ip/mmcm_for_fast_command_phase_tuning:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 88 Dec 14 13:06 fast_command_phase_shift_mmcm
+
+../d19c_MPAdev/fw/src/usr/phy/ip/mmcm_for_fast_command_phase_tuning/fast_command_phase_shift_mmcm:
+total 24
+-rw-rw-r--. 1 dceresa_local dceresa_local 14241 Dec 14 13:06 fast_command_phase_shift_mmcm.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  8084 Dec 14 13:06 fast_command_phase_shift_mmcm.vhd
+
+../d19c_MPAdev/fw/src/usr/phy/ip/pipeline_mpa_emulator_trig_data:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 62 Dec 14 13:06 mpa_pipeline_ram
+
+../d19c_MPAdev/fw/src/usr/phy/ip/pipeline_mpa_emulator_trig_data/mpa_pipeline_ram:
+total 2748
+-rw-rw-r--. 1 dceresa_local dceresa_local 2524521 Dec 14 13:06 mpa_pipeline_ram.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  286531 Dec 14 13:06 mpa_pipeline_ram.vhd
+
+../d19c_MPAdev/fw/src/usr/phy/MPA:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 3935 Dec 14 13:06 SSA_data_generator.vhd
+
+../d19c_MPAdev/fw/src/usr/phy/pkg:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 1127 Dec 14 13:06 slow_control_package.vhd
+
+../d19c_MPAdev/fw/src/usr/phy/slvs_debug:
+total 28
+drwxrwxr-x. 3 dceresa_local dceresa_local   33 Dec 14 13:06 ip
+-rw-rw-r--. 1 dceresa_local dceresa_local 4834 Dec 14 13:06 slvs_debug_core.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 7338 Dec 14 13:06 slvs_debug_generic_line_circular.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 6430 Dec 14 13:06 slvs_debug_generic_line_fifo.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3947 Dec 14 13:06 slvs_debug_generic_line.vhd
+
+../d19c_MPAdev/fw/src/usr/phy/slvs_debug/ip:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 99 Dec 14 13:06 slvs_debug_fifo_32k
+
+../d19c_MPAdev/fw/src/usr/phy/slvs_debug/ip/slvs_debug_fifo_32k:
+total 4132
+-rw-rw-r--. 1 dceresa_local dceresa_local 2994746 Dec 14 13:06 slvs_debug_fifo_32k.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 1174667 Dec 14 13:06 slvs_debug_fifo_32k.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   56907 Dec 14 13:06 slvs_debug_fifo_32k.xci
+
+../d19c_MPAdev/fw/src/usr/phy/SSA:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 3073 Dec 14 13:06 ssa_connect.vhd
+drwxrwxr-x. 3 dceresa_local dceresa_local  146 Dec 14 13:06 SSA_emulator
+
+../d19c_MPAdev/fw/src/usr/phy/SSA/SSA_emulator:
+total 36
+drwxrwxr-x. 4 dceresa_local dceresa_local   73 Dec 14 13:06 IP
+-rw-rw-r--. 1 dceresa_local dceresa_local 5401 Dec 14 13:06 phase_shifted_clocks_ssa.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 9819 Dec 14 13:06 stub_data_output_SSA.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 4374 Dec 14 13:06 toggle_phase_shift.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 7489 Dec 14 13:06 trig_data_output_SSA.vhd
+
+../d19c_MPAdev/fw/src/usr/phy/SSA/SSA_emulator/IP:
+total 0
+drwxrwxr-x. 3 dceresa_local dceresa_local 159 Dec 14 13:06 eight_bit_bus_shift_register
+drwxrwxr-x. 2 dceresa_local dceresa_local  76 Dec 14 13:06 phase_shift_mmcm_40_320
+
+../d19c_MPAdev/fw/src/usr/phy/SSA/SSA_emulator/IP/eight_bit_bus_shift_register:
+total 72
+-rw-rw-r--. 1 dceresa_local dceresa_local  3704 Dec 14 13:06 eight_bit_bus_shift_registerc_shift_ram_v12_0_10.edn
+-rw-rw-r--. 1 dceresa_local dceresa_local 16282 Dec 14 13:06 eight_bit_bus_shift_register.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local 49615 Dec 14 13:06 eight_bit_bus_shift_register.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local    46 Dec 14 13:06 synth
+
+../d19c_MPAdev/fw/src/usr/phy/SSA/SSA_emulator/IP/eight_bit_bus_shift_register/synth:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 6494 Dec 14 13:06 eight_bit_bus_shift_register.vhd
+
+../d19c_MPAdev/fw/src/usr/phy/SSA/SSA_emulator/IP/phase_shift_mmcm_40_320:
+total 24
+-rw-rw-r--. 1 dceresa_local dceresa_local 14158 Dec 14 13:06 phase_shift_mmcm_40_320.edf
+-rw-rw-r--. 1 dceresa_local dceresa_local  7923 Dec 14 13:06 phase_shift_mmcm_40_320.vhd
+
+../d19c_MPAdev/fw/src/usr/prbs:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local  218 Dec 14 13:06 prbs_package.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3514 Dec 14 13:06 prbs.vhd
+
+../d19c_MPAdev/fw/src/usr/stub_counter:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 3985 Dec 14 13:06 stub_counter_block.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2497 Dec 14 13:06 stub_counter_single_chip.vhd
+
+../d19c_MPAdev/fw/src/usr/test_ddr:
+total 0
+drwxrwxr-x. 3 dceresa_local dceresa_local 186 Dec 14 13:06 ddr3_test
+
+../d19c_MPAdev/fw/src/usr/test_ddr/ddr3_test:
+total 476
+-rw-rw-r--. 1 dceresa_local dceresa_local    871 Dec 14 13:06 clocks.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local   6752 Dec 14 13:06 ddr3_data_traffic_gen.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 442493 Dec 14 13:06 ddr3_test.cpj
+-rw-rw-r--. 1 dceresa_local dceresa_local    658 Dec 14 13:06 hb.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local   4096 Dec 14 13:06 ipcore_dir
+-rw-rw-r--. 1 dceresa_local dceresa_local   1561 Dec 14 13:06 pg.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local    150 Dec 14 13:06 prbs_package.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   3268 Dec 14 13:06 prbs.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   6972 Dec 14 13:06 top_entity.vhd
+
+../d19c_MPAdev/fw/src/usr/test_ddr/ddr3_test/ipcore_dir:
+total 2508
+-rw-rw-r--. 1 dceresa_local dceresa_local     235 Dec 14 13:06 coregen.cgp
+-rw-rw-r--. 1 dceresa_local dceresa_local     386 Dec 14 13:06 ddr3_cntrl_vio.cdc
+-rw-rw-r--. 1 dceresa_local dceresa_local       0 Dec 14 13:06 ddr3_cntrl_vio.ncf
+-rw-rw-r--. 1 dceresa_local dceresa_local   19931 Dec 14 13:06 ddr3_cntrl_vio.ngc
+-rw-rw-r--. 1 dceresa_local dceresa_local      98 Dec 14 13:06 ddr3_cntrl_vio.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local    1087 Dec 14 13:06 ddr3_cntrl_vio.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local    1848 Dec 14 13:06 ddr3_cntrl_vio.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local      80 Dec 14 13:06 ddr3_cntrl_vio.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local    4852 Dec 14 13:06 ddr3_cntrl_vio.xise
+-rw-rw-r--. 1 dceresa_local dceresa_local   52720 Dec 14 13:06 ddr3_ila.cdc
+-rw-rw-r--. 1 dceresa_local dceresa_local       0 Dec 14 13:06 ddr3_ila.ncf
+-rw-rw-r--. 1 dceresa_local dceresa_local 2317165 Dec 14 13:06 ddr3_ila.ngc
+-rw-rw-r--. 1 dceresa_local dceresa_local     771 Dec 14 13:06 ddr3_ila.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local    1429 Dec 14 13:06 ddr3_ila.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local    4394 Dec 14 13:06 ddr3_ila.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local     477 Dec 14 13:06 ddr3_ila.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local    4810 Dec 14 13:06 ddr3_ila.xise
+-rw-rw-r--. 1 dceresa_local dceresa_local    3310 Dec 14 13:06 fabric_pll_exdes.ncf
+-rw-rw-r--. 1 dceresa_local dceresa_local    3276 Dec 14 13:06 fabric_pll.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local    8688 Dec 14 13:06 fabric_pll.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local    8217 Dec 14 13:06 fabric_pll.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local    3112 Dec 14 13:06 fabric_pll.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local    4689 Dec 14 13:06 fabric_pll.xise
+-rw-rw-r--. 1 dceresa_local dceresa_local       0 Dec 14 13:06 vio_cntrl.ncf
+-rw-rw-r--. 1 dceresa_local dceresa_local   41541 Dec 14 13:06 vio_cntrl.ngc
+-rw-rw-r--. 1 dceresa_local dceresa_local     375 Dec 14 13:06 vio_cntrl.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local    1016 Dec 14 13:06 vio_cntrl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local    1659 Dec 14 13:06 vio_cntrl.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local     793 Dec 14 13:06 vio_cntrl.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local    4817 Dec 14 13:06 vio_cntrl.xise
+
+../d19c_MPAdev/fw/src/usr/tlu:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 6522 Dec 14 13:06 tlu_core.vhd
+
+../d19c_MPAdev/fw/src/usr/ttc_dec:
+total 16
+drwxrwxr-x. 2 dceresa_local dceresa_local   174 Dec 14 13:06 core
+drwxrwxr-x. 3 dceresa_local dceresa_local    29 Dec 14 13:06 ip
+-rw-rw-r--. 1 dceresa_local dceresa_local 12415 Dec 14 13:06 ttc_decoder_block.vhd
+
+../d19c_MPAdev/fw/src/usr/ttc_dec/core:
+total 68
+-rw-rw-r--. 1 dceresa_local dceresa_local  7928 Dec 14 13:06 cpm_ttc_dec_wrapper.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  9489 Dec 14 13:06 iddr_amc13.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2354 Dec 14 13:06 iddr_amc13.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  5366 Dec 14 13:06 ttc_amc13_channels_a_b.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  5059 Dec 14 13:06 TTC_decoder.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 26276 Dec 14 13:06 TTC_hamming_decoder_alme.vhd
+
+../d19c_MPAdev/fw/src/usr/ttc_dec/ip:
+total 0
+drwxrwxr-x. 3 dceresa_local dceresa_local 110 Dec 14 13:06 ttc_dec_err_cnt
+
+../d19c_MPAdev/fw/src/usr/ttc_dec/ip/ttc_dec_err_cnt:
+total 68
+-rw-rw-r--. 1 dceresa_local dceresa_local  5984 Dec 14 13:06 c_counter_binary_v12_0_10.edn
+drwxrwxr-x. 2 dceresa_local dceresa_local    33 Dec 14 13:06 synth
+-rw-rw-r--. 1 dceresa_local dceresa_local 45140 Dec 14 13:06 ttc_dec_err_cnt.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  9787 Dec 14 13:06 ttc_dec_err_cnt.xci
+
+../d19c_MPAdev/fw/src/usr/ttc_dec/ip/ttc_dec_err_cnt/synth:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 6227 Dec 14 13:06 ttc_dec_err_cnt.vhd
+
+../d19c_MPAdev/fw/src/usr/ucf:
+total 124
+-rw-rw-r--. 1 dceresa_local dceresa_local  7269 Dec 14 13:06 no_ddr3_controller.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local     0 Dec 14 13:06 tmp.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local  3338 Dec 14 13:06 user_io.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local  1649 Dec 14 13:06 usr_clk_ddr3.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local  1547 Dec 14 13:06 usr_clk.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local  8862 Dec 14 13:06 usr_io_fmc_l12_dio5.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local  8904 Dec 14 13:06 usr_io_fmc_l12_lvds.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local 12852 Dec 14 13:06 usr_io_fmc_l12_uib_main.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local  8582 Dec 14 13:06 usr_io_fmc_l8_dio5.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local  8565 Dec 14 13:06 usr_io_fmc_l8_lvds.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local  8816 Dec 14 13:06 usr_io_fmc_l8_uib_main.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local 18107 Dec 14 13:06 usr_io_fmc.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local   395 Dec 14 13:06 usr_mgt_amc.xdc
+-rw-rw-r--. 1 dceresa_local dceresa_local    43 Dec 14 13:06 usr_opt.xdc
+
+../d19c_MPAdev/fw/src/usr/usr:
+total 124
+-rw-rw-r--. 1 dceresa_local dceresa_local 14393 Dec 14 13:06 cbc3_emulator_package.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  3450 Dec 14 13:06 clkRateTool32.v
+drwxrwxr-x. 2 dceresa_local dceresa_local   156 Dec 14 13:06 ddr3
+-rw-rw-r--. 1 dceresa_local dceresa_local  5241 Dec 14 13:06 rising_edge_detector.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local    89 Dec 14 13:06 simulation
+-rw-rw-r--. 1 dceresa_local dceresa_local  1555 Dec 14 13:06 user_addr_decode.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 46398 Jan 16 14:56 user_core.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 40141 Jan 26 17:54 user_package_basic.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1116 Dec 14 13:06 user_version_package_basic.vhd
+
+../d19c_MPAdev/fw/src/usr/usr/ddr3:
+total 36
+-rw-rw-r--. 1 dceresa_local dceresa_local   906 Dec 14 13:06 user_addr_decode_ddr3.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 19680 Dec 14 13:06 user_logic_ddr3.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   483 Dec 14 13:06 user_package_ddr3.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1092 Dec 14 13:06 user_version_package_ddr3.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   379 Dec 14 13:06 usr_clk_ddr3.ucf
+
+../d19c_MPAdev/fw/src/usr/usr/simulation:
+total 108
+-rw-rw-r--. 1 dceresa_local dceresa_local  2016 Dec 14 13:06 sim_rising.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 50782 Dec 14 13:06 sim_usr_general_behav.wcfg
+-rw-rw-r--. 1 dceresa_local dceresa_local 50694 Dec 14 13:06 sim_usr_general.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1:
+total 0
+drwxrwxr-x. 8 dceresa_local dceresa_local 109 Dec 14 13:06 firmware
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware:
+total 0
+drwxrwxr-x. 7 dceresa_local dceresa_local  69 Dec 14 13:06 ethernet
+drwxrwxr-x. 8 dceresa_local dceresa_local 106 Dec 14 13:06 example_designs
+drwxrwxr-x. 5 dceresa_local dceresa_local  43 Dec 14 13:06 ipbus_core
+drwxrwxr-x. 6 dceresa_local dceresa_local  58 Dec 14 13:06 ipbus_core_v1
+drwxrwxr-x. 5 dceresa_local dceresa_local  48 Dec 14 13:06 sim
+drwxrwxr-x. 7 dceresa_local dceresa_local  72 Dec 14 13:06 slaves
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet:
+total 12
+drwxrwxr-x. 2 dceresa_local dceresa_local 4096 Dec 14 13:06 cfg
+drwxrwxr-x. 2 dceresa_local dceresa_local 4096 Dec 14 13:06 coregen
+drwxrwxr-x. 9 dceresa_local dceresa_local  191 Dec 14 13:06 gen_hdl
+drwxrwxr-x. 2 dceresa_local dceresa_local 4096 Dec 14 13:06 hdl
+drwxrwxr-x. 3 dceresa_local dceresa_local   67 Dec 14 13:06 sim
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/cfg:
+total 44
+-rw-rw-r--. 1 dceresa_local dceresa_local  541 Dec 14 13:06 file_list_gig_eth_pcs_pma_v11_4
+-rw-rw-r--. 1 dceresa_local dceresa_local 1073 Dec 14 13:06 file_list_k7_basex
+-rw-rw-r--. 1 dceresa_local dceresa_local  617 Dec 14 13:06 file_list_minit_240_ipb
+-rw-rw-r--. 1 dceresa_local dceresa_local  231 Dec 14 13:06 file_list_s6_basex
+-rw-rw-r--. 1 dceresa_local dceresa_local  276 Dec 14 13:06 file_list_s6_extphy
+-rw-rw-r--. 1 dceresa_local dceresa_local  297 Dec 14 13:06 file_list_v5_gmii
+-rw-rw-r--. 1 dceresa_local dceresa_local  736 Dec 14 13:06 file_list_v6_basex
+-rw-rw-r--. 1 dceresa_local dceresa_local  585 Dec 14 13:06 file_list_v6_sgmii
+-rw-rw-r--. 1 dceresa_local dceresa_local 1197 Dec 14 13:06 file_list_v7_485_prod
+-rw-rw-r--. 1 dceresa_local dceresa_local 1225 Dec 14 13:06 file_list_v7_690es
+-rw-rw-r--. 1 dceresa_local dceresa_local  562 Dec 14 13:06 setup_v5_serdes.tcl
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/coregen:
+total 140
+-rw-rw-r--. 1 dceresa_local dceresa_local  1662 Dec 14 13:06 emac_serdes_5_4.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  1627 Dec 14 13:06 eth_pcspma_basex_11_2.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  1627 Dec 14 13:06 gig_eth_pcs_pma_v11_4.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local 19832 Dec 14 13:06 gig_eth_pcs_pma_v11_5_GTWIZARD.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  1641 Dec 14 13:06 gig_eth_pcs_pma_v11_5.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local 20035 Dec 14 13:06 gtwizard_v2_4_gth.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local 19826 Dec 14 13:06 gtwizard_v2_5_gbe_gth.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local 19820 Dec 14 13:06 gtwizard_v2_5_gbe_gtx.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  7147 Dec 14 13:06 mac_fifo_axi4.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  7112 Dec 14 13:06 mac_fifo.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  1675 Dec 14 13:06 tri_mode_eth_mac_v5_4_serdes.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  1663 Dec 14 13:06 tri_mode_eth_mac_v5_4.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  1721 Dec 14 13:06 tri_mode_eth_mac_v5_5_gmii.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  1711 Dec 14 13:06 tri_mode_eth_mac_v5_5.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  3875 Dec 14 13:06 v5_emac_v1_8_serdes.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  2788 Dec 14 13:06 v6_emac_v2_3_basex.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local  2773 Dec 14 13:06 v6_emac_v2_3_sgmii.xco
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/gen_hdl:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 100 Dec 14 13:06 gig_eth_pcs_pma_v11_4
+drwxrwxr-x. 2 dceresa_local dceresa_local 151 Dec 14 13:06 gig_eth_pcs_pma_v11_5
+drwxrwxr-x. 2 dceresa_local dceresa_local 233 Dec 14 13:06 gtwizard_v2_3_gbe
+drwxrwxr-x. 2 dceresa_local dceresa_local 257 Dec 14 13:06 gtwizard_v2_3_gbe_gth
+drwxrwxr-x. 2 dceresa_local dceresa_local  30 Dec 14 13:06 v5_emac_v1_8
+drwxrwxr-x. 2 dceresa_local dceresa_local 199 Dec 14 13:06 v5_emac_v1_8_serdes
+drwxrwxr-x. 2 dceresa_local dceresa_local  42 Dec 14 13:06 v6_emac_v2_3_sgmii
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/gen_hdl/gig_eth_pcs_pma_v11_4:
+total 64
+-rwxrwxr-x. 1 dceresa_local dceresa_local 29657 Dec 14 13:06 gig_eth_pcs_pma_v11_4_transceiver_gth.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 30231 Dec 14 13:06 gig_eth_pcs_pma_v11_4_transceiver.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/gen_hdl/gig_eth_pcs_pma_v11_5:
+total 100
+-rwxrwxr-x. 1 dceresa_local dceresa_local 32402 Dec 14 13:06 gig_eth_pcs_pma_v11_5_transceiver_gth.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 32793 Dec 14 13:06 gig_eth_pcs_pma_v11_5_transceiver_kc705.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 32243 Dec 14 13:06 gig_eth_pcs_pma_v11_5_transceiver.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/gen_hdl/gtwizard_v2_3_gbe:
+total 204
+-rwxrwxr-x. 1 dceresa_local dceresa_local 45209 Dec 14 13:06 gtwizard_v2_3_gbe_gt.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 49330 Dec 14 13:06 gtwizard_v2_3_gbe_init.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 17121 Dec 14 13:06 gtwizard_v2_3_gbe_recclk_monitor.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 27153 Dec 14 13:06 gtwizard_v2_3_gbe_rx_startup_fsm.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 20740 Dec 14 13:06 gtwizard_v2_3_gbe_tx_startup_fsm.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 30071 Dec 14 13:06 gtwizard_v2_3_gbe.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/gen_hdl/gtwizard_v2_3_gbe_gth:
+total 196
+-rwxrwxr-x. 1 dceresa_local dceresa_local 52132 Dec 14 13:06 gtwizard_v2_3_gbe_gth_gt.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 41244 Dec 14 13:06 gtwizard_v2_3_gbe_gth_init.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 17141 Dec 14 13:06 gtwizard_v2_3_gbe_gth_recclk_monitor.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 27173 Dec 14 13:06 gtwizard_v2_3_gbe_gth_rx_startup_fsm.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 20760 Dec 14 13:06 gtwizard_v2_3_gbe_gth_tx_startup_fsm.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 28140 Dec 14 13:06 gtwizard_v2_3_gbe_gth.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/gen_hdl/v5_emac_v1_8:
+total 24
+-rwxrwxr-x. 1 dceresa_local dceresa_local 23606 Dec 14 13:06 v5_emac_v1_8.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/gen_hdl/v5_emac_v1_8_serdes:
+total 168
+-rwxrwxr-x. 1 dceresa_local dceresa_local 21310 Dec 14 13:06 gtx_dual_1000X_ch1.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 21303 Dec 14 13:06 gtx_dual_1000X.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 40215 Dec 14 13:06 rocketio_wrapper_gtx_tile.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 20997 Dec 14 13:06 rocketio_wrapper_gtx.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 26372 Dec 14 13:06 v5_emac_v1_8_serdes_block.vhd
+-rwxrwxr-x. 1 dceresa_local dceresa_local 25251 Dec 14 13:06 v5_emac_v1_8_serdes.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/gen_hdl/v6_emac_v2_3_sgmii:
+total 28
+-rwxrwxr-x. 1 dceresa_local dceresa_local 27827 Dec 14 13:06 v6_emac_v2_3_sgmii_block.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/hdl:
+total 108
+-rw-rw-r--. 1 dceresa_local dceresa_local  595 Dec 14 13:06 emac_hostbus_decl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 5761 Dec 14 13:06 eth_7s_1000basex_gth.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 5817 Dec 14 13:06 eth_7s_1000basex_new.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 5774 Dec 14 13:06 eth_7s_1000basex.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 7505 Dec 14 13:06 eth_7s_gmii.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2252 Dec 14 13:06 eth_err_inject.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1534 Dec 14 13:06 eth_mac_shim.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 4820 Dec 14 13:06 eth_s6_1000basex.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 7344 Dec 14 13:06 eth_s6_gmii.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3675 Dec 14 13:06 eth_v5_1000basex.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 5254 Dec 14 13:06 eth_v5_gmii.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2648 Dec 14 13:06 eth_v6_basex.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 5189 Dec 14 13:06 eth_v6_gmii.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2853 Dec 14 13:06 eth_v6_sgmii.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  442 Dec 14 13:06 mac_arbiter_decl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1817 Dec 14 13:06 mac_arbiter.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1137 Dec 14 13:06 mac_bridge_link_master.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1028 Dec 14 13:06 mac_bridge_master.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1071 Dec 14 13:06 mac_bridge_slave.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/sim:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 3950 Dec 14 13:06 eth_mac_sim.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local   49 Dec 14 13:06 modelsim_fli
+-rw-rw-r--. 1 dceresa_local dceresa_local 2136 Dec 14 13:06 readme.txt
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ethernet/sim/modelsim_fli:
+total 12
+-rw-rw-r--. 1 dceresa_local dceresa_local 4188 Dec 14 13:06 mac_fli.c
+-rwxrwxr-x. 1 dceresa_local dceresa_local  364 Dec 14 13:06 mac_fli_compile.sh
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs:
+total 8
+drwxrwxr-x. 2 dceresa_local dceresa_local   50 Dec 14 13:06 addr_table
+drwxrwxr-x. 2 dceresa_local dceresa_local   23 Dec 14 13:06 cfg
+drwxrwxr-x. 9 dceresa_local dceresa_local 4096 Dec 14 13:06 hdl
+drwxrwxr-x. 9 dceresa_local dceresa_local  164 Dec 14 13:06 projects
+-rw-rw-r--. 1 dceresa_local dceresa_local 1306 Dec 14 13:06 readme.txt
+drwxrwxr-x. 2 dceresa_local dceresa_local  183 Dec 14 13:06 scripts
+drwxrwxr-x. 2 dceresa_local dceresa_local  157 Dec 14 13:06 ucf
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/addr_table:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local  124 Dec 14 13:06 addr_table
+-rw-rw-r--. 1 dceresa_local dceresa_local 1014 Dec 14 13:06 example_design.xml
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/cfg:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 448 Dec 14 13:06 file_list
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/hdl:
+total 68
+-rw-rw-r--. 1 dceresa_local dceresa_local  874 Dec 14 13:06 clock_div_v6.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  880 Dec 14 13:06 clock_div.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2228 Dec 14 13:06 clocks_7s_extphy.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2819 Dec 14 13:06 clocks_7s_serdes.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1872 Dec 14 13:06 clocks_s6_basex.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2005 Dec 14 13:06 clocks_s6_extphy_100MHz.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2003 Dec 14 13:06 clocks_s6_extphy.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2039 Dec 14 13:06 clocks_v5_extphy.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2182 Dec 14 13:06 clocks_v5_serdes.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2106 Dec 14 13:06 clocks_v6_extphy.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2267 Dec 14 13:06 clocks_v6_serdes_125MHz.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2265 Dec 14 13:06 clocks_v6_serdes_40MHz.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2316 Dec 14 13:06 clocks_v6_serdes_noxtal_dual.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2562 Dec 14 13:06 clocks_v6_serdes_noxtal.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2246 Dec 14 13:06 clocks_v6_serdes.vhd
+drwxrwxr-x. 2 dceresa_local dceresa_local   27 Dec 14 13:06 demo_atlys
+drwxrwxr-x. 2 dceresa_local dceresa_local   33 Dec 14 13:06 demo_kc705_basex
+drwxrwxr-x. 2 dceresa_local dceresa_local   34 Dec 14 13:06 demo_kc705_extphy
+drwxrwxr-x. 2 dceresa_local dceresa_local   33 Dec 14 13:06 demo_ml605_sgmii
+drwxrwxr-x. 2 dceresa_local dceresa_local   33 Dec 14 13:06 demo_sp605_basex
+drwxrwxr-x. 2 dceresa_local dceresa_local   34 Dec 14 13:06 demo_sp605_extphy
+drwxrwxr-x. 2 dceresa_local dceresa_local   27 Dec 14 13:06 demo_v5fxt
+-rw-rw-r--. 1 dceresa_local dceresa_local 1701 Dec 14 13:06 ipbus_addr_decode.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2571 Dec 14 13:06 slaves.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/hdl/demo_atlys:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 3488 Dec 14 13:06 top_atlys.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/hdl/demo_kc705_basex:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 3132 Dec 14 13:06 top_kc705_basex.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/hdl/demo_kc705_extphy:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 3568 Dec 14 13:06 top_kc705_extphy.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/hdl/demo_ml605_sgmii:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 3355 Dec 14 13:06 top_ml605_sgmii.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/hdl/demo_sp605_basex:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 3077 Dec 14 13:06 top_sp605_basex.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/hdl/demo_sp605_extphy:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 3523 Dec 14 13:06 top_sp605_extphy.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/hdl/demo_v5fxt:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 4920 Dec 14 13:06 top_v5fxt.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects:
+total 0
+drwxrwxr-x. 3 dceresa_local dceresa_local 19 Dec 14 13:06 demo_atlys
+drwxrwxr-x. 3 dceresa_local dceresa_local 19 Dec 14 13:06 demo_kc705_basex
+drwxrwxr-x. 3 dceresa_local dceresa_local 19 Dec 14 13:06 demo_kc705_extphy
+drwxrwxr-x. 3 dceresa_local dceresa_local 19 Dec 14 13:06 demo_ml605_sgmii
+drwxrwxr-x. 3 dceresa_local dceresa_local 19 Dec 14 13:06 demo_sp605_basex
+drwxrwxr-x. 3 dceresa_local dceresa_local 19 Dec 14 13:06 demo_sp605_extphy
+drwxrwxr-x. 3 dceresa_local dceresa_local 19 Dec 14 13:06 demo_v5fxt
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_atlys:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 92 Dec 14 13:06 ise14
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_atlys/ise14:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local  79 Dec 14 13:06 build_project.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local 234 Dec 14 13:06 coregen.cgp
+-rw-rw-r--. 1 dceresa_local dceresa_local 448 Dec 14 13:06 file_list
+-rw-rw-r--. 1 dceresa_local dceresa_local 523 Dec 14 13:06 setup_project.tcl
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_kc705_basex:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 92 Dec 14 13:06 ise14
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_kc705_basex/ise14:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local  85 Dec 14 13:06 build_project.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local 224 Dec 14 13:06 coregen.cgp
+-rw-rw-r--. 1 dceresa_local dceresa_local 347 Dec 14 13:06 file_list
+-rw-rw-r--. 1 dceresa_local dceresa_local 527 Dec 14 13:06 setup_project.tcl
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_kc705_extphy:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 92 Dec 14 13:06 ise14
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_kc705_extphy/ise14:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local  86 Dec 14 13:06 build_project.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local 233 Dec 14 13:06 coregen.cgp
+-rw-rw-r--. 1 dceresa_local dceresa_local 462 Dec 14 13:06 file_list
+-rw-rw-r--. 1 dceresa_local dceresa_local 528 Dec 14 13:06 setup_project.tcl
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_ml605_sgmii:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 92 Dec 14 13:06 ise14
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_ml605_sgmii/ise14:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local  85 Dec 14 13:06 build_project.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local 235 Dec 14 13:06 coregen.cgp
+-rw-rw-r--. 1 dceresa_local dceresa_local 348 Dec 14 13:06 file_list
+-rw-rw-r--. 1 dceresa_local dceresa_local 529 Dec 14 13:06 setup_project.tcl
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_sp605_basex:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 92 Dec 14 13:06 ise14
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_sp605_basex/ise14:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local  85 Dec 14 13:06 build_project.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local 235 Dec 14 13:06 coregen.cgp
+-rw-rw-r--. 1 dceresa_local dceresa_local 347 Dec 14 13:06 file_list
+-rw-rw-r--. 1 dceresa_local dceresa_local 529 Dec 14 13:06 setup_project.tcl
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_sp605_extphy:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 92 Dec 14 13:06 ise14
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_sp605_extphy/ise14:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local  86 Dec 14 13:06 build_project.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local 235 Dec 14 13:06 coregen.cgp
+-rw-rw-r--. 1 dceresa_local dceresa_local 352 Dec 14 13:06 file_list
+-rw-rw-r--. 1 dceresa_local dceresa_local 530 Dec 14 13:06 setup_project.tcl
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_v5fxt:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 92 Dec 14 13:06 ise14
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/projects/demo_v5fxt/ise14:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local  79 Dec 14 13:06 build_project.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local 233 Dec 14 13:06 coregen.cgp
+-rw-rw-r--. 1 dceresa_local dceresa_local 430 Dec 14 13:06 file_list
+-rw-rw-r--. 1 dceresa_local dceresa_local 617 Dec 14 13:06 setup_project.tcl
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/scripts:
+total 32
+-rw-rw-r--. 1 dceresa_local dceresa_local 1365 Dec 14 13:06 addfiles.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local  404 Dec 14 13:06 build_all_designs.sh
+-rw-rw-r--. 1 dceresa_local dceresa_local   99 Dec 14 13:06 listfiles.sh
+-rw-rw-r--. 1 dceresa_local dceresa_local  747 Dec 14 13:06 listfiles.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local   88 Dec 14 13:06 listfiles_win.sh
+-rw-rw-r--. 1 dceresa_local dceresa_local  710 Dec 14 13:06 listfiles_win.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local  779 Dec 14 13:06 settings_v7.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local  128 Dec 14 13:06 setup.sh
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/example_designs/ucf:
+total 28
+-rw-rw-r--. 1 dceresa_local dceresa_local 2100 Dec 14 13:06 atlys.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local  523 Dec 14 13:06 kc705_basex.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local 1962 Dec 14 13:06 kc705_extphy.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local  978 Dec 14 13:06 ml605_sgmii.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local 1032 Dec 14 13:06 sp605_basex.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local 2188 Dec 14 13:06 sp605_extphy.ucf
+-rw-rw-r--. 1 dceresa_local dceresa_local 1982 Dec 14 13:06 v5fxt.ucf
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ipbus_core:
+total 4
+drwxrwxr-x. 2 dceresa_local dceresa_local   23 Dec 14 13:06 cfg
+drwxrwxr-x. 2 dceresa_local dceresa_local 4096 Dec 14 13:06 hdl
+drwxrwxr-x. 3 dceresa_local dceresa_local   22 Dec 14 13:06 scripts
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ipbus_core/cfg:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 1772 Dec 14 13:06 file_list
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ipbus_core/hdl:
+total 260
+-rw-rw-r--. 1 dceresa_local dceresa_local  1340 Dec 14 13:06 ipbus_arb.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  5870 Dec 14 13:06 ipbus_ctrl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1619 Dec 14 13:06 ipbus_fabric_sel.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1627 Dec 14 13:06 ipbus_fabric_simple.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1596 Dec 14 13:06 ipbus_fabric.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   903 Dec 14 13:06 ipbus_package.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1630 Dec 14 13:06 ipbus_pipeline.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2264 Dec 14 13:06 ipbus_shim.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   922 Dec 14 13:06 ipbus_trans_decl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   913 Dec 14 13:06 stretcher.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1089 Dec 14 13:06 transactor_cfg.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  4968 Dec 14 13:06 transactor_if.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  6794 Dec 14 13:06 transactor_sm.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2208 Dec 14 13:06 transactor.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1578 Dec 14 13:06 trans_arb.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  5175 Dec 14 13:06 udp_buffer_selector.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  7014 Dec 14 13:06 udp_build_arp.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 15724 Dec 14 13:06 udp_build_payload.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 10323 Dec 14 13:06 udp_build_ping.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1867 Dec 14 13:06 udp_build_resend.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  7220 Dec 14 13:06 udp_build_status.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2933 Dec 14 13:06 udp_byte_sum.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  6960 Dec 14 13:06 udp_clock_crossing_if.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1168 Dec 14 13:06 udp_do_rx_reset.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2076 Dec 14 13:06 udp_dualportram_rx.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1652 Dec 14 13:06 udp_dualportram_tx.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1250 Dec 14 13:06 udp_dualportram.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 20978 Dec 14 13:06 udp_if_flat.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2966 Dec 14 13:06 udp_ipaddr_block.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 13950 Dec 14 13:06 udp_packet_parser.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  5481 Dec 14 13:06 udp_rarp_block.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  4584 Dec 14 13:06 udp_rxram_mux.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2409 Dec 14 13:06 udp_rxram_shim.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1611 Dec 14 13:06 udp_rxtransactor_if_simple.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  8276 Dec 14 13:06 udp_status_buffer.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 18178 Dec 14 13:06 udp_tx_mux.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2853 Dec 14 13:06 udp_txtransactor_if_simple.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ipbus_core/scripts:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 77 Dec 14 13:06 addr_dec
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ipbus_core/scripts/addr_dec:
+total 12
+-rwxrwxr-x. 1 dceresa_local dceresa_local 2333 Dec 14 13:06 addr_dec.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  124 Dec 14 13:06 addr_table
+-rw-rw-r--. 1 dceresa_local dceresa_local  774 Dec 14 13:06 ipbus_addr_decode.vhd.tmpl
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ipbus_core_v1:
+total 4
+drwxrwxr-x. 2 dceresa_local dceresa_local   23 Dec 14 13:06 cfg
+drwxrwxr-x. 2 dceresa_local dceresa_local  170 Dec 14 13:06 coregen
+drwxrwxr-x. 2 dceresa_local dceresa_local 4096 Dec 14 13:06 hdl
+drwxrwxr-x. 3 dceresa_local dceresa_local   22 Dec 14 13:06 scripts
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ipbus_core_v1/cfg:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 1046 Dec 14 13:06 file_list
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ipbus_core_v1/coregen:
+total 36
+-rw-rw-r--. 1 dceresa_local dceresa_local 6119 Dec 14 13:06 dpram_32x10b_32x10b.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2979 Dec 14 13:06 dpram_32x10b_32x10b.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local 6183 Dec 14 13:06 dpram_8x12_32x10.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3195 Dec 14 13:06 dpram_8x12_32x10.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local 5809 Dec 14 13:06 sdpram_8x11.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3189 Dec 14 13:06 sdpram_8x11.xco
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ipbus_core_v1/hdl:
+total 120
+-rw-rw-r--. 1 dceresa_local dceresa_local  5804 Dec 14 13:06 arp.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  1817 Dec 14 13:06 bus_arb.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 13316 Dec 14 13:06 icmp.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  1348 Dec 14 13:06 ipbus_bus_decl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  4312 Dec 14 13:06 ipbus_ctrl_decl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  5831 Dec 14 13:06 ipbus_ctrl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1881 Dec 14 13:06 ipbus_fabric.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local   632 Dec 14 13:06 ipbus_package.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local    49 Dec 14 13:06 ipbus_v_defs.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  1019 Dec 14 13:06 ip_checksum_8bit.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  5663 Dec 14 13:06 packet_handler.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  2367 Dec 14 13:06 rx_buffer.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  3826 Dec 14 13:06 sub_packetbuffer.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  2942 Dec 14 13:06 sub_packetreq.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  5395 Dec 14 13:06 sub_packetresp.v
+-rw-rw-r--. 1 dceresa_local dceresa_local  1583 Dec 14 13:06 transactor_rx.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  7700 Dec 14 13:06 transactor_sm.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  3781 Dec 14 13:06 transactor_tx.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2186 Dec 14 13:06 transactor.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2435 Dec 14 13:06 tx_buffer.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  1623 Dec 14 13:06 udp_shim.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ipbus_core_v1/scripts:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 77 Dec 14 13:06 addr_dec
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/ipbus_core_v1/scripts/addr_dec:
+total 12
+-rwxrwxr-x. 1 dceresa_local dceresa_local 2333 Dec 14 13:06 addr_dec.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  180 Dec 14 13:06 addr_table
+-rw-rw-r--. 1 dceresa_local dceresa_local  774 Dec 14 13:06 ipbus_addr_decode.vhd.tmpl
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/sim:
+total 0
+drwxrwxr-x. 2 dceresa_local dceresa_local 102 Dec 14 13:06 hdl
+drwxrwxr-x. 2 dceresa_local dceresa_local  57 Dec 14 13:06 projects
+drwxrwxr-x. 2 dceresa_local dceresa_local  88 Dec 14 13:06 scripts
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/sim/hdl:
+total 40
+-rw-rw-r--. 1 dceresa_local dceresa_local   966 Dec 14 13:06 clock_sim.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  9854 Dec 14 13:06 ipbus_tb.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 18770 Dec 14 13:06 package_ipbus_simulation.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  2285 Dec 14 13:06 top_sim.vhd
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/sim/projects:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local  218 Dec 14 13:06 ipbus_sim_demo.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local 2707 Dec 14 13:06 setup_project.tcl
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/sim/scripts:
+total 16
+-rw-rw-r--. 1 dceresa_local dceresa_local 796 Dec 14 13:06 addfiles_sim.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local 284 Dec 14 13:06 file_list
+-rw-rw-r--. 1 dceresa_local dceresa_local 533 Dec 14 13:06 setup_project.tcl
+-rw-rw-r--. 1 dceresa_local dceresa_local 418 Dec 14 13:06 setup.sh
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/slaves:
+total 4
+drwxrwxr-x. 2 dceresa_local dceresa_local   35 Dec 14 13:06 addr_table
+drwxrwxr-x. 2 dceresa_local dceresa_local   70 Dec 14 13:06 cfg
+drwxrwxr-x. 2 dceresa_local dceresa_local  122 Dec 14 13:06 coregen
+drwxrwxr-x. 2 dceresa_local dceresa_local   35 Dec 14 13:06 doc
+drwxrwxr-x. 2 dceresa_local dceresa_local 4096 Dec 14 13:06 hdl
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/slaves/addr_table:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 146 Dec 14 13:06 trans_buffer_test.xml
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/slaves/cfg:
+total 8
+-rw-rw-r--. 1 dceresa_local dceresa_local 137 Dec 14 13:06 file_list_ipbus_syncreg
+-rw-rw-r--. 1 dceresa_local dceresa_local 189 Dec 14 13:06 file_list_ipbus_syncreg_v
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/slaves/coregen:
+total 24
+-rw-rw-r--. 1 dceresa_local dceresa_local 5870 Dec 14 13:06 sdpram_16x10_32x9.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3199 Dec 14 13:06 sdpram_16x10_32x9.xco
+-rw-rw-r--. 1 dceresa_local dceresa_local 5870 Dec 14 13:06 sdpram_32x9_16x10.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3198 Dec 14 13:06 sdpram_32x9_16x10.xco
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/slaves/doc:
+total 4
+-rw-rw-r--. 1 dceresa_local dceresa_local 1018 Dec 14 13:06 trans_buffer_test.txt
+
+../d19c_MPAdev/ipbus_2_0_v1/firmware/slaves/hdl:
+total 112
+-rw-rw-r--. 1 dceresa_local dceresa_local  754 Dec 14 13:06 drp_decl.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1634 Dec 14 13:06 ipbus_clk_bridge.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2636 Dec 14 13:06 ipbus_ctrlreg_sync.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2044 Dec 14 13:06 ipbus_ctrlreg.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1973 Dec 14 13:06 ipbus_ctrlreg_v.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1129 Dec 14 13:06 ipbus_ctr.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2308 Dec 14 13:06 ipbus_dpram36.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1718 Dec 14 13:06 ipbus_dpram.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1029 Dec 14 13:06 ipbus_drp_bridge.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1879 Dec 14 13:06 ipbus_emac_hostbus.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2077 Dec 14 13:06 ipbus_freq_ctr.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2607 Dec 14 13:06 ipbus_oob_test.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2139 Dec 14 13:06 ipbus_peephole_ram.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1095 Dec 14 13:06 ipbus_pkt_ctr.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 2839 Dec 14 13:06 ipbus_ported_dpram36.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1766 Dec 14 13:06 ipbus_ram.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local  766 Dec 14 13:06 ipbus_reg_types.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1416 Dec 14 13:06 ipbus_reg.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1248 Dec 14 13:06 ipbus_reg_v.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1786 Dec 14 13:06 ipbus_slow_reg.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3555 Dec 14 13:06 ipbus_syncreg.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3267 Dec 14 13:06 ipbus_syncreg_v.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1083 Dec 14 13:06 ipbus_ver.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1548 Dec 14 13:06 syncreg_r.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1774 Dec 14 13:06 syncreg_w.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 1372 Dec 14 13:06 trans_buffer_test.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3349 Dec 14 13:06 trans_buffer.vhd
+-rw-rw-r--. 1 dceresa_local dceresa_local 3584 Dec 14 13:06 uclink_mp7.vhd
+
+../d19c_MPAdev/sw:
+total 4
+drwxrwxr-x. 2 dceresa_local dceresa_local 4096 Jan 11 15:46 python_scripts
+
+../d19c_MPAdev/sw/python_scripts:
+total 176
+-rwxrwxr-x. 1 dceresa_local dceresa_local 20453 Dec 14 13:06 Cbc2_default_hole.txt
+-rw-rw-r--. 1 dceresa_local dceresa_local  3778 Dec 14 13:06 DAQTester.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  2936 Dec 14 13:06 ErrorHandler.py
+-rw-r--r--. 1 dceresa_local dceresa_local  2630 Dec 19 10:48 ErrorHandler.pyc
+-rw-rw-r--. 1 dceresa_local dceresa_local 15774 Dec 14 13:06 fc7AddrTable.dat
+-rw-rw-r--. 1 dceresa_local dceresa_local 16361 Dec 14 13:06 fc7_daq_methods.py
+-rw-r--r--. 1 dceresa_local dceresa_local 15033 Dec 19 10:48 fc7_daq_methods.pyc
+-rw-rw-r--. 1 dceresa_local dceresa_local  1305 Dec 14 13:06 fc7_get_mac_address.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  5518 Dec 14 13:06 fc7_i2c_voltage_get_all.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  2279 Dec 14 13:06 fc7_i2c_voltage_set.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  3815 Dec 14 13:06 fc7_lib.py
+-rw-r--r--. 1 dceresa_local dceresa_local  2866 Dec 15 09:58 fc7_lib.pyc
+-rw-r--r--. 1 dceresa_local dceresa_local   107 Jan 11 15:46 filename.xml
+-rw-rw-r--. 1 dceresa_local dceresa_local    14 Jan 10 17:47 ipaddr.dat
+-rwxrwxr-x. 1 dceresa_local dceresa_local  2036 Dec 14 13:06 MPA_SLVS_COUNTERS_Debug.py
+-rwxrwxr-x. 1 dceresa_local dceresa_local  1644 Dec 19 15:07 MPA_SLVS_Debug.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  7299 Dec 14 13:06 MPA_SSA_BoardControl.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  1631 Dec 19 11:11 MPA_SSA_conf_fast_output.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  9723 Dec 14 13:06 MPA_SSA_I2C_Example.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  3061 Dec 14 13:06 send_command_2FC7s.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  7192 Dec 14 13:06 send_command_Brussels.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  2489 Dec 14 13:06 send_command_Hamburg.py
+-rw-rw-r--. 1 dceresa_local dceresa_local   827 Dec 14 13:06 send_i2c.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  3239 Dec 14 13:06 send_reset.py
+-rw-rw-r--. 1 dceresa_local dceresa_local  4897 Dec 14 13:06 ZSTester.py

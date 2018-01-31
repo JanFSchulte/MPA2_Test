@@ -21,7 +21,7 @@ from d19cScripts.fc7_daq_methods import *
 
 from d19cScripts import *
 from myScripts import *
-  
+
 
 #
 ########################################
@@ -35,8 +35,8 @@ from myScripts import *
 #fc7 = ChipsBusUdp(fc7AddrTable, ipaddr, 50001)
 
 print '\n'
-text = raw_input("Select board: mpa or ssa: ") 
-ipaddr, fc7AddrTable, fc7 = SelectBoard(text) 
+text = raw_input("Select board: mpa or ssa: ")
+ipaddr, fc7AddrTable, fc7 = SelectBoard(text)
 print '\n\n\n'
 
 ########################################
@@ -584,7 +584,7 @@ def mpaanalogtestread():
     print "ADC0 READ: " + adc0entry.get()
     Configure_MPA_SSA_I2C_Master(1, SLOW)
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SC0 on PCA9646
-    Send_MPA_SSA_I2C_Command(ltc2487, 0, write, 0, 0xB080)  #
+    Send_MPA_SSA_I2C_Command(ltc2487, 0, write, 0, 0xB080)#0xB080)  #0b1011000010101000
     sleep(0.2)
     ret = Send_MPA_SSA_I2C_Command(ltc2487, 0, read, 0, 0)  #
     iret = hex(ret)

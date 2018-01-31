@@ -1,7 +1,7 @@
 # basic d19c methods include
-from fc7_daq_methods import *
+from d19cScripts.fc7_daq_methods import *
 
-##----- begin methods definition 
+##----- begin methods definition
 
 def reverse_mask(x):
 #    x = ((x & 0x55555555) << 1) | ((x & 0xAAAAAAAA) >> 1)
