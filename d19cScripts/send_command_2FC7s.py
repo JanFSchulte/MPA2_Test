@@ -1,4 +1,4 @@
-from fc7_daq_methods import *
+from d19cScripts.fc7_daq_methods import *
 
 # test Temp CBC2 Readout
 def ReadoutTester():
@@ -61,19 +61,19 @@ size = (6+num_chips*11)*(packet_nbr+1)
 #**************************************************#
 #----> DAQ CONFIGURATION
 #**************************************************#
-fc7.write("data_handshake_enable", data_handshake_enable)
-fc7.write("packet_nbr", packet_nbr)
-fc7.write("trigger_type", trigger_type)
-fc7.write("data_type", data_type)
-fc7.write("common_stubdata_delay", stub_delay)
+fc7.write("cnfg_readout_data_handshake_enable", data_handshake_enable)
+fc7.write("cnfg_readout_packet_nbr", packet_nbr)
+fc7.write("cnfg_readout_trigger_type", trigger_type)
+fc7.write("cnfg_readout_data_type", data_type)
+fc7.write("cnfg_readout_common_stubdata_delay", stub_delay)
 #fc7.write("cnfg_phy_phase_sel",18)
 
 sleep(5)
-print "Phase sel stat", fc7.read("stat_phy_phase_sel")
-print "Phase sel stat2", fc7.read("stat_phy_phase_sel2")
-print "Bitslip", fc7.read("stat_phy_stat_bitslip")
-print "Delay", fc7.read("stat_phy_stat_delay")
-print "Serial", fc7.read("stat_phy_stat_serializer")
+#print "Phase sel stat", fc7.read("stat_phy_phase_sel")
+#print "Phase sel stat2", fc7.read("stat_phy_phase_sel2")
+#print "Bitslip", fc7.read("stat_phy_stat_bitslip")
+#print "Delay", fc7.read("stat_phy_stat_delay")
+#print "Serial", fc7.read("stat_phy_stat_serializer")
 print "stat_fast_fsm", fc7.read("stat_fast_fsm")
 sleep(0.001)
 #**************************************************#
@@ -91,7 +91,7 @@ print "N Events Avalibale: ", fc7.read("evnt_cnt")
 nevents = fc7.read("evnt_cnt")
 
 for i in range(0, nevents):
-	REC_DATA = fc7.fifoRead("readout_run_fifo",size)
+        REC_DATA = fc7.fifoRead("ctrl_readout_run_fifo",size)
 	#print uInt32HexListStr(REC_DATA[0:size])
 	print_data(num_chips,packet_nbr+1, REC_DATA)
 

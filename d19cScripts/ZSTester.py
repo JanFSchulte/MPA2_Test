@@ -1,4 +1,4 @@
-from fc7_daq_methods import *
+from d19cScripts.fc7_daq_methods import *
 
 def get_bit(byteval,idx):
     return ((byteval&(1<<idx))!=0)
@@ -83,16 +83,14 @@ data_handshake_enable = 0
 packet_nbr = 0 #0: 1 packet
 stub_delay = 193
 zero_suppression_enable = 1
-zs_max_nclusters = 31
 ###############
 
 ################
 CBC_ConfigTXT()
-fc7.write("zero_suppression_enable", zero_suppression_enable)
-fc7.write("zs_max_nclusters", zs_max_nclusters)
-fc7.write("data_handshake_enable", data_handshake_enable)
-fc7.write("packet_nbr", packet_nbr)
-fc7.write("common_stubdata_delay", stub_delay)
+fc7.write("cnfg_readout_zero_suppression_enable", zero_suppression_enable)
+fc7.write("cnfg_readout_data_handshake_enable", data_handshake_enable)
+fc7.write("cnfg_readout_packet_nbr", packet_nbr)
+fc7.write("cnfg_readout_common_stubdata_delay", stub_delay)
 ################
 
 ## enabling channels
@@ -104,9 +102,9 @@ write = 0
 #	SendCommand_I2C(0, 0, 1, 0, 1, write, i, 0x00, 0)
 #sleep(1)
 ## readout reset ##
-fc7.write("readout_reset", 1)
+fc7.write("ctrl_readout_reset", 1)
 sleep(0.001)
-fc7.write("readout_reset", 0)
+fc7.write("ctrl_readout_reset", 0)
 sleep(0.001)
 ###################
 
@@ -116,9 +114,9 @@ for i in range (0,8):
 	SetParameterI2C("select_channel_group", i)
 	sleep(1)
 
-	fc7.write("readout_reset", 1)
+        fc7.write("ctrl_readout_reset", 1)
 	sleep(0.001)
-	fc7.write("readout_reset", 0)
+        fc7.write("ctrl_readout_reset", 0)
 	sleep(0.001)
 
 	SendCommand_CTRL("start_trigger")
@@ -130,10 +128,10 @@ for i in range (0,8):
 	i = 0
 
 	while((triggers_to_accept>0 and i<triggers_to_accept) or (triggers_to_accept==0)):
-		header1 = fc7.read("readout_run_fifo")
+                header1 = fc7.read("ctrl_readout_run_fifo")
 		event_size = (header1 & 0x0000FFFF)
 		if (fc7.read("words_cnt") >= event_size-1):
-			REC_DATA = fc7.fifoRead("readout_run_fifo",event_size-1)
+                        REC_DATA = fc7.fifoRead("ctrl_readout_run_fifo",event_size-1)
 			REC_DATA = [header1] + REC_DATA
 			#print header1
 			if zero_suppression_enable == 0:

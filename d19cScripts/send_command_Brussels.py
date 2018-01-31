@@ -1,4 +1,4 @@
-from fc7_daq_methods import *
+from d19cScripts.fc7_daq_methods import *
 
 def I2CTester(CBC_type):
 
@@ -149,6 +149,3 @@ I2CTester("CBC3_emulator")
 #sleep(0.00001)
 #SendCommand_CTRL("stop_trigger")
 #sleep(1)
-
-#CheckClockFrequencies()                                                                                                                                                                  106,1         29%
-

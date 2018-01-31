@@ -1,4 +1,4 @@
-from fc7_daq_methods import *
+from d19cScripts.fc7_daq_methods import *
 
 # test Temp CBC2 Readout
 def ReadoutTester():
@@ -77,6 +77,6 @@ print "N Events Avalibale: ", fc7.read("evnt_cnt")
 nevents = fc7.read("evnt_cnt")
 
 for i in range(0, nevents):
-	REC_DATA = fc7.fifoRead("readout_run_fifo",size)
+        REC_DATA = fc7.fifoRead("ctrl_readout_run_fifo",size)
 	#print uInt32HexListStr(REC_DATA[0:size])
 	print_data(num_chips,packet_nbr+1, REC_DATA)
