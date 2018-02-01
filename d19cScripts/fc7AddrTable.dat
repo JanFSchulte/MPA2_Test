@@ -120,12 +120,27 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1
    cnfg_phy_i2c_freq                    40013001    0000000f     1     1
    cnfg_phy_i2c_master_en		40013001    00000100     1     1
    cnfg_phy_SSA_gen_trig_data_format    40013004    0000000f     1     1
-   cnfg_phy_SSA_gen_stub_data_format    40013004    000000f0     1     1
    cnfg_phy_SSA_gen_delay_trig_data     40013004    00001f00     1     1
    cnfg_phy_SSA_gen_delay_stub_data     40013004    001f0000     1     1
    cnfg_phy_SSA_gen_left_lateral_data_format 	40013005    000000ff     1     1
    cnfg_phy_SSA_gen_right_lateral_data_format 	40013005    0000ff00     1     1
-   cnfg_phy_SSA_gen_delay_lateral_data  40013005    001f0000     1     1
+   cnfg_phy_SSA_gen_delay_lateral_data  	40013005    001f0000     1     1
+   cnfg_phy_SSA_gen_stub_data_format_0_0	40013006    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_0_1	40013007    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_1_0	40013008    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_1_1	40013009    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_2_0	4001300a    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_2_1	4001300b    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_3_0	4001300c    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_3_1	4001300d    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_4_0	4001300e    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_4_1	4001300f    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_5_0	40013010    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_5_1	40013011    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_6_0	40013012    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_6_1	40013013    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_7_0	40013014    ffffffff	 1     1	
+   cnfg_phy_SSA_gen_stub_data_format_7_1	40013015    ffffffff	 1     1	
 * Readout Block
    cnfg_readout_packet_nbr		40015000    0000ffff	 1     1
    cnfg_readout_data_handshake_enable	40015001    00000001	 1     1
