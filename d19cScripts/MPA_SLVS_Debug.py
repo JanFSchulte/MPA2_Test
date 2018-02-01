@@ -4,6 +4,14 @@ from d19cScripts.fc7_daq_methods import *
 ##----- begin methods definition 
 
 ##----- begin main
+
+# start from phase tuning
+fc7.write("ctrl_phy_phase_tune_again", 1)
+while(fc7.read("stat_phy_phase_tuning_done") == 0):
+	sleep(0.5)
+	print "Waiting for the phase tuning"
+
+# now send the start for l1a and stub data capturing
 SendCommand_CTRL("fast_test_pulse")
 SendCommand_CTRL("fast_trigger")
 sleep(0.001)

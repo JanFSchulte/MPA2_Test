@@ -111,52 +111,57 @@ def StartCountersRead():
     fc7.write("ctrl_fast", encode_fast_reset + encode_orbit_reset)
 
 ##----- begin main
-def ReadoutCounters():
-	# Reset the board
+def ReadoutCounters(raw_mode_en = 0):
+	# set the raw mode to the firmware
+	fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)
 	t0 = time.time()
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
-
-	#print "--> Status: "
-	#print "---> MPA Counters Ready(should be zero): ", mpa_counters_ready
 
 	#print "---> Sending Start and Waiting for Data"
 
 	StartCountersRead()
-	timeout = 0
-	while ((mpa_counters_ready == 0) & (timeout < 50)):
+	
+	while ((mpa_counters_ready == 0)):
 		sleep(0.01)
 		mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
-		timeout += 1
+		
 	#print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
-	count = np.zeros((2040, ), dtype = np.uint16)
-	cycle = 0
-	for i in range(0,20000):
-		fifo1_word = fc7.read("ctrl_slvs_debug_fifo1_data")
-		fifo2_word = fc7.read("ctrl_slvs_debug_fifo2_data")
-		#print "1: " + bin(reverse_mask(fifo1_word))
-		#print "2: " + bin(reverse_mask(fifo2_word))
-		line1 = to_number(reverse_mask(fifo1_word),8,0)
-		line2 = to_number(reverse_mask(fifo1_word),16,8)
-		line3 = to_number(reverse_mask(fifo1_word),24,16)
-		line4 = to_number(reverse_mask(fifo2_word),8,0)
-		line5 = to_number(reverse_mask(fifo2_word),16,8)
-		#print line1
-		#print line2
-		#print line3
-		#print line4
-		#print line5
-		if (((line1 & 0b10000000) == 128) & ((line4 & 0b10000000) == 128)):
-			temp = ((line2 & 0b00100000) << 9) | ((line3 & 0b00100000) << 8) | ((line4 & 0b00100000) << 7) | ((line5 & 0b00100000) << 6) | ((line1 & 0b00010000) << 6) | ((line2 & 0b00010000) << 5) | ((line3 & 0b00010000) << 4) | ((line4 & 0b00010000) << 3) | ((line5 & 0b10000000) >> 1) | ((line1 & 0b01000000) >> 1) | ((line2 & 0b01000000) >> 2) | ((line3 & 0b01000000) >> 3) | ((line4 & 0b01000000) >> 4) | ((line5 & 0b01000000) >> 5) | ((line1 & 0b00100000) >> 5)
-			if (temp != 0):
-				count[cycle] = temp - 1
-				cycle += 1
-			#print count[cycle,0]
-			#print bin(line1)
-			#print bin(line2)
-			#print bin(line3)
-			#print bin(line4)
-			#print bin(line5)
-	#print cycle
+	if raw_mode_en == 1:
+		count = np.zeros((2040, ), dtype = np.uint16)
+		cycle = 0
+		for i in range(0,20000):
+			fifo1_word = fc7.read("ctrl_slvs_debug_fifo1_data")
+			fifo2_word = fc7.read("ctrl_slvs_debug_fifo2_data")
+			#print "1: " + bin(reverse_mask(fifo1_word))
+			#print "2: " + bin(reverse_mask(fifo2_word))
+			line1 = to_number(fifo1_word,8,0)
+			line2 = to_number(fifo1_word,16,8)
+			line3 = to_number(fifo1_word,24,16)
+			line4 = to_number(fifo2_word,8,0)
+			line5 = to_number(fifo2_word,16,8)
+			#print line1
+			#print line2
+			#print line3
+			#print line4
+			#print line5
+			if (((line1 & 0b10000000) == 128) & ((line4 & 0b10000000) == 128)):
+				temp = ((line2 & 0b00100000) << 9) | ((line3 & 0b00100000) << 8) | ((line4 & 0b00100000) << 7) | ((line5 & 0b00100000) << 6) | ((line1 & 0b00010000) << 6) | ((line2 & 0b00010000) << 5) | ((line3 & 0b00010000) << 4) | ((line4 & 0b00010000) << 3) | ((line5 & 0b10000000) >> 1) | ((line1 & 0b01000000) >> 1) | ((line2 & 0b01000000) >> 2) | ((line3 & 0b01000000) >> 3) | ((line4 & 0b01000000) >> 4) | ((line5 & 0b01000000) >> 5) | ((line1 & 0b00100000) >> 5)
+				if (temp != 0):
+					count[cycle] = temp - 1
+					cycle += 1
+				#print count[cycle,0]
+				#print bin(line1)
+				#print bin(line2)
+				#print bin(line3)
+				#print bin(line4)
+				#print bin(line5)
+		#print cycle
+	else:
+		# here is the parsed mode, when the fpga parses all the counters
+		count = fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 2040)
+		for i in range(2040):
+			count[i] = count[i] - 1
+	
 	sleep(0.1)
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
 	#print "---> MPA Counters Ready(should be zero): ", mpa_counters_ready

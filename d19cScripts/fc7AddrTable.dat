@@ -116,6 +116,7 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1
    cnfg_fast_stubor_enable		40012009    00000002     1     1
    cnfg_fast_initial_fast_reset_enable  40012009    00000004     1     1
 * Physical Interface Abstraction Layer
+   cnfg_phy_slvs_raw_mode_en		40013000    00000001     1     1
    cnfg_phy_i2c_freq                    40013001    0000000f     1     1
    cnfg_phy_i2c_master_en		40013001    00000100     1     1
    cnfg_phy_SSA_gen_trig_data_format    40013004    0000000f     1     1
@@ -187,6 +188,7 @@ ipb_daq_system_ctrl			40020000    ffffffff     1     1
      ctrl_command_i2c_reply_register	40021003    0000ff00	 1     0
      ctrl_command_i2c_reply_data	40021003    000000ff	 1     0 
 * Fast Command Block
+   ctrl_fast				40022000    ffffffff     1     1
    ctrl_fast_reset			40022000    00000001     1     1
    ctrl_fast_start			40022000    00000002     1     1
    ctrl_fast_stop			40022000    00000004     1     1
