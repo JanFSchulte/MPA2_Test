@@ -67,7 +67,6 @@ def alignment_slvs(align_word = 128, step = 10):
 def test_ss_data(val = 0):
 	fc7.write("cnfg_phy_SSA_gen_stub_data_format", val)
 	activate_I2C_chip()
-	set_out_mapping()
 	activate_ss()
 	send_test()
 	pos = read_stubs()
@@ -75,7 +74,6 @@ def test_ss_data(val = 0):
 
 def test_pp_data(row, pixel, pattern = 0b10000000):
 	activate_I2C_chip()
-	set_out_mapping()
 	activate_pp()
 	for r in row:
 		for p in pixel:
@@ -120,11 +118,11 @@ def ReadoutCounters(raw_mode_en = 0):
 	#print "---> Sending Start and Waiting for Data"
 
 	StartCountersRead()
-	
+
 	while ((mpa_counters_ready == 0)):
 		sleep(0.01)
 		mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
-		
+
 	#print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
 	if raw_mode_en == 1:
 		count = np.zeros((2040, ), dtype = np.uint16)
@@ -161,7 +159,7 @@ def ReadoutCounters(raw_mode_en = 0):
 		count = fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 2040)
 		for i in range(2040):
 			count[i] = count[i] - 1
-	
+
 	sleep(0.1)
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
 	#print "---> MPA Counters Ready(should be zero): ", mpa_counters_ready
@@ -172,3 +170,52 @@ def ReadoutCounters(raw_mode_en = 0):
 	#print "Elapsed Time: " + str(t1 - t0)
 
 	return count
+
+def reset_strip_in( line = range(0,8), strip = [0, 0, 0, 0, 0, 0, 0, 0]):
+	value = strip[0] << 24 | strip[1] << 16 | strip[2] << 8 | strip[3]
+	for l in line:
+		reg = "cnfg_phy_SSA_gen_stub_data_format_" +str(l) + "_0"
+		fc7.write(reg, value)
+		value = strip[4] << 24 | strip[5] << 16 | strip[6] << 8 | strip[7]
+		reg = "cnfg_phy_SSA_gen_stub_data_format_" +str(l) + "_1"
+		fc7.write(reg, value)
+
+def strip_in_def( line ,strip = 8*[128]):
+	value = strip[0] << 24 | strip[1] << 16 | strip[2] << 8 | strip[3]
+	reg = "cnfg_phy_SSA_gen_stub_data_format_" +str(line) + "_0"
+	fc7.write(reg, value)
+	value = strip[4] << 24 | strip[5] << 16 | strip[6] << 8 | strip[7]
+	reg = "cnfg_phy_SSA_gen_stub_data_format_" +str(line) + "_1"
+	fc7.write(reg, value)
+
+def strip_in_test(n_pulse = 10, line = range(0,8),  value = [128, 64, 32, 16, 8, 4, 2, 1]):
+	t0 = time.time()
+
+	I2C.peri_write('LatencyRx320', 0b00111011) # Trigger line aligned with FC7
+	#I2C.peri_write('EdgeSelTrig', 0b000000000)
+	line = np.array(line)
+	value = np.array(value)
+	nline = int(line.shape[0])
+	nvalue = int(value.shape[0])
+	line_check = np.zeros((nline,nvalue), dtype = np.int)
+	count_line = 0
+	for l in line:
+		count_val = 0
+		for val in value:
+			reset_strip_in()
+			strip_in_def(l, 8*[val])
+			check = 0
+			for i in range(0, n_pulse):
+				send_test()
+				pos, Z, bend = read_stubs()
+				for centr in pos[:,0]:
+					if (centr == val):
+						check += 1
+			line_check[count_line, count_val ] = check
+			count_val += 1
+		count_line += 1
+	t1 = time.time()
+	print "END"
+	print "Elapsed Time: " + str(t1 - t0)
+
+	return line_check

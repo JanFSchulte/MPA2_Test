@@ -28,6 +28,7 @@ def set_threshold(th):
 	I2C.peri_write('ThDAC6',th)
 
 def disable_test():
+	activate_I2C_chip()
 	I2C.peri_write('TESTMUX',0b00000000)
 	I2C.peri_write('TEST0',0b00000000)
 	I2C.peri_write('TEST1',0b00000000)
@@ -38,17 +39,20 @@ def disable_test():
 	I2C.peri_write('TEST6',0b00000000)
 
 def enable_test(block, point):
+	activate_I2C_chip()
+	disable_test()
 	test = "TEST" + str(block)
 	I2C.peri_write('TESTMUX',0b00000001 << block)
 	I2C.peri_write(test, 0b00000001 << point)
 
-#def set_DAC(block, point, value):
-#	test = "TEST" + str(block)
-#	I2C.peri_write('TESTMUX',0b00000001 << block)
-#	I2C.peri_write(test, 0b00000001 << point)
-#	nameDAC = ["A", "B", "C", "D", "E", "F"]
-#	DAC = nameDAC[block] + str(point)
-#	I2C.peri_write(test, 0b00000001 << point)
+def set_DAC(block, point, value):
+	activate_I2C_chip()
+	test = "TEST" + str(block)
+	I2C.peri_write('TESTMUX',0b00000001 << block)
+	I2C.peri_write(test, 0b00000001 << point)
+	nameDAC = ["A", "B", "C", "D", "E", "F"]
+	DAC = nameDAC[block] + str(point)
+	I2C.peri_write(DAC, value)
 
 
 def activate_async():
