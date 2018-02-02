@@ -118,11 +118,11 @@ def ReadoutCounters(raw_mode_en = 0):
 	#print "---> Sending Start and Waiting for Data"
 
 	StartCountersRead()
-
-	while ((mpa_counters_ready == 0)):
+	timeout = 0
+	while ((mpa_counters_ready == 0) & (timeout < 10)):
 		sleep(0.01)
 		mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
-
+		timeout += 1
 	#print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
 	if raw_mode_en == 1:
 		count = np.zeros((2040, ), dtype = np.uint16)
