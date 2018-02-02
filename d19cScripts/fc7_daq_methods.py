@@ -34,7 +34,7 @@ def SendCommand_I2C(command, hybrid_id, chip_id, page, read, register_address, d
   description = "Command: type = " + str(command) + ", hybrid = " + str(hybrid_id) + ", chip = " + str(chip_id)
 
   #print hex(cmd)
-  if(read == 1):	
+  if(read == 1):
   	fc7.write("ctrl_command_i2c_command_fifo", cmd0)
   else:
 	fc7.write("ctrl_command_i2c_command_fifo", cmd0)
@@ -96,14 +96,14 @@ def print_data(num_chips, packet_nbr, data):
 		print "--==========================--"
 		print "-- Header Info:             --"
 		print "--==========================--"
-		print "\t FE_NBR: ", to_number(data[0+pkg*package_size],23,16), "BLOCK_SIZE: ", to_number(data[0+pkg*package_size],15,0)		
+		print "\t FE_NBR: ", to_number(data[0+pkg*package_size],23,16), "BLOCK_SIZE: ", to_number(data[0+pkg*package_size],15,0)
 		print "\t L1 Counter: ", to_number(data[2+pkg*package_size],23,0)
 		print "\t BX Counter: ", to_number(data[3+pkg*package_size],31,0)
 		print "\t TLU Trigger ID: ", to_number(data[4+pkg*package_size],23,8)
-	
+
 		print "\t\t", '%8s\t' % "Chip 0", '%8s\t' % "Chip 1", '%8s\t' % "Chip 2", '%8s\t' % "Chip 3", '%8s\t' % "Chip 4", '%8s\t' % "Chip 5", '%8s\t' % "Chip 6", '%8s\t' % "Chip 7"
 		for j in range (0, 11):
-			if j == 0: 
+			if j == 0:
 				print "\t --==========================--"
 				print "\t -- Trigger Data:            --"
 				print "\t --==========================--"
@@ -111,9 +111,9 @@ def print_data(num_chips, packet_nbr, data):
 				print "\t --==========================--"
 				print "\t -- Stub Data:               --"
 				print "\t --==========================--"
-			
+
 			if num_chips > 1:
-				print "\t\t", to_str(data[header_size+j+pkg*package_size]), "\t",			
+				print "\t\t", to_str(data[header_size+j+pkg*package_size]), "\t",
 				for i in range (1,num_chips-1):
 					print to_str(data[header_size+i*11+j+pkg*package_size]), "\t",
 				print to_str(data[header_size+(num_chips-1)*11+j+pkg*package_size])
@@ -123,7 +123,7 @@ def print_data(num_chips, packet_nbr, data):
 # Power initialization for FMC's
 def InitFMCPower(fmc_id):
   fc7.write("system_fmc_pg_c2m",1)
-  
+
   if (fmc_id == "fmc_l12"):
 	fc7.write("system_fmc_l12_pwr_en",0)
 	os.system("python fc7_i2c_voltage_set.py L12 p2v5");
@@ -137,7 +137,7 @@ def InitFMCPower(fmc_id):
 	fc7.write("system_fmc_l8_pwr_en",1)
 
   os.system("python fc7_i2c_voltage_get_all.py");
-  	
+
 
 # Configure Fast Block
 def Configure_Fast(triggers_to_accept, user_frequency, source, stubs_mask, stubs_latency):
@@ -159,10 +159,9 @@ def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_be
   fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
   fc7.write("cnfg_fast_triggers_to_accept", number_of_test_pulses)
   fc7.write("cnfg_fast_source", 6)
-
+  sleep(0.1)
   SendCommand_CTRL("load_trigger_config")
-  sleep(1)
-
+  sleep(0.1)
 # Configure I2C
 def Configure_I2C(mask):
   fc7.write("cnfg_command_i2c", fc7AddrTable.getItem("cnfg_command_i2c_mask").shiftDataToMask(mask))
@@ -173,7 +172,7 @@ def Configure_I2C(mask):
 # CBC Related Methods   									  #
 ###################################################################################################
 # data needs to be shifted if the mask is not from zero
-def ShiftDataToMask(mask, data):	
+def ShiftDataToMask(mask, data):
 	shiftingMask = mask
 	bitShiftRequired = 0
 	while (shiftingMask & 0x1) == 0:
@@ -189,7 +188,7 @@ class Parameter():
       		self.mask = int(mask_str,16)
 
 # writing parameter to all cbc
-def SetParameterI2C(parameter_name, data):	
+def SetParameterI2C(parameter_name, data):
 	# 0 - write, 1 - read
 	write = 0
 	read = 1
@@ -203,7 +202,7 @@ def SetParameterI2C(parameter_name, data):
 	cbc2_map["test_pulse_delay_select"] = Parameter(1,"0x0E", "F8") # LSB00000MSB - minimal, LSB11001MSB - maximal
 	cbc2_map["select_channel_group"] = Parameter(1,"0x0E", "07") # LSB 000 MSB
 	cbc2_map["test_pulse_control"] = Parameter(1,"0x0F", "C0") # 7 - polarity (1 = positive edge); 6 - enable test pulse
-	cbc2_map["mask_channels_8_1"] = Parameter(1,"0x20", "FF") 
+	cbc2_map["mask_channels_8_1"] = Parameter(1,"0x20", "FF")
 
 	write_data = data
 	# FIXME no mask anymore
@@ -222,7 +221,7 @@ def CBC_Config():
 	SetParameterI2C("test_pulse_delay_select", 24) # 11000
 	SetParameterI2C("select_channel_group", 0)
 	SetParameterI2C("test_pulse_control", 1) # polarity negative, test pulse enabled
-	
+
 	# unmask all channels
 	i_start = 32	# 32
 	i_finish = 64	# 64
@@ -230,7 +229,7 @@ def CBC_Config():
 		SendCommand_I2C(2, 0, 0, 0, 0, 0, i, 255, 0)
 	sleep(2)
 
-def CBC_ConfigTXT():	
+def CBC_ConfigTXT():
 	# 0 - write, 1 - read
 	write = 0
 	read = 1
@@ -245,7 +244,7 @@ def CBC_ConfigTXT():
 ###################################################################################################
 
 # Configure DIO5
-def Configure_DIO5(out_en, term_en, thresholds): 
+def Configure_DIO5(out_en, term_en, thresholds):
   fc7.write("cnfg_dio5_en", 1)
   for i in range (1,6):
 	combined_config = fc7AddrTable.getItem("cnfg_dio5_ch1_out_en").shiftDataToMask(out_en[i-1]) + fc7AddrTable.getItem("cnfg_dio5_ch1_term_en").shiftDataToMask(term_en[i-1]) + fc7AddrTable.getItem("cnfg_dio5_ch1_threshold").shiftDataToMask(thresholds[i-1])
@@ -254,7 +253,7 @@ def Configure_DIO5(out_en, term_en, thresholds):
   sleep(0.5)
   SendCommand_CTRL("load_dio5_config")
   sleep(0.5)
-  
+
 
 def ReadStatus(name = "Current Status"):
   print "============================"
@@ -266,8 +265,8 @@ def ReadStatus(name = "Current Status"):
   	  for i in range (0,error_counter):
 		  error_full = fc7.read("stat_error_full")
 		  error_block_id = DataFromMask(error_full,"stat_error_block_id");
-		  error_code = DataFromMask(error_full,"stat_error_code");	  
-		  print "   -> ", 
+		  error_code = DataFromMask(error_full,"stat_error_code");
+		  print "   -> ",
 		  fc7ErrorHandler.getErrorDescription(error_block_id,error_code)
   else:
 	print "   -> No Errors"
@@ -349,7 +348,7 @@ def I2CTester():
 	#data = 7
 	ReadBack = 0
 	################
-	
+
 	ReadStatus("Before I2C Configuration")
 	Configure_I2C(255)
 	ReadStatus("After I2C Configuration")
@@ -359,7 +358,7 @@ def I2CTester():
        #                       i2c_command , hybrid_id ,  chip_id, page , read , register_address , data;
 
 	for i in range(0, num_i2c_registersPage1):
-		SendCommand_I2C(          2,         0,       0,    0, read,        1,    10, ReadBack)	
+		SendCommand_I2C(          2,         0,       0,    0, read,        1,    10, ReadBack)
 	for i in range(0, num_i2c_registersPage2):
 		SendCommand_I2C(          2,         0,       0,    1, read,        i,    10, ReadBack)
 	for i in range(1, num_i2c_registersPage1):
@@ -370,7 +369,7 @@ def I2CTester():
 		SendCommand_I2C(          2,         0,       0,    0, read,        i,    10, ReadBack)
 	for i in range(0, num_i2c_registersPage2):
 		SendCommand_I2C(          2,         0,       0,    1, read,        i,    10, ReadBack)
-	
+
 	sleep(1)
 
 	ReadStatus("After Send Command")
@@ -390,6 +389,6 @@ def DIO5Tester(fmc_id):
 	# thresholds
 	thresholds = [0,50,0,50,50]
 	################
-	
+
 	Configure_DIO5(out_en, term_en, thresholds)
 	ReadStatus("After DIO5 Config")

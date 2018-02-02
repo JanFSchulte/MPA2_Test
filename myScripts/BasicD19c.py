@@ -352,3 +352,9 @@ def read_I2C (chip, address, timeout = 0.001):
 	sleep(timeout)
 	read_data = ReadChipDataNEW()
 	return read_data
+
+def align_out():
+	fc7.write("ctrl_phy_phase_tune_again", 1)
+	while(fc7.read("stat_phy_phase_tuning_done") == 0):
+		sleep(0.5)
+		print "Waiting for the phase tuning"
