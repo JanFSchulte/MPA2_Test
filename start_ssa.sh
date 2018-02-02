@@ -16,6 +16,7 @@ echo "from myScripts import *"                          >> LaunchPy.py
 echo "from ssa_methods import *"                        >> LaunchPy.py
 echo "  "                                               >> LaunchPy.py
 echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('SSA') "  >> LaunchPy.py
+echo "from ssa_methods.cal_utility import * "  		>> LaunchPy.py
 echo "  "                                               >> LaunchPy.py
 echo "ssa = SSA_handle() "                              >> LaunchPy.py
 

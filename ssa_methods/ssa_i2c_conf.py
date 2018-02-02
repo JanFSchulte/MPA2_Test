@@ -28,7 +28,7 @@ class ssa_i2c_conf:
 
 		return rep
 
-	def peri_read(self, register):
+	def peri_read(self, register, timeout = 0.001):
 		
 		if register not in self.ssa_peri_reg_map.keys():
 			print "Register name not found"
@@ -37,7 +37,7 @@ class ssa_i2c_conf:
 		else: 
 			base = ssa_peri_reg_map[register]
 			adr  = (base & 0xfff) | 0b0001000000000000
-			rep  = read_I2C('SSA', adr, 0, self.freq)
+			rep  = read_I2C('SSA', adr, timeout)
 
 		return rep
 
@@ -68,3 +68,5 @@ class ssa_i2c_conf:
 			rep  = read_I2C('SSA', adr, 0, self.freq)
 
 		return rep
+
+I2C = ssa_i2c_conf()

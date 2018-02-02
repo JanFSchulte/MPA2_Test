@@ -1,5 +1,6 @@
 from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
+
 #####################
 # START HERE
 #####################
@@ -29,7 +30,6 @@ from d19cScripts.MPA_SSA_BoardControl import *
 #fc7.write("cnfg_phy_SSA_gen_delay_stub_data",x)
 
 ################
-
 
 def reverse_mask(x):
 	#x = ((x & 0x55555555) << 1) | ((x & 0xAAAAAAAA) >> 1)
@@ -309,7 +309,7 @@ def SetMainSlaveMap():
 	# set the values
 	# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
 	i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA", "MPA0")
-	#i2c_slave_map[0].SetValues(0b0100000, 2, 1, 1, 1, 0, "SSA", "SSA0")
+	i2c_slave_map[1].SetValues(0b0100000, 2, 1, 1, 1, 0, "SSA", "SSA0")
 
 	# updating the slave id table
 	print "---> Updating the Slave ID Map"
@@ -348,7 +348,7 @@ def read_I2C (chip, address, timeout = 0.001):
 	if (chip == 'MPA'):
 		SendCommand_I2C(command_type, 0, MPA, 0, read, address, data, readback)
 	elif (chip == 'SSA'):
-		SendCommand_I2C(command_type, 0, MPA, 0, read, address, data, readback)
+		SendCommand_I2C(command_type, 0, SSA, 0, read, address, data, readback)
 	sleep(timeout)
 	read_data = ReadChipDataNEW()
 	return read_data
