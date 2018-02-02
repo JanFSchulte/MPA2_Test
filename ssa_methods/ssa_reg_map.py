@@ -4,15 +4,15 @@ ssa_strip_reg_map = {'test': 0xfff}
 
 ################# Strip register map #########################
 
-ssa_peri_reg_map['ENFLAGS']                = 0b00001
-ssa_peri_reg_map['SAMPLINGMODE']           = 0b00010
-ssa_peri_reg_map['GAINTRIMMING']           = 0b00011
-ssa_peri_reg_map['THTRIMMING']             = 0b00100
-ssa_peri_reg_map['HIPCUT']                 = 0b00101
-ssa_peri_reg_map['DigCalibPattern_L']      = 0b00110
-ssa_peri_reg_map['DigCalibPattern_H']      = 0b00111
-ssa_peri_reg_map['ReadCounter_MSB']        = 0b01000
-ssa_peri_reg_map['ReadCounter_LSB']        = 0b01001
+ssa_strip_reg_map['ENFLAGS']                = 0b00001
+ssa_strip_reg_map['SAMPLINGMODE']           = 0b00010
+ssa_strip_reg_map['GAINTRIMMING']           = 0b00011
+ssa_strip_reg_map['THTRIMMING']             = 0b00100
+ssa_strip_reg_map['HIPCUT']                 = 0b00101
+ssa_strip_reg_map['DigCalibPattern_L']      = 0b00110
+ssa_strip_reg_map['DigCalibPattern_H']      = 0b00111
+ssa_strip_reg_map['ReadCounter_MSB']        = 0b01000
+ssa_strip_reg_map['ReadCounter_LSB']        = 0b01001
 
 ################# Periphery register map #####################
 

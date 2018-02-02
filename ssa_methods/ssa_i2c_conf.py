@@ -6,6 +6,7 @@ class ssa_i2c_conf:
 
 	def __init__(self):
 		self.ssa_peri_reg_map = ssa_peri_reg_map
+		self.ssa_strip_reg_map = ssa_strip_reg_map
 		self.freq = 0
 
 	def set_freq(self, value):
@@ -55,7 +56,7 @@ class ssa_i2c_conf:
 
 		return rep
 
-	def strip_read(self, register, strip):
+	def strip_read(self, register, strip, timeout = 0.001):
 
 		if register not in self.ssa_strip_reg_map.keys():
 			print "Register name not found"
@@ -65,7 +66,7 @@ class ssa_i2c_conf:
 			strip_id = strip if (strip is not 'all') else 0b00000000
 			base = ssa_strip_reg_map[register]
 			adr  = ((base & 0x000f) << 8 ) & (strip_id & 0b01111111) 
-			rep  = read_I2C('SSA', adr, 0, self.freq)
+			rep  = read_I2C('SSA', adr, timeout)
 
 		return rep
 

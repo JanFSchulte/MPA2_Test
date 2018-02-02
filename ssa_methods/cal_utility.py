@@ -51,3 +51,9 @@ def set_shift_pattern(line0, line1, line2, line3, line4, line5, line6, line7):
 	I2C.peri_write('OutPattern6',line6)
 	I2C.peri_write('OutPattern7/FIFOconfig',line7)
 
+def set_async_delay(value):
+	msb = (value & 0xFF00) >> 8
+	lsb = (value & 0x00FF) >> 0 
+	I2C.peri_write('AsyncRead_StartDel_MSB', msb)
+	I2C.peri_write('AsyncRead_StartDel_LSB', lsb)
+	
