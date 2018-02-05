@@ -16,61 +16,172 @@ ssa_strip_reg_map['ReadCounter_LSB']        = 0b01001
 
 ################# Periphery register map #####################
 
-ssa_peri_reg_map['ReadoutMode']            = 0b000000000000         
-ssa_peri_reg_map['ClusterCut']             = 0b000000000001        
-ssa_peri_reg_map['FE_Calibration']         = 0b000000000010            
-ssa_peri_reg_map['OutPattern0']            = 0b000000000011         
-ssa_peri_reg_map['OutPattern1']            = 0b000000000100         
-ssa_peri_reg_map['OutPattern2']            = 0b000000000101         
-ssa_peri_reg_map['OutPattern3']            = 0b000000000110         
-ssa_peri_reg_map['OutPattern4']            = 0b000000000111         
-ssa_peri_reg_map['OutPattern5']            = 0b000000001000         
-ssa_peri_reg_map['OutPattern6']            = 0b000000001001         
-ssa_peri_reg_map['OutPattern7/FIFOconfig'] = 0b000000001010                    
-ssa_peri_reg_map['Offset0']                = 0b000000001011     
-ssa_peri_reg_map['Offset1']                = 0b000000001100     
-ssa_peri_reg_map['Offset2']                = 0b000000001101     
-ssa_peri_reg_map['Offset3']                = 0b000000001110     
-ssa_peri_reg_map['Offset4']                = 0b000000001111     
-ssa_peri_reg_map['Offset5']                = 0b000000010000     
-ssa_peri_reg_map['ClockDeskewing']         = 0b000000010001            
-ssa_peri_reg_map['AsyncRead_StartDel_LSB'] = 0b000000010010                    
-ssa_peri_reg_map['AsyncRead_StartDel_MSB'] = 0b000000010011                    
-ssa_peri_reg_map['L1-Latency_LSB']         = 0b000000010100            
-ssa_peri_reg_map['L1-Latency_MSB']         = 0b000000010101            
-ssa_peri_reg_map['PhaseShiftClock']        = 0b000000010110             
-ssa_peri_reg_map['EdgeSel_T1']             = 0b000000010111        
-ssa_peri_reg_map['SLVS_pad_current']       = 0b000000011000              
-ssa_peri_reg_map['Bias_D5BFEED']           = 0b000000001001          
-ssa_peri_reg_map['Bias_D5PREAMP']          = 0b000000001001           
-ssa_peri_reg_map['Bias_D5TDR']             = 0b000000001001        
-ssa_peri_reg_map['Bias_D5ALLV']            = 0b000000001001         
-ssa_peri_reg_map['Bias_D5ALLI']            = 0b000000001001         
-ssa_peri_reg_map['Bias_D5DLLB']            = 0b000000001001         
-ssa_peri_reg_map['Bias_D5DAC8']            = 0b000000001001         
-ssa_peri_reg_map['Bias_THDAC']             = 0b000000001001      
-ssa_peri_reg_map['Bias_THDACHIGH']         = 0b000000001001          
-ssa_peri_reg_map['Bias_CALDAC']            = 0b000000001001       
-ssa_peri_reg_map['Bias_DL_en']             = 0b000000100011        
-ssa_peri_reg_map['Bias_DL_ctrl']           = 0b000000100100          
-ssa_peri_reg_map['Bias_TEST_LSB']          = 0b000000100101           
-ssa_peri_reg_map['Bias_TEST_MSB']          = 0b000000100110           
-ssa_peri_reg_map['LateralRX_L_DataPhase']  = 0b000000100111                   
-ssa_peri_reg_map['LateralRX_R_DataPhase']  = 0b000000101000                   
-ssa_peri_reg_map['LateralRX_L_SampleEdge'] = 0b000000101001                    
-ssa_peri_reg_map['LateralRX_R_SampleEdge'] = 0b000000101010                    
-ssa_peri_reg_map['Fuse_Mode']              = 0b000000101011       
-ssa_peri_reg_map['Fuse_Prog_b0']           = 0b000000101100          
-ssa_peri_reg_map['Fuse_Prog_b1']           = 0b000000101101          
-ssa_peri_reg_map['Fuse_Prog_b2']           = 0b000000101110          
-ssa_peri_reg_map['Fuse_Prog_b3']           = 0b000000101111          
-ssa_peri_reg_map['Fuse_Value_b0']          = 0b000000110000         
-ssa_peri_reg_map['Fuse_Value_b1']          = 0b000000110001         
-ssa_peri_reg_map['Fuse_Value_b2']          = 0b000000110010         
-ssa_peri_reg_map['Fuse_Value_b3']          = 0b000000110011         
-ssa_peri_reg_map['CalPulse_duration']      = 0b000000110100               
-ssa_peri_reg_map['SEU_Counter']            = 0b000000110101       
-ssa_peri_reg_map['ClkEnable_Code']         = 0b000000110110      
+
+ssa_peri_reg_map['ReadoutMode']            =  0       
+ssa_peri_reg_map['ClusterCut']             =  1      
+ssa_peri_reg_map['FE_Calibration']         =  2          
+ssa_peri_reg_map['OutPattern0']            =  3       
+ssa_peri_reg_map['OutPattern1']            =  4       
+ssa_peri_reg_map['OutPattern2']            =  5       
+ssa_peri_reg_map['OutPattern3']            =  6       
+ssa_peri_reg_map['OutPattern4']            =  7       
+ssa_peri_reg_map['OutPattern5']            =  8       
+ssa_peri_reg_map['OutPattern6']            =  9       
+ssa_peri_reg_map['OutPattern7/FIFOconfig'] = 10                  
+ssa_peri_reg_map['Offset0']                = 11   
+ssa_peri_reg_map['Offset1']                = 12   
+ssa_peri_reg_map['Offset2']                = 13   
+ssa_peri_reg_map['Offset3']                = 14   
+ssa_peri_reg_map['Offset4']                = 15   
+ssa_peri_reg_map['Offset5']                = 16   
+ssa_peri_reg_map['ClockDeskewing']         = 17          
+ssa_peri_reg_map['AsyncRead_StartDel_LSB'] = 18                  
+ssa_peri_reg_map['AsyncRead_StartDel_MSB'] = 19                  
+ssa_peri_reg_map['L1-Latency_LSB']         = 20          
+ssa_peri_reg_map['L1-Latency_MSB']         = 21          
+ssa_peri_reg_map['PhaseShiftClock']        = 22           
+ssa_peri_reg_map['EdgeSel_T1']             = 23      
+ssa_peri_reg_map['SLVS_pad_current']       = 24            
+ssa_peri_reg_map['Bias_D5BFEED']           = 25        
+ssa_peri_reg_map['Bias_D5PREAMP']          = 26         
+ssa_peri_reg_map['Bias_D5TDR']             = 27      
+ssa_peri_reg_map['Bias_D5ALLV']            = 28       
+ssa_peri_reg_map['Bias_D5ALLI']            = 29       
+ssa_peri_reg_map['Bias_D5DLLB']            = 30       
+ssa_peri_reg_map['Bias_D5DAC8']            = 31       
+ssa_peri_reg_map['Bias_THDAC']             = 32    
+ssa_peri_reg_map['Bias_THDACHIGH']         = 33        
+ssa_peri_reg_map['Bias_CALDAC']            = 34     
+ssa_peri_reg_map['Bias_DL_en']             = 35      
+ssa_peri_reg_map['Bias_DL_ctrl']           = 36        
+ssa_peri_reg_map['Bias_TEST_LSB']          = 37         
+ssa_peri_reg_map['Bias_TEST_MSB']          = 38         
+ssa_peri_reg_map['LateralRX_L_DataPhase']  = 39                 
+ssa_peri_reg_map['LateralRX_R_DataPhase']  = 40                 
+ssa_peri_reg_map['LateralRX_L_SampleEdge'] = 41                  
+ssa_peri_reg_map['LateralRX_R_SampleEdge'] = 42                  
+ssa_peri_reg_map['Fuse_Mode']              = 43     
+ssa_peri_reg_map['Fuse_Prog_b0']           = 44        
+ssa_peri_reg_map['Fuse_Prog_b1']           = 45        
+ssa_peri_reg_map['Fuse_Prog_b2']           = 46        
+ssa_peri_reg_map['Fuse_Prog_b3']           = 47        
+ssa_peri_reg_map['Fuse_Value_b0']          = 48       
+ssa_peri_reg_map['Fuse_Value_b1']          = 49       
+ssa_peri_reg_map['Fuse_Value_b2']          = 50       
+ssa_peri_reg_map['Fuse_Value_b3']          = 51       
+ssa_peri_reg_map['CalPulse_duration']      = 52             
+ssa_peri_reg_map['SEU_Counter']            = 53     
+ssa_peri_reg_map['ClkEnable_Code']         = 54  
+
+
+
+
+
+
+
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ''' TO CONTINUE '''
 

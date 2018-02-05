@@ -51,7 +51,7 @@ class ssa_i2c_conf:
 		else: 
 			strip_id = strip if (strip is not 'all') else 0b00000000
 			base = ssa_strip_reg_map[register]
-			adr  = ((base & 0x000f) << 8 ) & (strip_id & 0b01111111) 
+			adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111) 
 			rep  = write_I2C('SSA', adr, data, self.freq)
 
 		return rep
@@ -65,7 +65,7 @@ class ssa_i2c_conf:
 		else: 
 			strip_id = strip if (strip is not 'all') else 0b00000000
 			base = ssa_strip_reg_map[register]
-			adr  = ((base & 0x000f) << 8 ) & (strip_id & 0b01111111) 
+			adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111) 
 			rep  = read_I2C('SSA', adr, timeout)
 
 		return rep
