@@ -157,6 +157,8 @@ def Configure_TestPulse_MPA_SSA(delay_before_next_pulse, number_of_test_pulses):
   fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
   fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
   fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
+  # disable the l1 backpressure
+  fc7.write("cnfg_fast_backpressure_enable", 0)	  
   # now write
   Configure_TestPulse(50, 50, delay_before_next_pulse, number_of_test_pulses)
 
