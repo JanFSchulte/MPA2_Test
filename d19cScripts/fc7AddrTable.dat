@@ -120,6 +120,7 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1
    cnfg_fast_tp_fsm_l1a_en		40012009    00000040     1     1
 * Physical Interface Abstraction Layer
    cnfg_phy_slvs_raw_mode_en		40013000    00000001     1     1
+   cnfg_phy_slvs_ssa_first_counter_del  40013000    0000ff00	 1     1
    cnfg_phy_i2c_freq                    40013001    0000000f     1     1
    cnfg_phy_i2c_master_en		40013001    00000100     1     1
    cnfg_phy_SSA_gen_trig_data_format    40013004    0000000f     1     1
