@@ -68,41 +68,6 @@ def set_async_delay(value):
 	I2C.peri_write('AsyncRead_StartDel_MSB', msb)
 	I2C.peri_write('AsyncRead_StartDel_LSB', lsb)
 	
-def read_all_lines():
-	#SendCommand_CTRL("fast_test_pulse")
-	#SendCommand_CTRL("fast_trigger")
-	Configure_TestPulse(199, 50, 400, 1)
-	sleep(0.001)
-	SendCommand_CTRL("start_trigger")
-	sleep(0.1)
-	status = fc7.read("stat_slvs_debug_general")
-	mpa_l1_data = fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
-	mpa_stub_data = fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
-	lateral_data = fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
-
-	print "--> Status: "
-	print "---> MPA L1 Data Ready: ", ((status & 0x00000001) >> 0)
-	print "---> MPA Stub Data Ready: ", ((status & 0x00000002) >> 1)
-	print "---> MPA Counters Ready: ", ((status & 0x00000004) >> 2)
-	print "---> Lateral Data Counters Ready: ", ((status & 0x00000008) >> 3)
-	
-	print "\n--> L1 Data: "
-	for word in mpa_l1_data:
-	    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
-
-	counter = 0 
-	print "\n--> Stub Data: "
-	for word in mpa_stub_data:
-	    if (counter % 10 == 0): 
-	        print "Line: " + str(counter/10) 
-	    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
-	    counter += 1
-	
-	print "\n--> Lateral Data: "
-	for word in lateral_data:
-	    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
-
-
 def start_counters_read():
     encode_fast_reset = fc7AddrTable.getItem("ctrl_fast_signal_fast_reset").shiftDataToMask(1)
     encode_orbit_reset = fc7AddrTable.getItem("ctrl_fast_signal_orbit_reset").shiftDataToMask(1)

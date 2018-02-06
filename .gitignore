@@ -1,3 +1,6 @@
 *.pyc
 ipaddr.dat 
-
+d19cScripts/ipaddr.dat
+LaunchPy.py
+tmp*
+temp*
