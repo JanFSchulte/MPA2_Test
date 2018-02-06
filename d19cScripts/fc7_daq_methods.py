@@ -152,8 +152,20 @@ def Configure_Fast(triggers_to_accept, user_frequency, source, stubs_mask, stubs
   SendCommand_CTRL("load_trigger_config")
   sleep(0.001)
 
+def Configure_TestPulse_MPA_SSA(delay_before_next_pulse, number_of_test_pulses):
+  # fast commands within the test pulse fsm
+  fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
+  fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
+  fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
+  # disable the l1 backpressure
+  fc7.write("cnfg_fast_backpressure_enable", 0)	  
+  # now write
+  Configure_TestPulse(50, 50, delay_before_next_pulse, number_of_test_pulses)
+
 def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses):
-  fc7.write("cnfg_fast_initial_fast_reset_enable", 1)
+  # initial fast reset which is sent once after start_trigger command
+  fc7.write("cnfg_fast_initial_fast_reset_enable", 0)
+  # configure delays
   fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
   fc7.write("cnfg_fast_delay_after_test_pulse", delay_after_test_pulse)
   fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
@@ -162,6 +174,7 @@ def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_be
   sleep(0.1)
   SendCommand_CTRL("load_trigger_config")
   sleep(0.1)
+
 # Configure I2C
 def Configure_I2C(mask):
   fc7.write("cnfg_command_i2c", fc7AddrTable.getItem("cnfg_command_i2c_mask").shiftDataToMask(mask))
