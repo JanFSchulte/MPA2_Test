@@ -68,13 +68,12 @@ def disable_pixel(r,p):
 	I2C.pixel_write('ENFLAGS', r, p, 0x00)
 def send_pulses(n_pulse):
 	open_shutter()
-
+	sleep(0.01)
 	for i in range(0, n_pulse):
-		SendCommand_CTRL("reset_trigger")
 		send_test()
-		SendCommand_CTRL("fast_trigger")
+	sleep(0.001)
 	close_shutter()
-def send_pulses_fast(number_of_test_pulses = 0, delay_after_fast_reset = 50, 	delay_after_test_pulse = 200, delay_before_next_pulse = 400):
+def send_pulses_fast(number_of_test_pulses = 100, delay_after_fast_reset = 200, delay_after_test_pulse = 200, delay_before_next_pulse = 200):
 	## now we can set the desired parameters for the test pulse
 	# in 40MHz clock cycles
 
@@ -82,11 +81,25 @@ def send_pulses_fast(number_of_test_pulses = 0, delay_after_fast_reset = 50, 	de
 
 	fc7.write("cnfg_fast_backpressure_enable", 0)
 	## now configure the test pulse machine
-	Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses)
+	Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses)
 	open_shutter()
+	sleep(0.01)
 	SendCommand_CTRL("start_trigger")
-	sleep(1)
+	sleep(0.01)
 	close_shutter()
+
+def send_pulse_trigger(number_of_test_pulses = 1, delay_after_fast_reset = 200, delay_after_test_pulse = 200, delay_before_next_pulse = 200):
+	## now we can set the desired parameters for the test pulse
+	# in 40MHz clock cycles
+
+	# 0 - infinite number of sequencies, otherwise as specified
+
+	fc7.write("cnfg_fast_backpressure_enable", 0)
+	## now configure the test pulse machine
+	Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses)
+	sleep(0.01)
+	SendCommand_CTRL("start_trigger")
+	sleep(0.01)
 
 
 def read_pixel_counter(row, pixel):
@@ -156,7 +169,7 @@ def s_curve(n_pulse, cal, row, pixel, step = 1, start = 0, stop = 256, print_fil
 def hit_map(n_pulse, cal, th, row = range(1,17), pixel = range (2,120) , print_file =1, filename = "../cernbox/MPA_Results/hitmap"):
 	clear_counters()
 	clear_counters()
-	#activate_I2C_chip()
+	activate_I2C_chip()
 	t0 = time.time()
 	pixel = np.array(pixel)
 	row = np.array(row)
@@ -251,6 +264,7 @@ def s_curve_rbr_fr(n_pulse = 1000, cal = 50, row = range(1,17), step = 1, start 
 		for r in row:
 			disable_pixel(0, 0)
 			enable_pix_counter(r, 0)
+			sleep(0.01)
 			send_pulses(n_pulse)
 		temp = ReadoutCounters()
 		data_array [:, count_th]= temp
@@ -282,7 +296,7 @@ def check_clear_counters(change = 1):
 			print str(i) + " " + str(value)
 
 
-def s_curve_pbp_fr(n_pulse = 1000, cal = 50, row = range(1,17), step = 1, start = 0, stop = 256, plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/scurve_fr_"):
+def s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1,120), step = 1, start = 0, stop = 256, pulse_delay = 50,  plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/scurve_fr_"):
 	t0 = time.time()
 	clear_counters()
 	clear_counters()
@@ -295,21 +309,40 @@ def s_curve_pbp_fr(n_pulse = 1000, cal = 50, row = range(1,17), step = 1, start 
 	#data_array = np.zeros(((stop-start)/step+1, nrow*118), dtype = np.int )
 	activate_async()
 	set_calibration(cal)
+	sleep(1)
 	count_th = 0
 	sys.stdout.write("Progress Scurve: ")
 	sys.stdout.flush()
+	fc7.write("cnfg_fast_backpressure_enable", 0)
+	## now configure the test pulse machine
+	Configure_TestPulse(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse)
 	for th in range(start, stop, step): # Temoporary: need to add clear counter fast command
 		set_threshold(th)
 		sys.stdout.write(str(count_th*100/((stop-start)/step+2)) + "% | ")
 		sys.stdout.flush()
+		tA = time.time()
 		for r in row:
-			for p in range(1,120):
+			for p in pixel:
 				disable_pixel(0, 0)
 				enable_pix_counter(r, p)
-				send_pulses(n_pulse)
+				sleep(0.005)
+				open_shutter()
+				if (cal != 0):
+					sleep(0.005)
+					SendCommand_CTRL("start_trigger")
+					test = 1
+					while (test):
+						test = fc7.read("stat_fast_fsm_state")
+						sleep(0.001)
+				else:
+					sleep(0.000001*n_pulse)
+				close_shutter()
+		tB = time.time()
+		sleep(0.005)
 		temp = ReadoutCounters()
+		tC = time.time()
+		#print "Elapsed Time: " + str(tC - tB) + " " + str(tB - tA)
 		data_array [:, count_th]= temp
-		clear_counters()
 		clear_counters()
 		count_th += 1
 	t1 = time.time()
@@ -317,7 +350,7 @@ def s_curve_pbp_fr(n_pulse = 1000, cal = 50, row = range(1,17), step = 1, start 
 	print "Elapsed Time: " + str(t1 - t0)
 	if plot:
 		for r in row:
-			for p in range(1,120):
+			for p in pixel:
 				plt.plot(range(0,nstep), data_array[p,:],'-')
 		plt.xlabel('Threshold DAC value')
 		plt.ylabel('Counter Value')
@@ -327,3 +360,16 @@ def s_curve_pbp_fr(n_pulse = 1000, cal = 50, row = range(1,17), step = 1, start 
 		CSV.ArrayToCSV (data_array, str(filename) + "_cal_" + str(cal) + ".csv")
 
 	return data_array
+
+def memory_test(latency, row, pixel, diff):
+	t0 = time.time()
+	activate_I2C_chip()
+	disable_pixel(0,0)
+	for r in row:
+		I2C.row_write('L1Offset_1', r,  latency - diff)
+		I2C.row_write('L1Offset_2', r,  0)
+		for p in pixel:
+			enable_dig_cal(r, p)
+	send_pulse_trigger(number_of_test_pulses = 1, delay_after_fast_reset = 200, delay_after_test_pulse = latency, delay_before_next_pulse = 200)
+	sleep(0.1)
+	read_L1()

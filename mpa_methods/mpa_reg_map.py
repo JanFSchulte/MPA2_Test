@@ -1,8 +1,8 @@
 
 mpa_peri_reg_map = {'test': 0xfff}
 mpa_pixel_reg_map = {'test': 0xfff}
-
-################# Strip register map #########################
+mpa_row_reg_map = {'test': 0xfff}
+################# Pixel register map #########################
 
 mpa_pixel_reg_map['ENFLAGS']            = 0b0000
 mpa_pixel_reg_map['ModeSel']            = 0b0001
@@ -12,6 +12,14 @@ mpa_pixel_reg_map['HipCut']             = 0b0100
 mpa_pixel_reg_map['DigPattern']         = 0b0101
 mpa_pixel_reg_map['ReadCounter_LSB']    = 0b1001
 mpa_pixel_reg_map['ReadCounter_MSB']    = 0b1010
+
+################# Memory register map #########################
+
+mpa_row_reg_map['L1Offset_1']         = 0b0001
+mpa_row_reg_map['L1Offset_2']         = 0b0010
+mpa_row_reg_map['ClrRst']             = 0b0011
+mpa_row_reg_map['MemGatEn']           = 0b0100
+mpa_row_reg_map['SEUcntRow']          = 0b0101
 
 ################# Periphery register map #####################
 

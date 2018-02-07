@@ -53,8 +53,8 @@ def read_regs( verbose =  1 ):
 
 		print "\n--> L1 Data: "
 		for word in mpa_l1_data:
-			print "--->", '%10s' % bin(to_number(reverse_mask(word),32,24)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),8,0)).lstrip('-0b').zfill(8)
-
+			#print "--->", '%10s' % bin(to_number(reverse_mask(word),32,24)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),8,0)).lstrip('-0b').zfill(8)
+			print "--->",  '%10s' % bin(to_number(reverse_mask(word),8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),32,24)).lstrip('-0b').zfill(8)
 		print "\n--> Stub Data: "
 		for word in mpa_stub_data:
 			print "--->", '%10s' % bin(to_number(reverse_mask(word),32,24)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),8,0)).lstrip('-0b').zfill(8)
@@ -107,14 +107,60 @@ def read_stubs(raw = 0):
 def read_L1():
 	status = fc7.read("stat_slvs_debug_general")
 	mpa_l1_data = fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
-	l1 = np.zeros((1,200), dtype = np.uint8)
-	line = 0
+	l1 = np.zeros((200,), dtype = np.uint8)
 	cycle = 0
 	for word in mpa_l1_data:
 		for i in range(0,4):
-			l1[line, cycle] = bin(to_number(reverse_mask(word),32-i*8,24-i*8)).lstrip('-0b').zfill(8)
+			l1[cycle] = to_number(reverse_mask(word),(i+1)*8,i*8)
 			cycle += 1
-	return l1
+	found = 0
+	for i in range(1,200):
+		if ((l1[i] == 255)&(l1[i-1] == 255)&(~found)):
+			header = l1[i-1] << 11 | l1[i-1] << 3 | ((l1[i+1] & 0b11100000) >> 5)
+			error = ((l1[i+1] & 0b00011000) >> 3)
+			L1_ID = ((l1[i+1] & 0b00000111) << 6) | ((l1[i+2] & 0b11111100) >> 2)
+			strip_counter = ((l1[i+2] & 0b00000001) << 4) | ((l1[i+3] & 0b11110000) >> 4)
+			pixel_counter = ((l1[i+3] & 0b00001111) << 1) | ((l1[i+4] & 0b10000000) >> 7)
+			pos_strip = ((l1[i+4] & 0b00111111) << 1) | ((l1[i+5] & 0b10000000) >> 7) # Pos 1
+			width_strip = (l1[i+5] & 0b01110000) >> 4
+			MIP = (l1[i+5] & 0b00001000) >> 3
+			payload = bin(l1[i+4] & 0b00111111).lstrip('-0b').zfill(6)
+			for j in range(5,50):
+				payload = payload + bin(l1[i+j]).lstrip('-0b').zfill(8)
+			found = 1
+	if found:
+		print "Header: " + bin(header)
+		print "error: " + bin(error)
+		print "L1_ID: " + str(L1_ID)
+		print "strip_counter: " + str(strip_counter)
+		print "pixel_counter: " + str(pixel_counter)
+		strip_data = payload[0:strip_counter*11]
+		pixel_data = payload[strip_counter*11: strip_counter*11 + pixel_counter*14]
+		print "Strip Cluster:"
+		strip_cluster = np.zeros((strip_counter,), dtype = np.int)
+		pixel_cluster = np.zeros((pixel_counter,), dtype = np.int)
+		pos_strip = np.zeros((strip_counter,), dtype = np.int)
+		width_strip = np.zeros((strip_counter,), dtype = np.int)
+		MIP = np.zeros((strip_counter,), dtype = np.int)
+		for i in range(0, strip_counter):
+			strip_cluster[i] 	=  int(strip_data[11*i:11*(i+1)], 2)
+			pos_strip[i] 		= (int(strip_data[11*i:11*(i+1)], 2) & 0b11111110000) >> 4
+			width_strip[i] 		= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000001110) >> 1
+			MIP[i] 				= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000000001)
+			print "Position: " + str(pos_strip[i]) + " Width: " + str(width_strip[i]) + " MIP: " + str(MIP[i])
+		print "Pixel Cluster:"
+		pos_pixel = np.zeros((pixel_counter,), dtype = np.int)
+		width_pixel = np.zeros((pixel_counter,), dtype = np.int)
+		Z = np.zeros((pixel_counter,), dtype = np.int)
+		for i in range(0, pixel_counter):
+			pixel_cluster[i] = int(pixel_data[14*i:14*(i+1)], 2)
+			pos_pixel[i] 	= (int(pixel_data[14*i:14*(i+1)], 2) & 0b11111110000000) >> 7
+			width_pixel[i] 	= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000001110000) >> 4
+			Z[i] 			= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000000001111) + 1
+			print "Position: " + str(pos_pixel[i]) + " Width: " + str(width_pixel[i]) + " Row Number: " + str(Z[i])
+	else:
+		print "Header not found!"
+
 def send_trigger():
 	SendCommand_CTRL("fast_trigger")
 
