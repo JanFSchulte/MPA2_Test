@@ -120,9 +120,11 @@ def ReadoutCounters(raw_mode_en = 0):
 	StartCountersRead()
 	timeout = 0
 	while ((mpa_counters_ready == 0) & (timeout < 10)):
-		sleep(0.01)
+		sleep(0.001)
 		mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
 		timeout += 1
+	if (timeout == 10):
+		print "Readout Counter failed"
 	#print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
 	if raw_mode_en == 1:
 		count = np.zeros((2040, ), dtype = np.uint16)
@@ -160,7 +162,7 @@ def ReadoutCounters(raw_mode_en = 0):
 		for i in range(2040):
 			count[i] = count[i] - 1
 
-	sleep(0.1)
+	sleep(0.001)
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
 	#print "---> MPA Counters Ready(should be zero): ", mpa_counters_ready
 	#if print_file:
@@ -219,3 +221,13 @@ def strip_in_test(n_pulse = 10, line = range(0,8),  value = [128, 64, 32, 16, 8,
 	print "Elapsed Time: " + str(t1 - t0)
 
 	return line_check
+
+#def strip_in_l1():
+#	reset()
+#	activate_I2C_chip()
+#	activate_sync()
+# 	align_out()
+#	fc7.write("cnfg_phy_SSA_enable_gen_l1_data", 1)
+#	fc7.write("cnfg_phy_SSA_gen_l1_data_format_3", 16)
+#	fc7.write("cnfg_phy_SSA_gen_delay_trig_data",6)
+#	fc7.write("ctrl_phy_ssa_gen_trig_phase",168)
