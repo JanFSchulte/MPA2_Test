@@ -116,7 +116,7 @@ def read_counters_fast(ssa_first_counter_delay = 8, raw_mode_en = 0):
 		# here is the parsed mode, when the fpga parses all the counters
 		count = fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 120)
 		# the last counter has to be read over I2C
-		count[119] = I2C.strip_read("ReadCounter_LSB",120)
+		count[119] = (I2C.strip_read("ReadCounter_MSB",120) << 8) | I2C.strip_read("ReadCounter_LSB",120)
 
 	sleep(0.1)
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
@@ -131,8 +131,8 @@ def set_threshold(value):
 
 def init_default_thresholds():
 	# init thersholds
-	I2C.peri_write("Bias_THDAC", 255-35)
-	I2C.peri_write("Bias_THDACHIGH", 255-120)
+	I2C.peri_write("Bias_THDAC", 35)
+	I2C.peri_write("Bias_THDACHIGH", 120)
 
 def init_cal_pulse(cal_pulse_amplitude = 255, cal_pulse_duration = 3):
 	# enable strips
@@ -141,7 +141,7 @@ def init_cal_pulse(cal_pulse_amplitude = 255, cal_pulse_duration = 3):
 	I2C.peri_write("Bias_DL_en", 1)
 	I2C.peri_write("Bias_DL_ctrl", 1)
 	# init cal pulse itself
-	I2C.peri_write("Bias_CALDAC", 255)
+	I2C.peri_write("Bias_CALDAC", cal_pulse_amplitude)
 	I2C.peri_write("CalPulse_duration", cal_pulse_duration)
 
 def measure_scurves(nevents = 50, cal_pulse_amplitude = 0):

@@ -42,10 +42,26 @@ def readout_clusters(apply_offset_correction = True, display = False):
 
 	status = fc7.read("stat_slvs_debug_general")
 	ssa_stub_data = fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
+	lateral_data = fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
 	
 	while ((status & 0x00000002) >> 1) != 1: 
 		status = fc7.read("stat_slvs_debug_general")
 		sleep(0.001)
+		counter = 0 
+	
+	if (display is True):
+		counter = 0 
+		print "\n--> Stub Data: "
+		for word in ssa_stub_data:
+		    if (counter % 10 == 0): 
+		        print "Line: " + str(counter/10) 
+		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+		    counter += 1
+		
+		print "\n--> Lateral Data: "
+		for word in lateral_data:
+		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+
 
  	if (apply_offset_correction == True):
 		ofs[0] = I2C.peri_read('Offset0')
