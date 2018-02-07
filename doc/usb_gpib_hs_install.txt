@@ -1,0 +1,41 @@
+USB-GPIB-HS with CentOS + Python:
+
+1. Check, that you see something like "Bus 002 Device 008: ID 3923:709b National Instruments Corp. GPIB-USB-HS" when you do lsusb
+2. Download the tar file with the source code of the linux-gpib: https://sourceforge.net/projects/linux-gpib/files/
+(kernels 3.x.x and 2.6.x, I guess) and the most recent version from there (4.1.0 worked good for me)
+3. do "tar zxvf linux-gpib*.tar.gz" & "cd linux-gpib*" & "./configure" & "make" & "sudo make install"
+4. go to "cd ./languages/python" and do "sudo python setup.py install"
+5. export the installation path of the gpib library to your LD_LIBRARY_PATH (better in .bashrc) "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib"
+6. replace the first slave (minor=0) in the /etc/gpib.conf with the next one:
+	interface {
+	    minor       = 0             /* board index, minor = 0 uses /dev/gpib0, minor = 1 uses /dev/gpib1 */
+	    board_type  = "ni_usb_b"    /* type of interface board being used */
+	    name        = "multimeter"  /* optional name, allows you to get a board descriptor using ibfind() */
+	    pad         = 0             /* primary address of interface             */
+	    sad         = 0             /* secondary address of interface           */
+	    timeout     = T30s          /* timeout for commands */
+	    eos         = 0x0a          /* EOS Byte, 0xa is newline and 0xd is carriage return */
+	    set-reos    = yes           /* Terminate read if EOS */
+	    set-bin     = no            /* Compare EOS 8-bit */
+	    set-xeos    = no            /* Assert EOI whenever EOS byte is sent */
+	    set-eot     = yes           /* Assert EOI with last byte on writes */
+	    master      = yes           /* interface board is system controller */
+	}
+7. set the udev rules to be able to access the device (you can also create a special access group):
+	in /etc/udev/rules.d/99-linux_gpib_ni_usb.rules:
+	SUBSYSTEM=="usb", ACTION=="add", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="3923", ATTR{idProduct}=="709b", MODE="660", GROUP="USERNAME", SYMLINK+="usb_gpib"
+	SUBSYSTEM=="usb", ACTION=="add", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="3923", ATTR{idProduct}=="709b", RUN+="/usr/local/sbin/gpib_config"
+	KERNEL=="gpib[0-9]*", ACTION=="add", MODE="660", GROUP="USERNAME"
+8. reload the udev rules: "sudo udevadm control --reload-rules"
+9. load the module: "modprobe ni_usb_gpib"
+10. reconnect the device
+11. try to run in python:
+	>>> import Gpib
+	>>> inst = Gpib.Gpib(0,16) # Device address 16
+	>>> inst.write("*IDN?")
+	>>> inst.read(100) # read 100 bytes
+
+In case of problems try to consult the article for Raspberry... https://xdevs.com/guide/ni_gpib_rpi/
+
+
+
