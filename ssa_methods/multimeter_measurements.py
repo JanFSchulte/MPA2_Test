@@ -157,7 +157,7 @@ def check_nominals():
 			self.nominal = nominal
 			self.best_dac = best_dac
 	# define the pars
-	par_list = [Parameter("Booster Feedback Bias", "D5BFEED", 82.0), Parameter("Preamplifier Bias", "D5PREAMP", 82.0), Parameter("TRIM DAC range", "D5TDR", 115.0), Parameter("DAC for voltage biases","D5ALLV", 82.0), Parameter("DAC for current biases","D5ALLI", 82.0), Parameter("Threshold DAC", "THDAC", 622.0), Parameter("Threshold High DAC", "THDACHIGH", 622.0), Parameter("Calibration DAC", "CALDAC", 100.0), Parameter("DAC for threshold and calibration", "D5DAC8", 86.0)]
+	par_list = [Parameter("Booster Feedback Bias", "D5BFEED", 82.0), Parameter("Preamplifier Bias", "D5PREAMP", 82.0), Parameter("TRIM DAC range", "D5TDR", 115.0), Parameter("DAC for voltage biases","D5ALLV", 82.0), Parameter("DAC for current biases","D5ALLI", 82.0), Parameter("DAC for threshold and calibration", "D5DAC8", 86.0), Parameter("Threshold DAC", "THDAC", 622.0), Parameter("Threshold High DAC", "THDACHIGH", 622.0), Parameter("Calibration DAC", "CALDAC", 100.0)]
 
 	# iterate and measure
 	for par in par_list:
@@ -197,5 +197,26 @@ def measure_vth_linearity():
 		data[i] = measure(inst)
 		if (i % 10 == 0):
 			print "Done point ", i, " of ", 256
+
+	return data
+
+
+def measure_booster_linearity():
+	inst = init_keithley(3)
+	activate_I2C_chip()
+	
+	# demux the line
+	set_measurement("D5BFEED")	
+	
+	#array
+	data = np.zeros(32, dtype=np.float);
+
+	# do the measurement
+	for i in range(0, 32):
+		#set_threshold(i)
+		I2C.peri_write("Bias_D5BFEED", i)
+		sleep(0.1)
+		data[i] = measure(inst)
+		print "Done point ", i, " of ", 32
 
 	return data

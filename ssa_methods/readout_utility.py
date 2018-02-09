@@ -128,9 +128,9 @@ def readout_l1_data(latency = 50, display = False):
 def read_all_lines():
 	#SendCommand_CTRL("fast_test_pulse")
 	#SendCommand_CTRL("fast_trigger")
-	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 1)
+	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-	fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
+	fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
 
 	Configure_TestPulse(199, 50, 400, 1)
 	sleep(0.001)

@@ -164,29 +164,37 @@ def read_L1():
 def send_resync():
 	SendCommand_CTRL("fast_fast_reset")
 
-def send_trigger():
-	SendCommand_CTRL("fast_trigger")
+def send_trigger(duration = 0):
+	compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
-def open_shutter():
-	SendCommand_CTRL("fast_trigger")
+def open_shutter(duration = 0):
+	compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
-def send_test():
-	SendCommand_CTRL("fast_test_pulse")
+def send_test(duration = 0):
+	compose_fast_command(duration, resync_en = 0, l1a_en = 0, cal_pulse_en = 1, bc0_en = 0)
 
-def orbit_reset():
-	SendCommand_CTRL("fast_orbit_reset")
+def orbit_reset(duration = 0):
+	compose_fast_command(duration, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 1)
 
-def close_shutter():
-	SendCommand_CTRL("fast_orbit_reset")
+def close_shutter(duration = 0):
+	compose_fast_command(duration, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 1)
 
 def reset():
 	SendCommand_CTRL("global_reset")
 
-def clear_counters():
-    encode_fast_trigger = fc7AddrTable.getItem("ctrl_fast_signal_trigger").shiftDataToMask(1)
-    encode_orbit_reset = fc7AddrTable.getItem("ctrl_fast_signal_orbit_reset").shiftDataToMask(1)
-    fc7.write("ctrl_fast", encode_fast_trigger + encode_orbit_reset)
+def clear_counters(duration = 0):
+    	compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 1)
 
+def start_counters_read(duration = 0):
+	compose_fast_command(duration, resync_en = 1, l1a_en = 0, cal_pulse_en = 0, bc0_en = 1)
+
+def compose_fast_command(duration = 0, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 0):
+    encode_resync = fc7AddrTable.getItem("ctrl_fast_signal_fast_reset").shiftDataToMask(resync_en)
+    encode_l1a = fc7AddrTable.getItem("ctrl_fast_signal_trigger").shiftDataToMask(l1a_en)
+    encode_cal_pulse = fc7AddrTable.getItem("ctrl_fast_signal_test_pulse").shiftDataToMask(cal_pulse_en)
+    encode_bc0 = fc7AddrTable.getItem("ctrl_fast_signal_orbit_reset").shiftDataToMask(bc0_en)
+    encode_duration = fc7AddrTable.getItem("ctrl_fast_signal_duration").shiftDataToMask(duration)
+    fc7.write("ctrl_fast", encode_resync + encode_l1a + encode_cal_pulse + encode_bc0 + encode_duration)
 
 class I2C_MainSlaveMapItem:
 	def __init__(self):

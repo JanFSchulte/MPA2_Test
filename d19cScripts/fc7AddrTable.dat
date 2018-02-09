@@ -223,6 +223,7 @@ ipb_daq_system_ctrl			40020000    ffffffff     1     1
    ctrl_fast_signal_trigger     	40022000    00040000     1     1
    ctrl_fast_signal_orbit_reset 	40022000    00080000     1     1
    ctrl_fast_signal_i2c_refresh 	40022000    00100000     1     1
+   ctrl_fast_signal_duration		40022000    f0000000     1     1
 * Physical Interface Abstraction Layer
    ctrl_phy_chip_hard_reset		40023000    00000001     1     1
    ctrl_phy_phase_tune_again		40023000    00000002     1     1
