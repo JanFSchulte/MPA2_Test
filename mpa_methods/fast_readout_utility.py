@@ -115,7 +115,8 @@ def ReadoutCounters(raw_mode_en = 0):
 	t0 = time.time()
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
 	#print "---> Sending Start and Waiting for Data"
-	StartCountersRead()
+	#StartCountersRead()
+	start_counters_read(8)
 	timeout = 0
 	while ((mpa_counters_ready == 0) & (timeout < 50)):
 		sleep(0.01)
