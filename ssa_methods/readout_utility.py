@@ -20,10 +20,11 @@ def select_dig_pulse_injection(hit_list = [], hip_list = []):
 	
 	#enable pulse injection in selected clusters
 	for cl in hit_list:
-		I2C.strip_write("ENFLAGS", 0, 0b01001)
+		I2C.strip_write("ENFLAGS", cl, 0b01001)
 		I2C.strip_write("DigCalibPattern_L", cl, 0xff)
+
 	for cl in hip_list:	
-		I2C.strip_write("ENFLAGS", 0, 0b01001)
+		I2C.strip_write("ENFLAGS", cl, 0b01001)
 		I2C.strip_write("DigCalibPattern_H", cl, 0xff)
 
 
@@ -33,7 +34,7 @@ def readout_clusters(apply_offset_correction = True, display = False):
  	ofs = [0]*6
 	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-	fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
+	fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
 	activate_readout_normal()
 	Configure_TestPulse(199, 50, 400, 1)
 	sleep(0.001)
@@ -42,10 +43,26 @@ def readout_clusters(apply_offset_correction = True, display = False):
 
 	status = fc7.read("stat_slvs_debug_general")
 	ssa_stub_data = fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
-	
+	lateral_data = fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
+
 	while ((status & 0x00000002) >> 1) != 1: 
 		status = fc7.read("stat_slvs_debug_general")
 		sleep(0.001)
+		counter = 0 
+	
+	if (display is True):
+		counter = 0 
+		print "\n--> Stub Data: "
+		for word in ssa_stub_data:
+		    if (counter % 10 == 0): 
+		        print "Line: " + str(counter/10) 
+		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+		    counter += 1
+		
+		print "\n--> Lateral Data: "
+		for word in lateral_data:
+		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+
 
  	if (apply_offset_correction == True):
 		ofs[0] = I2C.peri_read('Offset0')
@@ -57,7 +74,7 @@ def readout_clusters(apply_offset_correction = True, display = False):
 
  	for i in range(0,8):
  		
- 		val = (to_number(ssa_stub_data[5+i*10],32,24) / 2.0) 
+ 		val = (to_number(ssa_stub_data[5+i*10],24,16) / 2.0) 
  		
  		if val != 0:
 	 		if (apply_offset_correction == True):
@@ -66,6 +83,19 @@ def readout_clusters(apply_offset_correction = True, display = False):
 			coordinates.append( val )
 
 	return coordinates
+
+def test_digital_pulse_injection(display=True):
+	for i in range(1,121):
+		select_dig_pulse_injection([i])
+		r = readout_clusters()
+		dstr = "Error   -> expected cluster in " + str(i) + " but found " + str(r) 
+		if (len(r) != 1):
+			print dstr
+		elif (r[0] != i):
+			print dstr
+		else:
+			if(display == True): 
+				print "Passed -> expected cluster in " + str(i) + " and found " + str(r) 
 
 
 def readout_l1_data(latency = 50, display = False):
@@ -99,8 +129,8 @@ def readout_l1_data(latency = 50, display = False):
 	BX_counter = (int(bin(to_number(ssa_l1_data[4],23,22)).lstrip('-0b').zfill(8),2) << 8) | (int(bin(to_number(ssa_l1_data[4],32,24)).lstrip('-0b').zfill(8),2)) 
 	data = 0
 
-	print "L1 counter: " + str(L1_counter)
-	print "BX counter: " + str(BX_counter)
+	print "L1 counter: " , str(L1_counter), "  (" ,  bin(L1_counter), ")" 
+	print "BX counter: " , str(BX_counter), "  (" ,  bin(BX_counter), ")"
 
 	for i in range(5,10):
 		word = ssa_l1_data[i]
