@@ -210,3 +210,18 @@ def strip_in_test(n_pulse = 10, line = range(0,8),  value = [128, 64, 32, 16, 8,
 #	fc7.write("cnfg_phy_SSA_gen_l1_data_format_3", 16)
 #	fc7.write("cnfg_phy_SSA_gen_delay_trig_data",6)
 #	fc7.write("ctrl_phy_ssa_gen_trig_phase",168)
+
+def test_L1_fast_command(npulse):
+	for j in range(0,npulse):
+		send_trigger()
+		sleep(0.001)
+		L1_ID = read_L1()
+		if (L1_ID!=1): print "ERROR 1"
+		sleep(0.001)
+		send_resync()
+		sleep(0.001)
+		send_trigger()
+		sleep(0.001)
+		L1_ID = read_L1()
+		if (L1_ID!=0): print "ERROR 2"
+		sleep(0.001)

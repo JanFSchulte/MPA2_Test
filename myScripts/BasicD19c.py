@@ -129,14 +129,14 @@ def read_L1():
 				payload = payload + bin(l1[i+j]).lstrip('-0b').zfill(8)
 			found = 1
 	if found:
-		print "Header: " + bin(header)
-		print "error: " + bin(error)
-		print "L1_ID: " + str(L1_ID)
-		print "strip_counter: " + str(strip_counter)
-		print "pixel_counter: " + str(pixel_counter)
+		#print "Header: " + bin(header)
+		#print "error: " + bin(error)
+		#print "L1_ID: " + str(L1_ID)
+		#print "strip_counter: " + str(strip_counter)
+		#print "pixel_counter: " + str(pixel_counter)
 		strip_data = payload[0:strip_counter*11]
 		pixel_data = payload[strip_counter*11: strip_counter*11 + pixel_counter*14]
-		print "Strip Cluster:"
+		#print "Strip Cluster:"
 		strip_cluster = np.zeros((strip_counter,), dtype = np.int)
 		pixel_cluster = np.zeros((pixel_counter,), dtype = np.int)
 		pos_strip = np.zeros((strip_counter,), dtype = np.int)
@@ -147,8 +147,8 @@ def read_L1():
 			pos_strip[i] 		= (int(strip_data[11*i:11*(i+1)], 2) & 0b11111110000) >> 4
 			width_strip[i] 		= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000001110) >> 1
 			MIP[i] 				= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000000001)
-			print "Position: " + str(pos_strip[i]) + " Width: " + str(width_strip[i]) + " MIP: " + str(MIP[i])
-		print "Pixel Cluster:"
+			#print "Position: " + str(pos_strip[i]) + " Width: " + str(width_strip[i]) + " MIP: " + str(MIP[i])
+		#print "Pixel Cluster:"
 		pos_pixel = np.zeros((pixel_counter,), dtype = np.int)
 		width_pixel = np.zeros((pixel_counter,), dtype = np.int)
 		Z = np.zeros((pixel_counter,), dtype = np.int)
@@ -157,9 +157,12 @@ def read_L1():
 			pos_pixel[i] 	= (int(pixel_data[14*i:14*(i+1)], 2) & 0b11111110000000) >> 7
 			width_pixel[i] 	= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000001110000) >> 4
 			Z[i] 			= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000000001111) + 1
-			print "Position: " + str(pos_pixel[i]) + " Width: " + str(width_pixel[i]) + " Row Number: " + str(Z[i])
+			#print "Position: " + str(pos_pixel[i]) + " Width: " + str(width_pixel[i]) + " Row Number: " + str(Z[i])
 	else:
 		print "Header not found!"
+	return L1_ID
+def send_resync():
+	SendCommand_CTRL("fast_fast_reset")
 
 def send_trigger():
 	SendCommand_CTRL("fast_trigger")
