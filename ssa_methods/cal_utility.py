@@ -7,6 +7,7 @@ import numpy as np
 import time
 import sys
 import inspect
+import matplotlib.pyplot as plt
 
 def init_all():
 	reset()
@@ -54,7 +55,7 @@ def activate_readout_async(ssa_first_counter_delay = 8):
 		print "Error! I2C did not work properly"
 		exit(1)
 	# ssa set delay of the counters
-	fc7.write("cnfg_phy_slvs_ssa_first_counter_del", ssa_first_counter_delay+25)
+	fc7.write("cnfg_phy_slvs_ssa_first_counter_del", ssa_first_counter_delay+26)
 	
 def activate_readout_shift():
         I2C.peri_write('ReadoutMode',0b10)
@@ -78,11 +79,6 @@ def set_async_delay(value):
 	I2C.peri_write('AsyncRead_StartDel_MSB', msb)
 	I2C.peri_write('AsyncRead_StartDel_LSB', lsb)
 	
-def start_counters_read():
-    encode_fast_reset = fc7AddrTable.getItem("ctrl_fast_signal_fast_reset").shiftDataToMask(1)
-    encode_orbit_reset = fc7AddrTable.getItem("ctrl_fast_signal_orbit_reset").shiftDataToMask(1)
-    fc7.write("ctrl_fast", encode_fast_reset + encode_orbit_reset)
-
 def read_counters_fast(raw_mode_en = 0):
 	# set the raw mode to the firmware
 	fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)
@@ -90,7 +86,7 @@ def read_counters_fast(raw_mode_en = 0):
 	# counter ready signal
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
 
-	start_counters_read()
+	start_counters_read(1)
 	timeout = 0
 	while ((mpa_counters_ready == 0) & (timeout < 50)):
 		sleep(0.01)
@@ -154,8 +150,8 @@ def measure_scurves(nevents = 50, cal_pulse_amplitude = 50):
 	# first go to the async mode
 	activate_readout_async()
 	# close shutter and clear counters
-	close_shutter()
-	clear_counters()
+	close_shutter(1)
+	clear_counters(1)
 	# init chip cal pulse
 	init_cal_pulse(cal_pulse_amplitude, 3)
 	# init firmware cal pulse
@@ -171,9 +167,9 @@ def measure_scurves(nevents = 50, cal_pulse_amplitude = 50):
 		# set the threshold
 		set_threshold(threshold)
 		# clear counters
-		clear_counters()
+		clear_counters(1)
 		# open shutter
-		open_shutter()
+		open_shutter(2)
 		# send sequence of NEVENTS pulses
 		SendCommand_CTRL("start_trigger")
 		# sleep a bit and wait for trigger to finish
@@ -181,12 +177,16 @@ def measure_scurves(nevents = 50, cal_pulse_amplitude = 50):
 		while(fc7.read("stat_fast_fsm_state") != 0):
 			sleep(0.1)
 		# close shutter and read counters
-		close_shutter()
+		close_shutter(1)
 		failed, scurves[threshold] = read_counters_fast()
 		if failed:
 			print "Failed to read counters for threshold ", threshold, ". Redoing"
 			threshold = threshold - 1
 		# threshold increment
 		threshold = threshold + 1
-		
+	
+	plt.clf()
+	plt.plot(scurves)
+	plt.show()
+	
 	return scurves
