@@ -129,14 +129,14 @@ def read_L1():
 				payload = payload + bin(l1[i+j]).lstrip('-0b').zfill(8)
 			found = 1
 	if found:
-		print "Header: " + bin(header)
-		print "error: " + bin(error)
-		print "L1_ID: " + str(L1_ID)
-		print "strip_counter: " + str(strip_counter)
-		print "pixel_counter: " + str(pixel_counter)
+		#print "Header: " + bin(header)
+		#print "error: " + bin(error)
+		#print "L1_ID: " + str(L1_ID)
+		#print "strip_counter: " + str(strip_counter)
+		#print "pixel_counter: " + str(pixel_counter)
 		strip_data = payload[0:strip_counter*11]
 		pixel_data = payload[strip_counter*11: strip_counter*11 + pixel_counter*14]
-		print "Strip Cluster:"
+		#print "Strip Cluster:"
 		strip_cluster = np.zeros((strip_counter,), dtype = np.int)
 		pixel_cluster = np.zeros((pixel_counter,), dtype = np.int)
 		pos_strip = np.zeros((strip_counter,), dtype = np.int)
@@ -147,8 +147,8 @@ def read_L1():
 			pos_strip[i] 		= (int(strip_data[11*i:11*(i+1)], 2) & 0b11111110000) >> 4
 			width_strip[i] 		= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000001110) >> 1
 			MIP[i] 				= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000000001)
-			print "Position: " + str(pos_strip[i]) + " Width: " + str(width_strip[i]) + " MIP: " + str(MIP[i])
-		print "Pixel Cluster:"
+			#print "Position: " + str(pos_strip[i]) + " Width: " + str(width_strip[i]) + " MIP: " + str(MIP[i])
+		#print "Pixel Cluster:"
 		pos_pixel = np.zeros((pixel_counter,), dtype = np.int)
 		width_pixel = np.zeros((pixel_counter,), dtype = np.int)
 		Z = np.zeros((pixel_counter,), dtype = np.int)
@@ -157,33 +157,44 @@ def read_L1():
 			pos_pixel[i] 	= (int(pixel_data[14*i:14*(i+1)], 2) & 0b11111110000000) >> 7
 			width_pixel[i] 	= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000001110000) >> 4
 			Z[i] 			= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000000001111) + 1
-			print "Position: " + str(pos_pixel[i]) + " Width: " + str(width_pixel[i]) + " Row Number: " + str(Z[i])
+			#print "Position: " + str(pos_pixel[i]) + " Width: " + str(width_pixel[i]) + " Row Number: " + str(Z[i])
 	else:
 		print "Header not found!"
+	return L1_ID
+def send_resync():
+	SendCommand_CTRL("fast_fast_reset")
 
-def send_trigger():
-	SendCommand_CTRL("fast_trigger")
+def send_trigger(duration = 0):
+	compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
-def open_shutter():
-	SendCommand_CTRL("fast_trigger")
+def open_shutter(duration = 0):
+	compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
-def send_test():
-	SendCommand_CTRL("fast_test_pulse")
+def send_test(duration = 0):
+	compose_fast_command(duration, resync_en = 0, l1a_en = 0, cal_pulse_en = 1, bc0_en = 0)
 
-def orbit_reset():
-	SendCommand_CTRL("fast_orbit_reset")
+def orbit_reset(duration = 0):
+	compose_fast_command(duration, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 1)
 
-def close_shutter():
-	SendCommand_CTRL("fast_orbit_reset")
+def close_shutter(duration = 0):
+	compose_fast_command(duration, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 1)
 
 def reset():
 	SendCommand_CTRL("global_reset")
 
-def clear_counters():
-    encode_fast_trigger = fc7AddrTable.getItem("ctrl_fast_signal_trigger").shiftDataToMask(1)
-    encode_orbit_reset = fc7AddrTable.getItem("ctrl_fast_signal_orbit_reset").shiftDataToMask(1)
-    fc7.write("ctrl_fast", encode_fast_trigger + encode_orbit_reset)
+def clear_counters(duration = 0):
+    	compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 1)
 
+def start_counters_read(duration = 0):
+	compose_fast_command(duration, resync_en = 1, l1a_en = 0, cal_pulse_en = 0, bc0_en = 1)
+
+def compose_fast_command(duration = 0, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 0):
+    encode_resync = fc7AddrTable.getItem("ctrl_fast_signal_fast_reset").shiftDataToMask(resync_en)
+    encode_l1a = fc7AddrTable.getItem("ctrl_fast_signal_trigger").shiftDataToMask(l1a_en)
+    encode_cal_pulse = fc7AddrTable.getItem("ctrl_fast_signal_test_pulse").shiftDataToMask(cal_pulse_en)
+    encode_bc0 = fc7AddrTable.getItem("ctrl_fast_signal_orbit_reset").shiftDataToMask(bc0_en)
+    encode_duration = fc7AddrTable.getItem("ctrl_fast_signal_duration").shiftDataToMask(duration)
+    fc7.write("ctrl_fast", encode_resync + encode_l1a + encode_cal_pulse + encode_bc0 + encode_duration)
 
 class I2C_MainSlaveMapItem:
 	def __init__(self):

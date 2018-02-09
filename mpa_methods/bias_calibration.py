@@ -11,6 +11,18 @@ import matplotlib.pyplot as plt
 from myScripts.BasicMultimeter import *
 import Gpib
 
+def disable_test():
+	activate_I2C_chip()
+	I2C.peri_write('TESTMUX',0b00000000)
+	I2C.peri_write('TEST0',0b00000000)
+	I2C.peri_write('TEST1',0b00000000)
+	I2C.peri_write('TEST2',0b00000000)
+	I2C.peri_write('TEST3',0b00000000)
+	I2C.peri_write('TEST4',0b00000000)
+	I2C.peri_write('TEST5',0b00000000)
+	I2C.peri_write('TEST6',0b00000000)
+
+
 def DAC_linearity(block, point, bit, inst, step = 1, plot = 1):
 	nameDAC = ["A", "B", "C", "D", "E", "ThDAC", "CalDAC"]
 	DAC = nameDAC[point] + str(block)
@@ -81,3 +93,13 @@ def calibrate_chip():
 	for point in range(0,5):
 		for block in range(0,7):
 			calibrate_bias(point, block, DAC_val[point], exp_val[point], inst)
+	disable_test()
+
+def trimDAC_amplitude(value):
+	activate_I2C_chip()
+	for block in range(0,7):
+		#curr = I2C.peri_read("C"+str(block))
+		#new_value = curr + value
+		I2C.peri_write("C"+str(block), value)
+	trm_LSB = round(((0.172-0.048)/32.0*value+0.048)/32.0*1000.0,2)
+	return trm_LSB
