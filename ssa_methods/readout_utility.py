@@ -10,14 +10,18 @@ import time
 import sys
 import inspect
 
-def select_dig_pulse_injection(hit_list = [], hip_list = []):
+def dig_pulse_injection(hit_list = [], hip_list = []):
 	
 	activate_readout_normal()
 	#reset digital calib patterns
-	I2C.strip_write("ENFLAGS", 0, 0b00001)
+	I2C.strip_write("ENFLAGS", 0, 0b01001)
 	I2C.strip_write("DigCalibPattern_L", 0, 0)
 	I2C.strip_write("DigCalibPattern_H", 0, 0)
-	
+	I2C.strip_write("DigCalibPattern_L", 0, 0)
+	I2C.strip_write("DigCalibPattern_H", 0, 0)	
+
+	I2C.peri_write("CalPulse_duration", 15)
+
 	#enable pulse injection in selected clusters
 	for cl in hit_list:
 		I2C.strip_write("ENFLAGS", cl, 0b01001)
@@ -27,15 +31,35 @@ def select_dig_pulse_injection(hit_list = [], hip_list = []):
 		I2C.strip_write("ENFLAGS", cl, 0b01001)
 		I2C.strip_write("DigCalibPattern_H", cl, 0xff)
 
+def analog_pulse_injection(hit_list = [], hip_list = [], threshold = 50, cal_pulse_amplitude = 200):
+	
+	activate_readout_normal()
+	
+	init_cal_pulse(cal_pulse_amplitude, 5)
+	Configure_TestPulse_MPA_SSA(200, 1)
+	set_threshold(threshold)
 
-def readout_clusters(apply_offset_correction = True, display = False):
+	#reset digital calib patterns
+	I2C.strip_write("ENFLAGS", 0, 0b00001)
+	I2C.strip_write("DigCalibPattern_L", 0, 0)
+	I2C.strip_write("DigCalibPattern_H", 0, 0)
+
+	#enable pulse injection in selected clusters
+	for cl in hit_list:
+		I2C.strip_write("ENFLAGS", cl, 0b10001)
+
+	SendCommand_CTRL("start_trigger")
+	sleep(0.01)
+
+
+def readout_clusters(apply_offset_correction = True, display = False, shift = 0):
 
  	coordinates = []
  	ofs = [0]*6
 	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 	fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-	activate_readout_normal()
+	#activate_readout_normal()
 	Configure_TestPulse(199, 50, 400, 1)
 	sleep(0.001)
 	SendCommand_CTRL("start_trigger")
@@ -74,7 +98,7 @@ def readout_clusters(apply_offset_correction = True, display = False):
 
  	for i in range(0,8):
  		
- 		val = (to_number(ssa_stub_data[5+i*10],24,16) / 2.0) 
+ 		val = (to_number(ssa_stub_data[5+i*10],16,8) / 2.0) 
  		
  		if val != 0:
 	 		if (apply_offset_correction == True):
@@ -86,7 +110,7 @@ def readout_clusters(apply_offset_correction = True, display = False):
 
 def test_digital_pulse_injection(display=True):
 	for i in range(1,121):
-		select_dig_pulse_injection([i])
+		dig_pulse_injection([i])
 		r = readout_clusters()
 		dstr = "Error   -> expected cluster in " + str(i) + " but found " + str(r) 
 		if (len(r) != 1):
@@ -98,74 +122,86 @@ def test_digital_pulse_injection(display=True):
 				print "Passed -> expected cluster in " + str(i) + " and found " + str(r) 
 
 
-def readout_l1_data(latency = 50, display = False):
-
-	l1datavect = [0]*120
-	hipflagvect = [0]*24
+def readout_l1_data(latency = 50, display = False, shift = 0):
 
 	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 	fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
 	
+	I2C.peri_write('L1-Latency_MSB', 0)
+	I2C.peri_write('L1-Latency_LSB', latency)
+
 	activate_readout_normal()
-	Configure_TestPulse(199, (latency+3), 400, 1)
+	Configure_TestPulse(199, (latency+3+shift), 400, 1)
 	sleep(0.001)
 	SendCommand_CTRL("start_trigger")
 	sleep(0.1)
 
-	I2C.peri_write('L1-Latency_MSB', 0)
-	I2C.peri_write('L1-Latency_LSB', latency)
-
 	status = fc7.read("stat_slvs_debug_general")
 	
 	ssa_l1_data = fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
-	
+
 	if(display is True): 
 		print "\n--> L1 Data: "
 		for word in ssa_l1_data:
 		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
 
-	L1_counter = int(bin(to_number(ssa_l1_data[4],21,17)).lstrip('-0b').zfill(8),2)
-	BX_counter = (int(bin(to_number(ssa_l1_data[4],23,22)).lstrip('-0b').zfill(8),2) << 8) | (int(bin(to_number(ssa_l1_data[4],32,24)).lstrip('-0b').zfill(8),2)) 
 	data = 0
-
-	print "L1 counter: " , str(L1_counter), "  (" ,  bin(L1_counter), ")" 
-	print "BX counter: " , str(BX_counter), "  (" ,  bin(BX_counter), ")"
-
-	for i in range(5,10):
+	for i in range(4,10):
 		word = ssa_l1_data[i]
-		tmp = (   int(bin(to_number(word,8,0)).lstrip('-0b').zfill(8),2)   <<32 
+		tmp = (   int(bin(to_number(word,8,0)).lstrip('-0b').zfill(8),2)   <<24 
 		        | int(bin(to_number(word,16,8)).lstrip('-0b').zfill(8),2)  <<16 
 		        | int(bin(to_number(word,24,16)).lstrip('-0b').zfill(8),2) << 8 
 		        | int(bin(to_number(word,32,24)).lstrip('-0b').zfill(8), 2)
 		      )
 		data = data | (tmp << (32*(9-i)))
-	data = data >> 16
-	for i in range(0,120):
-		l1datavect[i] = data & 0b1
-		data = data >> 1
-	tmp = (   int(bin(to_number(ssa_l1_data[5], 8, 0)).lstrip('-0b').zfill(8),2)  << 16 
-		    | int(bin(to_number(ssa_l1_data[5],16, 8)).lstrip('-0b').zfill(8),2)  << 8 
-	        | int(bin(to_number(ssa_l1_data[5],24,16)).lstrip('-0b').zfill(8),2)  
-	        
-	      )
-	for i in range(0,24):
-		hipflagvect[i] = tmp & 0b1
-		tmp = tmp >> 1
 
-	return l1datavect, hipflagvect
+	while ((data & 0b1) != 0b1 ):
+		data =  data >> 1
+
+	L1_counter = (data >> 154) & 0b1111
+	BX_counter = (data >> 145) & 0b1111
+	l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
+	hidata = (data >> 121) & 0xffffff
+
+	print "L1 counter: " , str(L1_counter), "  (" ,  bin(L1_counter), ")" 
+	print "BX counter: " , str(BX_counter), "  (" ,  bin(BX_counter), ")"
+
+	l1datavect = [0]*120
+	hipflagvect = [0]*24
+
+	for i in range(0,120):
+		l1datavect[i] = l1data & 0b1
+		l1data = l1data >> 1
+
+	for i in range(0,24):
+		hipflagvect[i] = hidata & 0b1
+		hidata = hidata >> 1
+
+	#return l1datavect, hipflagvect
+	l1hitlist = []
+	for i in range(0,120):
+		if(l1datavect[i] > 0): 
+			l1hitlist.append(i+1)
+	hiplist = [] 
+	for i in range(0,24):
+		if(hipflagvect[i] > 0): 
+			hiplist.append(i+1)
+
+	return l1hitlist, hiplist
 
 def read_all_lines():
 	#SendCommand_CTRL("fast_test_pulse")
 	#SendCommand_CTRL("fast_trigger")
-	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
-	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-	fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
-
-	Configure_TestPulse(199, 50, 400, 1)
-	sleep(0.001)
-	SendCommand_CTRL("start_trigger")
-	sleep(0.1)
+	
+	#fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
+	#fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
+	#fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
+	#
+	#Configure_TestPulse(199, 50, 400, 1)
+	#sleep(0.001)
+	#SendCommand_CTRL("start_trigger")
+	#sleep(0.1)
 	status = fc7.read("stat_slvs_debug_general")
 	ssa_l1_data = fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
 	ssa_stub_data = fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
@@ -199,4 +235,15 @@ def read_all_lines():
 #    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
 
 
+def lateral_data_phase(left, right):
+	fc7.write("ctrl_phy_ssa_gen_lateral_phase_1", left)
+	fc7.write("ctrl_phy_ssa_gen_lateral_phase_2", right)
 
+def set_lateral_data(left, right):
+	fc7.write("cnfg_phy_SSA_gen_right_lateral_data_format", left)
+	fc7.write("cnfg_phy_SSA_gen_left_lateral_data_format", right)
+
+
+
+#Configure_TestPulse_MPA_SSA(3, 0)
+#SendCommand_CTRL('start_trigger')

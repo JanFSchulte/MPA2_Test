@@ -9,16 +9,19 @@ import sys
 import inspect
 import matplotlib.pyplot as plt
 
-def init_all():
+def init_all(edge = "negative"):
 	reset()
 	activate_I2C_chip()
-	set_t1_sampling_edge("negative")
+	set_t1_sampling_edge(edge)
 	init_slvs()
 	activate_readout_shift()
 	set_shift_pattern_all(128) 
 	time.sleep(0.01)
+	set_lateral_lines_alignament()
+	time.sleep(0.01)
 	do_phase_tuning()
 	I2C.peri_write('OutPattern7/FIFOconfig', 7)
+	reset_pattern_injection()
 	activate_readout_normal()
 	
 def print_method(name):
@@ -28,8 +31,24 @@ def print_method(name):
 def init_slvs():
 	I2C.peri_write('SLVS_pad_current', 0b001)
 
+def set_lateral_lines_alignament():
+	I2C.strip_write("ENFLAGS", 0, 0b01001)
+	I2C.strip_write("DigCalibPattern_L", 0, 0)
+	I2C.strip_write("DigCalibPattern_H", 0, 0)
+	I2C.peri_write( "CalPulse_duration", 15)
+	I2C.strip_write("ENFLAGS",   7, 0b01001)
+	I2C.strip_write("ENFLAGS", 120, 0b01001)
+	I2C.strip_write("DigCalibPattern_L",   7, 0xff)
+	I2C.strip_write("DigCalibPattern_L", 120, 0xff)
+
+def reset_pattern_injection():
+	I2C.strip_write("ENFLAGS", 0, 0b01001)
+	I2C.strip_write("DigCalibPattern_L", 0, 0)
+	I2C.strip_write("DigCalibPattern_H", 0, 0)
+
 def do_phase_tuning():
 	fc7.write("ctrl_phy_phase_tune_again", 1)
+	send_test(15)
 	while(fc7.read("stat_phy_phase_tuning_done") == 0):
         	sleep(0.5)
         	print "Waiting for the phase tuning"	
@@ -86,7 +105,7 @@ def read_counters_fast(raw_mode_en = 0):
 	# counter ready signal
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
 
-	start_counters_read(1)
+	start_counters_read(3)
 	timeout = 0
 	while ((mpa_counters_ready == 0) & (timeout < 50)):
 		sleep(0.01)
@@ -146,14 +165,14 @@ def init_cal_pulse(cal_pulse_amplitude = 255, cal_pulse_duration = 3):
 	I2C.peri_write("Bias_CALDAC", cal_pulse_amplitude)
 	I2C.peri_write("CalPulse_duration", cal_pulse_duration)
 
-def measure_scurves(nevents = 50, cal_pulse_amplitude = 50):
+def measure_scurves(nevents = 500, cal_pulse_amplitude = 150):
 	# first go to the async mode
 	activate_readout_async()
 	# close shutter and clear counters
 	close_shutter(1)
 	clear_counters(1)
 	# init chip cal pulse
-	init_cal_pulse(cal_pulse_amplitude, 3)
+	init_cal_pulse(cal_pulse_amplitude, 5)
 	# init firmware cal pulse
 	Configure_TestPulse_MPA_SSA(200, nevents)
 

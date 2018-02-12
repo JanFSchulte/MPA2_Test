@@ -232,7 +232,8 @@ ipb_daq_system_ctrl			40020000    ffffffff     1     1
    ctrl_phy_fast_cmd_phase              40023003    000000ff     1     1
    ctrl_phy_ssa_gen_trig_phase          40023003    0000ff00     1     1
    ctrl_phy_ssa_gen_stub_phase          40023003    00ff0000     1     1
-   ctrl_phy_ssa_gen_lateral_phase       40023003    ff000000     1     1
+   ctrl_phy_ssa_gen_lateral_phase_1     40023004    000000ff     1     1
+   ctrl_phy_ssa_gen_lateral_phase_2     40023004    0000ff00     1     1
    cnfg_phy_SSA_enable_gen_l1_data      40013004    01000000     1     1
 * Readout Block
    ctrl_readout_reset			40025000    00000001	 1     1
@@ -280,6 +281,8 @@ ipb_daq_system_stat			40030000    ffffffff     1     0
    stat_fast_fsm_source     		40032000    0000000f     1     0
    stat_fast_trigger_in_counter		40032001    ffffffff     1     0
 * Physical Interface Abstraction Layer
+   stat_phy_phase_fsm_state_chip0_lateral_l  40033002 0000000f 1 0
+   stat_phy_phase_fsm_state_chip0_lateral_r  40033002 000000f0 1 0
    stat_phy_phase_tuning_done  		40033002    00010000   	 1     0
    stat_phy_phase_fsm_state_chip0	40033002    00f00000	 1     0
    stat_phy_phase_fsm_state_chip1	40033002    0f000000	 1     0
