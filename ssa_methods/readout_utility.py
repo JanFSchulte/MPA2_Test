@@ -20,6 +20,35 @@ def set_lateral_data(left, right):
 	fc7.write("cnfg_phy_SSA_gen_right_lateral_data_format", right)
 	fc7.write("cnfg_phy_SSA_gen_left_lateral_data_format", left)
 
+def align_lateral_input(display = True):
+	alined_left  = False
+	alined_right = False
+
+	fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
+
+	print "Allaining left input line"
+	set_lateral_data(0b00001001, 0)
+	while (alined_left == False):  
+		clusters = readout_clusters(display_prev = display)
+		if len(clusters) == 2:
+			if(clusters[0] == 121 and clusters[1] == 124):
+				alined_left = True
+		time.sleep(0.001)
+		lateral_data_phase(0,5)
+		time.sleep(0.001)
+	print "Done"
+		
+	print "Allaining right input line"
+	set_lateral_data(0, 0b10010000)
+	while (alined_right == False):  
+		clusters = readout_clusters(display_prev = display)
+		if len(clusters) == 2:
+			if(clusters[0] == 0 and clusters[1] == -2):
+				alined_right = True
+		time.sleep(0.001)
+		lateral_data_phase(5,0)
+		time.sleep(0.001)
+	print "Done"
 
 def dig_pulse_injection(hit_list = [], hip_list = [], initialise = True):
 	
@@ -142,8 +171,8 @@ def readout_clusters(apply_offset_correction = False, display = False, shift = 0
 		print coordinatesA
 		print coordinates
 		print coordinatesC
-	else: 
-		return coordinates
+	 
+	return coordinates
 
 def test_digital_pulse_injection(display=False):
 	dig_pulse_injection(hit_list = [], initialise = True)
