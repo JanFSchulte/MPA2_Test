@@ -64,7 +64,7 @@ def set_t1_sampling_edge(edge):
 def activate_readout_normal():
 	I2C.peri_write('ReadoutMode',0b00)
 
-def activate_readout_async(ssa_first_counter_delay = 8):
+def activate_readout_async(ssa_first_counter_delay = 8, correction = 0):
 	I2C.peri_write('ReadoutMode',0b01)
 	# write to the I2C
 	I2C.peri_write("AsyncRead_StartDel_MSB", 0)
@@ -74,7 +74,7 @@ def activate_readout_async(ssa_first_counter_delay = 8):
 		print "Error! I2C did not work properly"
 		exit(1)
 	# ssa set delay of the counters
-	fc7.write("cnfg_phy_slvs_ssa_first_counter_del", ssa_first_counter_delay+26)
+	fc7.write("cnfg_phy_slvs_ssa_first_counter_del", ssa_first_counter_delay+24+correction)
 	
 def activate_readout_shift():
         I2C.peri_write('ReadoutMode',0b10)
@@ -105,7 +105,7 @@ def read_counters_fast(raw_mode_en = 0):
 	# counter ready signal
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
 
-	start_counters_read(3)
+	start_counters_read(1)
 	timeout = 0
 	while ((mpa_counters_ready == 0) & (timeout < 50)):
 		sleep(0.01)
@@ -165,7 +165,7 @@ def init_cal_pulse(cal_pulse_amplitude = 255, cal_pulse_duration = 3):
 	I2C.peri_write("Bias_CALDAC", cal_pulse_amplitude)
 	I2C.peri_write("CalPulse_duration", cal_pulse_duration)
 
-def measure_scurves(nevents = 500, cal_pulse_amplitude = 150):
+def measure_scurves(nevents = 1000, cal_pulse_amplitude = 150, display = True):
 	# first go to the async mode
 	activate_readout_async()
 	# close shutter and clear counters
@@ -182,12 +182,16 @@ def measure_scurves(nevents = 500, cal_pulse_amplitude = 150):
 	threshold = 0
 	while (threshold < 256):
 		# debug output		
-		print "Setting the threshold to ", threshold, ", sending the test pulse and reading the counters"
+		strout = ""
+		#print "Setting the threshold to ", threshold, ", sending the test pulse and reading the counters"
 		# set the threshold
+		strout += "threshold = " + str(threshold) + ".   " 
 		set_threshold(threshold)
 		# clear counters
 		clear_counters(1)
 		# open shutter
+		open_shutter(2)
+		open_shutter(2)
 		open_shutter(2)
 		# send sequence of NEVENTS pulses
 		SendCommand_CTRL("start_trigger")
@@ -199,13 +203,16 @@ def measure_scurves(nevents = 500, cal_pulse_amplitude = 150):
 		close_shutter(1)
 		failed, scurves[threshold] = read_counters_fast()
 		if failed:
-			print "Failed to read counters for threshold ", threshold, ". Redoing"
+			strout += "Failed to read counters for threshold " + str(threshold) + ". Redoing"
 			threshold = threshold - 1
+		else: 
+			strout += "Counters samples = 1->[" + str(scurves[threshold][0]) + "]  30->[" + str(scurves[threshold][29]) + "]  60->[" + str(scurves[threshold][59]) + "]  90->[" + str(scurves[threshold][89]) + "]  120->[" + str(scurves[threshold][119]) + "]"    
 		# threshold increment
 		threshold = threshold + 1
-	
-	plt.clf()
-	plt.plot(scurves)
-	plt.show()
+		print strout
+	if(display == True):
+		plt.clf()
+		plt.plot(scurves)
+		plt.show()
 	
 	return scurves

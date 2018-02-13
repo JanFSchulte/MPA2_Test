@@ -9,26 +9,34 @@ import numpy as np
 import time
 import sys
 import inspect
+import random
 
-def dig_pulse_injection(hit_list = [], hip_list = []):
+
+def execute_percent(val = 0, max = 100): 
+	i = int( (float(val)/max) * 100.0) - 1
+	row = ""*i + "   "
+	sys.stdout.write("%s\r%d%%" %(row, i + 1))
+	sys.stdout.flush()
+	time.sleep(0.01)
+
+
+def dig_pulse_injection(hit_list = [], hip_list = [], initialise = True):
 	
-	activate_readout_normal()
-	#reset digital calib patterns
-	I2C.strip_write("ENFLAGS", 0, 0b01001)
+	if(initialise == True):
+		#reset digital calib patterns
+		activate_readout_normal()
+		I2C.strip_write("DigCalibPattern_L", 0, 0)
+		I2C.strip_write("DigCalibPattern_H", 0, 0)
+		I2C.peri_write("CalPulse_duration", 15)
+		I2C.strip_write("ENFLAGS", 0, 0b01001)
+	
 	I2C.strip_write("DigCalibPattern_L", 0, 0)
 	I2C.strip_write("DigCalibPattern_H", 0, 0)
-	I2C.strip_write("DigCalibPattern_L", 0, 0)
-	I2C.strip_write("DigCalibPattern_H", 0, 0)	
-
-	I2C.peri_write("CalPulse_duration", 15)
-
 	#enable pulse injection in selected clusters
 	for cl in hit_list:
-		I2C.strip_write("ENFLAGS", cl, 0b01001)
 		I2C.strip_write("DigCalibPattern_L", cl, 0xff)
 
 	for cl in hip_list:	
-		I2C.strip_write("ENFLAGS", cl, 0b01001)
 		I2C.strip_write("DigCalibPattern_H", cl, 0xff)
 
 def analog_pulse_injection(hit_list = [], hip_list = [], threshold = 50, cal_pulse_amplitude = 200):
@@ -52,27 +60,28 @@ def analog_pulse_injection(hit_list = [], hip_list = [], threshold = 50, cal_pul
 	sleep(0.01)
 
 
-def readout_clusters(apply_offset_correction = True, display = False, shift = 0):
+def readout_clusters(apply_offset_correction = False, display = False, shift = 0, initialize = True):
 
  	coordinates = []
  	ofs = [0]*6
-	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
-	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-	fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-	#activate_readout_normal()
-	Configure_TestPulse(199, 50, 400, 1)
-	sleep(0.001)
+
+ 	if(initialize == True):
+		Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
+		sleep(0.001)
+
+	SendCommand_CTRL("start_trigger")
 	SendCommand_CTRL("start_trigger")
 	sleep(0.01)
 
 	status = fc7.read("stat_slvs_debug_general")
-	ssa_stub_data = fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
-	lateral_data = fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
-
 	while ((status & 0x00000002) >> 1) != 1: 
 		status = fc7.read("stat_slvs_debug_general")
 		sleep(0.001)
 		counter = 0 
+	
+	sleep(0.001)
+	ssa_stub_data = fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
+	lateral_data = fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
 	
 	if (display is True):
 		counter = 0 
@@ -87,7 +96,6 @@ def readout_clusters(apply_offset_correction = True, display = False, shift = 0)
 		for word in lateral_data:
 		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
 
-
  	if (apply_offset_correction == True):
 		ofs[0] = I2C.peri_read('Offset0')
 		ofs[1] = I2C.peri_read('Offset1')
@@ -97,21 +105,28 @@ def readout_clusters(apply_offset_correction = True, display = False, shift = 0)
 		ofs[5] = I2C.peri_read('Offset5')
 
  	for i in range(0,8):
- 		
  		val = (to_number(ssa_stub_data[5+i*10],16,8) / 2.0) 
- 		
  		if val != 0:
 	 		if (apply_offset_correction == True):
+	 			val = val - 3
 	 			## TO BE IMPLEMENTED
+	 		else:
 	 			val = val - 3
 			coordinates.append( val )
 
 	return coordinates
 
-def test_digital_pulse_injection(display=True):
-	for i in range(1,121):
-		dig_pulse_injection([i])
-		r = readout_clusters()
+def test_digital_pulse_injection(display=False):
+	dig_pulse_injection(hit_list = [], initialise = True)
+	readout_clusters(initialize = True)
+	cnt = 0
+	for i in random.sample(range(1, 121), 120):
+		cnt += 1
+		dig_pulse_injection(hit_list = [i], initialise = False)
+		#dig_pulse_injection(hit_list = [i], initialise = False)
+		time.sleep(0.01)
+		r = readout_clusters(initialize = False)
+		time.sleep(0.01)
 		dstr = "Error   -> expected cluster in " + str(i) + " but found " + str(r) 
 		if (len(r) != 1):
 			print dstr
@@ -120,7 +135,7 @@ def test_digital_pulse_injection(display=True):
 		else:
 			if(display == True): 
 				print "Passed -> expected cluster in " + str(i) + " and found " + str(r) 
-
+		execute_percent(cnt, 120)
 
 def readout_l1_data(latency = 50, display = False, shift = 0):
 
