@@ -4,7 +4,7 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from ssa_methods.ssa_i2c_conf import *
 from ssa_methods.cal_utility import *
-
+from myScripts.Utilities import *
 import numpy as np
 import time
 import sys
@@ -12,12 +12,13 @@ import inspect
 import random
 
 
-def execute_percent(val = 0, max = 100): 
-	i = int( (float(val)/max) * 100.0) - 1
-	row = ""*i + "   "
-	sys.stdout.write("%s\r%d%%" %(row, i + 1))
-	sys.stdout.flush()
-	time.sleep(0.01)
+def lateral_data_phase(left, right):
+	fc7.write("ctrl_phy_ssa_gen_lateral_phase_1", right)
+	fc7.write("ctrl_phy_ssa_gen_lateral_phase_2", left)
+
+def set_lateral_data(left, right):
+	fc7.write("cnfg_phy_SSA_gen_right_lateral_data_format", right)
+	fc7.write("cnfg_phy_SSA_gen_left_lateral_data_format", left)
 
 
 def dig_pulse_injection(hit_list = [], hip_list = [], initialise = True):
@@ -29,12 +30,22 @@ def dig_pulse_injection(hit_list = [], hip_list = [], initialise = True):
 		I2C.strip_write("DigCalibPattern_H", 0, 0)
 		I2C.peri_write("CalPulse_duration", 15)
 		I2C.strip_write("ENFLAGS", 0, 0b01001)
+		fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
 	
 	I2C.strip_write("DigCalibPattern_L", 0, 0)
 	I2C.strip_write("DigCalibPattern_H", 0, 0)
-	#enable pulse injection in selected clusters
+	leftdata  = 0b00000000
+	rightdata = 0b00000000
+
 	for cl in hit_list:
-		I2C.strip_write("DigCalibPattern_L", cl, 0xff)
+		if (cl < 1): 
+			rightdata = rightdata | (0b1 << (7+cl))
+		elif (cl > 120): 
+			leftdata = leftdata | (0b1 << (7-(cl-120)))
+		else: 
+			I2C.strip_write("DigCalibPattern_L", cl, 0xff)
+
+	set_lateral_data(left = leftdata, right = rightdata)
 
 	for cl in hip_list:	
 		I2C.strip_write("DigCalibPattern_H", cl, 0xff)
@@ -60,9 +71,7 @@ def analog_pulse_injection(hit_list = [], hip_list = [], threshold = 50, cal_pul
 	sleep(0.01)
 
 
-def readout_clusters(apply_offset_correction = False, display = False, shift = 0, initialize = True):
-
- 	coordinates = []
+def readout_clusters(apply_offset_correction = False, display = False, shift = 0, initialize = True, display_prev = False):
  	ofs = [0]*6
 
  	if(initialize == True):
@@ -92,9 +101,9 @@ def readout_clusters(apply_offset_correction = False, display = False, shift = 0
 		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
 		    counter += 1
 		
-		print "\n--> Lateral Data: "
-		for word in lateral_data:
-		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+		#print "\n--> Lateral Data: "
+		#for word in lateral_data:
+		#    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
 
  	if (apply_offset_correction == True):
 		ofs[0] = I2C.peri_read('Offset0')
@@ -103,7 +112,9 @@ def readout_clusters(apply_offset_correction = False, display = False, shift = 0
 		ofs[3] = I2C.peri_read('Offset3')
 		ofs[4] = I2C.peri_read('Offset4')
 		ofs[5] = I2C.peri_read('Offset5')
-
+ 	
+ 	coordinates = []
+ 	
  	for i in range(0,8):
  		val = (to_number(ssa_stub_data[5+i*10],16,8) / 2.0) 
  		if val != 0:
@@ -114,7 +125,25 @@ def readout_clusters(apply_offset_correction = False, display = False, shift = 0
 	 			val = val - 3
 			coordinates.append( val )
 
-	return coordinates
+	if (display_prev == True):
+		coordinatesA = []
+ 		coordinatesC = []
+	 	for i in range(0,8):
+	 		val = (to_number(ssa_stub_data[5+i*10],24,16) / 2.0) 
+	 		if val != 0:
+		 		val = val - 3
+				coordinatesA.append( val )
+		for i in range(0,8):
+	 		val = (to_number(ssa_stub_data[5+i*10],8,0) / 2.0) 
+	 		if val != 0:
+		 		val = val - 3
+				coordinatesC.append( val )
+
+		print coordinatesA
+		print coordinates
+		print coordinatesC
+	else: 
+		return coordinates
 
 def test_digital_pulse_injection(display=False):
 	dig_pulse_injection(hit_list = [], initialise = True)
@@ -135,7 +164,7 @@ def test_digital_pulse_injection(display=False):
 		else:
 			if(display == True): 
 				print "Passed -> expected cluster in " + str(i) + " and found " + str(r) 
-		execute_percent(cnt, 120)
+		utils.ShowPercent(cnt, 120)
 
 def readout_l1_data(latency = 50, display = False, shift = 0):
 
@@ -250,13 +279,6 @@ def read_all_lines():
 #    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
 
 
-def lateral_data_phase(left, right):
-	fc7.write("ctrl_phy_ssa_gen_lateral_phase_1", left)
-	fc7.write("ctrl_phy_ssa_gen_lateral_phase_2", right)
-
-def set_lateral_data(left, right):
-	fc7.write("cnfg_phy_SSA_gen_right_lateral_data_format", left)
-	fc7.write("cnfg_phy_SSA_gen_left_lateral_data_format", right)
 
 
 

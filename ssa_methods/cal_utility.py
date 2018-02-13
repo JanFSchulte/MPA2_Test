@@ -2,6 +2,7 @@ from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
+from myScripts.Utilities import *
 from ssa_methods.ssa_i2c_conf import *
 import numpy as np
 import time
@@ -155,6 +156,22 @@ def init_default_thresholds():
 	I2C.peri_write("Bias_THDAC", 35)
 	I2C.peri_write("Bias_THDACHIGH", 120)
 
+def init_trimming(th_trimming = 15, gain_trimming = 15):
+	I2C.strip_write('THTRIMMING', 0, th_trimming)
+	I2C.strip_write('GAINTRIMMING', 0, gain_trimming)
+	repT = [0xff]*120
+	repG = [0xff]*120
+	error = False
+	for i in range(1,121):
+		repT[i-1] = I2C.strip_read('THTRIMMING', i)
+		repG[i-1] = I2C.strip_read('GAINTRIMMING', i)
+	for i in repT:
+		if (i != th_trimming): error = True
+	for i in repG:
+		if (i != gain_trimming): error = True	
+	if error:
+		print "Error. Failed to set the trimming"
+
 def init_cal_pulse(cal_pulse_amplitude = 255, cal_pulse_duration = 3):
 	# enable strips
 	I2C.strip_write("ENFLAGS", 0, 0b10101)
@@ -165,54 +182,81 @@ def init_cal_pulse(cal_pulse_amplitude = 255, cal_pulse_duration = 3):
 	I2C.peri_write("Bias_CALDAC", cal_pulse_amplitude)
 	I2C.peri_write("CalPulse_duration", cal_pulse_duration)
 
-def measure_scurves(nevents = 1000, cal_pulse_amplitude = 150, display = True):
+def measure_scurves(cal_pulse_amplitude = [50, 70, 90], nevents = 1000, display = False, plot = True, filename = False, filename2 = ""):
 	# first go to the async mode
 	activate_readout_async()
-	# close shutter and clear counters
-	close_shutter(1)
-	clear_counters(1)
-	# init chip cal pulse
-	init_cal_pulse(cal_pulse_amplitude, 5)
-	# init firmware cal pulse
-	Configure_TestPulse_MPA_SSA(200, nevents)
+	plt.clf()
 
-	# then let's try to measure the scurves
-	scurves = np.zeros((256,120), dtype=np.int)
+	if isinstance(cal_pulse_amplitude, int):
+		cal_pulse_amplitude = [cal_pulse_amplitude]
+	elif not isinstance(cal_pulse_amplitude, list): 
+		return False
 	
-	threshold = 0
-	while (threshold < 256):
-		# debug output		
-		strout = ""
-		#print "Setting the threshold to ", threshold, ", sending the test pulse and reading the counters"
-		# set the threshold
-		strout += "threshold = " + str(threshold) + ".   " 
-		set_threshold(threshold)
-		# clear counters
-		clear_counters(1)
-		# open shutter
-		open_shutter(2)
-		open_shutter(2)
-		open_shutter(2)
-		# send sequence of NEVENTS pulses
-		SendCommand_CTRL("start_trigger")
-		# sleep a bit and wait for trigger to finish
-		sleep(0.01)
-		while(fc7.read("stat_fast_fsm_state") != 0):
-			sleep(0.1)
-		# close shutter and read counters
+	for cal_val in  cal_pulse_amplitude:
+		# close shutter and clear counters
 		close_shutter(1)
-		failed, scurves[threshold] = read_counters_fast()
-		if failed:
-			strout += "Failed to read counters for threshold " + str(threshold) + ". Redoing"
-			threshold = threshold - 1
-		else: 
-			strout += "Counters samples = 1->[" + str(scurves[threshold][0]) + "]  30->[" + str(scurves[threshold][29]) + "]  60->[" + str(scurves[threshold][59]) + "]  90->[" + str(scurves[threshold][89]) + "]  120->[" + str(scurves[threshold][119]) + "]"    
-		# threshold increment
-		threshold = threshold + 1
-		print strout
-	if(display == True):
-		plt.clf()
-		plt.plot(scurves)
+		clear_counters(1)
+		# init chip cal pulse
+		init_cal_pulse(cal_val, 5)
+		# init firmware cal pulse
+		Configure_TestPulse_MPA_SSA(200, nevents)
+
+		# then let's try to measure the scurves
+		scurves = np.zeros((256,120), dtype=np.int)
+		
+		threshold = 0
+		while (threshold < 256):
+			# debug output		
+			strout = ""
+			error = False
+			#print "Setting the threshold to ", threshold, ", sending the test pulse and reading the counters"
+			# set the threshold
+			strout += "threshold = " + str(threshold) + ".   " 
+			set_threshold(threshold)
+			# clear counters
+			clear_counters(1)
+			# open shutter
+			open_shutter(2)
+			open_shutter(2)
+			open_shutter(2)
+			# send sequence of NEVENTS pulses
+			SendCommand_CTRL("start_trigger")
+			# sleep a bit and wait for trigger to finish
+			sleep(0.01)
+			while(fc7.read("stat_fast_fsm_state") != 0):
+				sleep(0.1)
+			# close shutter and read counters
+			close_shutter(1)
+			failed, scurves[threshold] = read_counters_fast()
+			if (failed): error = True
+			if (threshold > 0):
+				if (scurves[threshold,0] == 0 and  scurves[threshold-1,0] > (nevents*0.9)) : error = True
+
+			if (error == True): 	
+				threshold = threshold - 1
+				print "Failed to read counters for threshold " + str(threshold) + ". Redoing"
+				continue
+			else: 
+				strout += "Counters samples = 1->[" + str(scurves[threshold][0]) + "]  30->[" + str(scurves[threshold][29]) + "]  60->[" + str(scurves[threshold][59]) + "]  90->[" + str(scurves[threshold][89]) + "]  120->[" + str(scurves[threshold][119]) + "]"    
+			
+			# threshold increment
+			threshold = threshold + 1
+			
+			if (display == True): 
+				print strout
+			else: 
+				utils.ShowPercent(threshold, 256)
+
+		if( isinstance(filename, str) ):
+			fo = "../SSA_Results/" + filename + "_scurve_" + filename2 + "__cal_" + str(cal_val) + ".csv"
+			CSV.ArrayToCSV (array = scurves, filename = fo, transpose = True)
+
+		if(plot == True):
+			plt.plot(scurves)
+
+	if(plot == True):
 		plt.show()
 	
 	return scurves
+
+
