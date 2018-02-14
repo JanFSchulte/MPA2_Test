@@ -16,7 +16,6 @@ ssa_strip_reg_map['ReadCounter_LSB']        = 0b01001
 
 ################# Periphery register map #####################
 
-
 ssa_peri_reg_map['ReadoutMode']            =  0       
 ssa_peri_reg_map['ClusterCut']             =  1      
 ssa_peri_reg_map['FE_Calibration']         =  2          

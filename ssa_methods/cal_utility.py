@@ -10,27 +10,24 @@ import sys
 import inspect
 import matplotlib.pyplot as plt
 
-def init_all(edge = "negative"):
+def init_all(slvs_current = 1, edge = "negative"):
 	reset()
 	activate_I2C_chip()
 	set_t1_sampling_edge(edge)
-	init_slvs()
-	activate_readout_shift()
-	set_shift_pattern_all(128) 
-	time.sleep(0.01)
-	set_lateral_lines_alignament()
-	time.sleep(0.01)
-	do_phase_tuning()
-	I2C.peri_write('OutPattern7/FIFOconfig', 7)
-	reset_pattern_injection()
+	init_slvs(slvs_current)
+	phase_tuning()
 	activate_readout_normal()
-	
+		
 def print_method(name):
 	lines = inspect.getsourcelines(name)
 	print("".join(lines[0]))
 
-def init_slvs():
-	I2C.peri_write('SLVS_pad_current', 0b001)
+def init_slvs(current = 0b001):
+	I2C.peri_write('SLVS_pad_current', current)
+	r = I2C.peri_read('SLVS_pad_current')
+	if (I2C.peri_read("SLVS_pad_current") != (current & 0b111) ):
+		print "Error! I2C did not work properly"
+		exit(1)
 
 def set_lateral_lines_alignament():
 	I2C.strip_write("ENFLAGS", 0, 0b01001)
@@ -52,7 +49,18 @@ def do_phase_tuning():
 	send_test(15)
 	while(fc7.read("stat_phy_phase_tuning_done") == 0):
         	sleep(0.5)
-        	print "Waiting for the phase tuning"	
+        	print "Waiting for the phase tuning"
+
+def phase_tuning():
+	activate_readout_shift()
+	set_shift_pattern_all(128) 
+	time.sleep(0.01)
+	set_lateral_lines_alignament()
+	time.sleep(0.01)
+	do_phase_tuning()
+	I2C.peri_write('OutPattern7/FIFOconfig', 7)
+	reset_pattern_injection()
+	activate_readout_normal()
 
 def set_t1_sampling_edge(edge):
 	if edge == "rising" or edge == "positive":
@@ -182,7 +190,7 @@ def init_cal_pulse(cal_pulse_amplitude = 255, cal_pulse_duration = 3):
 	I2C.peri_write("Bias_CALDAC", cal_pulse_amplitude)
 	I2C.peri_write("CalPulse_duration", cal_pulse_duration)
 
-def measure_scurves(cal_pulse_amplitude = [50, 70, 90], nevents = 1000, display = False, plot = True, filename = False, filename2 = ""):
+def measure_scurves(cal_pulse_amplitude = [100], nevents = 1000, display = False, plot = True, filename = False, filename2 = ""):
 	# first go to the async mode
 	activate_readout_async()
 	plt.clf()
@@ -234,7 +242,8 @@ def measure_scurves(cal_pulse_amplitude = [50, 70, 90], nevents = 1000, display 
 
 			if (error == True): 	
 				threshold = threshold - 1
-				print "Failed to read counters for threshold " + str(threshold) + ". Redoing"
+				utils.ShowPercent(threshold, 256, "Failed to read counters for threshold " + str(threshold) + ". Redoing")
+				sleep(0.5)
 				continue
 			else: 
 				strout += "Counters samples = 1->[" + str(scurves[threshold][0]) + "]  30->[" + str(scurves[threshold][29]) + "]  60->[" + str(scurves[threshold][59]) + "]  90->[" + str(scurves[threshold][89]) + "]  120->[" + str(scurves[threshold][119]) + "]"    
@@ -243,9 +252,11 @@ def measure_scurves(cal_pulse_amplitude = [50, 70, 90], nevents = 1000, display 
 			threshold = threshold + 1
 			
 			if (display == True): 
-				print strout
+				utils.ShowPercent(threshold, 256, strout)
 			else: 
-				utils.ShowPercent(threshold, 256)
+				utils.ShowPercent(threshold, 256, "Calculating S-Curves for threshold " + str(threshold) + "                                        ")
+		
+		utils.ShowPercent(256, 256, "Done")
 
 		if( isinstance(filename, str) ):
 			fo = "../SSA_Results/" + filename + "_scurve_" + filename2 + "__cal_" + str(cal_val) + ".csv"
@@ -258,5 +269,4 @@ def measure_scurves(cal_pulse_amplitude = [50, 70, 90], nevents = 1000, display 
 		plt.show()
 	
 	return scurves
-
 
