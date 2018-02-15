@@ -20,6 +20,6 @@ echo "from ssa_methods.cal_utility import * "           >> LaunchPy.py
 echo "from ssa_methods.readout_utility import * "       >> LaunchPy.py
 echo "  "                                               >> LaunchPy.py
 echo "ssa = SSA_handle() "                              >> LaunchPy.py
-
+echo "init_all() "                                      >> LaunchPy.py
 cp ./myScripts/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
 python -i LaunchPy.py

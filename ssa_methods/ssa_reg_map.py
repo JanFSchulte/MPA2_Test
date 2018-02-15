@@ -1,8 +1,7 @@
 
-ssa_peri_reg_map = {'test': 0xfff}
-ssa_strip_reg_map = {'test': 0xfff}
 
 ################# Strip register map #########################
+ssa_strip_reg_map = {'test': 0xfff}
 
 ssa_strip_reg_map['ENFLAGS']                = 0b00001
 ssa_strip_reg_map['SAMPLINGMODE']           = 0b00010
@@ -15,6 +14,7 @@ ssa_strip_reg_map['ReadCounter_MSB']        = 0b01000
 ssa_strip_reg_map['ReadCounter_LSB']        = 0b01001
 
 ################# Periphery register map #####################
+ssa_peri_reg_map = {'test': 0xfff}
 
 ssa_peri_reg_map['ReadoutMode']            =  0       
 ssa_peri_reg_map['ClusterCut']             =  1      
@@ -71,6 +71,22 @@ ssa_peri_reg_map['Fuse_Value_b3']          = 51
 ssa_peri_reg_map['CalPulse_duration']      = 52             
 ssa_peri_reg_map['SEU_Counter']            = 53     
 ssa_peri_reg_map['ClkEnable_Code']         = 54  
+
+################# Analog MUX map #####################
+analog_mux_map = {'highimpedence': 0x00}
+
+analog_mux_map['Bias_D5BFEED']          = 0b0000000000000001
+analog_mux_map['Bias_D5PREAMP']         = 0b0000000000000010
+analog_mux_map['Bias_D5TDR']            = 0b0000000000000100
+analog_mux_map['Bias_D5ALLV']           = 0b0000000000001000
+analog_mux_map['Bias_D5ALLI']           = 0b0000000000010000
+analog_mux_map['Bias_CALDAC']           = 0b0000000000100000
+analog_mux_map['Bias_BOOSTERBASELINE']  = 0b0000000001000000
+analog_mux_map['Bias_THDAC']            = 0b0000000010000000
+analog_mux_map['Bias_THDACHIGH']        = 0b0000000100000000
+analog_mux_map['Bias_D5DAC8']           = 0b0000001000000000
+analog_mux_map['VBG']                   = 0b0000010000000000
+analog_mux_map['GND']                   = 0b0000100000000000
 
 
 

@@ -11,12 +11,20 @@ import inspect
 import matplotlib.pyplot as plt
 
 def init_all(slvs_current = 1, edge = "negative"):
+	sys.stdout.write("Initialising..")
+	sys.stdout.flush()
 	reset()
+	utils.print_enable(False)
 	activate_I2C_chip()
+	utils.print_enable(True)
+	sys.stdout.write("Tuning sampling phases..")
+	sys.stdout.flush()
 	set_t1_sampling_edge(edge)
 	init_slvs(slvs_current)
 	phase_tuning()
 	activate_readout_normal()
+	sys.stdout.write("Ready!")
+	sys.stdout.flush()
 		
 def print_method(name):
 	lines = inspect.getsourcelines(name)
@@ -70,8 +78,12 @@ def set_t1_sampling_edge(edge):
 	else:
 		print "Error! The edge name is wrong"
 
-def activate_readout_normal():
-	I2C.peri_write('ReadoutMode',0b00)
+def activate_readout_normal(mipadapterdisable = 0):
+	val = 0b100 if (mipadapterdisable) else 0b000
+	I2C.peri_write('ReadoutMode',val)
+	if (I2C.peri_read("ReadoutMode") != val):
+		print "Error! I2C did not work properly"
+		exit(1)
 
 def activate_readout_async(ssa_first_counter_delay = 8, correction = 0):
 	I2C.peri_write('ReadoutMode',0b01)
@@ -191,6 +203,9 @@ def init_cal_pulse(cal_pulse_amplitude = 255, cal_pulse_duration = 3):
 	I2C.peri_write("CalPulse_duration", cal_pulse_duration)
 
 def measure_scurves(cal_pulse_amplitude = [100], nevents = 1000, display = False, plot = True, filename = False, filename2 = ""):
+	utils.print_enable(False)
+	activate_I2C_chip()
+	utils.print_enable(True)
 	# first go to the async mode
 	activate_readout_async()
 	plt.clf()

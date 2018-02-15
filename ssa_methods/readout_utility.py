@@ -25,7 +25,7 @@ def lateral_input_phase_tuning(display = False, timeout = 256):
 	alined_right = False
 	print ""
 	fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
-	dig_pulse_injection(initialise = True)
+	digital_pulse_injection(initialise = True)
 
 	set_lateral_data(0b00001001, 0)
 	cnt = 0
@@ -45,12 +45,12 @@ def lateral_input_phase_tuning(display = False, timeout = 256):
 		utils.ShowPercent(100, 100, "Impossible to align left input data line  ")
 	print "   " 
 
-	set_lateral_data(0, 0b10011001)
+	set_lateral_data(0, 0b10100000)
 	cnt = 0
 	while ((alined_right == False) and (cnt < timeout)):  
 		clusters = readout_clusters(display_prev = display)
 		if len(clusters) == 2:
-			if(clusters[0] == 0 and clusters[1] == -2):
+			if(clusters[0] == -2 and clusters[1] == 0):
 				alined_right = True
 		time.sleep(0.001)
 		set_lateral_data_phase(5,0)
@@ -64,10 +64,9 @@ def lateral_input_phase_tuning(display = False, timeout = 256):
 		utils.ShowPercent(100, 100, "Impossible to align right input data line")
 	print "   " 
 
-def dig_pulse_injection(hit_list = [], hip_list = [], initialise = True):
+def digital_pulse_injection(hit_list = [], hip_list = [], initialise = True):
 	
 	if(initialise == True):
-		#reset digital calib patterns
 		activate_readout_normal()
 		I2C.strip_write("DigCalibPattern_L", 0, 0)
 		I2C.strip_write("DigCalibPattern_H", 0, 0)
@@ -93,22 +92,24 @@ def dig_pulse_injection(hit_list = [], hip_list = [], initialise = True):
 	for cl in hip_list:	
 		I2C.strip_write("DigCalibPattern_H", cl, 0xff)
 
-def analog_pulse_injection(hit_list = [], hip_list = [], threshold = 50, cal_pulse_amplitude = 200):
+
+def analog_pulse_injection(hit_list = [], threshold = 50, cal_pulse_amplitude = 200, initialise = True):
 	
-	activate_readout_normal()
-	
-	init_cal_pulse(cal_pulse_amplitude, 5)
-	Configure_TestPulse_MPA_SSA(200, 1)
-	set_threshold(threshold)
+	if(initialise == True):
+		activate_readout_normal()
+		init_cal_pulse(cal_pulse_amplitude, 5)
+		Configure_TestPulse_MPA_SSA(200, 1)
+		set_threshold(threshold)
+		I2C.strip_write("DigCalibPattern_L", 0, 0)
+		I2C.strip_write("DigCalibPattern_H", 0, 0)
 
 	#reset digital calib patterns
-	I2C.strip_write("ENFLAGS", 0, 0b00001)
-	I2C.strip_write("DigCalibPattern_L", 0, 0)
-	I2C.strip_write("DigCalibPattern_H", 0, 0)
-
+	I2C.strip_write("ENFLAGS", 0, 0b00000)
+	
 	#enable pulse injection in selected clusters
 	for cl in hit_list:
-		I2C.strip_write("ENFLAGS", cl, 0b10001)
+		if(cl > 0 and cl < 121):
+			I2C.strip_write("ENFLAGS", cl, 0b10001)
 
 	SendCommand_CTRL("start_trigger")
 	sleep(0.01)
@@ -154,7 +155,7 @@ def readout_clusters(apply_offset_correction = False, display = False, shift = 0
  	coordinates = []
  	
  	for i in range(0,8):
- 		val = (to_number(ssa_stub_data[5+i*10],16,8) / 2.0) 
+ 		val = (to_number(ssa_stub_data[5+i*10],32,24) / 2.0) 
  		if val != 0:
 	 		if (apply_offset_correction == True):
 	 			val = val - 3
@@ -172,7 +173,7 @@ def readout_clusters(apply_offset_correction = False, display = False, shift = 0
 		 		val = val - 3
 				coordinatesA.append( val )
 		for i in range(0,8):
-	 		val = (to_number(ssa_stub_data[5+i*10],8,0) / 2.0) 
+	 		val = (to_number(ssa_stub_data[5+i*10],16,8) / 2.0) 
 	 		if val != 0:
 		 		val = val - 3
 				coordinatesC.append( val )
@@ -183,7 +184,7 @@ def readout_clusters(apply_offset_correction = False, display = False, shift = 0
 	 
 	return coordinates
 
-def readout_l1_data(latency = 50, display = False, shift = 0, initialise = True):
+def readout_l1_data(latency = 50, display = False, shift = 0, initialise = True, mipadapterdisable = False):
 	if(initialise == True):
 		fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 		fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
@@ -192,7 +193,7 @@ def readout_l1_data(latency = 50, display = False, shift = 0, initialise = True)
 		I2C.peri_write('L1-Latency_MSB', 0)
 		I2C.peri_write('L1-Latency_LSB', latency)
 
-		activate_readout_normal()
+		activate_readout_normal(mipadapterdisable = mipadapterdisable)
 		Configure_TestPulse(199, (latency+3+shift), 400, 1)
 		sleep(0.001)
 
@@ -285,7 +286,7 @@ def readout_lateral_data(display = False, shift = 0, initialize = True):
 
  	for i in range(1,9): 
  		if ((right & 0b1) == 1): 
- 			coordinates.append(i)
+ 			coordinates.append(i-1)
  		right = right >> 1
 
  	for i in range(1,9): 
@@ -296,33 +297,49 @@ def readout_lateral_data(display = False, shift = 0, initialize = True):
 	return coordinates
 
 
-def test_cluster_data(display=False):
-	dig_pulse_injection(hit_list = [], initialise = True)
+def test_cluster_data(mode = "digital", display=False):
+	utils.print_enable(False)
+	activate_I2C_chip()
+	utils.print_enable(True)
+
+	if(mode == "digital"):
+		digital_pulse_injection(hit_list = [], hip_list = [], initialise = True)
+	elif(mode == "analog"):
+		analog_pulse_injection(hit_list = [], initialise = True)
 	readout_clusters(initialize = True)
 	cnt = 0
 	for i in random.sample(range(-3, 125), 128):
 		cnt += 1
-		err = [False]*2
-		dig_pulse_injection(hit_list = [i], initialise = False)
-		#dig_pulse_injection(hit_list = [i], initialise = False)
+		err = [False]*3
+		if(mode == "digital"):
+			digital_pulse_injection(hit_list = [i], initialise = False)
+		elif(mode == "analog"):
+			analog_pulse_injection(hit_list = [i], initialise = False)
+		
 		time.sleep(0.01)
 		
 		r = readout_clusters(initialize = False)
 		l = []
 
-		if (len(r) != 1): err[0] = True
-		elif (r[0] != i): err[0] = True
+		if(i>0 and i < 121):
+			if (len(r) != 1): err[0] = True
+			elif (r[0] != i): err[0] = True
+		elif (mode == "digital"):
+			if (len(r) != 1): err[1] = True
+			elif (r[0] != i): err[1] = True
 
-		if( (i < 9 and i > 0) or (i > 112 and i < 121) ):
+		if( ((i < 8 and i > 0) or (i > 112 and i < 121)) and (mode == "digital") ):
 			l = readout_lateral_data(initialize = False)
-			if (len(l) != 1): err[1] = True
-			elif (l[0] != i): err[1] = True
+			if (len(l) != 1): err[2] = True
+			elif (l[0] != i): err[2] = True
 
-		dstr = " -> expected: "+cl2str(i)+" found cluster: " + cl2str(r) + " found lateral: " + cl2str(l) 
+		dstr = " -> expected: "+utils.cl2str(i)+" found cluster: " + utils.cl2str(r) + " found lateral: " + utils.cl2str(l) 
 		if (err[0]):
-			print "\tCluster Error" + dstr
+			print "\tCluster data Error   " + dstr
 		elif(err[1]):
-			print "\tLateral Error" + dstr  
+			print "\tLateral Input Error  " + dstr  
+		elif(err[2]):
+			print "\tLateral Output Error " + dstr  
 		else:
 			if(display == True): 
 				print "\tPassed       " + dstr 
@@ -334,18 +351,22 @@ def test_cluster_data(display=False):
 
 def test_l1_data(display=False):
 	
-	dig_pulse_injection(hit_list = [], initialise = True)
+	utils.print_enable(False)
+	activate_I2C_chip()
+	utils.print_enable(True)
+
+	digital_pulse_injection(hit_list = [], hip_list = [], initialise = True)
 	L1_counter_init, BX_counter, l1hitlist, hiplist = readout_l1_data(initialise = True)
 
 	
 	for H in range(0,2):
 		cnt = 0
-		dig_pulse_injection(hit_list = [], hip_list = [], initialise = True)
+		digital_pulse_injection(hit_list = [], hip_list = [], initialise = True)
 		for i in random.sample(range(1, 121), 120):
 			cnt += 1
 			err = False
-			dig_pulse_injection(hit_list = [i], hip_list = [i]*H, initialise = False)
-			#dig_pulse_injection(hit_list = [i], initialise = False)
+			digital_pulse_injection(hit_list = [i], hip_list = [i]*H, initialise = False)
+			#digital_pulse_injection(hit_list = [i], initialise = False)
 			time.sleep(0.01)
 			
 			L1_counter, BX_counter, l1hitlist, hiplist = readout_l1_data(initialise = False)
