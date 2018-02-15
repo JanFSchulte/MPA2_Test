@@ -3,9 +3,6 @@ import time
 import sys
 import os
 
-
-
-	
 class Utilities: 
 
 	class cl_clustdispl(float):
@@ -37,6 +34,11 @@ class Utilities:
 		else:
 			rstr = "[{:6.1f}]".format(clist)
 		return rstr
+
+def print_method(name):
+	lines = inspect.getsourcelines(name)
+	print("".join(lines[0]))
+
 
 utils = Utilities()
 
