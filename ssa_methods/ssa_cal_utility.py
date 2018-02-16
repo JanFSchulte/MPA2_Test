@@ -43,7 +43,9 @@ class SSA_cal_utility():
 		self.ssa = ssa
 		self.I2C = I2C
 		self.fc7 = fc7
-		self.scurvedata = False
+		self.scurve_data = False
+		self.scurve_nevents  = 0
+		self.scurve_calpulse = 0
 
 	def scurves(self, cal_pulse_amplitude = [100], nevents = 1000, display = False, plot = True, filename = False, filename2 = ""):
 		utils.print_enable(False)
@@ -111,9 +113,9 @@ class SSA_cal_utility():
 				if (display == True): 
 					utils.ShowPercent(threshold, 256, strout)
 				else: 
-					utils.ShowPercent(threshold, 256, "Calculating S-Curves for threshold " + str(threshold) + "                                        ")
+					utils.ShowPercent(threshold, 256, "Calculating S-Curves                                       ")
 			
-			utils.ShowPercent(256, 256, "Done")
+			utils.ShowPercent(256, 256, "Done calculating S-Curves")
 
 			if( isinstance(filename, str) ):
 				fo = "../SSA_Results/" + filename + "_scurve_" + filename2 + "__cal_" + str(cal_val) + ".csv"
@@ -125,40 +127,134 @@ class SSA_cal_utility():
 		if(plot == True):
 			plt.show()
 
-		self.scurvedata = scurves
+		self.scurve_data     = scurves
+		self.scurve_nevents  = nevents
+		self.scurve_calpulse = cal_pulse_amplitude
+
 		return scurves
 
 	def trimming_apply(self, default_trimming = 0, striprange = range(1,121)):
 		r = True
+
 		if(isinstance(default_trimming, int)):
 			trimdac_value = np.zeros(120)
 			self.I2C.strip_write("THTRIMMING", 0, default_trimming)
+			print "Trimming: Applied value %d to all channels" % (default_trimming)
 		elif(isinstance(default_trimming, np.ndarray) or isinstance(default_trimming, list)):
 			trimdac_value = np.array(default_trimming)
 			for i in striprange:
 				self.I2C.strip_write("THTRIMMING", i, default_trimming[i])
-		else:
+			print "Trimming: Applied trimming array" % (default_trimming)
+		elif(default_trimming != False):
 			exit(1)
 		return trimdac_value
 
 
+	def errfitting_get_mean(self, curve, nevents, expected = 'autodefine', errmsg="", reiterate = 3):
+		sct = curve
+		err = True
+		itr = 0
+		# get read of the noise peack 
+		while ( not ((sct[0] == nevents) and (sct[1] == nevents)) ):
+			sct = sct[ np.argmax(sct)+1 : ]
+		
+		# find a first guess for the scurve mean value
+		if(expected == 'autodefine'):
+			par_guess = np.abs(np.abs(sct - (nevents/2) )).argmin()	
+		elif(isinstance(expected, int) or isinstance(expected, float)):
+			par_guess = expected
+		else:
+			err = True
+			return False
 
-	def trimming_scurves(self, default_trimming = False, striprange = range(1,121), iterations = 3, cal_pulse_amplitude = 100, th_nominal = 115, ratio = 3.90, nevents = 1000, plot = True):
+		while(err == True and itr < reiterate):
+			try:
+				# fit the curve with 1-error_function 
+				# and find the mean
+				par, cov = curve_fit(
+					f     = errorfc, 
+					xdata = range(0, len(sct)-1), 
+					ydata = sct[1 : len(sct)], 
+					p0    = [nevents, par_guess, 2]
+				)
+			except RuntimeError:
+				itr += 1
+			else:
+				err = False
+
+		if(err):
+			print "Fitting failed " + errmsg
+			return False
+		else:
+			# readd number of th points removed by the noise cleaning
+			thidx = int(round( par[1] + (255-len(sct)) ))
+			print "MEAN VALUE  =  " + str(thidx)
+			return thidx
+
+
+	def trimming_evaluate_thdac_trimdac_ratio(self, trimdac_pvt_calib = False, cal_pulse_amplitude = 100, th_nominal = 115,  nevents = 500):
+		# set the value of the dac that controls the trimmin dacs currents
+		# to compensate for process variations
+		if(isinstance(trimdac_pvt_calib, int)):
+			self.I2C.peri_write('Bias_D5TDR', trimdac_pvt_calib)
+
+		sc = []
+		th = []
+		cnt = 0
+
+		for trimdac in [0, 15, 31]:
+			# apply trimming dact values
+			self.trimming_apply(trimdac)
+			
+			# calculate scurves
+			sc.append(
+				self.scurves(
+					cal_pulse_amplitude = cal_pulse_amplitude, 
+					nevents = nevents, 
+					display = False, 
+					plot = False, 
+					filename = False
+				)
+			)
+
+			strip = 10
+
+			sct = sc[cnt][:,strip]
+			thidx = self.errfitting_get_mean(sct, nevents)
+			th.append( thidx )
+			cnt += 1 
+
+		plt.plot(th)
+		plt.show()
+
+		return th
+
+
+	def trimming_scurves(self, default_trimming = False, striprange = range(1,121), iterations = 3, cal_pulse_amplitude = 100, th_nominal = 115, ratio = 10, nevents = 1000, plot = True, display = True):
 		
 		trimdac_value = self.trimming_apply(default_trimming, striprange)
+		
+		scurve_data_available = False
+		if(isinstance(self.scurve_data, np.ndarray)):
+			if(self.scurve_nevents == nevents and self.scurve_calpulse == cal_pulse_amplitude):
+				scurve_data_available = True
 
-		scurve_init = self.scurves(
-			cal_pulse_amplitude = cal_pulse_amplitude, 
-			nevents = nevents, 
-			display = False, 
-			plot = True, 
-			filename = False
-		)
+		if(scurve_data_available == False):
+			scurve_init = self.scurves(
+				cal_pulse_amplitude = cal_pulse_amplitude, 
+				nevents = nevents, 
+				display = False, 
+				plot = True, 
+				filename = False
+			)
+		else:
+			print "Trimming: Using available S-Curves data"
 
-		#scurve_init = self.scurvedata
+		#scurve_init = self.scurve_data
 
 		scurve = scurve_init
-		print "Trimming DAC values: " + str(trimdac_value)
+		if(display):
+			print "Trimming DAC values: " + str(trimdac_value)
 
 		for i in range(0, iterations):
 			for strip in striprange:
@@ -199,7 +295,8 @@ class SSA_cal_utility():
 					plot = True, 
 					filename = False
 				)
-			print "Trimming DAC values: " + str(trimdac_value)
+			if(display):
+				print "Trimming DAC values: " + str(trimdac_value)
 
 
 '''
