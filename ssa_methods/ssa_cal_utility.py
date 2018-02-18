@@ -133,19 +133,25 @@ class SSA_cal_utility():
 
 		return scurves
 
-	def trimming_apply(self, default_trimming = 0, striprange = range(1,121)):
+	def trimming_apply(self, default_trimming = 'keep_current', striprange = range(1,121)):
 		r = True
 
 		if(isinstance(default_trimming, int)):
 			trimdac_value = np.zeros(120)
 			self.I2C.strip_write("THTRIMMING", 0, default_trimming)
 			print "Trimming: Applied value %d to all channels" % (default_trimming)
+			if(default_trimming == 0):
+				self.scurve_trimming = 'zeros'
+			else:
+				self.scurve_trimming = 'const'
 		elif(isinstance(default_trimming, np.ndarray) or isinstance(default_trimming, list)):
 			trimdac_value = np.array(default_trimming)
 			for i in striprange:
 				self.I2C.strip_write("THTRIMMING", i, default_trimming[i])
 			print "Trimming: Applied trimming array" % (default_trimming)
-		elif(default_trimming != False):
+			self.scurve_trimming = 'trimmed'
+		elif(default_trimming != False or default_trimming != 'keep_current'):
+			self.scurve_trimming = 'none'
 			exit(1)
 		return trimdac_value
 
@@ -188,24 +194,21 @@ class SSA_cal_utility():
 		else:
 			# readd number of th points removed by the noise cleaning
 			thidx = int(round( par[1] + (255-len(sct)) ))
-			print "MEAN VALUE  =  " + str(thidx)
 			return thidx
 
 
-	def trimming_evaluate_thdac_trimdac_ratio(self, trimdac_pvt_calib = False, cal_pulse_amplitude = 100, th_nominal = 115,  nevents = 500):
+	def trimming_evaluate_thdac_trimdac_ratio(self, trimdac_pvt_calib = False, cal_pulse_amplitude = 100, th_nominal = 115,  nevents = 500, plot = False):
 		# set the value of the dac that controls the trimmin dacs currents
 		# to compensate for process variations
 		if(isinstance(trimdac_pvt_calib, int)):
 			self.I2C.peri_write('Bias_D5TDR', trimdac_pvt_calib)
-
 		sc = []
 		th = []
 		cnt = 0
-
-		for trimdac in [0, 15, 31]:
+		for trimdac in [31, 0]:
+			thtmp = np.zeros(120)
 			# apply trimming dact values
 			self.trimming_apply(trimdac)
-			
 			# calculate scurves
 			sc.append(
 				self.scurves(
@@ -216,29 +219,45 @@ class SSA_cal_utility():
 					filename = False
 				)
 			)
-
-			strip = 10
-
-			sct = sc[cnt][:,strip]
-			thidx = self.errfitting_get_mean(sct, nevents)
-			th.append( thidx )
+			
+			for strip in range(0,120):
+				sct = sc[cnt][:,strip]
+				thidx = self.errfitting_get_mean(sct, nevents)
+				thtmp[strip] = thidx
+			th.append( thtmp )
 			cnt += 1 
+		if(plot):
+			plt.plot(th)
+			plt.show()
+		ratios = 32.0 / (th[0]-th[1])
+		return ratios
 
-		plt.plot(th)
-		plt.show()
 
-		return th
-
-
-	def trimming_scurves(self, default_trimming = False, striprange = range(1,121), iterations = 3, cal_pulse_amplitude = 100, th_nominal = 115, ratio = 10, nevents = 1000, plot = True, display = True):
+	def trimming_scurves(self, cal_pulse_amplitude = 100, th_nominal = 'evaluate', default_trimming = 'keep_current', striprange = range(1,121), ratio = 'evaluate', iterations = 3, nevents = 1000, plot = True, display = True, reevaluate = True):
 		
+		# evaluate TRIMDAC/THDAC ratio
+		if(ratio == 'evaluate'):
+			dacratiolist = self.trimming_evaluate_thdac_trimdac_ratio(trimdac_pvt_calib = False, cal_pulse_amplitude = cal_pulse_amplitude, th_nominal = th_nominal,  nevents = nevents, plot = False)
+		elif isinstance(ratio, float) or isinstance(ratio, int):
+			dacratiolist = [ratio]*120
+		else: exit(1)
+
+		# evaluate expected threshold value
+		if(th_nominal == 'evaluate'):
+			th_expected = 0
+		else:
+			th_expected = th_nominal
+
+		# apply the starting trimming
 		trimdac_value = self.trimming_apply(default_trimming, striprange)
 		
+		# evaluate inital S-Curves
 		scurve_data_available = False
 		if(isinstance(self.scurve_data, np.ndarray)):
-			if(self.scurve_nevents == nevents and self.scurve_calpulse == cal_pulse_amplitude):
+			if((reevaluate == False) and (self.scurve_nevents == nevents) and (self.scurve_calpulse == cal_pulse_amplitude) ):
 				scurve_data_available = True
-
+				scurve_init = self.scurve_data
+				print "Trimming: Using available S-Curves data"
 		if(scurve_data_available == False):
 			scurve_init = self.scurves(
 				cal_pulse_amplitude = cal_pulse_amplitude, 
@@ -247,88 +266,53 @@ class SSA_cal_utility():
 				plot = True, 
 				filename = False
 			)
-		else:
-			print "Trimming: Using available S-Curves data"
-
-		#scurve_init = self.scurve_data
-
 		scurve = scurve_init
 		if(display):
 			print "Trimming DAC values: " + str(trimdac_value)
 
+		# start trimming on the S-Curves
 		for i in range(0, iterations):
 			for strip in striprange:
-				th_start = np.argmax(scurve[:,strip-1]) + 10
-				th_stop = 180
-				th_start = 80
-				try:
-					par, cov = curve_fit(
-						errorfc, 
-						range(th_start, th_stop), 
-						scurve[th_start+1 : th_stop+1, strip-1], 
-						p0 = [nevents, th_nominal, 2]
-					)
-				except RuntimeError:
-					print "Fitting failed for Strip " + str(strip)
-
-				th_initial            = int(round(par[1]))
-				trimdac_correction    = int(round((th_nominal - th_initial)/ratio))
-				trimdac_current_value = self.I2C.strip_read("THTRIMMING", strip-1)
+				
+				# fit the S-Curve and find the actual threshold
+				th_initial = self.errfitting_get_mean(
+					curve = scurve[: , strip-1],
+					nevents = nevents,
+					expected = 'autodefine',
+					errmsg = "", 
+					reiterate = 3
+				)
+				#calculate the trimming DAC correcton value
+				trimdac_correction    = int(round((th_nominal - th_initial) * dacratiolist[strip-1] ))
+				trimdac_current_value = self.I2C.strip_read("THTRIMMING", strip)
 				trimdac_value[strip-1]  = trimdac_current_value + trimdac_correction
-
-				print th_initial, "  ", trimdac_correction , "  ", trimdac_current_value , "  ", trimdac_value[strip-1]
-
 				if(trimdac_value[strip-1] > 31):
 					print "Reached high trimming limit for strip" + str(strip)
 					trimdac_value[strip-1] = 31
 				elif(trimdac_value[strip-1] < 0):
 					print "Reached low trimming limit for strip" + str(strip)
 					trimdac_value[strip-1] = 0
-				
+
+				# Apply correction to the trimming DAC				
 				self.I2C.strip_write("THTRIMMING", strip, int(trimdac_value[strip-1]))
 
-			if(i < iterations):
-				scurve = self.scurves(
-					cal_pulse_amplitude = cal_pulse_amplitude, 
-					nevents = nevents, 
-					display = False, 
-					plot = True, 
-					filename = False
-				)
 			if(display):
 				print "Trimming DAC values: " + str(trimdac_value)
 
+			# evaluate new S-Curves
+			scurve = self.scurves(
+				cal_pulse_amplitude = cal_pulse_amplitude, 
+				nevents = nevents, 
+				display = False, 
+				plot = True, 
+				filename = False
+			)
 
-'''
-scurve[:, 110]
-s = np.array([ 1959,  1828,  1501,  2000, 11966, 18051, 31600,  6354,  2265,
-        2016,  2005,  2001,  2000,  2000,  2000,  2001,  2000,  2000,
-        2000,  2000,  2000,  1998,  1969,  1850,  1596,  1300,  1088,
-        1019,  1004,  1000,  1000,  1000,  1000,  1000,  1000,  1000,
-        1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,
-        1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,
-        1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,
-        1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,
-        1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,
-        1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,
-        1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,
-        1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,
-        1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,  1000,
-        1000,  1000,   998,   977,   861,   607,   310,   110,    20,
-           1,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0,     0,     0,     0,     0,     0,
-           0,     0,     0,     0])
+		#plot initial and final S-Curves
+		if(plot):
+			plt.clf()
+			plt.plot(scurve_init, 'b')
+			plt.plot(scurve_init, 'r')
+			plt.show()
 
-'''
+		return trimdac_value
