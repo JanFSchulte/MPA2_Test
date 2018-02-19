@@ -2,6 +2,12 @@ import numpy as np
 import time
 import sys
 import os
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+from scipy.special import erfc
+from scipy.special import erf
+import matplotlib.cm as cm
 
 class Utilities: 
 
@@ -39,8 +45,25 @@ def print_method(name):
 	lines = inspect.getsourcelines(name)
 	print("".join(lines[0]))
 
-
 utils = Utilities()
+
+def f_errorf(x, *p):
+    a, mu, sigma = p
+#    print x
+    return 0.5*a*(1.0+erf((x-mu)/sigma))
+
+def f_line(x, *p):
+    g, offset = p
+    return  np.array(x) *g + offset
+
+def f_gauss(x, *p):
+    A, mu, sigma = p
+    return A*np.exp(-(x-mu)**2/(2.*sigma**2))
+
+def f_errorfc(x, *p):
+    a, mu, sigma = p
+    return a*0.5*erfc((x-mu)/sigma)
+
 
 
 

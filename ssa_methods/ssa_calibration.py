@@ -28,10 +28,10 @@ class ssa_calibration():
 
 		# write now	
 		if (mode == 'w'):
-			I2C.peri_write(name, value)
+			self.I2C.peri_write(name, value)
 
 		# read back
-		read_value = I2C.peri_read(name)
+		read_value = self.I2C.peri_read(name)
 
 		# if it was write - check the result
 		if (mode == 'w'):
@@ -48,14 +48,14 @@ class ssa_calibration():
 	def get_value_and_voltage(self, name, inst0 = -1):
 		# get instrument
 		if (inst0 == -1):
-			inst = init_keithley()
+			inst = self.multimeter.init_keithley()
 		else:
 			inst = inst0
 		# demux the line
-		set_measurement(name)
+		self.set_measurement(name)
 		# read value
-		value = d5_value('Bias_'+str(name), 'r')
-		measurement = self.mul.measure(inst)
+		value = self.d5_value('Bias_'+str(name), 'r')
+		measurement = self.multimeter.measure(inst)
 		# return	
 		return value, measurement
 
@@ -64,7 +64,7 @@ class ssa_calibration():
 			return
 
 		# check initials
-		dac_value, voltage = get_value_and_voltage(name, inst)
+		dac_value, voltage = self.get_value_and_voltage(name, inst)
 		voltage = voltage*1E3
 		print "\t\tInitial Set: ", dac_value, voltage
 		# best values
@@ -82,9 +82,9 @@ class ssa_calibration():
 		while(True):
 			# set new value
 			dac_value = dac_value + sign
-			d5_value('Bias_'+str(name), 'w', dac_value)
+			self.d5_value('Bias_'+str(name), 'w', dac_value)
 			# measure
-			voltage = 1E3*self.mul.measure(inst)
+			voltage = 1E3*self.multimeter.measure(inst)
 			print "\t\t\tdac: ", dac_value, " voltage: ", voltage
 			# compare
 			current_voltage_diff = abs(voltage-nominal)
@@ -112,15 +112,15 @@ class ssa_calibration():
 			prev_voltage_diff = current_voltage_diff
 		
 		# verify the value
-		d5_value('Bias_'+str(name), 'w', best_dac_value)
-		dac_value, voltage = get_value_and_voltage(name, inst)
+		self.d5_value('Bias_'+str(name), 'w', best_dac_value)
+		dac_value, voltage = self.get_value_and_voltage(name, inst)
 		print "\t\tBest Set: ", dac_value, 1E3*voltage
 
 		return best_dac_value
 
 	def check_nominals(self):
 		# init keithley
-		inst = init_keithley()
+		inst = self.multimeter.init_keithley()
 		# for simplicity define a par class
 		class Parameter:
 			def __init__(self, full_name, par_name, nominal = -1, best_dac = -1):
@@ -129,34 +129,43 @@ class ssa_calibration():
 				self.nominal = nominal
 				self.best_dac = best_dac
 		# define the pars
-		par_list = [Parameter("Booster Feedback Bias", "D5BFEED", 82.0), Parameter("Preamplifier Bias", "D5PREAMP", 82.0), Parameter("TRIM DAC range", "D5TDR", 115.0), Parameter("DAC for voltage biases","D5ALLV", 82.0), Parameter("DAC for current biases","D5ALLI", 82.0), Parameter("DAC for threshold and calibration", "D5DAC8", 86.0), Parameter("Threshold DAC", "THDAC", 622.0), Parameter("Threshold High DAC", "THDACHIGH", 622.0), Parameter("Calibration DAC", "CALDAC", 100.0)]
+		par_list = [
+			Parameter("Booster Feedback Bias", "D5BFEED", 82.0), 
+			Parameter("Preamplifier Bias", "D5PREAMP", 82.0), 
+			Parameter("TRIM DAC range", "D5TDR", 115.0), 
+			Parameter("DAC for voltage biases","D5ALLV", 82.0), 
+			Parameter("DAC for current biases","D5ALLI", 82.0), 
+			Parameter("DAC for threshold and calibration", "D5DAC8", 86.0)]
+			#Parameter("Threshold DAC", "THDAC", 622.0), 
+			#Parameter("Threshold High DAC", "THDACHIGH", 622.0), 
+			#Parameter("Calibration DAC", "CALDAC", 100.0)]
 
 		# iterate and measure
 		for par in par_list:
-			value, voltage = get_value_and_voltage(par.par_name, inst)
+			value, voltage = self.get_value_and_voltage(par.par_name, inst)
 			voltage = voltage*1E3
 			print par.full_name, ": "
 			print "\tCheck the initial value: "
 			print ("\t\t DAC: %4d\t V: %8.3f mV") % (value, voltage)
 			print "\tTune the value (", par.nominal, "):"
-			best_dac = tune_parameter(inst, par.par_name, par.nominal)
+			best_dac = self.tune_parameter(inst, par.par_name, par.nominal)
 			par.best_dac = best_dac
 
 		print "\n\nSummary of tuning (tuned values):"
 		for par in par_list:
-			value, voltage = get_value_and_voltage(par.par_name, inst)
+			value, voltage = self.get_value_and_voltage(par.par_name, inst)
 			voltage = voltage*1E3
 			print par.full_name, ": "
 			print ("\t Best DAC: %4d,\t V: %8.3f mV") % (value, voltage)
 			
 
 	def measure_vth_linearity(self):
-		inst = init_keithley(3)
+		inst = self.multimeter.init_keithley(3)
 		activate_I2C_chip()
 		
 		# demux the line
-		I2C.peri_write("Bias_TEST_LSB", 0b10000000)
-		I2C.peri_write("Bias_TEST_MSB", 0)	
+		self.I2C.peri_write("Bias_TEST_LSB", 0b10000000)
+		self.I2C.peri_write("Bias_TEST_MSB", 0)	
 		
 		#array
 		data = np.zeros(256, dtype=np.float);
@@ -164,9 +173,9 @@ class ssa_calibration():
 		# do the measurement
 		for i in range(0, 256):
 			#set_threshold(i)
-			I2C.peri_write("Bias_THDAC", i)
+			self.I2C.peri_write("Bias_THDAC", i)
 			sleep(0.1)
-			data[i] = self.mul.measure(inst)
+			data[i] = self.multimeter.measure(inst)
 			if (i % 10 == 0):
 				print "Done point ", i, " of ", 256
 
@@ -178,7 +187,7 @@ class ssa_calibration():
 		activate_I2C_chip()
 		
 		# demux the line
-		set_measurement("D5BFEED")	
+		self.set_measurement("D5BFEED")	
 		
 		#array
 		data = np.zeros(32, dtype=np.float);
@@ -186,56 +195,56 @@ class ssa_calibration():
 		# do the measurement
 		for i in range(0, 32):
 			#set_threshold(i)
-			I2C.peri_write("Bias_D5BFEED", i)
+			self.I2C.peri_write("Bias_D5BFEED", i)
 			sleep(0.1)
-			data[i] = self.mul.measure(inst)
+			data[i] = self.multimeter.measure(inst)
 			print "Done point ", i, " of ", 32
 
 		return data
 
 	def set_measurement(self, name = "none"):
 		# set all zeros now
-		I2C.peri_write("Bias_TEST_LSB", 0)
-		I2C.peri_write("Bias_TEST_MSB", 0)
+		self.I2C.peri_write("Bias_TEST_LSB", 0)
+		self.I2C.peri_write("Bias_TEST_MSB", 0)
 		
 		# now set whatever you want
 		if name == "none":
 			pass
 		elif name == "D5BFEED":
-			I2C.peri_write("Bias_TEST_LSB", 0b00000001)
-			I2C.peri_write("Bias_TEST_MSB", 0b00000000)
+			self.I2C.peri_write("Bias_TEST_LSB", 0b00000001)
+			self.I2C.peri_write("Bias_TEST_MSB", 0b00000000)
 		elif name == "D5PREAMP":
-			I2C.peri_write("Bias_TEST_LSB", 0b00000010)
-			I2C.peri_write("Bias_TEST_MSB", 0b00000000)
+			self.I2C.peri_write("Bias_TEST_LSB", 0b00000010)
+			self.I2C.peri_write("Bias_TEST_MSB", 0b00000000)
 		elif name == "D5TDR":
-			I2C.peri_write("Bias_TEST_LSB", 0b00000100)
-			I2C.peri_write("Bias_TEST_MSB", 0b00000000)
+			self.I2C.peri_write("Bias_TEST_LSB", 0b00000100)
+			self.I2C.peri_write("Bias_TEST_MSB", 0b00000000)
 		elif name == "D5ALLV":
-			I2C.peri_write("Bias_TEST_LSB", 0b00001000)
-			I2C.peri_write("Bias_TEST_MSB", 0b00000000)
+			self.I2C.peri_write("Bias_TEST_LSB", 0b00001000)
+			self.I2C.peri_write("Bias_TEST_MSB", 0b00000000)
 		elif name == "D5ALLI":
-			I2C.peri_write("Bias_TEST_LSB", 0b00010000)
-			I2C.peri_write("Bias_TEST_MSB", 0b00000000)
+			self.I2C.peri_write("Bias_TEST_LSB", 0b00010000)
+			self.I2C.peri_write("Bias_TEST_MSB", 0b00000000)
 		elif name == "CALDAC":
-			I2C.peri_write("Bias_TEST_LSB", 0b00100000)
-			I2C.peri_write("Bias_TEST_MSB", 0b00000000)
+			self.I2C.peri_write("Bias_TEST_LSB", 0b00100000)
+			self.I2C.peri_write("Bias_TEST_MSB", 0b00000000)
 		elif name == "BOOSTERBASELINE":
-			I2C.peri_write("Bias_TEST_LSB", 0b01000000)
-			I2C.peri_write("Bias_TEST_MSB", 0b00000000)
+			self.I2C.peri_write("Bias_TEST_LSB", 0b01000000)
+			self.I2C.peri_write("Bias_TEST_MSB", 0b00000000)
 		elif name == "THDAC":
-			I2C.peri_write("Bias_TEST_LSB", 0b10000000)
-			I2C.peri_write("Bias_TEST_MSB", 0b00000000)
+			self.I2C.peri_write("Bias_TEST_LSB", 0b10000000)
+			self.I2C.peri_write("Bias_TEST_MSB", 0b00000000)
 		elif name == "THDACHIGH":
-			I2C.peri_write("Bias_TEST_LSB", 0b00000000)
-			I2C.peri_write("Bias_TEST_MSB", 0b00000001)
+			self.I2C.peri_write("Bias_TEST_LSB", 0b00000000)
+			self.I2C.peri_write("Bias_TEST_MSB", 0b00000001)
 		elif name == "D5DAC8":
-			I2C.peri_write("Bias_TEST_LSB", 0b00000000)
-			I2C.peri_write("Bias_TEST_MSB", 0b00000010)
+			self.I2C.peri_write("Bias_TEST_LSB", 0b00000000)
+			self.I2C.peri_write("Bias_TEST_MSB", 0b00000010)
 		elif name == "VBG":
-			I2C.peri_write("Bias_TEST_LSB", 0b00000000)
-			I2C.peri_write("Bias_TEST_MSB", 0b00000100)
+			self.I2C.peri_write("Bias_TEST_LSB", 0b00000000)
+			self.I2C.peri_write("Bias_TEST_MSB", 0b00000100)
 		elif name == "GND":
-			I2C.peri_write("Bias_TEST_LSB", 0b00000000)
-			I2C.peri_write("Bias_TEST_MSB", 0b00001000)
+			self.I2C.peri_write("Bias_TEST_LSB", 0b00000000)
+			self.I2C.peri_write("Bias_TEST_MSB", 0b00001000)
 		else:
 			print "Error. Wrong name"

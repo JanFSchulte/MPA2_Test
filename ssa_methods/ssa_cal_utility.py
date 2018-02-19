@@ -18,25 +18,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def errorf(x, *p):
-    a, mu, sigma = p
-#    print x
-    return 0.5*a*(1.0+erf((x-mu)/sigma))
-
-def line(x, *p):
-    g, offset = p
-    return  numpy.array(x) *g + offset
-
-def gauss(x, *p):
-    A, mu, sigma = p
-    return A*numpy.exp(-(x-mu)**2/(2.*sigma**2))
-
-def errorfc(x, *p):
-    a, mu, sigma = p
-    return a*0.5*erfc((x-mu)/sigma)
-
-
-
 class SSA_cal_utility():
 
 	def __init__(self, ssa, I2C, fc7):
@@ -46,8 +27,11 @@ class SSA_cal_utility():
 		self.scurve_data = False
 		self.scurve_nevents  = 0
 		self.scurve_calpulse = 0
+		self.default_dac_ratio = 4.9 / 2
+		self.fe_ofs = 0.3708
+		self.fe_gain = 1.1165
 
-	def scurves(self, cal_pulse_amplitude = [100], nevents = 1000, display = False, plot = True, filename = False, filename2 = ""):
+	def scurves(self, cal_pulse_amplitude = [100], nevents = 1000, display = False, plot = True, filename = False, filename2 = "", msg = ""):
 		utils.print_enable(False)
 		activate_I2C_chip()
 		utils.print_enable(True)
@@ -65,7 +49,7 @@ class SSA_cal_utility():
 			close_shutter(1)
 			clear_counters(1)
 			# init chip cal pulse
-			self.ssa.ctrl.init_cal_pulse(cal_val, 5)
+			self.ssa.ctrl.init_cal_pulse(cal_val, 15)
 			# init firmware cal pulse
 			Configure_TestPulse_MPA_SSA(200, nevents)
 
@@ -113,9 +97,9 @@ class SSA_cal_utility():
 				if (display == True): 
 					utils.ShowPercent(threshold, 256, strout)
 				else: 
-					utils.ShowPercent(threshold, 256, "Calculating S-Curves                                       ")
+					utils.ShowPercent(threshold, 256, "Calculating S-Curves "+msg+"                                      ")
 			
-			utils.ShowPercent(256, 256, "Done calculating S-Curves")
+			utils.ShowPercent(256, 256, "Done calculating S-Curves "+msg+"                                            ")
 
 			if( isinstance(filename, str) ):
 				fo = "../SSA_Results/" + filename + "_scurve_" + filename2 + "__cal_" + str(cal_val) + ".csv"
@@ -135,11 +119,10 @@ class SSA_cal_utility():
 
 	def trimming_apply(self, default_trimming = 'keep_current', striprange = range(1,121)):
 		r = True
-
 		if(isinstance(default_trimming, int)):
-			trimdac_value = np.zeros(120)
+			trimdac_value = np.array([default_trimming]*120)
 			self.I2C.strip_write("THTRIMMING", 0, default_trimming)
-			print "Trimming: Applied value %d to all channels" % (default_trimming)
+			print "->  \tTrimming: Applied value %d to all channels" % (default_trimming)
 			if(default_trimming == 0):
 				self.scurve_trimming = 'zeros'
 			else:
@@ -148,7 +131,7 @@ class SSA_cal_utility():
 			trimdac_value = np.array(default_trimming)
 			for i in striprange:
 				self.I2C.strip_write("THTRIMMING", i, default_trimming[i])
-			print "Trimming: Applied trimming array" % (default_trimming)
+			print "->  \tTrimming: Applied trimming array" % (default_trimming)
 			self.scurve_trimming = 'trimmed'
 		elif(default_trimming != False or default_trimming != 'keep_current'):
 			self.scurve_trimming = 'none'
@@ -175,10 +158,9 @@ class SSA_cal_utility():
 
 		while(err == True and itr < reiterate):
 			try:
-				# fit the curve with 1-error_function 
-				# and find the mean
+				# fit the curve with 1-error_function (function defined in myScripts/Utilities.py)
 				par, cov = curve_fit(
-					f     = errorfc, 
+					f     = f_errorfc, 
 					xdata = range(0, len(sct)-1), 
 					ydata = sct[1 : len(sct)], 
 					p0    = [nevents, par_guess, 2]
@@ -187,7 +169,6 @@ class SSA_cal_utility():
 				itr += 1
 			else:
 				err = False
-
 		if(err):
 			print "Fitting failed " + errmsg
 			return False
@@ -197,7 +178,7 @@ class SSA_cal_utility():
 			return thidx
 
 
-	def trimming_evaluate_thdac_trimdac_ratio(self, trimdac_pvt_calib = False, cal_pulse_amplitude = 100, th_nominal = 115,  nevents = 500, plot = False):
+	def evaluate_thdac_trimdac_ratio(self, trimdac_pvt_calib = False, cal_pulse_amplitude = 100, th_nominal = 115,  nevents = 500, plot = False):
 		# set the value of the dac that controls the trimmin dacs currents
 		# to compensate for process variations
 		if(isinstance(trimdac_pvt_calib, int)):
@@ -219,7 +200,6 @@ class SSA_cal_utility():
 					filename = False
 				)
 			)
-			
 			for strip in range(0,120):
 				sct = sc[cnt][:,strip]
 				thidx = self.errfitting_get_mean(sct, nevents)
@@ -233,86 +213,139 @@ class SSA_cal_utility():
 		return ratios
 
 
-	def trimming_scurves(self, cal_pulse_amplitude = 100, th_nominal = 'evaluate', default_trimming = 'keep_current', striprange = range(1,121), ratio = 'evaluate', iterations = 3, nevents = 1000, plot = True, display = True, reevaluate = True):
-		
-		# evaluate TRIMDAC/THDAC ratio
+	def trimming_scurves(self, method = 'expected', cal_pulse_amplitude = 100, th_nominal = 'default', default_trimming = 'keep_current', striprange = range(1,121), ratio = 'default', iterations = 3, nevents = 1000, plot = True, display = False, reevaluate = True):
+
+		# trimdac/thdac ratio
 		if(ratio == 'evaluate'):
-			dacratiolist = self.trimming_evaluate_thdac_trimdac_ratio(trimdac_pvt_calib = False, cal_pulse_amplitude = cal_pulse_amplitude, th_nominal = th_nominal,  nevents = nevents, plot = False)
+			dacratiolist = self.evaluate_thdac_trimdac_ratio(trimdac_pvt_calib = False, cal_pulse_amplitude = cal_pulse_amplitude, th_nominal = th_nominal,  nevents = nevents, plot = False)
+		elif(ratio == 'default'):
+			dacratiolist = [self.default_dac_ratio]*120
 		elif isinstance(ratio, float) or isinstance(ratio, int):
 			dacratiolist = [ratio]*120
 		else: exit(1)
 
-		# evaluate expected threshold value
-		if(th_nominal == 'evaluate'):
-			th_expected = 0
+		# apply starting trimming
+		if(method == 'expected'):
+			if( isinstance(default_trimming, np.ndarray) or isinstance(default_trimming, list) or isinstance(default_trimming, int)):
+				trimdac_value = self.trimming_apply(default_trimming, striprange)
+			elif(default_trimming == 'keep_current'): 
+				trimdac_value = self.trimming_apply(15, striprange)
+			else:
+				exit(1)
+		elif(method == 'center'):
+			trimdac_value = self.trimming_apply(15, striprange)
+		elif (method == 'highest'):
+			trimdac_value = self.trimming_apply(0, striprange)
 		else:
-			th_expected = th_nominal
+			print "Invalid method"
+			return False
 
-		# apply the starting trimming
-		trimdac_value = self.trimming_apply(default_trimming, striprange)
-		
-		# evaluate inital S-Curves
-		scurve_data_available = False
-		if(isinstance(self.scurve_data, np.ndarray)):
-			if((reevaluate == False) and (self.scurve_nevents == nevents) and (self.scurve_calpulse == cal_pulse_amplitude) ):
-				scurve_data_available = True
-				scurve_init = self.scurve_data
-				print "Trimming: Using available S-Curves data"
-		if(scurve_data_available == False):
-			scurve_init = self.scurves(
-				cal_pulse_amplitude = cal_pulse_amplitude, 
+		# evaluate initial S-Curves
+		thlist_init, scurve_init = self.evaluate_scurve_thresholds(
+				cal = cal_pulse_amplitude, 
 				nevents = nevents, 
-				display = False, 
-				plot = True, 
-				filename = False
-			)
-		scurve = scurve_init
-		if(display):
-			print "Trimming DAC values: " + str(trimdac_value)
+				plot = False,
+				msg = "for iteration 0")
+
+		# Define the target threshold
+		if(method == 'expected'):
+			if(th_nominal == 'evaluate'):
+				fe_gain , fe_ofs = self.evaluate_fe_gain(nevents = nevents, plot = False)
+				th_expected = fe_ofs + fe_gain * cal_pulse_amplitude
+			elif(th_nominal == 'default'):
+				th_expected = self.fe_ofs + self.fe_gain * cal_pulse_amplitude
+			elif isinstance(ratio, float) or isinstance(ratio, int):
+				th_expected = th_nominal
+			else: exit(1)
+		elif(method == 'center'):
+			th_expected = np.mean(thlist_init)
+		elif (method == 'highest'):
+			th_expected = np.max(thlist_init)		
+
+		thlist = thlist_init
 
 		# start trimming on the S-Curves
 		for i in range(0, iterations):
+			trimdac_correction = np.zeros(120)
+
+
 			for strip in striprange:
 				
-				# fit the S-Curve and find the actual threshold
-				th_initial = self.errfitting_get_mean(
-					curve = scurve[: , strip-1],
-					nevents = nevents,
-					expected = 'autodefine',
-					errmsg = "", 
-					reiterate = 3
-				)
-				#calculate the trimming DAC correcton value
-				trimdac_correction    = int(round((th_nominal - th_initial) * dacratiolist[strip-1] ))
-				trimdac_current_value = self.I2C.strip_read("THTRIMMING", strip)
-				trimdac_value[strip-1]  = trimdac_current_value + trimdac_correction
+				th_initial                  = thlist[strip-1]
+				trimdac_correction[strip-1] = int(round((th_expected - th_initial) * dacratiolist[strip-1] ))
+				trimdac_current_value       = self.I2C.strip_read("THTRIMMING", strip)
+				trimdac_value[strip-1]      = trimdac_current_value + trimdac_correction[strip-1]
+
 				if(trimdac_value[strip-1] > 31):
-					print "Reached high trimming limit for strip" + str(strip)
+					print "->  \tReached high trimming limit for strip" + str(strip)
 					trimdac_value[strip-1] = 31
 				elif(trimdac_value[strip-1] < 0):
-					print "Reached low trimming limit for strip" + str(strip)
+					print "->  \tReached low trimming limit for strip" + str(strip)
 					trimdac_value[strip-1] = 0
 
 				# Apply correction to the trimming DAC				
 				self.I2C.strip_write("THTRIMMING", strip, int(trimdac_value[strip-1]))
 
 			if(display):
-				print "Trimming DAC values: " + str(trimdac_value)
+				print "Initial threshold    " + str(thlist[0:10])
+				print "Target threshold     " + str([th_expected]*10)
+				print "Trim-DAC Correction  " + str(trimdac_correction[0:10])
+				print "Trimming DAC values: " + str(trimdac_value[0:10])
 
 			# evaluate new S-Curves
-			scurve = self.scurves(
-				cal_pulse_amplitude = cal_pulse_amplitude, 
+			thlist, scurve = self.evaluate_scurve_thresholds(
+				cal = cal_pulse_amplitude, 
 				nevents = nevents, 
-				display = False, 
-				plot = True, 
-				filename = False
-			)
+				plot = False,
+				msg = "for iteration " + str(i+1))
 
 		#plot initial and final S-Curves
 		if(plot):
 			plt.clf()
 			plt.plot(scurve_init, 'b')
-			plt.plot(scurve_init, 'r')
+			plt.plot(scurve, 'r')
 			plt.show()
 
 		return trimdac_value
+
+
+	def evaluate_fe_gain(self, callist = [30, 60, 90], nevents=1000, plot = True):
+		thmean = []
+		cnt = 0
+		for cal in callist:
+			thlist = self.evaluate_scurve_thresholds(cal = cal, nevents = nevents, plot = False)
+			thmean.append( np.mean(thmean) )
+
+		par, cov = curve_fit(f= f_line,  xdata = callist, ydata = thmean, p0 = [0, 0])
+		gain = par[0]
+		offset = par[1]
+
+		if(plot):
+			plt.clf()
+			plt.plot(callist, offset+gain*np.array(callist))
+			plt.plot(callist, thmean, 'o')
+			plt.show()
+
+		return gain, offset
+
+
+	def evaluate_scurve_thresholds(self, cal, nevents = 1000, plot = False, msg = ""):
+		th = np.zeros(120)
+		scurve = self.scurves(
+			cal_pulse_amplitude = cal, 
+			nevents = nevents, 
+			display = False, 
+			plot = plot, 
+			filename = False,
+			msg = msg)
+		for strip in range(1,121):
+			th[strip-1] = self.errfitting_get_mean(
+				curve = scurve[: , strip-1],
+				nevents = nevents,
+				expected = 'autodefine',
+				errmsg = "", 
+				reiterate = 3)
+		thmean = np.mean(th)
+		tmmin = np.min(th)
+		thmax = np.max(th)
+		return th, scurve

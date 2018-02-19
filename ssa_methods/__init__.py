@@ -13,7 +13,7 @@ try:
     from ssa_methods.ssa_calibration import *
     ssa_calibration = ssa_calibration(ssa, I2C, fc7, multimeter)
 except ImportError:
-    print "- Impossible to access multimeter"
+    print "- Impossible to access GPIB instruments"
 
 def init():	ssa.init_all()
 

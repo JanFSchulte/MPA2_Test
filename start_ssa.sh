@@ -19,4 +19,5 @@ echo "from ssa_methods import *"                                              >>
 #echo "ssa = SSA_handle(I2C, fc7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map) " >> LaunchPy.py
 #echo "init_all() "                                      >> LaunchPy.py
 cp ./myScripts/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 python -i LaunchPy.py
