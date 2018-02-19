@@ -41,6 +41,18 @@ class Utilities:
 			rstr = "[{:6.1f}]".format(clist)
 		return rstr
 
+	def linear_fit(self, xdata, ydata):
+		par, cov = curve_fit(
+			f= f_line,  
+			xdata = np.array(xdata), 
+			ydata = np.array(ydata), 
+			p0 = [0, 0])
+		gain = par[0]
+		offset = par[1]
+		sigma = np.sqrt(np.diag(cov))
+		return gain, offset, sigma
+
+
 def print_method(name):
 	lines = inspect.getsourcelines(name)
 	print("".join(lines[0]))

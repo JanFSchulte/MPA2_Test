@@ -11,7 +11,7 @@ ssa_test        = SSA_test_utility(ssa, I2C, fc7)
 
 try:
     from ssa_methods.ssa_calibration import *
-    ssa_calibration = ssa_calibration(ssa, I2C, fc7, multimeter)
+    ssa_calibration = ssa_calibration(ssa, I2C, fc7, multimeter, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
 except ImportError:
     print "- Impossible to access GPIB instruments"
 
