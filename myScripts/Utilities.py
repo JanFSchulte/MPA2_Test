@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from scipy.special import erfc
 from scipy.special import erf
 import matplotlib.cm as cm
+from scipy.interpolate import spline as interpspline
+
 
 class Utilities: 
 
@@ -51,6 +53,21 @@ class Utilities:
 		offset = par[1]
 		sigma = np.sqrt(np.diag(cov))
 		return gain, offset, sigma
+
+	def smuth_plot(self, y, x, par = '', r=10):
+		xnew = np.linspace(x[0],x[-1], (len(x)-1)*10+1)
+		ynp  = np.transpose(np.array(y))
+		dim  = len(ynp.shape)
+		if(dim == 1):
+			ynew = interpspline(x,y,xnew)
+			plt.plot(xnew, ynew, par)
+		elif(dim == 2):
+			for i in ynp:
+				ynew = interpspline(x,i,xnew) 
+				plt.plot(xnew, ynew, par)
+		else:
+			return False
+		
 
 
 def print_method(name):

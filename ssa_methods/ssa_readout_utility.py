@@ -324,7 +324,7 @@ class SSA_inject():
 		
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
-			self.ctrl.init_cal_pulse(cal_pulse_amplitude, 5)
+			self.ctrl.set_cal_pulse(amplitude = cal_pulse_amplitude, duration = 5, delay = 'keep')
 			Configure_TestPulse_MPA_SSA(200, 1)
 			self.ctrl.set_threshold(threshold)
 			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
@@ -340,9 +340,6 @@ class SSA_inject():
 
 		SendCommand_CTRL("start_trigger")
 		sleep(0.01)
-
-
-
 
 
 

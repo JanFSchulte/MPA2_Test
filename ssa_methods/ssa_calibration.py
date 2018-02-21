@@ -79,12 +79,12 @@ class ssa_calibration():
 				self.best_dac = best_dac
 		# define the pars
 		par_list = [
-			Parameter("Booster Feedback Bias", "D5BFEED", 82.0), 
-			Parameter("Preamplifier Bias", "D5PREAMP", 82.0), 
-			Parameter("TRIM DAC range", "D5TDR", 115.0), 
-			Parameter("DAC for voltage biases","D5ALLV", 82.0), 
-			Parameter("DAC for current biases","D5ALLI", 82.0), 
-			Parameter("DAC for threshold and calibration", "D5DAC8", 86.0)]
+			Parameter("Booster Feedback Bias", "Bias_D5BFEED", 82.0), 
+			Parameter("Preamplifier Bias", "Bias_D5PREAMP", 82.0), 
+			Parameter("TRIM DAC range", "Bias_D5TDR", 115.0), 
+			Parameter("DAC for voltage biases","Bias_D5ALLV", 82.0), 
+			Parameter("DAC for current biases","Bias_D5ALLI", 82.0), 
+			Parameter("DAC for threshold and calibration", "Bias_D5DAC8", 86.0)]
 			#Parameter("Threshold DAC", "THDAC", 622.0), 
 			#Parameter("Threshold High DAC", "THDACHIGH", 622.0), 
 			#Parameter("Calibration DAC", "CALDAC", 100.0)]
@@ -154,9 +154,9 @@ class ssa_calibration():
 		else:
 			inst = inst0
 		# demux the line
-		self.ssa.set_output_mux(name)
+		self.ssa.ctrl.set_output_mux(name)
 		# read value
-		value = self.__d5_value('Bias_'+str(name), 'r')
+		value = self.__d5_value(str(name), 'r')
 		measurement = self.multimeter.measure(inst)
 		# return	
 		return value, measurement
@@ -185,7 +185,7 @@ class ssa_calibration():
 		while(True):
 			# set new value
 			dac_value = dac_value + sign
-			self.__d5_value('Bias_'+str(name), 'w', dac_value)
+			self.__d5_value(str(name), 'w', dac_value)
 			# measure
 			voltage = 1E3*self.multimeter.measure(inst)
 			print "\t\t\tdac: ", dac_value, " voltage: ", voltage
@@ -215,7 +215,7 @@ class ssa_calibration():
 			prev_voltage_diff = current_voltage_diff
 		
 		# verify the value
-		self.__d5_value('Bias_'+str(name), 'w', best_dac_value)
+		self.__d5_value(str(name), 'w', best_dac_value)
 		dac_value, voltage = self.__get_value_and_voltage(name, inst)
 		print "\t\tBest Set: ", dac_value, 1E3*voltage
 

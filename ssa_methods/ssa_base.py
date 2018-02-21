@@ -153,15 +153,60 @@ class SSA_control:
 		if error:
 			print "Error. Failed to set the trimming"
 
-	def init_cal_pulse(self, cal_pulse_amplitude = 255, cal_pulse_duration = 3):
-		# enable strips
-		self.I2C.strip_write("ENFLAGS", 0, 0b10101)
-		# init the dll
-		self.I2C.peri_write("Bias_DL_en", 1)
-		self.I2C.peri_write("Bias_DL_ctrl", 1)
+	def set_cal_strips(self, mode = 'counter', strip = 'all'):
+		
+		if  (mode == 'counter'): 
+			activeval = 0b10101
+		elif(mode == 'analog'):  
+			activeval = 0b10001
+		elif(mode == 'digital'):
+		 activeval = 0b01001
+		else: exit(1)
+
+		#enable calibration on required strip
+		if(strip == 'all'):
+			self.I2C.strip_write("ENFLAGS", 0, activeval)
+		elif(strip == 'none'):
+			self.I2C.strip_write("ENFLAGS", 0, 0b00001)
+		elif(isinstance(strip, list)):
+			self.I2C.strip_write("ENFLAGS", 0, 0b00001)
+			for s in strip:
+				self.I2C.strip_write("ENFLAGS", 0, activeval)
+		elif(isinstance(strip, int)):
+			self.I2C.strip_write("ENFLAGS", 0, 0b00000)
+			self.I2C.strip_write("ENFLAGS", strip, activeval)
+		else:
+			exit(1)
+
+	def set_cal_pulse(self, amplitude = 255, duration = 3, delay = 'keep'):
 		# init cal pulse itself
-		self.I2C.peri_write("Bias_CALDAC", cal_pulse_amplitude)
-		self.I2C.peri_write("CalPulse_duration", cal_pulse_duration)
+		self.I2C.peri_write("Bias_CALDAC", amplitude)
+		self.I2C.peri_write("CalPulse_duration", duration)
+		# init the dll
+		if(isinstance(delay, str)):
+			if(delay == 'disable' or delay == 'off'):
+				self.I2C.peri_write("Bias_DL_en", 0)
+			elif(delay == 'enable'or delay == 'on'):
+				self.I2C.peri_write("Bias_DL_en", 1)
+			elif(delay == 'keep'): pass
+			else: exit(1)
+		elif(isinstance(value, int)):
+			self.I2C.peri_write("Bias_DL_en", 1)
+			self.I2C.peri_write("Bias_DL_ctrl", delay)
+
+
+	#def set_dll(self, value = 'disable')
+	#	if(isinstance(value, str)):
+	#		if(value == 'disable' or value == 'off'):
+	#			self.I2C.peri_write("Bias_DL_en", 0)
+	#			self.I2C.peri_write("Bias_DL_ctrl", 0)
+	#		elif(value == 'enable'or value == 'on'):
+	#			self.I2C.peri_write("Bias_DL_en", 1)
+	#			self.I2C.peri_write("Bias_DL_ctrl", 1)
+	#	elif(isinstance(value, int)):
+	#		self.I2C.peri_write("Bias_DL_en", 1)
+	#		self.I2C.peri_write("Bias_DL_ctrl", value)
+
 
 	def set_lateral_data_phase(self, left, right):
 		self.fc7.write("ctrl_phy_ssa_gen_lateral_phase_1", right)
