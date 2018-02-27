@@ -106,6 +106,9 @@ class ssa_calibration():
 			voltage = voltage*1E3
 			print par.full_name, ": "
 			print ("\t Best DAC: %4d,\t V: %8.3f mV") % (value, voltage)
+
+		self.ssa.ctrl.set_output_mux('highimpedence')
+
 		
 
 	def __dac_inl(self, data, nbits, plot = True):

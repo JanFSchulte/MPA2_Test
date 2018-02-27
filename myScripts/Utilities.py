@@ -95,5 +95,3 @@ def f_errorfc(x, *p):
 
 
 
-
-

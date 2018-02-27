@@ -140,11 +140,11 @@ class SSA_cal_utility():
 
 		# trimdac/thdac ratio
 		if(ratio == 'evaluate'):
-			dacratiolist = self.evaluate_thdac_trimdac_ratio(trimdac_pvt_calib = False, cal_pulse_amplitude = cal_pulse_amplitude, th_nominal = th_nominal,  nevents = nevents, plot = False)
+			dacratiolist = np.array(self.evaluate_thdac_trimdac_ratio(trimdac_pvt_calib = False, cal_pulse_amplitude = cal_pulse_amplitude, th_nominal = th_nominal,  nevents = nevents, plot = False))
 		elif(ratio == 'default'):
-			dacratiolist = [self.default_dac_ratio]*120
+			dacratiolist = np.array([self.default_dac_ratio]*120)
 		elif isinstance(ratio, float) or isinstance(ratio, int):
-			dacratiolist = [ratio]*120
+			dacratiolist = np.array([ratio]*120)
 		else: exit(1)
 
 		# apply starting trimming
@@ -164,11 +164,17 @@ class SSA_cal_utility():
 		else: return False
 
 		# evaluate initial S-Curves
-		thlist_init, scurve_init = self.__evaluate_scurve_thresholds(
-				cal = cal_pulse_amplitude, 
-				nevents = nevents, 
-				plot = False,
-				msg = "for iteration 0")
+		scurve_init = self.scurves(
+			cal_pulse_amplitude = cal_pulse_amplitude, 
+			nevents = nevents, 
+			display = False, 
+			plot = False, 
+			filename = False,
+			msg = "for iteration 0")
+
+		thlist_init, par_init = self.evaluate_scurve_thresholds(
+			scurve = scurve_init, 
+			nevents = nevents)
 
 		# Define the target threshold
 		if(method == 'expected'):
@@ -187,6 +193,9 @@ class SSA_cal_utility():
 
 		thlist = thlist_init
 		scurve = scurve_init
+		par = par_init
+
+		print "Difference = " +  str(np.max(thlist)-np.min(thlist))
 
 		# start trimming on the S-Curves
 		for i in range(0, iterations):
@@ -216,33 +225,53 @@ class SSA_cal_utility():
 				print "->  \tTrimming DAC values: " + str(trimdac_value[0:10])
 
 			# evaluate new S-Curves
-			thlist, scurve = self.__evaluate_scurve_thresholds(
-				cal = cal_pulse_amplitude, 
+			scurve = self.scurves(
+				cal_pulse_amplitude = cal_pulse_amplitude, 
 				nevents = nevents, 
-				plot = False,
+				display = False, 
+				plot = False, 
+				filename = False,
 				msg = "for iteration " + str(i+1))
 
-			if ((np.max(thlist)-np.min(thlist)) < 2):
+			thlist, par = self.evaluate_scurve_thresholds(
+				scurve = scurve, 
+				nevents = nevents)
+
+			dacratiolist = dacratiolist/2.0
+
+			print "Difference = " +  str(np.max(thlist)-np.min(thlist))
+			if ((np.max(thlist)-np.min(thlist)) < 1):
 				break   
 			if (i == iterations-1):
 				print "->  \tReached the maximum number of iterations (d = " + str(np.max(thlist)-np.min(thlist)) + ")"
 
 		#plot initial and final S-Curves
 		if(plot):
-			xplt = range(int(th_expected-30), int(th_expected+31))
+			xplt = np.linspace(int(th_expected-30), int(th_expected+31), 601)
 			plt.clf()
-			utils.smuth_plot(scurve_init[xplt], xplt, 'b')
-			utils.smuth_plot(scurve[xplt], xplt, 'r')
+			for i in par_init:
+				plt.plot( xplt, f_errorfc(xplt, i[0], i[1], i[2]) , 'b')
+			for i in par:
+				plt.plot( xplt, f_errorfc(xplt, i[0], i[1], i[2]) , 'r')
+			#utils.smuth_plot(scurve_init[xplt], xplt, 'b')
+			#utils.smuth_plot(scurve[xplt], xplt, 'r')
 			plt.show()
 
-		return trimdac_value
+		return scurve_init , scurve
 
 
 	def evaluate_fe_gain(self, callist = [30, 60, 90], nevents=1000, plot = True):
 		thmean = []
 		cnt = 0
 		for cal in callist:
-			thlist = self.__evaluate_scurve_thresholds(cal = cal, nevents = nevents, plot = False)
+			s = self.scurves(
+				cal_pulse_amplitude = cal, 
+				nevents = nevents, 
+				display = False, 
+				plot = False, 
+				filename = False,
+				msg = "")
+			thlist, p = self.evaluate_scurve_thresholds(scurve = s, nevents = nevents)
 			thmean.append( np.mean(thmean) )
 
 		par, cov = curve_fit(f= f_line,  xdata = callist, ydata = thmean, p0 = [0, 0])
@@ -308,7 +337,7 @@ class SSA_cal_utility():
 			)
 			for strip in range(0,120):
 				sct = sc[cnt][:,strip]
-				thidx = self.__errfitting_get_mean(sct, nevents)
+				thidx , par = self.__errfitting_get_mean(sct, nevents)
 				thtmp[strip] = thidx
 			th.append( thtmp )
 			cnt += 1 
@@ -319,26 +348,23 @@ class SSA_cal_utility():
 		return ratios
 
 
-	def __evaluate_scurve_thresholds(self, cal, nevents = 1000, plot = False, msg = ""):
-		th = np.zeros(120)
-		scurve = self.scurves(
-			cal_pulse_amplitude = cal, 
-			nevents = nevents, 
-			display = False, 
-			plot = plot, 
-			filename = False,
-			msg = msg)
+	def evaluate_scurve_thresholds(self, scurve, nevents = 1000):
+		ths = []
+		pars = []
+
 		for strip in range(1,121):
-			th[strip-1] = self.__errfitting_get_mean(
+			th, par = self.__errfitting_get_mean(
 				curve = scurve[: , strip-1],
 				nevents = nevents,
 				expected = 'autodefine',
 				errmsg = "", 
 				reiterate = 3)
-		thmean = np.mean(th)
-		tmmin = np.min(th)
-		thmax = np.max(th)
-		return th, scurve
+			ths.append(th)
+			pars.append(par)
+
+		ths = np.array(ths)
+		pars = np.array(pars)
+		return ths, pars
 
 
 	def __errfitting_get_mean(self, curve, nevents, expected = 'autodefine', errmsg="", reiterate = 3):
@@ -349,6 +375,9 @@ class SSA_cal_utility():
 		while ( not ((sct[0] == nevents) and (sct[1] == nevents)) ):
 			sct = sct[ np.argmax(sct)+1 : ]
 		
+		for i in range(0, len(curve)-len(sct)):
+			sct = np.insert(sct, 0, nevents)
+
 		# find a first guess for the scurve mean value
 		if(expected == 'autodefine'):
 			par_guess = np.abs(np.abs(sct - (nevents/2) )).argmin()	
@@ -363,8 +392,8 @@ class SSA_cal_utility():
 				# fit the curve with 1-error_function (function defined in myScripts/Utilities.py)
 				par, cov = curve_fit(
 					f     = f_errorfc, 
-					xdata = range(0, len(sct)-1), 
-					ydata = sct[1 : len(sct)], 
+					xdata = range(1, len(sct)), 
+					ydata = sct[0 : len(sct)-1], 
 					p0    = [nevents, par_guess, 2]
 				)
 			except RuntimeError:
@@ -376,8 +405,8 @@ class SSA_cal_utility():
 			return False
 		else:
 			# readd number of th points removed by the noise cleaning
-			thidx = int(round( par[1] + (255-len(sct)) ))
-			return thidx
+			thidx = int(round(par[1]))
+			return thidx, par
 
 	def save_multiple_scurves(self, cal_list = range(0, 160, 10), filename = "Chip1"):
 		
