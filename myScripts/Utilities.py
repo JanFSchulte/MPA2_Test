@@ -9,9 +9,16 @@ from scipy.special import erfc
 from scipy.special import erf
 import matplotlib.cm as cm
 from scipy.interpolate import spline as interpspline
+from multiprocessing import Process
+import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
+
 
 
 class Utilities: 
+
+	def __init__(self):
+		p = []
 
 	class cl_clustdispl(float):
 	    def __repr__(self):
@@ -26,22 +33,6 @@ class Utilities:
 		time.sleep(0.001)
 		if (i == 99): 
 			sys.stdout.write('\n')
-
-	def print_enable(self, ctr = True):
-		if(ctr):
-			sys.stdout = sys.__stdout__
-		else: 
-			sys.stdout = open(os.devnull, "w")
-
-	def cl2str(self, clist = [0]):
-		if isinstance(clist, list):
-			if len(clist) > 0: 
-				rstr = str(map(self.cl_clustdispl, clist))
-			else: 
-				rstr = "[      ]"
-		else:
-			rstr = "[{:6.1f}]".format(clist)
-		return rstr
 
 	def linear_fit(self, xdata, ydata):
 		par, cov = curve_fit(
@@ -67,7 +58,39 @@ class Utilities:
 				plt.plot(xnew, ynew, par)
 		else:
 			return False
-		
+	
+	def cl2str(self, clist = [0]):
+		if isinstance(clist, list):
+			if len(clist) > 0: 
+				rstr = str(map(self.cl_clustdispl, clist))
+			else: 
+				rstr = "[      ]"
+		else:
+			rstr = "[{:6.1f}]".format(clist)
+		return rstr
+
+	def __plot_graph(self, *args):
+	    plt.show()
+	
+	def PltPlot(self, data, show = True):
+		plt.plot(data)
+		self.p.append( Process(target=self.__plot_graph, args='') ) 
+		self.p[-1].start()
+	
+	def PltShow(self):
+		self.p.append( Process(target=self.__plot_graph, args='') )
+		self.p[-1].start()
+	
+	def PltClose(self):
+		for i in p:
+			i.join()
+
+	def print_enable(self, ctr = True):
+		if(ctr):
+			sys.stdout = sys.__stdout__
+		else: 
+			sys.stdout = open(os.devnull, "w")
+
 
 
 def print_method(name):

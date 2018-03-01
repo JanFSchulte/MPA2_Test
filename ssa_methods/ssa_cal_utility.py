@@ -31,16 +31,20 @@ class SSA_cal_utility():
 		self.fe_ofs = 0.3708
 		self.fe_gain = 1.1165
 
-	def scurves(self, cal_pulse_amplitude = [50], mode = 'all', nevents = 1000, display = False, plot = True, filename = False, filename2 = "", msg = "", striplist = range(1,121)):
+	def scurves(self, cal_pulse_amplitude = [50], mode = 'all', nevents = 1000, display = False, plot = True, filename = False, filename2 = "trim0", msg = "", striplist = range(1,121)):
 		utils.print_enable(False)
 		activate_I2C_chip()
 		utils.print_enable(True)
 		# first go to the async mode
 		self.ssa.ctrl.activate_readout_async()
 		plt.clf()
+		baseline = False
 
 		if isinstance(cal_pulse_amplitude, int):
 			cal_pulse_amplitude = [cal_pulse_amplitude]
+		elif cal_pulse_amplitude == 'baseline':
+			baseline = True
+			cal_pulse_amplitude = [0]
 		elif not isinstance(cal_pulse_amplitude, list): 
 			return False
 		
@@ -65,32 +69,39 @@ class SSA_cal_utility():
 				#print "Setting the threshold to ", threshold, ", sending the test pulse and reading the counters"
 				strout += "threshold = " + str(threshold) + ".   " 
 				self.ssa.ctrl.set_threshold(threshold)# set the threshold
-				sleep(0.01)
-							
-				if(mode == 'all'): # provide cal pulse to all strips together
-					clear_counters(1)# clear counters
-					open_shutter(2) # open shutter
-					open_shutter(2) # open shutter
-					SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
-					sleep(0.01)   # sleep a bit and wait for trigger to finish
-					while(self.fc7.read("stat_fast_fsm_state") != 0):
-						sleep(0.01)
-					close_shutter(1) # close shutter and read counters
-
-				elif(mode == 'sbs'): # provide cal pulse strip by strip
-					clear_counters(1)
-					open_shutter(2) # open shutter
-					open_shutter(2) # open shutter
-					for s in striplist:
-						self.ssa.ctrl.set_cal_strips(mode = 'counter', strip = s )
-						sleep(0.01)
+				sleep(0.05)
+				if (not baseline):		
+					if(mode == 'all'): # provide cal pulse to all strips together
+						clear_counters(1)# clear counters
+						open_shutter(2) # open shutter
+						open_shutter(2) # open shutter
 						SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
-						sleep(0.01)   # sleep a bit and wait for trigger to finish
+						sleep(0.02)   # sleep a bit and wait for trigger to finish
 						while(self.fc7.read("stat_fast_fsm_state") != 0):
 							sleep(0.01)
-					close_shutter(1) # close shutter and read counters
-				else: 
-					return False
+						close_shutter(2) # close shutter and read counters
+
+					elif(mode == 'sbs'): # provide cal pulse strip by strip
+						clear_counters(1)
+						open_shutter(2) # open shutter
+						open_shutter(2) # open shutter
+						for s in striplist:
+							self.ssa.ctrl.set_cal_strips(mode = 'counter', strip = s )
+							sleep(0.01)
+							SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
+							sleep(0.01)   # sleep a bit and wait for trigger to finish
+							while(self.fc7.read("stat_fast_fsm_state") != 0):
+								sleep(0.01)
+						close_shutter(2) # close shutter and read counters
+					else: 
+						return False
+				else:
+					clear_counters(1)# clear counters
+					sleep(0.01)
+					open_shutter(2) # open shutter
+					sleep(1)
+					close_shutter(2)
+					sleep(0.01)
 
 				failed, scurves[threshold] = self.ssa.readout.read_counters_fast()
 
@@ -100,7 +111,7 @@ class SSA_cal_utility():
 					for s in range(0,120):
 						if ((threshold > 0) and (scurves[threshold,s])==0 and (scurves[threshold-1,s]>(nevents*0.8)) ) : 
 							error = True
-						elif ((threshold > 0) and (scurves[threshold,s])== 2*scurves[threshold-1,s] and (scurves[threshold,s] != 0)): 
+						elif ((not baseline) and (threshold > 0) and (scurves[threshold,s])== 2*scurves[threshold-1,s] and (scurves[threshold,s] != 0)): 
 							error = True
 				if (error == True): 	
 					threshold = threshold - 1
@@ -123,11 +134,11 @@ class SSA_cal_utility():
 			if( isinstance(filename, str) ):
 				fo = "../SSA_Results/" + filename + "_scurve_" + filename2 + "__cal_" + str(cal_val) + ".csv"
 				CSV.ArrayToCSV (array = scurves, filename = fo, transpose = True)
+				print "->  \tData saved in" + fo
 
-		if(plot == True):
-			plt.clf()
+		if(plot == True): 
 			plt.plot(scurves)
-			plt.show()
+			plt.show(block=False)
 
 		self.scurve_data     = scurves
 		self.scurve_nevents  = nevents
@@ -297,20 +308,22 @@ class SSA_cal_utility():
 				self.scurve_trimming = 'zeros'
 			else:
 				self.scurve_trimming = 'const'
+
 		elif(isinstance(default_trimming, np.ndarray) or isinstance(default_trimming, list)):
 			trimdac_value = np.array(default_trimming)
 			for i in striprange:
 				self.I2C.strip_write("THTRIMMING", i, default_trimming[i])
 			print "->  \tTrimming: Applied trimming array" % (default_trimming)
-			self.scurve_trimming = 'trimmed'
-		elif(default_trimming == 'keep'):
-			trimdac_value = np.zeros(120)
-			for i in range(0,120):
-				trimdac_value[i] = self.I2C.strip_read("THTRIMMING", i+1)
+			self.scurve_trimming = 'trimmed'			
+
 		elif(default_trimming != False or default_trimming != 'keep'):
 			self.scurve_trimming = 'none'
 			exit(1)
-		return trimdac_value
+
+		readback = np.zeros(120)
+		for i in range(0,120):
+			readback[i] = self.I2C.strip_read("THTRIMMING", i+1)
+		return readback
 
 
 	def evaluate_thdac_trimdac_ratio(self, trimdac_pvt_calib = False, cal_pulse_amplitude = 100, th_nominal = 115,  nevents = 500, plot = False):
@@ -408,75 +421,15 @@ class SSA_cal_utility():
 			thidx = int(round(par[1]))
 			return thidx, par
 
-	def save_multiple_scurves(self, cal_list = range(0, 160, 10), filename = "Chip1"):
-		
-		self.trimming_apply(0)
 
-		for i in cal_list:
-			self.scurves( 
-				cal_pulse_amplitude = [100], 
-				nevents = 1000, 
-				display = False, 
-				plot = False, 
-				filename = filename, 
-				filename2 = "trim0", 
-				msg = "")
-		
-		self.trimming_apply(31)
-
-		for i in cal_list:
-			self.scurves( 
-				cal_pulse_amplitude = [100], 
-				nevents = 1000, 
-				display = False, 
-				plot = False, 
-				filename = filename, 
-				filename2 = "trim31", 
-				msg = "")
-
-		self.trimming_scurves( 
-			method = 'expected', 
-			cal_pulse_amplitude = 50, 
-			th_nominal = 'default', 
-			default_trimming = 'keep', 
-			striprange = range(1,121), 
-			ratio = 'default', 
-			iterations = 3, 
-			nevents = 1000, 
-			plot = True, 
-			display = False, 
-			reevaluate = True)
-
-		for i in cal_list:
-			self.scurves( 
-				cal_pulse_amplitude = [100], 
-				nevents = 1000, 
-				display = False, 
-				plot = False, 
-				filename = filename, 
-				filename2 = "trim", 
-				msg = "")
-		
-		self.trimming_scurves( 
-			method = 'center', 
-			cal_pulse_amplitude = 50, 
-			th_nominal = 'default', 
-			default_trimming = 'keep', 
-			striprange = range(1,121), 
-			ratio = 'default', 
-			iterations = 3, 
-			nevents = 1000, 
-			plot = True, 
-			display = False, 
-			reevaluate = True)
-
-		for i in cal_list:
-			self.scurves( 
-				cal_pulse_amplitude = [100], 
-				nevents = 1000, 
-				display = False, 
-				plot = False, 
-				filename = filename, 
-				filename2 = "trimCenter", 
-				msg = "")
-		
+	def save_multiple_scurves(self, cal_list = range(0, 160, 10), name = "Chip1", name2 = "trim0"):
+		plt.clf()
+		for cal in cal_list:
+			print "Trimming: " + str(self.trimming_apply()[0:10])
+			sleep(0.1)
+			self.scurves(
+				cal_pulse_amplitude = cal, 
+				filename = name+'/'+name, 
+				filename2 = name2,
+				plot = True,
+				msg = "for calibration pulse = " + str(cal))

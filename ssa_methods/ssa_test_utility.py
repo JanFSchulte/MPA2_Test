@@ -90,7 +90,7 @@ class SSA_test_utility():
 				err = False
 				self.ssa.inject.digital_pulse(hit_list = [i], hip_list = [i]*H, initialise = False)
 				#self.ssa.inject.digital_pulse(hit_list = [i], initialise = False)
-				time.sleep(0.01)
+				time.sleep(0.03)
 				
 				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = False)
 

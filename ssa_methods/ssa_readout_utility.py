@@ -290,6 +290,7 @@ class SSA_inject():
 		self.I2C  = I2C
 		self.fc7  = FC7
 		self.ctrl = SSA_base
+		self.hitmode = 'none'
 
 	def digital_pulse(self, hit_list = [], hip_list = [], initialise = True):
 		
@@ -320,7 +321,7 @@ class SSA_inject():
 			self.I2C.strip_write("DigCalibPattern_H", cl, 0xff)
 
 
-	def analog_pulse(self, hit_list = [], threshold = 50, cal_pulse_amplitude = 200, initialise = True):
+	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = 50, cal_pulse_amplitude = 200, initialise = True):
 		
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
@@ -332,11 +333,24 @@ class SSA_inject():
 
 		#reset digital calib patterns
 		self.I2C.strip_write("ENFLAGS", 0, 0b00000)
-		
+		if(mode != self.hitmode):
+			self.hitmode = mode
+			if(mode == 'edge'):
+				self.I2C.strip_write("SAMPLINGMODE", 0, 0b00)
+			elif(mode == 'level'):
+				self.I2C.strip_write("SAMPLINGMODE", 0, 0b01)
+			elif (mode == 'or'):
+				self.I2C.strip_write("SAMPLINGMODE", 0, 0b10)
+			elif (mode == 'xor'):
+				self.I2C.strip_write("SAMPLINGMODE", 0, 0b11)
+
 		#enable pulse injection in selected clusters
 		for cl in hit_list:
 			if(cl > 0 and cl < 121):
 				self.I2C.strip_write("ENFLAGS", cl, 0b10001)
+				sleep(0.05)
+				self.I2C.strip_write("ENFLAGS", cl, 0b10001)
+				sleep(0.05)
 
 		SendCommand_CTRL("start_trigger")
 		sleep(0.01)
