@@ -18,6 +18,7 @@ class SSA_control:
 		self.ssa_strip_reg_map = ssa_strip_reg_map
 		self.I2C               = I2C
 		self.fc7               = FC7
+		self.dll_chargepump    = 0b00
 
 	def set_output_mux(self, testline = 'highimpedence'):
 		ctrl = self.analog_mux_map[testline]
@@ -30,7 +31,6 @@ class SSA_control:
 			return False
 		else:
 			return True
-
 
 	def init_slvs(self, current = 0b001):
 		self.I2C.peri_write('SLVS_pad_current', current)
@@ -195,17 +195,19 @@ class SSA_control:
 			self.I2C.peri_write("Bias_DL_ctrl", delay)
 
 
-	#def set_dll(self, value = 'disable')
-	#	if(isinstance(value, str)):
-	#		if(value == 'disable' or value == 'off'):
-	#			self.I2C.peri_write("Bias_DL_en", 0)
-	#			self.I2C.peri_write("Bias_DL_ctrl", 0)
-	#		elif(value == 'enable'or value == 'on'):
-	#			self.I2C.peri_write("Bias_DL_en", 1)
-	#			self.I2C.peri_write("Bias_DL_ctrl", 1)
-	#	elif(isinstance(value, int)):
-	#		self.I2C.peri_write("Bias_DL_en", 1)
-	#		self.I2C.peri_write("Bias_DL_ctrl", value)
+	def set_sampling_dll(self, value, enable = True, bypass = False):
+		word = (
+			((value & 0b1111) << 0) |
+			((self.dll_chargepump & 0b11) << 4) |
+			((bypass & 0b1) << 6) |
+			((enable & 0b1) << 7) 
+		)
+		self.I2C.peri_write("ClockDeskewing", word)
+		r = self.I2C.peri_read("ClockDeskewing")
+		if(r != word): return False
+		else: return True
+
+		
 
 
 	def set_lateral_data_phase(self, left, right):

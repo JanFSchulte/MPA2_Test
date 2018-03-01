@@ -28,7 +28,7 @@ class SSA_cal_utility():
 		self.fe_ofs = 0.3708
 		self.fe_gain = 1.1165
 
-	def scurves(self, cal_ampl = 'baseline', mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = False, filename2 = "trim0", msg = "", striplist = range(1,121)):
+	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = False, filename2 = "trim0", msg = "", striplist = range(1,121)):
 		'''	cal_ampl  -> int number      -> Calibration pulse charge (in CALDAC LSBs)         
 			mode      -> 'all' | 'sbs'   -> All strips together or one by one     
 			nevents   -> int number      -> Number of calibration pulses (default 1000)  
@@ -130,7 +130,7 @@ class SSA_cal_utility():
 					failed, scurves[threshold] = self.ssa.readout.read_counters_i2c(striplist)
 				else:
 					failed = True
-					
+
 				if (failed): 
 					error = True
 				else:
@@ -378,7 +378,7 @@ class SSA_cal_utility():
 			)
 			for strip in range(0,120):
 				sct = sc[cnt][:,strip]
-				thidx , par = self.__errfitting_get_mean(sct, nevents)
+				thidx , par = self.__scurve_fit_errorfunction(sct, nevents)
 				thtmp[strip] = thidx
 			th.append( thtmp )
 			cnt += 1 
@@ -394,7 +394,7 @@ class SSA_cal_utility():
 		pars = []
 
 		for strip in range(1,121):
-			th, par = self.__errfitting_get_mean(
+			th, par = self.__scurve_fit_errorfunction(
 				curve = scurve[: , strip-1],
 				nevents = nevents,
 				expected = 'autodefine',
@@ -408,7 +408,7 @@ class SSA_cal_utility():
 		return ths, pars
 
 
-	def __errfitting_get_mean(self, curve, nevents, expected = 'autodefine', errmsg="", reiterate = 3):
+	def __scurve_fit_errorfunction(self, curve, nevents, expected = 'autodefine', errmsg="", reiterate = 3):
 		sct = curve
 		err = True
 		itr = 0
@@ -448,6 +448,26 @@ class SSA_cal_utility():
 			# readd number of th points removed by the noise cleaning
 			thidx = int(round(par[1]))
 			return thidx, par
+
+	def __scurve_fit_gaussian(curve, errmsg="", reiterate = 3):
+		guess_mean = np.argmax(curve)
+		guess_sigma = np.len( np.where(curve > 10) )/6.0
+		while(err == True and itr < reiterate):
+			try:
+				par, cov = curve_fit(
+					f = f_gauss, 
+					xdata = range(1, len(curve)), 
+					ydata = curve[0 : len(curve)-1], 
+					p0 = [1, guess_mean, guess_sigma])
+			except RuntimeError:
+				itr += 1
+			else:
+				err = False
+		if(err):
+			print "Fitting failed " + errmsg
+			return False
+		else:
+			return par, cov
 
 
 	def save_multiple_scurves(self, cal_list = range(0, 160, 10), name = "Chip1", name2 = "trim0"):

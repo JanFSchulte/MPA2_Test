@@ -17,73 +17,54 @@ class SSA_readout():
 		self.I2C  = I2C
 		self.fc7  = FC7
 		self.ctrl = SSA_base
+		self.ofs_initialised = False
+		self.ofs = [0]*6
 
-	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, display_prev = False):
-	 	ofs = [0]*6
-
+	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False):
+	 	coordinates = []
+	 	data = []	 	
+	 	tmp = []
+	 	counter = 0
+	 	data_loc = 21 + shift
 	 	if(initialize == True):
 			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
 			sleep(0.001)
-
 		SendCommand_CTRL("start_trigger")
 		SendCommand_CTRL("start_trigger")
 		sleep(0.01)
-
 		status = self.fc7.read("stat_slvs_debug_general")
 		while ((status & 0x00000002) >> 1) != 1: 
 			status = self.fc7.read("stat_slvs_debug_general")
 			sleep(0.001)
 			counter = 0 
-		
 		sleep(0.001)
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
-		
-		if (display is True):
-			counter = 0 
-			print "\n--> Stub Data: "
-			for word in ssa_stub_data:
-			    if (counter % 10 == 0): 
-			        print "Line: " + str(counter/10) 
-			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
-			    counter += 1
-
-	 	if (apply_offset_correction == True):
-			ofs[0] = self.I2C.peri_read('Offset0')
-			ofs[1] = self.I2C.peri_read('Offset1')
-			ofs[2] = self.I2C.peri_read('Offset2')
-			ofs[3] = self.I2C.peri_read('Offset3')
-			ofs[4] = self.I2C.peri_read('Offset4')
-			ofs[5] = self.I2C.peri_read('Offset5')
-	 	
-	 	coordinates = []
-	 	
-	 	for i in range(0,8):
-	 		val = (to_number(ssa_stub_data[5+i*10],32,24) / 2.0) 
-	 		if val != 0:
-		 		if (apply_offset_correction == True):
-		 			val = val - 3
-		 			## TO BE IMPLEMENTED
-		 		else:
-		 			val = val - 3
-				coordinates.append( val )
-
-		if (display_prev == True):
-			coordinatesA = []
-	 		coordinatesC = []
-		 	for i in range(0,8):
-		 		val = (to_number(ssa_stub_data[5+i*10],24,16) / 2.0) 
-		 		if val != 0:
-			 		val = val - 3
-					coordinatesA.append( val )
-			for i in range(0,8):
-		 		val = (to_number(ssa_stub_data[5+i*10],16,8) / 2.0) 
-		 		if val != 0:
-			 		val = val - 3
-					coordinatesC.append( val )
-			print ""
-			print coordinatesA
-			print coordinatesC
-		 	print coordinates
+		counter = 0
+	 	for word in ssa_stub_data:
+	 		counter += 1
+ 			tmp.append( to_number(word, 8, 0)/2.0 )
+ 			tmp.append( to_number(word,16, 8)/2.0 )
+ 			tmp.append( to_number(word,24,16)/2.0 )
+ 			tmp.append( to_number(word,32,24)/2.0 )
+ 			if (counter % 10 == 0):
+ 				data.append(tmp)
+ 				tmp = []
+		if(display):
+ 			for i in data:
+ 				print "-->  ", i 
+ 		if (not lookaround): 
+	 		for block in data:
+	 			if block[ data_loc ] != 0:
+	 				val = self.__apply_offset_correction(block[ data_loc ], apply_offset_correction)
+					coordinates.append( val )
+		else:
+			for i in range(data_loc-2, data_loc+3):
+				tmp = []
+				for block in data:
+		 			if block[ i ] != 0:
+		 				val = self.__apply_offset_correction(block[ i ], apply_offset_correction)
+						tmp.append( val )
+				coordinates.append(tmp)
 
 		return coordinates
 
@@ -277,9 +258,21 @@ class SSA_readout():
 		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
 
 
-
-
-
+	def __apply_offset_correction(self, val, enable = True): 
+		if(not enable):
+			cr = val - 3
+		else:
+			if(not self.ofs_initialised):
+				self.ofs[0] = self.I2C.peri_read('Offset0')
+				self.ofs[1] = self.I2C.peri_read('Offset1')
+				self.ofs[2] = self.I2C.peri_read('Offset2')
+				self.ofs[3] = self.I2C.peri_read('Offset3')
+				self.ofs[4] = self.I2C.peri_read('Offset4')
+				self.ofs[5] = self.I2C.peri_read('Offset5')
+			## TO BE IMPLEMENTED
+			cr = val - 3
+			## TO BE IMPLEMENTED
+		return cr
 
 class SSA_inject():
 
@@ -289,13 +282,13 @@ class SSA_inject():
 		self.ctrl = SSA_base
 		self.hitmode = 'none'
 
-	def digital_pulse(self, hit_list = [], hip_list = [], initialise = True):
+	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, initialise = True):
 		
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
 			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
 			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
-			self.I2C.peri_write("CalPulse_duration", 15)
+			self.I2C.peri_write("CalPulse_duration", times)
 			self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 			#fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
 		
