@@ -3,20 +3,17 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
-import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
 from scipy.special import erfc
 from scipy.special import erf
+from scipy.interpolate import spline
+import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-
 import time
 import sys
 import inspect
 import random
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import spline
 
 class SSA_cal_utility():
 
@@ -31,7 +28,18 @@ class SSA_cal_utility():
 		self.fe_ofs = 0.3708
 		self.fe_gain = 1.1165
 
-	def scurves(self, cal_pulse_amplitude = [50], mode = 'all', nevents = 1000, display = False, plot = True, filename = False, filename2 = "trim0", msg = "", striplist = range(1,121)):
+	def scurves(self, cal_ampl = 'baseline', mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = False, filename2 = "trim0", msg = "", striplist = range(1,121)):
+		'''	cal_ampl  -> int number      -> Calibration pulse charge (in CALDAC LSBs)         
+			mode      -> 'all' | 'sbs'   -> All strips together or one by one     
+			nevents   -> int number      -> Number of calibration pulses (default 1000)  
+			striplist -> [list 1:120]    -> Select specific strip (default all) 
+			rdmode    -> 'fast' | 'i2c'  -> Select if use fast readout or I2C readout  
+			display   -> True | False    -> Display additional informations     
+			plot      -> True | False    -> Plot S-Curve      
+			filename  -> False | string  -> If not False the data is vritten in the file named by 'string'     
+			filename2 -> 'string'        -> Additional string to complete the filename    
+			msg       -> internal use         
+		'''
 		utils.print_enable(False)
 		activate_I2C_chip()
 		utils.print_enable(True)
@@ -40,15 +48,15 @@ class SSA_cal_utility():
 		plt.clf()
 		baseline = False
 
-		if isinstance(cal_pulse_amplitude, int):
-			cal_pulse_amplitude = [cal_pulse_amplitude]
-		elif cal_pulse_amplitude == 'baseline':
+		if isinstance(cal_ampl, int):
+			cal_ampl = [cal_ampl]
+		elif cal_ampl == 'baseline':
 			baseline = True
-			cal_pulse_amplitude = [0]
-		elif not isinstance(cal_pulse_amplitude, list): 
+			cal_ampl = [0]
+		elif not isinstance(cal_ampl, list): 
 			return False
 		
-		for cal_val in  cal_pulse_amplitude:
+		for cal_val in  cal_ampl:
 			# close shutter and clear counters
 			close_shutter(1)
 			clear_counters(1)
@@ -63,48 +71,66 @@ class SSA_cal_utility():
 			utils.ShowPercent(0, 256, "Calculating S-Curves "+msg+" ")
 
 			while (threshold < 256):
-
 				strout = ""
 				error = False
 				#print "Setting the threshold to ", threshold, ", sending the test pulse and reading the counters"
 				strout += "threshold = " + str(threshold) + ".   " 
 				self.ssa.ctrl.set_threshold(threshold)# set the threshold
 				sleep(0.05)
-				if (not baseline):		
-					if(mode == 'all'): # provide cal pulse to all strips together
-						clear_counters(1)# clear counters
-						open_shutter(2) # open shutter
-						open_shutter(2) # open shutter
-						SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
-						sleep(0.02)   # sleep a bit and wait for trigger to finish
-						while(self.fc7.read("stat_fast_fsm_state") != 0):
-							sleep(0.01)
-						close_shutter(2) # close shutter and read counters
 
-					elif(mode == 'sbs'): # provide cal pulse strip by strip
-						clear_counters(1)
-						open_shutter(2) # open shutter
-						open_shutter(2) # open shutter
-						for s in striplist:
-							self.ssa.ctrl.set_cal_strips(mode = 'counter', strip = s )
-							sleep(0.01)
-							SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
-							sleep(0.01)   # sleep a bit and wait for trigger to finish
-							while(self.fc7.read("stat_fast_fsm_state") != 0):
-								sleep(0.01)
-						close_shutter(2) # close shutter and read counters
-					else: 
-						return False
-				else:
-					clear_counters(1)# clear counters
+				if (not baseline and (mode == 'all')):	# provide cal pulse to all strips together
+					clear_counters(2)
+					open_shutter(2) 
+					SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
+					sleep(0.02)   
+					while(self.fc7.read("stat_fast_fsm_state") != 0): sleep(0.01)
+					close_shutter(2) 
+
+				elif(not baseline and (mode == 'sbs')): # provide cal pulse strip by strip
+					clear_counters(1)
+					for s in striplist:
+						self.ssa.ctrl.set_cal_strips(mode = 'counter', strip = s )
+						sleep(0.01)
+						open_shutter(2) 
+						sleep(0.01)
+						SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
+						sleep(0.01)   
+						while(self.fc7.read("stat_fast_fsm_state") != 0): sleep(0.01)
+						close_shutter(2) 
+						sleep(0.01)
+
+				elif(baseline and (mode == 'all')):
+					clear_counters(1)
 					sleep(0.01)
-					open_shutter(2) # open shutter
-					sleep(1)
+					open_shutter(2) 
+					sleep(0.01)
 					close_shutter(2)
 					sleep(0.01)
 
-				failed, scurves[threshold] = self.ssa.readout.read_counters_fast()
+				elif(baseline and (mode == 'sbs')):
+					# with this method, the time between open and close shutter
+					# change from strip to strip due to the communication time
+					# so do not use to compare the counters value, 
+					# from the point of view of the atandard deviation is not influent
+					clear_counters(2)# clear counters
+					sleep(0.01)
+					for s in striplist:
+						# all trims at 0 and one at 31 to remove the crosstalks effect
+						self.I2C.strip_write("THTRIMMING", 0, 0)
+						self.I2C.strip_write("THTRIMMING", s, 31)
+						sleep(0.01)
+						open_shutter(2) 
+						sleep(0.01)
+						close_shutter(2)
+						sleep(0.01)
 
+				if(rdmode == 'fast'):
+					failed, scurves[threshold] = self.ssa.readout.read_counters_fast(striplist)
+				elif(rdmode == 'i2c'):
+					failed, scurves[threshold] = self.ssa.readout.read_counters_i2c(striplist)
+				else:
+					failed = True
+					
 				if (failed): 
 					error = True
 				else:
@@ -142,16 +168,16 @@ class SSA_cal_utility():
 
 		self.scurve_data     = scurves
 		self.scurve_nevents  = nevents
-		self.scurve_calpulse = cal_pulse_amplitude
+		self.scurve_calpulse = cal_ampl
 
 		return scurves
 
 
-	def trimming_scurves(self, method = 'expected', cal_pulse_amplitude = 100, th_nominal = 'default', default_trimming = 'keep', striprange = range(1,121), ratio = 'default', iterations = 3, nevents = 1000, plot = True, display = False, reevaluate = True):
+	def trimming_scurves(self, method = 'expected', cal_ampl = 100, th_nominal = 'default', default_trimming = 'keep', striprange = range(1,121), ratio = 'default', iterations = 3, nevents = 1000, plot = True, display = False, reevaluate = True):
 
 		# trimdac/thdac ratio
 		if(ratio == 'evaluate'):
-			dacratiolist = np.array(self.evaluate_thdac_trimdac_ratio(trimdac_pvt_calib = False, cal_pulse_amplitude = cal_pulse_amplitude, th_nominal = th_nominal,  nevents = nevents, plot = False))
+			dacratiolist = np.array(self.evaluate_thdac_trimdac_ratio(trimdac_pvt_calib = False, cal_ampl = cal_ampl, th_nominal = th_nominal,  nevents = nevents, plot = False))
 		elif(ratio == 'default'):
 			dacratiolist = np.array([self.default_dac_ratio]*120)
 		elif isinstance(ratio, float) or isinstance(ratio, int):
@@ -176,7 +202,7 @@ class SSA_cal_utility():
 
 		# evaluate initial S-Curves
 		scurve_init = self.scurves(
-			cal_pulse_amplitude = cal_pulse_amplitude, 
+			cal_ampl = cal_ampl, 
 			nevents = nevents, 
 			display = False, 
 			plot = False, 
@@ -191,9 +217,9 @@ class SSA_cal_utility():
 		if(method == 'expected'):
 			if(th_nominal == 'evaluate'):
 				fe_gain , fe_ofs = self.evaluate_fe_gain(nevents = nevents, plot = False)
-				th_expected = fe_ofs + fe_gain * cal_pulse_amplitude
+				th_expected = fe_ofs + fe_gain * cal_ampl
 			elif(th_nominal == 'default'):
-				th_expected = self.fe_ofs + self.fe_gain * cal_pulse_amplitude
+				th_expected = self.fe_ofs + self.fe_gain * cal_ampl
 			elif isinstance(ratio, float) or isinstance(ratio, int):
 				th_expected = th_nominal
 			else: exit(1)
@@ -237,7 +263,7 @@ class SSA_cal_utility():
 
 			# evaluate new S-Curves
 			scurve = self.scurves(
-				cal_pulse_amplitude = cal_pulse_amplitude, 
+				cal_ampl = cal_ampl, 
 				nevents = nevents, 
 				display = False, 
 				plot = False, 
@@ -276,7 +302,7 @@ class SSA_cal_utility():
 		cnt = 0
 		for cal in callist:
 			s = self.scurves(
-				cal_pulse_amplitude = cal, 
+				cal_ampl = cal, 
 				nevents = nevents, 
 				display = False, 
 				plot = False, 
@@ -298,12 +324,13 @@ class SSA_cal_utility():
 		return gain, offset
 
 
-	def trimming_apply(self, default_trimming = 'keep', striprange = range(1,121)):
+	def trimming_apply(self, default_trimming = 'keep', striprange = range(1,121), display = True):
 		r = True
 		if(isinstance(default_trimming, int)):
 			trimdac_value = np.array([default_trimming]*120)
 			self.I2C.strip_write("THTRIMMING", 0, default_trimming)
-			print "->  \tTrimming: Applied value %d to all channels" % (default_trimming)
+			if(display):
+				print "->  \tTrimming: Applied value %d to all channels" % (default_trimming)
 			if(default_trimming == 0):
 				self.scurve_trimming = 'zeros'
 			else:
@@ -313,7 +340,8 @@ class SSA_cal_utility():
 			trimdac_value = np.array(default_trimming)
 			for i in striprange:
 				self.I2C.strip_write("THTRIMMING", i, default_trimming[i])
-			print "->  \tTrimming: Applied trimming array" % (default_trimming)
+			if(display):
+				print "->  \tTrimming: Applied trimming array" % (default_trimming)
 			self.scurve_trimming = 'trimmed'			
 
 		elif(default_trimming != False or default_trimming != 'keep'):
@@ -326,7 +354,7 @@ class SSA_cal_utility():
 		return readback
 
 
-	def evaluate_thdac_trimdac_ratio(self, trimdac_pvt_calib = False, cal_pulse_amplitude = 100, th_nominal = 115,  nevents = 500, plot = False):
+	def evaluate_thdac_trimdac_ratio(self, trimdac_pvt_calib = False, cal_ampl = 100, th_nominal = 115,  nevents = 500, plot = False):
 		# set the value of the dac that controls the trimmin dacs currents
 		# to compensate for process variations
 		if(isinstance(trimdac_pvt_calib, int)):
@@ -341,7 +369,7 @@ class SSA_cal_utility():
 			# calculate scurves
 			sc.append(
 				self.scurves(
-					cal_pulse_amplitude = cal_pulse_amplitude, 
+					cal_ampl = cal_ampl, 
 					nevents = nevents, 
 					display = False, 
 					plot = False, 
@@ -428,7 +456,7 @@ class SSA_cal_utility():
 			print "Trimming: " + str(self.trimming_apply()[0:10])
 			sleep(0.1)
 			self.scurves(
-				cal_pulse_amplitude = cal, 
+				cal_ampl = cal, 
 				filename = name+'/'+name, 
 				filename2 = name2,
 				plot = True,

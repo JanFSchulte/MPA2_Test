@@ -199,15 +199,12 @@ class SSA_readout():
 		 
 		return coordinates
 
-	def read_counters_fast(self, raw_mode_en = 0):
-		# set the raw mode to the firmware
-		self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)
-
-		# counter ready signal
+	def read_counters_fast(self, striplist = range(1,121), raw_mode_en = 0):
+		self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
-
 		start_counters_read(1)
 		timeout = 0
+		failed = False
 		while ((mpa_counters_ready == 0) & (timeout < 50)):
 			sleep(0.01)
 			timeout += 1
@@ -215,30 +212,30 @@ class SSA_readout():
 		if(timeout >= 50):
 			failed = True;
 			return failed, 0
-		#print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
-		if raw_mode_en == 1:
+		if raw_mode_en == 0:
+			count = self.fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 120)
+			count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
+		else:
 			count = np.zeros((20000, ), dtype = np.uint16)
 			for i in range(0,20000):
 				fifo1_word = self.fc7.read("ctrl_slvs_debug_fifo1_data")
 				fifo2_word = self.fc7.read("ctrl_slvs_debug_fifo2_data")
-				#print "1: " + bin(reverse_mask(fifo1_word))
-				#print "2: " + bin(reverse_mask(fifo2_word))
 				line1 = to_number(fifo1_word,8,0)
 				line2 = to_number(fifo1_word,16,8)
 				count[i] = (line2 << 8) | line1
-				#print line1, line2
-				if (i%1000 == 0):
-					print "Reading BX #", i
-		else:
-			# here is the parsed mode, when the fpga parses all the counters
-			count = self.fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 120)
-			# the last counter has to be read over I2C
-			count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
-
+				if (i%1000 == 0): print "Reading BX #", i
 		sleep(0.1)
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
-		failed = False
+		for s in range(0,120):
+			if (not (s+1) in striplist):
+				count[s] = 0
 		return failed, count
+
+	def read_counters_i2c(self, striplist = range(1,120)):
+		count = [0]*120
+		for s in striplist:
+			count[s-1] = (self.I2C.strip_read("ReadCounter_MSB", s) << 8) | self.I2C.strip_read("ReadCounter_LSB", s)
+		return False, count
 
 	def read_all_lines(self):
 		#SendCommand_CTRL("fast_test_pulse")
