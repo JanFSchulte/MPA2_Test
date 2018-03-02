@@ -68,6 +68,16 @@ class SSA_readout():
 
 		return coordinates
 
+	def cluster_data_delay(self, shift = 0): 
+		cl_array = self.cluster_data(lookaround = True, shift = shift )
+		delay = []
+		cnt = -2
+		for cl in cl_array:
+			if(cl != []):
+				delay.append(cnt)
+			cnt += 1
+		return cl_array, delay
+
 	def l1_data(self, latency = 50, display = False, shift = 0, initialise = True, mipadapterdisable = False):
 		if(initialise == True):
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
@@ -321,9 +331,8 @@ class SSA_inject():
 			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
 			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 
-		#reset digital calib patterns
-		self.I2C.strip_write("ENFLAGS", 0, 0b00000)
-		if(mode != self.hitmode):
+		
+		if(mode != self.hitmode): # to speed up
 			self.hitmode = mode
 			if(mode == 'edge'):
 				self.I2C.strip_write("SAMPLINGMODE", 0, 0b00)
@@ -335,12 +344,11 @@ class SSA_inject():
 				self.I2C.strip_write("SAMPLINGMODE", 0, 0b11)
 
 		#enable pulse injection in selected clusters
+		self.I2C.strip_write("ENFLAGS", 0, 0b00000)
 		for cl in hit_list:
 			if(cl > 0 and cl < 121):
 				self.I2C.strip_write("ENFLAGS", cl, 0b10001)
-				sleep(0.05)
-				self.I2C.strip_write("ENFLAGS", cl, 0b10001)
-				sleep(0.05)
+				sleep(0.01)
 
 		SendCommand_CTRL("start_trigger")
 		sleep(0.01)
