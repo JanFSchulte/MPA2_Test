@@ -18,22 +18,22 @@ from scipy.special import erf
 import matplotlib.cm as cm
 
 def errorf(x, *p):
-    a, mu, sigma = p
+	a, mu, sigma = p
 #    print x
-    return 0.5*a*(1.0+erf((x-mu)/sigma))
+	return 0.5*a*(1.0+erf((x-mu)/sigma))
 
 def line(x, *p):
-    g, offset = p
-    return  numpy.array(x) *g + offset
+	g, offset = p
+	return  numpy.array(x) *g + offset
 
 def gauss(x, *p):
-    A, mu, sigma = p
-    return A*numpy.exp(-(x-mu)**2/(2.*sigma**2))
+	A, mu, sigma = p
+	return A*numpy.exp(-(x-mu)**2/(2.*sigma**2))
 
 
 def errorfc(x, *p):
-    a, mu, sigma = p
-    return a*0.5*erfc((x-mu)/sigma)
+	a, mu, sigma = p
+	return a*0.5*erfc((x-mu)/sigma)
 
 def set_calibration(cal):
 	I2C.peri_write('CalDAC0',cal)
@@ -91,9 +91,15 @@ def activate_sync():
 def enable_pix_counter(r,p):
 	I2C.pixel_write('ENFLAGS', r, p, 0x53)
 def enable_pix_EdgeBRcal(r,p):
-	I2C.pixel_write('ENFLAGS', r, p, 0x47)
+	I2C.pixel_write('ENFLAGS', r, p, 0x57) # with pixel counter for debugging
+	return bin(I2C.pixel_read('ENFLAGS', r, p))
+def enable_pix_LevelBRcal(r,p):
+	I2C.pixel_write('ENFLAGS', r, p, 0x5b) # with pixel counter for debugging
+	I2C.pixel_write('ModeSel', r, p, 0b01)
+	return bin(I2C.pixel_read('ENFLAGS', r, p))
 def disable_pixel(r,p):
 	I2C.pixel_write('ENFLAGS', r, p, 0x00)
+
 def send_pulses(n_pulse):
 	open_shutter()
 	sleep(0.01)
@@ -646,3 +652,190 @@ def trimDAC_linearity_pbp(row, pixel, plot = 1,  print_file = 0, filename = "../
 		plt.ylabel('Trimming Voltage [V]')
 		plt.legend()
 		plt.show()
+
+def Configure_TestPulse_DLL_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses):
+	fc7.write("cnfg_fast_initial_fast_reset_enable", 0)
+	fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
+	fc7.write("cnfg_fast_delay_after_test_pulse", delay_after_test_pulse)
+	fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
+	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 1)
+	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
+	fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
+	fc7.write("cnfg_fast_triggers_to_accept", number_of_test_pulses)
+	fc7.write("cnfg_fast_source", 6)
+	sleep(0.1)
+	SendCommand_CTRL("load_trigger_config")
+	sleep(0.1)
+
+
+def test_DLL(row, pixel, delay_reset, iteration = 10):
+	#enable_pix_EdgeBRcal(row, pixel)
+	latency_map = np.zeros((64, iteration), dtype = np.float16 )
+	latency = np.zeros((64, ), dtype = np.float16 )
+	Configure_TestPulse_DLL_MPA(delay_reset, 10, 10, 1)
+	for delay in range(0,64):
+		I2C.peri_write('DL_ctrl0', delay)
+		sleep(0.1)
+		for i in range(0, iteration):
+			SendCommand_CTRL("start_trigger")
+			nst, pos, row, cur = read_stubs()
+			tmp = np.where(pos == pixel*2)
+			try:
+				latency_map[delay, i] = tmp[0][0]*2 - nst[tmp[0][0]]
+			except IndexError:
+				latency_map[delay, i] = 0
+		latency[delay] = np.average(latency_map[delay])
+	return 	latency
+
+def char_DLL(row, pixel, delay_reset, curr = range(0,32), plot = 1):
+	activate_pp()
+	activate_sync()
+	disable_pixel(0,0)
+	enable_pix_LevelBRcal(row, pixel)
+	I2C.pixel_write('ModeSel', row, pixel, 0b01)
+	I2C.pixel_write('HipCut', row, pixel, 0b001)
+	I2C.peri_write('DL_en', 0b11111111)
+	latency = np.zeros((32, 32 ), dtype = np.int )
+	for i in curr:
+		I2C.peri_write('F0',i)
+		latency[i] = test_DLL(row, pixel, delay_reset)
+
+	if plot:
+		for i in curr:
+			plt.plot(range(0,32),latency[i],'o-', label = i)
+		plt.xlabel('Delay value [#]')
+		plt.ylabel('Cycle [#]')
+		plt.legend()
+		plt.show()
+	return latency
+
+def shaper_rise(row, pixel, delay_reset, BX, th = range(90,170,10), cal = 50, iteration = 10, plot = 1, print_file = 1, filename = "../cernbox/MPA_Results/shaper_rise"):
+	activate_I2C_chip()
+	activate_pp()
+	activate_sync()
+	disable_pixel(0,0)
+	enable_pix_LevelBRcal(row, pixel)
+	set_calibration(cal)
+	th = np.array(th)
+	nth = int(th.shape[0])
+	latency = np.zeros((nth, 64 ), dtype = np.float16 )
+	delta =  np.zeros((nth, ), dtype = np.float16 )
+	delta0 = 0
+	set_threshold(th[0])
+	latency[0] = test_DLL(row, pixel, delay_reset)
+	for i in range(0,64):
+		if (latency[0,i] == BX):
+			delta0 += 1
+	count_tot0 = 0
+	index = 0
+	for t in th:
+		set_threshold(t)
+		latency[index] = test_DLL(row, pixel, delay_reset)
+		count0 = 0
+		count1 = 0
+		if (latency[index,0] == BX):
+			for i in range(0,64):
+				if (latency[index,i] == BX):
+					count0 += 1
+			delta[index] =  (delta0 - count0)*1.25
+			count_tot0 = (delta0 - count0)*1.25
+		else: #if (latency[index,0] > BX):
+			for i in range(0,64):
+				if (latency[index,i] == BX + 1):
+					count1 += 1
+			delta[index] = (delta0 - count0)*1.25 + 25-(count1*1.25)
+		index += 1
+	data_array = np.array([delta, th])
+	if print_file:
+		CSV.ArrayToCSV (data_array, str(filename) + "_cal_" + str(cal) + ".csv")
+	if plot:
+		for t in th:
+			plt.plot(delta, (th - 75)*1.456,'o')
+		plt.xlabel('Delay value [#]')
+		plt.ylabel('threshold DAC [mV]')
+		plt.show()
+
+	return latency, data_array
+
+def shaper_fall(row, pixel, delay_reset, BX, th = range(160,90,-10), cal = 50, iteration = 10, plot = 1, print_file = 1, filename = "../cernbox/MPA_Results/shaper_fall"):
+	activate_I2C_chip()
+	activate_pp()
+	activate_sync()
+	disable_pixel(0,0)
+	I2C.pixel_write('ENFLAGS',row,pixel,0x59)
+	set_calibration(cal)
+	th = np.array(th)
+	nth = int(th.shape[0])
+	latency = np.zeros((nth, 64 ), dtype = np.float16 )
+	delta =  np.zeros((nth, ), dtype = np.float16 )
+	delta0 = 0
+	set_threshold(th[0])
+	latency[0] = test_DLL(row, pixel, delay_reset)
+	for i in range(0,64):
+		if (latency[0,i] == BX):
+			delta0 += 1
+	count_tot0 = 0
+	index = 0
+	for t in th:
+		set_threshold(t)
+		latency[index] = test_DLL(row, pixel, delay_reset)
+		count0 = 0
+		count1 = 0
+		count2 = 0
+		count3 = 0
+		if (latency[index,0] == BX):
+			for i in range(0,64):
+				if (latency[index,i] == BX):
+					count0 += 1
+			delta[index] =  (delta0 - count0)*1.25
+			count_tot0 = (delta0 - count0)*1.25
+		else: #if (latency[index,0] > BX):
+			for i in range(0,64):
+				if (latency[index,i] == BX + 1):
+					count1 += 1
+				if (latency[index,i] == BX + 2):
+					count2 += 1
+				if (latency[index,i] == BX + 3):
+					count3 += 1
+			delta[index] = (delta0 - count0)*1.25 + 25-(count1*1.25) + 25-(count2*1.25) + 25-(count3*1.25)
+		index += 1
+	data_array = np.array([delta, th])
+	if print_file:
+		CSV.ArrayToCSV (data_array, str(filename) + "_cal_" + str(cal) + ".csv")
+	if plot:
+		for t in th:
+			plt.plot(delta, (th - 75)*1.456,'o')
+		plt.xlabel('Delay value [#]')
+		plt.ylabel('threshold DAC [mV]')
+		plt.show()
+
+	return latency, data_array
+
+def timewalk(row, pixel, delay_reset, BX, cal = range(15,255,10), th = 100, iteration = 10, plot = 1, print_file = 1, filename = "../cernbox/MPA_Results/timewalk"):
+	activate_I2C_chip()
+	activate_pp()
+	activate_sync()
+	disable_pixel(0,0)
+	enable_pix_LevelBRcal(row, pixel)
+	set_threshold(th)
+	cal = np.array(cal)
+	ncal = int(cal.shape[0])
+	latency = np.zeros((ncal, 64 ), dtype = np.float16 )
+	delta =  np.zeros((ncal, ), dtype = np.float16 )
+	index = 0
+	for c in cal:
+		set_calibration(c)
+		latency[index] = test_DLL(row, pixel, delay_reset)
+		tmp = np.where(latency[index] == BX)
+		delta[index] = tmp[0][0]
+		index += 1
+	data_array = np.array([delta, cal])
+	if print_file:
+		CSV.ArrayToCSV (data_array, str(filename) + "_th_" + str(th) + ".csv")
+	if plot:
+		plt.plot(delta, cal,'o')
+		plt.xlabel('Delay value [#]')
+		plt.ylabel('threshold DAC [mV]')
+		plt.show()
+
+	return latency, data_array
