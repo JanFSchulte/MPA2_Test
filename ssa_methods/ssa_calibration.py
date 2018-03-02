@@ -24,49 +24,6 @@ class ssa_calibration():
 		self.ssa_strip_reg_map = ssa_strip_reg_map
 		self.analog_mux_map = analog_mux_map
 
-
-	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot = True):
-		if(not name in self.analog_mux_map):
-			print "->  \tInvalid DAC name"
-			return False
-		fullscale = 2**nbits
-		inst = self.multimeter.init_keithley(3)
-		self.ssa.ctrl.set_output_mux(name)	
-		data = np.zeros(fullscale, dtype=np.float);
-
-		for i in range(0, fullscale):
-			self.I2C.peri_write(name, i)
-			sleep(0.1)
-			data[i] = self.multimeter.measure(inst)
-			utils.ShowPercent(i, fullscale-1, "Measuring "+name+" linearity                         ")
-		
-		if( isinstance(filename, str) ):
-			fo = "../SSA_Results/" + filename + "_Linearity_" + name + filename2
-			CSV.ArrayToCSV (array = data, filename = fo + ".csv", transpose = True)
-		
-		inl = self.__dac_inl(data = data, nbits = nbits, plot = False)
-		inl_max = np.max(np.abs(inl))
-
-		if(plot):
-			plt.clf()
-			plt.figure(1)
-			plt.subplot(211)
-			plt.ylim([-2,2])
-			plt.plot(range(0,fullscale), inl, '-')
-			plt.plot(range(0,fullscale), [1]*fullscale, 'r')
-			plt.plot(range(0,fullscale),[-1]*fullscale, 'r')
-			plt.subplot(212)
-			plt.plot(range(0,fullscale), data, '-x')
-			if( isinstance(filename, str) ):
-				plt.savefig(fo+".pdf")
-			else:
-				plt.show()
-
-		g, ofs, sigma = utils.linear_fit(range(0,2**nbits), data)
-		
-		return g, ofs, sigma/g, inl_max
-	
-
 	def calibrate_to_nominals(self):
 		# init keithley
 		inst = self.multimeter.init_keithley()
@@ -109,8 +66,48 @@ class ssa_calibration():
 
 		self.ssa.ctrl.set_output_mux('highimpedence')
 
-		
 
+	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot = True):
+		if(not name in self.analog_mux_map):
+			print "->  \tInvalid DAC name"
+			return False
+		fullscale = 2**nbits
+		inst = self.multimeter.init_keithley(3)
+		self.ssa.ctrl.set_output_mux(name)	
+		data = np.zeros(fullscale, dtype=np.float);
+
+		for i in range(0, fullscale):
+			self.I2C.peri_write(name, i)
+			sleep(0.1)
+			data[i] = self.multimeter.measure(inst)
+			utils.ShowPercent(i, fullscale-1, "Measuring "+name+" linearity                         ")
+		
+		if( isinstance(filename, str) ):
+			fo = "../SSA_Results/" + filename + "_Linearity_" + name + filename2
+			CSV.ArrayToCSV (array = data, filename = fo + ".csv", transpose = True)
+		
+		inl = self.__dac_inl(data = data, nbits = nbits, plot = False)
+		inl_max = np.max(np.abs(inl))
+
+		if(plot):
+			plt.clf()
+			plt.figure(1)
+			plt.subplot(211)
+			plt.ylim([-2,2])
+			plt.plot(range(0,fullscale), inl, '-')
+			plt.plot(range(0,fullscale), [1]*fullscale, 'r')
+			plt.plot(range(0,fullscale),[-1]*fullscale, 'r')
+			plt.subplot(212)
+			plt.plot(range(0,fullscale), data, '-x')
+			if( isinstance(filename, str) ):
+				plt.savefig(fo+".pdf")
+			else:
+				plt.show()
+
+		g, ofs, sigma = utils.linear_fit(range(0,2**nbits), data)
+		
+		return g, ofs, sigma/g, inl_max
+	
 	def __dac_inl(self, data, nbits, plot = True):
 		fullscale = 2**nbits
 		INL = np.zeros(fullscale, dtype=np.float)

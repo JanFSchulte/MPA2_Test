@@ -17,75 +17,66 @@ class SSA_readout():
 		self.I2C  = I2C
 		self.fc7  = FC7
 		self.ctrl = SSA_base
+		self.ofs_initialised = False
+		self.ofs = [0]*6
 
-	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, display_prev = False):
-	 	ofs = [0]*6
-
+	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False):
+	 	coordinates = []
+	 	data = []	 	
+	 	tmp = []
+	 	counter = 0
+	 	data_loc = 21 + shift
 	 	if(initialize == True):
 			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
 			sleep(0.001)
-
 		SendCommand_CTRL("start_trigger")
 		SendCommand_CTRL("start_trigger")
 		sleep(0.01)
-
 		status = self.fc7.read("stat_slvs_debug_general")
 		while ((status & 0x00000002) >> 1) != 1: 
 			status = self.fc7.read("stat_slvs_debug_general")
 			sleep(0.001)
 			counter = 0 
-		
 		sleep(0.001)
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
-		
-		if (display is True):
-			counter = 0 
-			print "\n--> Stub Data: "
-			for word in ssa_stub_data:
-			    if (counter % 10 == 0): 
-			        print "Line: " + str(counter/10) 
-			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
-			    counter += 1
-
-	 	if (apply_offset_correction == True):
-			ofs[0] = self.I2C.peri_read('Offset0')
-			ofs[1] = self.I2C.peri_read('Offset1')
-			ofs[2] = self.I2C.peri_read('Offset2')
-			ofs[3] = self.I2C.peri_read('Offset3')
-			ofs[4] = self.I2C.peri_read('Offset4')
-			ofs[5] = self.I2C.peri_read('Offset5')
-	 	
-	 	coordinates = []
-	 	
-	 	for i in range(0,8):
-	 		val = (to_number(ssa_stub_data[5+i*10],32,24) / 2.0) 
-	 		if val != 0:
-		 		if (apply_offset_correction == True):
-		 			val = val - 3
-		 			## TO BE IMPLEMENTED
-		 		else:
-		 			val = val - 3
-				coordinates.append( val )
-
-		if (display_prev == True):
-			coordinatesA = []
-	 		coordinatesC = []
-		 	for i in range(0,8):
-		 		val = (to_number(ssa_stub_data[5+i*10],24,16) / 2.0) 
-		 		if val != 0:
-			 		val = val - 3
-					coordinatesA.append( val )
-			for i in range(0,8):
-		 		val = (to_number(ssa_stub_data[5+i*10],16,8) / 2.0) 
-		 		if val != 0:
-			 		val = val - 3
-					coordinatesC.append( val )
-			print ""
-			print coordinatesA
-			print coordinatesC
-		 	print coordinates
+		counter = 0
+	 	for word in ssa_stub_data:
+	 		counter += 1
+ 			tmp.append( to_number(word, 8, 0)/2.0 )
+ 			tmp.append( to_number(word,16, 8)/2.0 )
+ 			tmp.append( to_number(word,24,16)/2.0 )
+ 			tmp.append( to_number(word,32,24)/2.0 )
+ 			if (counter % 10 == 0):
+ 				data.append(tmp)
+ 				tmp = []
+		if(display):
+ 			for i in data:
+ 				print "-->  ", i 
+ 		if (not lookaround): 
+	 		for block in data:
+	 			if block[ data_loc ] != 0:
+	 				val = self.__apply_offset_correction(block[ data_loc ], apply_offset_correction)
+					coordinates.append( val )
+		else:
+			for i in range(data_loc-2, data_loc+3):
+				tmp = []
+				for block in data:
+		 			if block[ i ] != 0:
+		 				val = self.__apply_offset_correction(block[ i ], apply_offset_correction)
+						tmp.append( val )
+				coordinates.append(tmp)
 
 		return coordinates
+
+	def cluster_data_delay(self, shift = 0): 
+		cl_array = self.cluster_data(lookaround = True, shift = shift )
+		delay = []
+		cnt = -2
+		for cl in cl_array:
+			if(cl != []):
+				delay.append(cnt)
+			cnt += 1
+		return cl_array, delay
 
 	def l1_data(self, latency = 50, display = False, shift = 0, initialise = True, mipadapterdisable = False):
 		if(initialise == True):
@@ -199,15 +190,12 @@ class SSA_readout():
 		 
 		return coordinates
 
-	def read_counters_fast(self, raw_mode_en = 0):
-		# set the raw mode to the firmware
-		self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)
-
-		# counter ready signal
+	def read_counters_fast(self, striplist = range(1,121), raw_mode_en = 0):
+		self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
-
 		start_counters_read(1)
 		timeout = 0
+		failed = False
 		while ((mpa_counters_ready == 0) & (timeout < 50)):
 			sleep(0.01)
 			timeout += 1
@@ -215,30 +203,30 @@ class SSA_readout():
 		if(timeout >= 50):
 			failed = True;
 			return failed, 0
-		#print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
-		if raw_mode_en == 1:
+		if raw_mode_en == 0:
+			count = self.fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 120)
+			count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
+		else:
 			count = np.zeros((20000, ), dtype = np.uint16)
 			for i in range(0,20000):
 				fifo1_word = self.fc7.read("ctrl_slvs_debug_fifo1_data")
 				fifo2_word = self.fc7.read("ctrl_slvs_debug_fifo2_data")
-				#print "1: " + bin(reverse_mask(fifo1_word))
-				#print "2: " + bin(reverse_mask(fifo2_word))
 				line1 = to_number(fifo1_word,8,0)
 				line2 = to_number(fifo1_word,16,8)
 				count[i] = (line2 << 8) | line1
-				#print line1, line2
-				if (i%1000 == 0):
-					print "Reading BX #", i
-		else:
-			# here is the parsed mode, when the fpga parses all the counters
-			count = self.fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 120)
-			# the last counter has to be read over I2C
-			count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
-
+				if (i%1000 == 0): print "Reading BX #", i
 		sleep(0.1)
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
-		failed = False
+		for s in range(0,120):
+			if (not (s+1) in striplist):
+				count[s] = 0
 		return failed, count
+
+	def read_counters_i2c(self, striplist = range(1,120)):
+		count = [0]*120
+		for s in striplist:
+			count[s-1] = (self.I2C.strip_read("ReadCounter_MSB", s) << 8) | self.I2C.strip_read("ReadCounter_LSB", s)
+		return False, count
 
 	def read_all_lines(self):
 		#SendCommand_CTRL("fast_test_pulse")
@@ -280,9 +268,21 @@ class SSA_readout():
 		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
 
 
-
-
-
+	def __apply_offset_correction(self, val, enable = True): 
+		if(not enable):
+			cr = val - 3
+		else:
+			if(not self.ofs_initialised):
+				self.ofs[0] = self.I2C.peri_read('Offset0')
+				self.ofs[1] = self.I2C.peri_read('Offset1')
+				self.ofs[2] = self.I2C.peri_read('Offset2')
+				self.ofs[3] = self.I2C.peri_read('Offset3')
+				self.ofs[4] = self.I2C.peri_read('Offset4')
+				self.ofs[5] = self.I2C.peri_read('Offset5')
+			## TO BE IMPLEMENTED
+			cr = val - 3
+			## TO BE IMPLEMENTED
+		return cr
 
 class SSA_inject():
 
@@ -292,13 +292,13 @@ class SSA_inject():
 		self.ctrl = SSA_base
 		self.hitmode = 'none'
 
-	def digital_pulse(self, hit_list = [], hip_list = [], initialise = True):
+	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, initialise = True):
 		
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
 			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
 			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
-			self.I2C.peri_write("CalPulse_duration", 15)
+			self.I2C.peri_write("CalPulse_duration", times)
 			self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 			#fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
 		
@@ -331,9 +331,8 @@ class SSA_inject():
 			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
 			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 
-		#reset digital calib patterns
-		self.I2C.strip_write("ENFLAGS", 0, 0b00000)
-		if(mode != self.hitmode):
+		
+		if(mode != self.hitmode): # to speed up
 			self.hitmode = mode
 			if(mode == 'edge'):
 				self.I2C.strip_write("SAMPLINGMODE", 0, 0b00)
@@ -345,12 +344,11 @@ class SSA_inject():
 				self.I2C.strip_write("SAMPLINGMODE", 0, 0b11)
 
 		#enable pulse injection in selected clusters
+		self.I2C.strip_write("ENFLAGS", 0, 0b00000)
 		for cl in hit_list:
 			if(cl > 0 and cl < 121):
 				self.I2C.strip_write("ENFLAGS", cl, 0b10001)
-				sleep(0.05)
-				self.I2C.strip_write("ENFLAGS", cl, 0b10001)
-				sleep(0.05)
+				sleep(0.01)
 
 		SendCommand_CTRL("start_trigger")
 		sleep(0.01)

@@ -18,6 +18,7 @@ class SSA_control:
 		self.ssa_strip_reg_map = ssa_strip_reg_map
 		self.I2C               = I2C
 		self.fc7               = FC7
+		self.dll_chargepump    = 0b00
 
 	def set_output_mux(self, testline = 'highimpedence'):
 		ctrl = self.analog_mux_map[testline]
@@ -30,7 +31,6 @@ class SSA_control:
 			return False
 		else:
 			return True
-
 
 	def init_slvs(self, current = 0b001):
 		self.I2C.peri_write('SLVS_pad_current', current)
@@ -178,11 +178,12 @@ class SSA_control:
 		else:
 			exit(1)
 
-	def set_cal_pulse(self, amplitude = 255, duration = 3, delay = 'keep'):
-		# init cal pulse itself
-		self.I2C.peri_write("Bias_CALDAC", amplitude)
-		self.I2C.peri_write("CalPulse_duration", duration)
-		# init the dll
+	def set_cal_pulse(self, amplitude = 255, duration = 5, delay = 'keep'):
+		self.I2C.peri_write("Bias_CALDAC", amplitude) # init cal pulse itself
+		self.I2C.peri_write("CalPulse_duration", duration) # set cal pulse duration
+		self.set_cal_pulse_delay(delay) # init the cal pulse digital delay line
+
+	def set_cal_pulse_delay(self, delay):
 		if(isinstance(delay, str)):
 			if(delay == 'disable' or delay == 'off'):
 				self.I2C.peri_write("Bias_DL_en", 0)
@@ -190,23 +191,38 @@ class SSA_control:
 				self.I2C.peri_write("Bias_DL_en", 1)
 			elif(delay == 'keep'): pass
 			else: exit(1)
-		elif(isinstance(value, int)):
+		elif(isinstance(delay, int)):
 			self.I2C.peri_write("Bias_DL_en", 1)
 			self.I2C.peri_write("Bias_DL_ctrl", delay)
+		return True
 
+	def set_sampling_deskewing_coarse(self, value):
+		word = value & 0b111
+		self.I2C.peri_write("PhaseShiftClock", word)
+		r = self.I2C.peri_read("PhaseShiftClock")
+		if(r != word): return False
+		else: return True
 
-	#def set_dll(self, value = 'disable')
-	#	if(isinstance(value, str)):
-	#		if(value == 'disable' or value == 'off'):
-	#			self.I2C.peri_write("Bias_DL_en", 0)
-	#			self.I2C.peri_write("Bias_DL_ctrl", 0)
-	#		elif(value == 'enable'or value == 'on'):
-	#			self.I2C.peri_write("Bias_DL_en", 1)
-	#			self.I2C.peri_write("Bias_DL_ctrl", 1)
-	#	elif(isinstance(value, int)):
-	#		self.I2C.peri_write("Bias_DL_en", 1)
-	#		self.I2C.peri_write("Bias_DL_ctrl", value)
+	def set_sampling_deskewing_fine(self, value, enable = True, bypass = False):
+		word = (
+			((value & 0b1111) << 0) |
+			((self.dll_chargepump & 0b11) << 4) |
+			((bypass & 0b1) << 6) |
+			((enable & 0b1) << 7) 
+		)
+		self.I2C.peri_write("ClockDeskewing", word)
+		r = self.I2C.peri_read("ClockDeskewing")
+		if(r != word): return False
+		else: return True
 
+	def set_sampling_deskewing_chargepump(self, val):
+		self.dll_chargepump = val & 0b11
+		r = self.I2C.peri_read("ClockDeskewing")
+		word = (r & 0b11001111) | (self.dll_chargepump << 4)
+		self.I2C.peri_write("ClockDeskewing", word)
+		r = self.I2C.peri_read("ClockDeskewing")
+		if(r != word): return False
+		else: return True		
 
 	def set_lateral_data_phase(self, left, right):
 		self.fc7.write("ctrl_phy_ssa_gen_lateral_phase_1", right)

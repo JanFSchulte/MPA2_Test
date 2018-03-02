@@ -164,3 +164,51 @@ class SSA_test_utility():
 			utils.ShowPercent(100, 100, "Impossible to align right input data line")
 		print "   " 
 
+	def sampling_slack(self, strips = range(1,121), display=True, shift = 0): 
+		delay = []
+		cnt = 0
+		self.ssa.inject.analog_pulse(initialise = True)
+		for s in strips:
+			cnt += 1
+			self.ssa.inject.analog_pulse(hit_list = [s], mode = 'edge', initialise = False)
+			cl_array , sdel = self.ssa.readout.cluster_data_delay(shift = shift)
+			delay.append(sdel)
+			if(display): utils.ShowPercent(cnt, len(strips), " Sampling")
+		if(display): utils.ShowPercent(len(strips), len(strips), " Done")	
+		return delay
+
+	def sampling_clk_deskewing(self, strip = [10], step = 1, start = 3, shift = 2, display = False):
+		prev1 = 0xff
+		prev2 = 0xff
+
+		edge = [False, False]
+		for i in range(start,7):
+			for j in range(0, 16, step):
+				utils.ShowPercent(i*16+j, 16*8, " Sampling")
+				self.ssa.ctrl.set_sampling_deskewing_coarse(value = i)
+				self.ssa.ctrl.set_sampling_deskewing_fine(value = j, enable = True, bypass = True)
+				sleep(0.01)
+				delay = self.sampling_slack(strip, display = False, shift = shift)
+				if(display): 
+					print "deskewing = [%d][%d] \t->  delay = %s)" % (i, j, delay)
+				if(delay < prev2 and prev1 < prev2): 
+					if(j>0): edge = [i,j-1]
+					else: edge = [i-1,15]
+					utils.ShowPercent(100, 100, " Done         ")
+					return edge
+				prev2 = prev1
+				prev1 = delay
+		return edge
+
+	def CalPulse_DelayLine_Resolution(self):
+		r = []
+		for i in range(0,64):
+			self.ssa.ctrl.set_cal_pulse_delay(i)
+			r.append(self.sampling_slack(strips = [50], display=False, shift = 3))
+			utils.ShowPercent(i, 63, "Calculating")
+		resolution = 25.0 / np.size( np.where(  np.array(r) == 0 ) )
+		return '%0.3fns' % resolution
+
+	#  ssa.ctrl.set_cal_pulse_delay(11)
+	#  test.sampling_clk_deskewing(step = 1)
+	#  I2C.peri_write('Bias_D5DLLB', 20)
