@@ -69,12 +69,14 @@ def read_stubs(raw = 0):
 	for word in mpa_stub_data[0:50]:
 		#print "--->", '%10s' % bin(to_number(reverse_mask(word),32,24)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),8,0)).lstrip('-0b').zfill(8)
 		for i in range(0,4):
-			stubs[line, cycle] = to_number(reverse_mask(word),32-i*8,24-i*8)
+			#stubs[line, cycle] = to_number(reverse_mask(word),32-i*8,24-i*8)
+			stubs[line, cycle] = to_number(reverse_mask(word),(i+1)*8,i*8)
 			#print bin(stubs[line, cycle])
 			cycle += 1
 			if cycle == 40:
 				line += 1
 				cycle = 0
+	nst = np.zeros((20,), dtype = np.uint8)
 	pos = np.zeros((20,5), dtype = np.uint8)
 	row = np.zeros((20,5), dtype = np.uint8)
 	cur = np.zeros((20,5), dtype = np.uint8)
@@ -86,6 +88,7 @@ def read_stubs(raw = 0):
 		for i in range(0,39):
 			if ((stubs[0,i] & 0b10000000) == 128):
 				j = i+1
+				nst[cycle]   = ((stubs[1,i] & 0b10000000) >> 5) | ((stubs[2,i] & 0b10000000) >> 6) | ((stubs[3,i] & 0b10000000) >> 7)
 				pos[cycle,0] = ((stubs[4,i] & 0b10000000) << 0) | ((stubs[0,i] & 0b01000000) << 0) | ((stubs[1,i] & 0b01000000) >> 1) | ((stubs[2,i] & 0b01000000) >> 2) | ((stubs[3,i] & 0b01000000) >> 3) | ((stubs[4,i] & 0b01000000) >> 4) | ((stubs[0,i] & 0b00100000) >> 4) | ((stubs[1,i] & 0b00100000) >> 5)
 				pos[cycle,1] = ((stubs[4,i] & 0b00010000) << 3) | ((stubs[0,i] & 0b00001000) << 3) | ((stubs[1,i] & 0b00001000) << 2) | ((stubs[2,i] & 0b00001000) << 1) | ((stubs[3,i] & 0b00001000) << 0) | ((stubs[4,i] & 0b00001000) >> 1) | ((stubs[0,i] & 0b00000100) >> 1) | ((stubs[1,i] & 0b00000100) >> 2)
 				pos[cycle,2] = ((stubs[4,i] & 0b00000010) << 6) | ((stubs[0,i] & 0b00000001) << 6) | ((stubs[1,i] & 0b00000001) << 5) | ((stubs[2,i] & 0b00000001) << 4) | ((stubs[3,i] & 0b00000001) << 3) | ((stubs[4,i] & 0b00000001) << 3) | ((stubs[1,j] & 0b10000000) >> 6) | ((stubs[2,j] & 0b10000000) >> 7)
@@ -102,7 +105,7 @@ def read_stubs(raw = 0):
 				cur[cycle,3] = ((stubs[3,j] & 0b00010000) >> 2) | ((stubs[4,j] & 0b00010000) >> 3) | ((stubs[0,j] & 0b00001000) >> 3)
 				cur[cycle,4] = ((stubs[3,j] & 0b00000010) << 1) | ((stubs[4,j] & 0b00000010) >> 0) | ((stubs[0,j] & 0b00000001) >> 0)
 				cycle += 1
-		return pos, row, cur
+		return nst,  pos, row, cur
 
 def read_L1():
 	status = fc7.read("stat_slvs_debug_general")
