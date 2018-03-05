@@ -21,6 +21,7 @@ class SSA_test_utility():
 
 
 	def test_cluster_data(self, mode = "digital", display=False):
+		print "->  \tRemember to call test.lateral_input_phase_tuning() before to run this test"
 		utils.print_enable(False)
 		activate_I2C_chip()
 		utils.print_enable(True)
@@ -130,17 +131,17 @@ class SSA_test_utility():
 		self.ssa.ctrl.set_lateral_data(0b00001001, 0)
 		cnt = 0
 		while ((alined_left == False) and (cnt < timeout)):  
-			clusters = self.ssa.readout.cluster_data(display_prev = display)
+			clusters = self.ssa.readout.cluster_data()
 			if len(clusters) == 2:
 				if(clusters[0] == 121 and clusters[1] == 124):
 					alined_left = True
+			utils.ShowPercent(cnt, timeout+1, "Allaining left input line\t\t" + str(clusters) + "           ")
 			time.sleep(0.001)
 			self.ssa.ctrl.set_lateral_data_phase(0,5)
 			time.sleep(0.001)
-			utils.ShowPercent(cnt, timeout+1, "Allaining left input line                    " + str(clusters) + "           ")
 			cnt += 1
 		if(alined_left == True):
-			utils.ShowPercent(100, 100, "Left Input line alined                    ")
+			utils.ShowPercent(100, 100, "Left Input line alined    \t\t" + str(clusters) + "           ")
 		else: 
 			utils.ShowPercent(100, 100, "Impossible to align left input data line  ")
 		print "   " 
@@ -148,18 +149,17 @@ class SSA_test_utility():
 		self.ssa.ctrl.set_lateral_data(0, 0b10100000)
 		cnt = 0
 		while ((alined_right == False) and (cnt < timeout)):  
-			clusters = self.ssa.readout.cluster_data(display_prev = display)
+			clusters = self.ssa.readout.cluster_data()
 			if len(clusters) == 2:
 				if(clusters[0] == -2 and clusters[1] == 0):
 					alined_right = True
+			utils.ShowPercent(cnt, timeout+1, "Allaining right input line\t\t" + str(clusters) + "           ")
 			time.sleep(0.001)
 			self.ssa.ctrl.set_lateral_data_phase(5,0)
 			time.sleep(0.001)
-			utils.ShowPercent(cnt, timeout+1, "Allaining right input line                  " + str(clusters) + "           ")
 			cnt += 1
-		utils.ShowPercent(100)
 		if(alined_right == True):
-			utils.ShowPercent(100, 100, "Right input line alined")
+			utils.ShowPercent(100, 100, "Right input line alined     \t\t" + str(clusters) + "           ")
 		else: 
 			utils.ShowPercent(100, 100, "Impossible to align right input data line")
 		print "   " 
@@ -212,3 +212,27 @@ class SSA_test_utility():
 	#  ssa.ctrl.set_cal_pulse_delay(11)
 	#  test.sampling_clk_deskewing(step = 1)
 	#  I2C.peri_write('Bias_D5DLLB', 20)
+
+	def noise_occupancy(self, nevents = 100, upto = 20, plot = True):
+		integ = [] 
+		self.ssa.readout.l1_data(initialise = True)
+		for th in range(0, upto+1):
+			count = [0]*120
+			self.ssa.ctrl.set_threshold(th)
+			for i in range(0, nevents):
+				utils.ShowPercent(th*nevents + i, (upto+1)*nevents , "Calculating")
+				lcnt, bcnt, hit, hip = self.ssa.readout.l1_data(initialise = False)
+				for s in range(0,120):
+					if s in hit: 
+						count[s] += 1
+			integ.append(count)
+		utils.ShowPercent(100, 100, "Done")
+		noise_occupancy = (np.array(integ) / float(nevents)) * 100.0
+		plt.clf()
+		plt.plot(noise_occupancy)
+		plt.show()		
+		return noise_occupancy
+
+
+	def pulse_reconstruction(self):
+		self.I2C.strip_write()

@@ -31,13 +31,11 @@ class SSA_readout():
 			sleep(0.001)
 		SendCommand_CTRL("start_trigger")
 		SendCommand_CTRL("start_trigger")
-		sleep(0.01)
-		status = self.fc7.read("stat_slvs_debug_general")
+		status = 0
 		while ((status & 0x00000002) >> 1) != 1: 
-			status = self.fc7.read("stat_slvs_debug_general")
 			sleep(0.001)
+			status = self.fc7.read("stat_slvs_debug_general")
 			counter = 0 
-		sleep(0.001)
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
 		counter = 0
 	 	for word in ssa_stub_data:
@@ -93,16 +91,13 @@ class SSA_readout():
 
 		SendCommand_CTRL("start_trigger")
 		sleep(0.01)
-
 		status = self.fc7.read("stat_slvs_debug_general")
-		
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
 
 		if(display is True): 
 			print "\n--> L1 Data: "
 			for word in ssa_l1_data:
 			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
-
 		data = 0
 		for i in range(4,10):
 			word = ssa_l1_data[i]
@@ -115,7 +110,6 @@ class SSA_readout():
 
 		while ((data & 0b1) != 0b1 ):
 			data =  data >> 1
-
 		L1_counter = (data >> 154) & 0b1111
 		BX_counter = (data >> 145) & 0b1111
 		l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
@@ -174,9 +168,23 @@ class SSA_readout():
 			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
 
 	 	coordinates = []
+	 	
+	 	left = 0
+	 	right = 0 
+	 	for i in range(0,20):
+			word = lateral_data[i]
+			tmp = (   to_number(word, 8, 0) <<24 
+			        | to_number(word,16, 8) <<16 
+			        | to_number(word,24,16) << 8 
+			        | to_number(word,32,24) << 0
+			      )
+			if(i< 10):
+				right = right | (tmp << (32*i))
+			else:
+				left = left | (tmp << (32*(i-10)))
 
-		right = to_number(lateral_data[5+shift+0*10],16,8)
-	 	left  = to_number(lateral_data[5+shift+1*10],16,8)
+		left  = (left  >> ((shift+13)*8)) & 0xff
+		right = (right >> ((shift+13)*8)) & 0xff
 
 	 	for i in range(1,9): 
 	 		if ((right & 0b1) == 1): 
