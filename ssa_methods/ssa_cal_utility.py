@@ -187,17 +187,17 @@ class SSA_cal_utility():
 		# apply starting trimming
 		if(method == 'expected'):
 			if( isinstance(default_trimming, np.ndarray) or isinstance(default_trimming, list) or isinstance(default_trimming, int)):
-				trimdac_value = self.trimming_apply(default_trimming, striprange)
+				trimdac_value = self.set_trimming(default_trimming, striprange)
 			elif(default_trimming == 'keep'): 
-				trimdac_value = self.trimming_apply('keep')
+				trimdac_value = self.set_trimming('keep')
 			else: return False
 		elif(method == 'center'):
 			if(default_trimming == 'keep'): 
-				trimdac_value = self.trimming_apply('keep')
+				trimdac_value = self.set_trimming('keep')
 			else:
-				trimdac_value = self.trimming_apply(15, striprange)
+				trimdac_value = self.set_trimming(15, striprange)
 		elif (method == 'highest'):
-			trimdac_value = self.trimming_apply(0, striprange)
+			trimdac_value = self.set_trimming(0, striprange)
 		else: return False
 
 		# evaluate initial S-Curves
@@ -324,7 +324,7 @@ class SSA_cal_utility():
 		return gain, offset
 
 
-	def trimming_apply(self, default_trimming = 'keep', striprange = range(1,121), display = True):
+	def set_trimming(self, default_trimming = 'keep', striprange = range(1,121), display = True):
 		r = True
 		if(isinstance(default_trimming, int)):
 			trimdac_value = np.array([default_trimming]*120)
@@ -365,7 +365,7 @@ class SSA_cal_utility():
 		for trimdac in [31, 0]:
 			thtmp = np.zeros(120)
 			# apply trimming dact values
-			self.trimming_apply(trimdac)
+			self.set_trimming(trimdac)
 			# calculate scurves
 			sc.append(
 				self.scurves(
@@ -473,7 +473,7 @@ class SSA_cal_utility():
 	def save_multiple_scurves(self, cal_list = range(0, 160, 10), name = "Chip1", name2 = "trim0"):
 		plt.clf()
 		for cal in cal_list:
-			print "Trimming: " + str(self.trimming_apply()[0:10])
+			print "Trimming: " + str(self.set_trimming()[0:10])
 			sleep(0.1)
 			self.scurves(
 				cal_ampl = cal, 
@@ -481,3 +481,5 @@ class SSA_cal_utility():
 				filename2 = name2,
 				plot = True,
 				msg = "for calibration pulse = " + str(cal))
+
+	
