@@ -544,7 +544,7 @@ def trimming_cal(n_pulse = 300, cal = 10, iteration = 2, nominal_DAC = 110, data
 					#sleep(0.01)
 					data_array[(r-1)*120+p] = new_DAC
 					if (check != new_DAC): print "Trim not written at: ", p, " Row: ", r
-				except RuntimeError:
+				except RuntimeError or TypeError:
 					print "Fitting failed on pixel ", p , " row: " ,r
 
 		if (i != iteration - 1):
@@ -695,14 +695,14 @@ def char_DLL(row, pixel, delay_reset, curr = range(0,32), plot = 1):
 	I2C.pixel_write('ModeSel', row, pixel, 0b01)
 	I2C.pixel_write('HipCut', row, pixel, 0b001)
 	I2C.peri_write('DL_en', 0b11111111)
-	latency = np.zeros((32, 32 ), dtype = np.int )
+	latency = np.zeros((32, 64 ), dtype = np.int )
 	for i in curr:
 		I2C.peri_write('F0',i)
 		latency[i] = test_DLL(row, pixel, delay_reset)
 
 	if plot:
 		for i in curr:
-			plt.plot(range(0,32),latency[i],'o-', label = i)
+			plt.plot(range(0,64),latency[i],'o-', label = i)
 		plt.xlabel('Delay value [#]')
 		plt.ylabel('Cycle [#]')
 		plt.legend()
