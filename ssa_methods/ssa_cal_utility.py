@@ -61,7 +61,7 @@ class SSA_cal_utility():
 			close_shutter(1)
 			clear_counters(1)
 			# init chip cal pulse
-			self.ssa.ctrl.set_cal_strips(mode = 'counter', strip = 'all')
+			self.ssa.strip.set_cal_strips(mode = 'counter', strip = 'all')
 			self.ssa.ctrl.set_cal_pulse(amplitude = cal_val, duration = 15, delay = 'keep')
 			# init firmware cal pulse
 			Configure_TestPulse_MPA_SSA(200, nevents)
@@ -89,7 +89,7 @@ class SSA_cal_utility():
 				elif(not baseline and (mode == 'sbs')): # provide cal pulse strip by strip
 					clear_counters(1)
 					for s in striplist:
-						self.ssa.ctrl.set_cal_strips(mode = 'counter', strip = s )
+						self.ssa.strip.set_cal_strips(mode = 'counter', strip = s )
 						sleep(0.01)
 						open_shutter(2) 
 						sleep(0.01)
@@ -116,8 +116,8 @@ class SSA_cal_utility():
 					sleep(0.01)
 					for s in striplist:
 						# all trims at 0 and one at 31 to remove the crosstalks effect
-						self.I2C.strip_write("THTRIMMING", 0, 0)
-						self.I2C.strip_write("THTRIMMING", s, 31)
+						self.ssa.strip.set_trimming('all', 0)
+						self.ssa.strip.set_trimming(s, 31)
 						sleep(0.01)
 						open_shutter(2) 
 						sleep(0.01)
@@ -174,7 +174,9 @@ class SSA_cal_utility():
 
 
 	def trimming_scurves(self, method = 'expected', cal_ampl = 100, th_nominal = 'default', default_trimming = 'keep', striprange = range(1,121), ratio = 'default', iterations = 3, nevents = 1000, plot = True, display = False, reevaluate = True):
-
+		utils.print_enable(False)
+		activate_I2C_chip()
+		utils.print_enable(True)
 		# trimdac/thdac ratio
 		if(ratio == 'evaluate'):
 			dacratiolist = np.array(self.evaluate_thdac_trimdac_ratio(trimdac_pvt_calib = False, cal_ampl = cal_ampl, th_nominal = th_nominal,  nevents = nevents, plot = False))
@@ -242,7 +244,7 @@ class SSA_cal_utility():
 				
 				th_initial                  = thlist[strip-1]
 				trimdac_correction[strip-1] = int(round((th_expected - th_initial) * dacratiolist[strip-1] ))
-				trimdac_current_value       = self.I2C.strip_read("THTRIMMING", strip)
+				trimdac_current_value       = self.ssa.strip.get_trimming(strip)
 				trimdac_value[strip-1]      = trimdac_current_value + trimdac_correction[strip-1]
 
 				if(trimdac_value[strip-1] > 31):
@@ -253,7 +255,7 @@ class SSA_cal_utility():
 					trimdac_value[strip-1] = 0
 
 				# Apply correction to the trimming DAC				
-				self.I2C.strip_write("THTRIMMING", strip, int(trimdac_value[strip-1]))
+				self.ssa.strip.set_trimming(strip, int(trimdac_value[strip-1]))
 
 			if(display):
 				print "->  \tInitial threshold    " + str(thlist[0:10])
@@ -298,6 +300,9 @@ class SSA_cal_utility():
 
 
 	def evaluate_fe_gain(self, callist = [30, 60, 90], nevents=1000, plot = True):
+		utils.print_enable(False)
+		activate_I2C_chip()
+		utils.print_enable(True)
 		thmean = []
 		cnt = 0
 		for cal in callist:
@@ -314,13 +319,11 @@ class SSA_cal_utility():
 		par, cov = curve_fit(f= f_line,  xdata = callist, ydata = thmean, p0 = [0, 0])
 		gain = par[0]
 		offset = par[1]
-
 		if(plot):
 			plt.clf()
 			plt.plot(callist, offset+gain*np.array(callist))
 			plt.plot(callist, thmean, 'o')
 			plt.show()
-
 		return gain, offset
 
 
@@ -328,18 +331,17 @@ class SSA_cal_utility():
 		r = True
 		if(isinstance(default_trimming, int)):
 			trimdac_value = np.array([default_trimming]*120)
-			self.I2C.strip_write("THTRIMMING", 0, default_trimming)
+			self.ssa.strip.set_trimming('all', default_trimming)
 			if(display):
 				print "->  \tTrimming: Applied value %d to all channels" % (default_trimming)
 			if(default_trimming == 0):
 				self.scurve_trimming = 'zeros'
 			else:
 				self.scurve_trimming = 'const'
-
 		elif(isinstance(default_trimming, np.ndarray) or isinstance(default_trimming, list)):
 			trimdac_value = np.array(default_trimming)
 			for i in striprange:
-				self.I2C.strip_write("THTRIMMING", i, default_trimming[i])
+				self.ssa.strip.set_trimming( i, default_trimming[i])
 			if(display):
 				print "->  \tTrimming: Applied trimming array" % (default_trimming)
 			self.scurve_trimming = 'trimmed'			
@@ -347,10 +349,9 @@ class SSA_cal_utility():
 		elif(default_trimming != False or default_trimming != 'keep'):
 			self.scurve_trimming = 'none'
 			exit(1)
-
 		readback = np.zeros(120)
 		for i in range(0,120):
-			readback[i] = self.I2C.strip_read("THTRIMMING", i+1)
+			readback[i] = self.ssa.strip.get_trimming(i+1)
 		return readback
 
 
@@ -471,6 +472,9 @@ class SSA_cal_utility():
 
 
 	def save_multiple_scurves(self, cal_list = range(0, 160, 10), name = "Chip1", name2 = "trim0"):
+		utils.print_enable(False)
+		activate_I2C_chip()
+		utils.print_enable(True)
 		plt.clf()
 		for cal in cal_list:
 			print "Trimming: " + str(self.set_trimming()[0:10])
@@ -482,4 +486,3 @@ class SSA_cal_utility():
 				plot = True,
 				msg = "for calibration pulse = " + str(cal))
 
-	

@@ -10,7 +10,7 @@ import inspect
 import numpy as np
 import matplotlib.pyplot as plt
 
-class SSA_control:
+class ssa_ctrl_base:
 
 	def __init__(self, I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
 		self.analog_mux_map    = analog_mux_map
@@ -127,10 +127,17 @@ class SSA_control:
 		test_read = self.I2C.peri_read("Bias_THDAC")
 		if(test_read != value):
 			print "Was writing: ", value, ", got: ", test_read
-			self.I2C.peri_write("Bias_THDAC", value)
-			print self.I2C.peri_read("Bias_THDAC")
 			print "Error. Failed to set the threshold"
-			#error(1)
+			error(1)
+	
+	def set_threshold_H(self, value):
+		self.I2C.peri_write("Bias_THDACHIGH", value)
+		sleep(0.01)
+		test_read = self.I2C.peri_read("Bias_THDACHIGH")
+		if(test_read != value):
+			print "Was writing: ", value, ", got: ", test_read
+			print "Error. Failed to set the threshold"
+			error(1)
 
 	def init_default_thresholds(self):
 		# init thersholds
@@ -152,31 +159,6 @@ class SSA_control:
 			if (i != gain_trimming): error = True	
 		if error:
 			print "Error. Failed to set the trimming"
-
-	def set_cal_strips(self, mode = 'counter', strip = 'all'):
-		
-		if  (mode == 'counter'): 
-			activeval = 0b10101
-		elif(mode == 'analog'):  
-			activeval = 0b10001
-		elif(mode == 'digital'):
-		 activeval = 0b01001
-		else: exit(1)
-
-		#enable calibration on required strip
-		if(strip == 'all'):
-			self.I2C.strip_write("ENFLAGS", 0, activeval)
-		elif(strip == 'none'):
-			self.I2C.strip_write("ENFLAGS", 0, 0b00001)
-		elif(isinstance(strip, list)):
-			self.I2C.strip_write("ENFLAGS", 0, 0b00001)
-			for s in strip:
-				self.I2C.strip_write("ENFLAGS", 0, activeval)
-		elif(isinstance(strip, int)):
-			self.I2C.strip_write("ENFLAGS", 0, 0b00000)
-			self.I2C.strip_write("ENFLAGS", strip, activeval)
-		else:
-			exit(1)
 
 	def set_cal_pulse(self, amplitude = 255, duration = 5, delay = 'keep'):
 		self.I2C.peri_write("Bias_CALDAC", amplitude) # init cal pulse itself

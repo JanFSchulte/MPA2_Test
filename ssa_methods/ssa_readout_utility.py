@@ -13,10 +13,11 @@ import matplotlib.pyplot as plt
 
 class SSA_readout():
 
-	def __init__(self, I2C, FC7, SSA_base):
-		self.I2C  = I2C
-		self.fc7  = FC7
-		self.ctrl = SSA_base
+	def __init__(self, I2C, FC7, ssactrl, ssastrip):
+		self.I2C = I2C
+		self.fc7 = FC7
+		self.ctrl = ssactrl
+		self.strip = ssastrip
 		self.ofs_initialised = False
 		self.ofs = [0]*6
 
@@ -81,15 +82,14 @@ class SSA_readout():
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-			
+			Configure_TestPulse(199, (latency+3+shift), 400, 1)
 			self.I2C.peri_write('L1-Latency_MSB', 0)
 			self.I2C.peri_write('L1-Latency_LSB', latency)
-
 			self.ctrl.activate_readout_normal(mipadapterdisable = mipadapterdisable)
-			Configure_TestPulse(199, (latency+3+shift), 400, 1)
 			sleep(0.001)
-
+	
 		SendCommand_CTRL("start_trigger")
+
 		sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
@@ -294,10 +294,11 @@ class SSA_readout():
 
 class SSA_inject():
 
-	def __init__(self, I2C, FC7, SSA_base):
-		self.I2C  = I2C
-		self.fc7  = FC7
-		self.ctrl = SSA_base
+	def __init__(self, I2C, FC7, ssactrl, ssastrip):
+		self.I2C = I2C
+		self.fc7 = FC7
+		self.ctrl = ssactrl
+		self.strip = ssastrip
 		self.hitmode = 'none'
 
 	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, initialise = True):
@@ -329,27 +330,20 @@ class SSA_inject():
 			self.I2C.strip_write("DigCalibPattern_H", cl, 0xff)
 
 
-	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = 50, cal_pulse_amplitude = 200, initialise = True):
+	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [20, 100], cal_pulse_amplitude = 200, initialise = True, trigger = False):
 		
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
 			self.ctrl.set_cal_pulse(amplitude = cal_pulse_amplitude, duration = 5, delay = 'keep')
-			Configure_TestPulse_MPA_SSA(200, 1)
-			self.ctrl.set_threshold(threshold)
+			self.ctrl.set_threshold(threshold[0])
+			self.ctrl.set_threshold_H(threshold[1])
 			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
 			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
+			#Configure_TestPulse_MPA_SSA(200, 1)
 
-		
 		if(mode != self.hitmode): # to speed up
 			self.hitmode = mode
-			if(mode == 'edge'):
-				self.I2C.strip_write("SAMPLINGMODE", 0, 0b00)
-			elif(mode == 'level'):
-				self.I2C.strip_write("SAMPLINGMODE", 0, 0b01)
-			elif (mode == 'or'):
-				self.I2C.strip_write("SAMPLINGMODE", 0, 0b10)
-			elif (mode == 'xor'):
-				self.I2C.strip_write("SAMPLINGMODE", 0, 0b11)
+			self.strip.set_sampling_mode('all', mode)
 
 		#enable pulse injection in selected clusters
 		self.I2C.strip_write("ENFLAGS", 0, 0b00000)
@@ -358,12 +352,10 @@ class SSA_inject():
 				self.I2C.strip_write("ENFLAGS", cl, 0b10001)
 				sleep(0.01)
 
-		SendCommand_CTRL("start_trigger")
-		sleep(0.01)
-
-
-
-
+		if(trigger == True):
+			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
+			SendCommand_CTRL("start_trigger")
+			sleep(0.01)
 
 
 
