@@ -313,7 +313,8 @@ def mpavddread():
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
     ret=Send_MPA_SSA_I2C_Command(ina226_10, 0, read, 0x02, 0)  # read V on shunt
     print hex(ret)
-    vret = Vcshunt * ret
+    #vret = Vcshunt * ret
+    vret = 0.00125 * ret
     vret = float(round(vret, 3))
     print vret
     mpavddVentry.delete(0,'end')
@@ -356,15 +357,16 @@ def mpavddDread():
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
     ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x02, 0)  # read V on shunt
     print hex(ret)
-    vret = Vcshunt * ret
+    #vret = Vcshunt * ret
+    vret = 0.00125 * ret
     vret = float(round(vret, 3))
     print vret
     mpavddDVentry.delete(0,'end')
     mpavddDVentry.insert(0,format(vret,'.3f'))
     ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0)  # read V on shunt
     print hex(ret)
-#    iret = (Vcshunt * ret)/Rshunt
-    iret = (0.00125 * ret)/Rshunt
+    iret = (Vcshunt * ret)/Rshunt
+    #iret = (0.00125 * ret)/Rshunt
     iret = float(round(iret, 3))
     print iret
     mpavddDIentry.delete(0,'end')
@@ -399,7 +401,8 @@ def mpavddAread():
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
     ret=Send_MPA_SSA_I2C_Command(ina226_8, 0, read, 0x02, 0)  # read V on shunt
     print hex(ret)
-    vret = Vcshunt * ret
+    #vret = Vcshunt * ret
+    vret = 0.00125 * ret
     vret = float(round(vret, 3))
     print vret
     mpavddAVentry.delete(0,'end')
@@ -443,7 +446,8 @@ def ssavddread():
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
     ret=Send_MPA_SSA_I2C_Command(ina226_7, 0, read, 0x02, 0)  # read V on shunt
     print hex(ret)
-    vret = Vcshunt * ret
+    #vret = Vcshunt * ret
+    vret = 0.00125 * ret
     vret = float(round(vret, 3))
     print vret
     ssavddVentry.delete(0,'end')
@@ -485,7 +489,8 @@ def ssavddDread():
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
     ret=Send_MPA_SSA_I2C_Command(ina226_6, 0, read, 0x02, 0)  # read V on shunt
     print hex(ret)
-    vret = Vcshunt * ret
+    #vret = Vcshunt * ret
+    vret = 0.00125 * ret
     vret = float(round(vret, 3))
     print vret
     ssavddDVentry.delete(0,'end')
@@ -528,7 +533,8 @@ def ssavddAread():
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
     ret=Send_MPA_SSA_I2C_Command(ina226_5, 0, read, 0x02, 0)  # read V on shunt
     print hex(ret)
-    vret = Vcshunt * ret
+    #vret = Vcshunt * ret
+    vret = 0.00125 * ret
     vret = float(round(vret, 3))
     print vret
     ssavddAVentry.delete(0,'end')
@@ -825,12 +831,12 @@ mpavddVlabel.grid(row=2,column=4, pady=0)
 mpavddVentry = Entry(bcontrolui, width=5)
 mpavddVentry.grid(row=3, column=4, pady=0)
 mpavddVentry.insert(0, "?")
-mpavddIlabel = Label(bcontrolui, text="I(A)")
+mpavddIlabel = Label(bcontrolui, text="I(mA)")
 mpavddIlabel.grid(row=2,column=5, pady=0)
 mpavddIentry = Entry(bcontrolui, width=5)
 mpavddIentry.grid(row=3, column=5, pady=0)
 mpavddIentry.insert(0, "?")
-mpavddPlabel = Label(bcontrolui, text="P(W)")
+mpavddPlabel = Label(bcontrolui, text="P(mW)")
 mpavddPlabel.grid(row=2,column=6, pady=0)
 mpavddPentry = Entry(bcontrolui, width=5)
 mpavddPentry.grid(row=3, column=6, pady=0)
@@ -1077,7 +1083,7 @@ ltc2487 = 3
 
 Vc = 0.0003632813 # V/Dac step
 #Vcshunt = 5.0/4000
-Vcshunt = 5.0/4000
+Vcshunt = 0.00250
 Rshunt = 0.1
 ##----- end constants
 

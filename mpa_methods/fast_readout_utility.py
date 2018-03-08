@@ -170,10 +170,11 @@ def strip_in_def( line ,strip = 8*[128]):
 	reg = "cnfg_phy_SSA_gen_stub_data_format_" +str(line) + "_1"
 	fc7.write(reg, value)
 
-def strip_in_test(n_pulse = 10, line = range(0,8),  value = [128, 64, 32, 16, 8, 4, 2, 1]):
+def strip_in_test(n_pulse = 10, line = range(0,8),  value = [128, 64, 32, 16, 8, 4, 2, 1], latency = 0b00111011):
 	t0 = time.time()
-
-	I2C.peri_write('LatencyRx320', 0b00111011) # Trigger line aligned with FC7
+	activate_ss()
+	I2C.peri_write('EdgeSelTrig',0)
+	I2C.peri_write('LatencyRx320', latency) # Trigger line aligned with FC7
 	#I2C.peri_write('EdgeSelTrig', 0b000000000)
 	line = np.array(line)
 	value = np.array(value)
@@ -189,8 +190,11 @@ def strip_in_test(n_pulse = 10, line = range(0,8),  value = [128, 64, 32, 16, 8,
 			check = 0
 			for i in range(0, n_pulse):
 				send_test()
-				pos, Z, bend = read_stubs()
+				nst, pos, Z, bend = read_stubs()
 				for centr in pos[:,0]:
+					if (centr == val):
+						check += 1
+				for centr in pos[:,1]:
 					if (centr == val):
 						check += 1
 			line_check[count_line, count_val ] = check
