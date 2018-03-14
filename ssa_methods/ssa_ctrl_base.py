@@ -22,6 +22,8 @@ class ssa_ctrl_base:
 
 	def set_output_mux(self, testline = 'highimpedence'):
 		ctrl = self.analog_mux_map[testline]
+		self.I2C.peri_write('Bias_TEST_LSB', 0) # to avoid short
+		self.I2C.peri_write('Bias_TEST_MSB', 0) # to avoid short
 		self.I2C.peri_write('Bias_TEST_LSB', (ctrl >> 0) & 0xff)
 		self.I2C.peri_write('Bias_TEST_MSB', (ctrl >> 8) & 0xff)
 		r = ((self.I2C.peri_read('Bias_TEST_LSB') & 0xff))
@@ -32,7 +34,7 @@ class ssa_ctrl_base:
 		else:
 			return True
 
-	def init_slvs(self, current = 0b001):
+	def init_slvs(self, current = 0b100):
 		self.I2C.peri_write('SLVS_pad_current', current)
 		r = self.I2C.peri_read('SLVS_pad_current')
 		if (self.I2C.peri_read("SLVS_pad_current") != (current & 0b111) ):

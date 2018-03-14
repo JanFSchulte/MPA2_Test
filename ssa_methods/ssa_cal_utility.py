@@ -27,9 +27,10 @@ class SSA_cal_utility():
 		self.default_dac_ratio = 4.9 / 2
 		self.fe_ofs = 0.3708
 		self.fe_gain = 1.1165
+		self.calpulse_dll_resolution = 1.2 
 
 	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = False, filename2 = "trim0", msg = "", striplist = range(1,121)):
-		'''	cal_ampl  -> int number      -> Calibration pulse charge (in CALDAC LSBs)         
+		'''	cal_ampl  -> int |'baseline'  -> Calibration pulse charge (in CALDAC LSBs)         
 			mode      -> 'all' | 'sbs'   -> All strips together or one by one     
 			nevents   -> int number      -> Number of calibration pulses (default 1000)  
 			striplist -> [list 1:120]    -> Select specific strip (default all) 
@@ -45,7 +46,8 @@ class SSA_cal_utility():
 		utils.print_enable(True)
 		# first go to the async mode
 		self.ssa.ctrl.activate_readout_async()
-		plt.clf()
+		ermsg = ''
+		
 		baseline = False
 
 		if isinstance(cal_ampl, int):
@@ -53,6 +55,9 @@ class SSA_cal_utility():
 		elif cal_ampl == 'baseline':
 			baseline = True
 			cal_ampl = [0]
+			self.set_trimming(0, display=False)
+			self.set_trimming(31, striplist, display=False)
+
 		elif not isinstance(cal_ampl, list): 
 			return False
 		
@@ -132,16 +137,16 @@ class SSA_cal_utility():
 					failed = True
 
 				if (failed): 
-					error = True
+					error = True; ermsg = '[Counters readout]';
 				else:
 					for s in range(0,120):
 						if ((threshold > 0) and (scurves[threshold,s])==0 and (scurves[threshold-1,s]>(nevents*0.8)) ) : 
-							error = True
+							error = True; ermsg = '[Condition 1]' + str(scurves[threshold,s]) +'  ' + str(scurves[threshold-1,s])
 						elif ((not baseline) and (threshold > 0) and (scurves[threshold,s])== 2*scurves[threshold-1,s] and (scurves[threshold,s] != 0)): 
-							error = True
+							error = True; ermsg = '[Condition 2]'
 				if (error == True): 	
 					threshold = threshold - 1
-					utils.ShowPercent(threshold, 256, "Failed to read counters for threshold " + str(threshold) + ". Redoing")
+					utils.ShowPercent(threshold, 256, "Failed to read counters for threshold " + str(threshold) + ". Redoing. " +  ermsg)
 					sleep(0.5)
 					continue
 				else: 
@@ -161,11 +166,10 @@ class SSA_cal_utility():
 				fo = "../SSA_Results/" + filename + "_scurve_" + filename2 + "__cal_" + str(cal_val) + ".csv"
 				CSV.ArrayToCSV (array = scurves, filename = fo, transpose = True)
 				print "->  \tData saved in" + fo
-
-		if(plot == True): 
-			plt.plot(scurves)
-			plt.show(block=False)
-
+		
+		if(plot == True): plt.clf()
+		plt.plot(scurves)
+		if(plot == True): plt.show()
 		self.scurve_data     = scurves
 		self.scurve_nevents  = nevents
 		self.scurve_calpulse = cal_ampl
@@ -173,7 +177,7 @@ class SSA_cal_utility():
 		return scurves
 
 
-	def trimming_scurves(self, method = 'expected', cal_ampl = 100, th_nominal = 'default', default_trimming = 'keep', striprange = range(1,121), ratio = 'default', iterations = 3, nevents = 1000, plot = True, display = False, reevaluate = True):
+	def trimming_scurves(self, method = 'expected', cal_ampl = 100, th_nominal = 'default', default_trimming = 'keep', striprange = range(1,121), ratio = 'default', iterations = 5, nevents = 1000, plot = True, display = False, reevaluate = True):
 		utils.print_enable(False)
 		activate_I2C_chip()
 		utils.print_enable(True)
@@ -189,17 +193,17 @@ class SSA_cal_utility():
 		# apply starting trimming
 		if(method == 'expected'):
 			if( isinstance(default_trimming, np.ndarray) or isinstance(default_trimming, list) or isinstance(default_trimming, int)):
-				trimdac_value = self.set_trimming(default_trimming, striprange)
+				trimdac_value = self.set_trimming(default_trimming, striprange, display = False)
 			elif(default_trimming == 'keep'): 
-				trimdac_value = self.set_trimming('keep')
+				trimdac_value = self.set_trimming('keep', display = False)
 			else: return False
 		elif(method == 'center'):
 			if(default_trimming == 'keep'): 
-				trimdac_value = self.set_trimming('keep')
+				trimdac_value = self.set_trimming('keep', display = False)
 			else:
-				trimdac_value = self.set_trimming(15, striprange)
+				trimdac_value = self.set_trimming(15, striprange, display = False)
 		elif (method == 'highest'):
-			trimdac_value = self.set_trimming(0, striprange)
+			trimdac_value = self.set_trimming(0, striprange, display = False)
 		else: return False
 
 		# evaluate initial S-Curves
@@ -327,28 +331,30 @@ class SSA_cal_utility():
 		return gain, offset
 
 
-	def set_trimming(self, default_trimming = 'keep', striprange = range(1,121), display = True):
+	def set_trimming(self, default_trimming = 'keep', striprange = 'all', display = True):
 		r = True
 		if(isinstance(default_trimming, int)):
-			trimdac_value = np.array([default_trimming]*120)
-			self.ssa.strip.set_trimming('all', default_trimming)
-			if(display):
-				print "->  \tTrimming: Applied value %d to all channels" % (default_trimming)
-			if(default_trimming == 0):
-				self.scurve_trimming = 'zeros'
+			if(striprange == 'all'):
+				self.ssa.strip.set_trimming('all', default_trimming)
+				if(display):
+					print "->  \tTrimming: Applied value %d to all channels" % (default_trimming)
+				if(default_trimming == 0): self.scurve_trimming = 'zeros'
+				else:self.scurve_trimming = 'const'
 			else:
-				self.scurve_trimming = 'const'
+				for i in striprange:
+					self.ssa.strip.set_trimming(i, default_trimming)
+					if(display):
+						print "->  \tTrimming: Applied value %d to channel %d" % (default_trimming, i)
 		elif(isinstance(default_trimming, np.ndarray) or isinstance(default_trimming, list)):
-			trimdac_value = np.array(default_trimming)
 			for i in striprange:
 				self.ssa.strip.set_trimming( i, default_trimming[i])
 			if(display):
 				print "->  \tTrimming: Applied trimming array" % (default_trimming)
 			self.scurve_trimming = 'trimmed'			
 
-		elif(default_trimming != False or default_trimming != 'keep'):
+		elif(default_trimming != False and default_trimming != 'keep'):
 			self.scurve_trimming = 'none'
-			exit(1)
+			error(1)
 		readback = np.zeros(120)
 		for i in range(0,120):
 			readback[i] = self.ssa.strip.get_trimming(i+1)
@@ -379,7 +385,7 @@ class SSA_cal_utility():
 			)
 			for strip in range(0,120):
 				sct = sc[cnt][:,strip]
-				thidx , par = self.__scurve_fit_errorfunction(sct, nevents)
+				thidx , par = self._scurve_fit_errorfunction(sct, nevents)
 				thtmp[strip] = thidx
 			th.append( thtmp )
 			cnt += 1 
@@ -395,7 +401,7 @@ class SSA_cal_utility():
 		pars = []
 
 		for strip in range(1,121):
-			th, par = self.__scurve_fit_errorfunction(
+			th, par = self._scurve_fit_errorfunction(
 				curve = scurve[: , strip-1],
 				nevents = nevents,
 				expected = 'autodefine',
@@ -409,7 +415,7 @@ class SSA_cal_utility():
 		return ths, pars
 
 
-	def __scurve_fit_errorfunction(self, curve, nevents, expected = 'autodefine', errmsg="", reiterate = 3):
+	def _scurve_fit_errorfunction(self, curve, nevents, expected = 'autodefine', errmsg="", reiterate = 3):
 		sct = curve
 		err = True
 		itr = 0
@@ -450,15 +456,17 @@ class SSA_cal_utility():
 			thidx = int(round(par[1]))
 			return thidx, par
 
-	def __scurve_fit_gaussian(curve, errmsg="", reiterate = 3):
+	def _scurve_fit_gaussian(self, curve, errmsg="", reiterate = 3):
 		guess_mean = np.argmax(curve)
-		guess_sigma = np.len( np.where(curve > 10) )/6.0
+		guess_sigma = np.size( np.where(curve > 10) )/6.0
+		err = True
+		itr = 0
 		while(err == True and itr < reiterate):
 			try:
-				par, cov = curve_fit(
-					f = f_gauss, 
-					xdata = range(1, len(curve)), 
-					ydata = curve[0 : len(curve)-1], 
+				par, cov = curve_fit(	
+					f = f_gauss, 	
+					xdata = range(0, np.size(curve)-1), 
+					ydata = curve[0 : np.size(curve)-1], 
 					p0 = [1, guess_mean, guess_sigma])
 			except RuntimeError:
 				itr += 1
@@ -471,18 +479,184 @@ class SSA_cal_utility():
 			return par, cov
 
 
-	def save_multiple_scurves(self, cal_list = range(0, 160, 10), name = "Chip1", name2 = "trim0"):
+
+
+
+
+	def shaper_pulse_reconstruction(self, calpulse = 60, mode = 'clkdll', targetbx = 2, resolution = 10, strip = 50, display = False, plot = True, thmin = 1, thmax = 70, iterations = 1, basedelay = 25):
+		# mode = [clkdll][caldll]
 		utils.print_enable(False)
 		activate_I2C_chip()
 		utils.print_enable(True)
+		thlist = np.array(range(thmin, thmax, resolution))
+		latency = np.zeros(np.shape(thlist)[0], dtype = np.float16 )
+		edgemax = 1
+		latency0 = basedelay
+		cnt = 0
+		self.ssa.ctrl.activate_readout_normal()
+		self.ssa.strip.set_enable(strip='all', enable=0, polarity=0, hitcounter=0, digitalpulse=0, analogpulse=0)
+		self.ssa.inject.analog_pulse(initialise = True, hit_list = [], mode = 'edge', threshold = [1,100], cal_pulse_amplitude = calpulse)
+		self.ssa.ctrl.set_sampling_deskewing_coarse(1)
+		self.ssa.ctrl.set_sampling_deskewing_fine(5, True, True)
+		self.ssa.ctrl.set_cal_pulse_delay(0)
+		self.I2C.peri_write('Bias_D5DLLB', 31)
+		if(not display): 
+			utils.ShowPercent(0, len(thlist) , "Calculating..")
+		saturated = False
+		for th in thlist: 
+			self.ssa.ctrl.set_threshold(th)
+			latency[cnt], edge = self.deskew_samplingedge(
+				strip = strip, 
+				targetbx = targetbx,
+				step = 1, 
+				mode = mode,
+				samplingmode='edge', 
+				start = edgemax-1, 
+				shift = 2, 
+				display = False, 
+				iterations = iterations, 
+				displaypercent = display
+			)
+			if(latency[cnt] > 100):
+				saturated = True
+			#if(cnt == 0):
+			#	latency0 = latency[cnt]
+			if(edge[0]>edgemax):
+				edgemax = edge[0]
+			if(mode == 'clkdll'):
+				latency[cnt] = latency[cnt] - latency0
+			elif(mode == 'caldll'):
+				latency[cnt] = latency0 - latency[cnt]
+			if(not display):
+				utils.ShowPercent(cnt, len(thlist) , ("Th = %d -> latency = %3.5f" % (th, latency[cnt])))
+				print '' 
+			cnt += 1
+			if(saturated):
+				break
+		if(not display): 
+			utils.ShowPercent(100, 100 , "Done.                       ")
+		if(plot): 
+			plt.axis([0, np.max(latency)+3, 0, thmax])
+			plt.plot(latency, thlist, 'o')
+			plt.show()
+		return latency, thlist
+
+
+	def sampling_slack(self, strip = 50, display=True, shift = 0, samplingmode='level'): 
+		delay = []
+		cnt = 0
+		for s in strips:
+			cnt += 1
+			self.ssa.inject.analog_pulse(hit_list = [s], mode = samplingmode, initialise = False)
+			cl_array , sdel = self.ssa.readout.cluster_data_delay(shift = shift)
+			delay.append(sdel)
+			if(display): utils.ShowPercent(cnt, len(strips), " Sampling")
+		if(display): utils.ShowPercent(len(strips), len(strips), " Done")	
+		return delay
+
+
+	def data_latency(self, strip = 50, shift = 0, samplingmode='level', iterations = 1):
+		lv = np.zeros(iterations, dtype = np.float16)
+		for i in range(0, iterations):
+			self.ssa.inject.analog_pulse(hit_list = [strip], mode = samplingmode, initialise = False)
+			cl_array = self.ssa.readout.cluster_data(shift = shift, lookaround = True)
+			tmp = (np.where( cl_array[0,:] == strip )[0])
+			if (np.size(tmp) > 0):
+				lv[i] = float(tmp[0])
+			else:
+				lv[i] = 0
+		latency=np.mean(lv)
+		return latency
+
+
+	def deskew_samplingedge(self, strip, mode = 'clkdll', targetbx = 1 , step = 1, samplingmode='level', start = 1, shift = 2, display = False, displaypercent = True, raw = False, msg='', iterations = 10):
+		edgemax = 1
+		if(mode == 'clkdll'):
+			latency, edge = self._deskew_samplingedge_clk_dll(strip=strip, target = targetbx, step=step, start=0, shift=shift+4, display=display, displaypercent=displaypercent, msg=msg, samplingmode=samplingmode, iterations = iterations)
+		elif(mode == 'caldll'):
+			latency, edge = self._deskew_samplingedge_cal_dl( strip=strip, target = targetbx, step=step, start=0, shift=shift+7, display=display, displaypercent=displaypercent, msg=msg, samplingmode=samplingmode, iterations = iterations)
+		else:
+			error(1)
+		if(edge > edgemax): edgemax = edge
+		return latency, [edge[0], edge[1]]
+
+
+	def _deskew_samplingedge_clk_dll(self, strip, target, shift = 2, samplingmode='level', display = False, displaypercent = True, msg='', step = 1, start = 0,  iterations = 1):
+		edge = [False, False]
+		for i, j in itertools_product(range(start,7), range(0, 16, step)): 
+			if(displaypercent): 
+				utils.ShowPercent(i*16+j, 16*8, msg + " Sampling..")
+			self.ssa.ctrl.set_sampling_deskewing_coarse(value = i)
+			self.ssa.ctrl.set_sampling_deskewing_fine(value = j, enable = True, bypass = True)
+			sleep(0.01)
+			delay = self.data_latency(strip = strip, shift = shift, samplingmode=samplingmode, iterations = iterations)
+			if(display): 
+				print "deskewing = [%d][%d] \t->  delay = %s)" % (i, j, delay)
+			if (delay == target):
+				break
+		latency = float(i*3.125 + j*0.1953125)
+		if(displaypercent): 
+			utils.ShowPercent(100, 100, msg + " Delay = %3.4f [%d-%d]" % (latency, edge[0], edge[1]) )
+		return latency, [i, j]
+
+
+	def _deskew_samplingedge_cal_dl(self, strip, target, shift = 2, samplingmode='level', display = False, displaypercent = True, msg='', step = 1, start = 0, iterations = 1):
+		edge = 0
+		delay = 0xffff
+		for i in range(start, 64): 
+			if(displaypercent): 
+				utils.ShowPercent(i, 64, msg + " Sampling..")
+			self.ssa.ctrl.set_cal_pulse_delay(i)
+			sleep(0.01)
+			latency = self.data_latency(strip = strip, shift = shift, samplingmode=samplingmode, iterations = iterations)
+			if(display):
+				print "->  \tdeskewing = [%d] \t->  latency = %s)" % (i, latency)
+			if (latency == target):
+				delay = i
+				break
+		latency = float(delay)* self.calpulse_dll_resolution 
+		return latency , [delay, 0]
+
+
+	def delayline_resolution(self):
+		# I2C.peri_write('Bias_D5DLLB', 31) # to change the resolution
+		self.ssa.strip.set_enable(strip='all', enable=0, polarity=0, hitcounter=0, digitalpulse=0, analogpulse=0)
+		self.ssa.inject.analog_pulse(initialise = True, hit_list = [], mode = 'edge', threshold = [50,200], cal_pulse_amplitude = 200)
+		r = []
+		for i in range(0,64):
+			self.ssa.ctrl.set_cal_pulse_delay(i)
+			tmp = self.sampling_slack(strips = [50], display=False, shift = 3, samplingmode='edge')
+			if(np.size(tmp[0]) > 0):
+				r.append(tmp[0][0])
+			else: # delay out of considered range (< -2 or > +2)
+				r.append(0xff)
+			utils.ShowPercent(i, 63, "Calculating")
+		print r
+		resolution = 25.0 / np.size( np.where(  np.array(r) == 0 ) )
+		self.calpulse_dll_resolution = resolution
+		return '%0.3fns' % resolution
+		#  ssa.ctrl.set_cal_pulse_delay(11)
+		#  measure.deskew_samplingedge(step = 1)
+		#  I2C.peri_write('Bias_D5DLLB', 20)
+
+
+	def noise_occupancy(self, nevents = 100, upto = 20, plot = True):
+		integ = [] 
+		self.ssa.readout.l1_data(initialise = True)
+		for th in range(0, upto+1):
+			count = [0]*120
+			self.ssa.ctrl.set_threshold(th)
+			for i in range(0, nevents):
+				utils.ShowPercent(th*nevents + i, (upto+1)*nevents , "Calculating")
+				lcnt, bcnt, hit, hip = self.ssa.readout.l1_data(initialise = False)
+				for s in range(0,120):
+					if s in hit: 
+						count[s] += 1
+			integ.append(count)
+		utils.ShowPercent(100, 100, "Done")
+		noise_occupancy = (np.array(integ) / float(nevents)) * 100.0
 		plt.clf()
-		for cal in cal_list:
-			print "Trimming: " + str(self.set_trimming()[0:10])
-			sleep(0.1)
-			self.scurves(
-				cal_ampl = cal, 
-				filename = name+'/'+name, 
-				filename2 = name2,
-				plot = True,
-				msg = "for calibration pulse = " + str(cal))
+		plt.plot(noise_occupancy)
+		plt.show()		
+		return noise_occupancy
 

@@ -18,7 +18,7 @@ class SSA_ASIC:
 		self.inject            = SSA_inject(I2C, FC7, self.ctrl, self.strip)
 		self.readout           = SSA_readout(I2C, FC7, self.ctrl, self.strip)
 	
-	def init_all(self, slvs_current = 1, edge = "negative"):
+	def init_all(self, slvs_current = 0b110, edge = "negative"):
 		sys.stdout.write("->  Initialising..\r")
 		sys.stdout.flush()
 		reset()

@@ -22,15 +22,14 @@ class SSA_readout():
 		self.ofs = [0]*6
 
 	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False):
-	 	coordinates = []
 	 	data = []	 	
 	 	tmp = []
 	 	counter = 0
 	 	data_loc = 21 + shift
 	 	if(initialize == True):
-			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
+			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 100)
 			sleep(0.001)
-		SendCommand_CTRL("start_trigger")
+		#SendCommand_CTRL("start_trigger")
 		SendCommand_CTRL("start_trigger")
 		status = 0
 		while ((status & 0x00000002) >> 1) != 1: 
@@ -52,30 +51,37 @@ class SSA_readout():
  			for i in data:
  				print "-->  ", i 
  		if (not lookaround): 
+ 			coordinates = []
 	 		for block in data:
 	 			if block[ data_loc ] != 0:
 	 				val = self.__apply_offset_correction(block[ data_loc ], apply_offset_correction)
 					coordinates.append( val )
 		else:
-			for i in range(data_loc-2, data_loc+3):
+			coordinates = np.zeros([8,16], dtype = np.float16)
+			cnt0 = 0
+			for i in range(data_loc-7, data_loc+9):
 				tmp = []
+				cnt1 = 0
 				for block in data:
 		 			if block[ i ] != 0:
 		 				val = self.__apply_offset_correction(block[ i ], apply_offset_correction)
 						tmp.append( val )
-				coordinates.append(tmp)
-
+				for st in tmp:
+					coordinates[cnt1, cnt0] = st
+					cnt1 += 1
+				cnt0 += 1
+		#print coordinates[0]
 		return coordinates
 
 	def cluster_data_delay(self, shift = 0): 
 		cl_array = self.cluster_data(lookaround = True, shift = shift )
-		delay = []
-		cnt = -2
+		delay = [0]*len(cl_array)
+		cnt = -5
 		for cl in cl_array:
 			if(cl != []):
 				delay.append(cnt)
 			cnt += 1
-		return cl_array, delay
+		return delay
 
 	def l1_data(self, latency = 50, display = False, shift = 0, initialise = True, mipadapterdisable = False):
 		if(initialise == True):
