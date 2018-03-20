@@ -7,6 +7,7 @@ from scipy.optimize import curve_fit
 from scipy.special import erfc
 from scipy.special import erf
 from scipy.interpolate import spline
+from itertools import product as itertools_product
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import time
@@ -483,7 +484,7 @@ class SSA_cal_utility():
 
 
 
-	def shaper_pulse_reconstruction(self, calpulse = 60, mode = 'clkdll', targetbx = 2, resolution = 10, strip = 50, display = False, plot = True, thmin = 1, thmax = 70, iterations = 1, basedelay = 25):
+	def shaper_pulse_reconstruction(self, calpulse = 60, mode = 'caldll', targetbx = 2, resolution = 10, strip = 50, display = False, plot = True, thmin = 1, thmax = 70, iterations = 1, basedelay = 25):
 		# mode = [clkdll][caldll]
 		utils.print_enable(False)
 		activate_I2C_chip()

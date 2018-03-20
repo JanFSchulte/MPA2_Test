@@ -18,7 +18,8 @@ except ImportError:
 
 measure     = SSA_measurements(ssa, I2C, fc7, cal, analog_mux_map, biascal)
 
-def init():	ssa.init_all()
+def init():
+	ssa.init_all(display=True)
 
 activate_I2C_chip()
 

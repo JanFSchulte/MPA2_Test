@@ -12,7 +12,10 @@ from scipy.interpolate import spline as interpspline
 from multiprocessing import Process
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
-
+from d19cScripts.fc7_daq_methods import *
+from d19cScripts.MPA_SSA_BoardControl import *
+from myScripts.BasicD19c import *
+from myScripts.ArrayToCSV import *
 
 
 class Utilities: 
@@ -90,6 +93,11 @@ class Utilities:
 			sys.stdout = sys.__stdout__
 		else: 
 			sys.stdout = open(os.devnull, "w")
+
+	def activate_I2C_chip(self):
+		utils.print_enable(False)
+		activate_I2C_chip()
+		utils.print_enable(True)
 
 
 
