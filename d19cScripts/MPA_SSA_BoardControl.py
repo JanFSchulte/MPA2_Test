@@ -146,6 +146,7 @@ def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data):
 	else:
 		if read == 1:
 			print "Data that was read is: ", hex(reply_data)
+			return reply_data
 		else:
 			print "Successful write transaction"
 

@@ -5,7 +5,7 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from mpa_methods.mpa_i2c_conf import *
-from mpa_methods.fast_readout_utility import *
+#from mpa_methods.fast_readout_utility import *
 import numpy as np
 import time
 import sys
@@ -86,19 +86,41 @@ def set_DAC(block, point, value):
 
 def activate_async():
 	I2C.peri_write('ReadoutMode',0b01)
+
 def activate_sync():
 	I2C.peri_write('ReadoutMode',0b00)
+
 def enable_pix_counter(r,p):
 	I2C.pixel_write('ENFLAGS', r, p, 0x53)
+
 def enable_pix_EdgeBRcal(r,p):
 	I2C.pixel_write('ENFLAGS', r, p, 0x57) # with pixel counter for debugging
 	return bin(I2C.pixel_read('ENFLAGS', r, p))
+
 def enable_pix_LevelBRcal(r,p):
 	I2C.pixel_write('ENFLAGS', r, p, 0x5b) # with pixel counter for debugging
 	I2C.pixel_write('ModeSel', r, p, 0b01)
 	return bin(I2C.pixel_read('ENFLAGS', r, p))
+
 def disable_pixel(r,p):
 	I2C.pixel_write('ENFLAGS', r, p, 0x00)
+	I2C.pixel_write('ModeSel', r, p, 0x00)
+
+def activate_shift():
+	I2C.peri_write('ReadoutMode',0b10)
+
+def activate_pp():
+	I2C.peri_write('ECM',0b10000001)
+
+def activate_ss():
+	I2C.peri_write('ECM',0b01000001)
+
+def activate_ps():
+	I2C.peri_write('ECM',0b00001000)
+
+def enable_dig_cal(r,p, pattern = 0b00000001):
+	I2C.pixel_write('ENFLAGS', r, p, 0x20)
+	I2C.pixel_write('DigPattern', r, p, pattern)
 
 def send_pulses(n_pulse):
 	open_shutter()
@@ -154,6 +176,51 @@ def read_pixel_counter(row, pixel):
 	else:
 		data = ((data2 & 0x0ffffff) << 8) | (data1 & 0x0fffffff)
 	return data
+
+# Readout Counters current method
+def ReadoutCounters(raw_mode_en = 0):
+	# set the raw mode to the firmware
+	fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)
+	t0 = time.time()
+	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
+	#print "---> Sending Start and Waiting for Data"
+	#StartCountersRead()
+	start_counters_read(8)
+	timeout = 0
+	while ((mpa_counters_ready == 0) & (timeout < 50)):
+		sleep(0.01)
+		mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
+		timeout += 1
+	if (timeout >= 50):
+		failed = True;
+		return failed, 0
+	#print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
+	if raw_mode_en == 1:
+		count = np.zeros((2040, ), dtype = np.uint16)
+		cycle = 0
+		for i in range(0,20000):
+			fifo1_word = fc7.read("ctrl_slvs_debug_fifo1_data")
+			fifo2_word = fc7.read("ctrl_slvs_debug_fifo2_data")
+			line1 = to_number(fifo1_word,8,0)
+			line2 = to_number(fifo1_word,16,8)
+			line3 = to_number(fifo1_word,24,16)
+			line4 = to_number(fifo2_word,8,0)
+			line5 = to_number(fifo2_word,16,8)
+			if (((line1 & 0b10000000) == 128) & ((line4 & 0b10000000) == 128)):
+				temp = ((line2 & 0b00100000) << 9) | ((line3 & 0b00100000) << 8) | ((line4 & 0b00100000) << 7) | ((line5 & 0b00100000) << 6) | ((line1 & 0b00010000) << 6) | ((line2 & 0b00010000) << 5) | ((line3 & 0b00010000) << 4) | ((line4 & 0b00010000) << 3) | ((line5 & 0b10000000) >> 1) | ((line1 & 0b01000000) >> 1) | ((line2 & 0b01000000) >> 2) | ((line3 & 0b01000000) >> 3) | ((line4 & 0b01000000) >> 4) | ((line5 & 0b01000000) >> 5) | ((line1 & 0b00100000) >> 5)
+				if (temp != 0):
+					count[cycle] = temp - 1
+					cycle += 1
+	else:
+		# here is the parsed mode, when the fpga parses all the counters
+		count = fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 2040)
+		for i in range(2040):
+			count[i] = count[i] - 1
+
+	sleep(0.001)
+	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
+	failed = False
+	return failed, count
 #a = s_curve(100, 50, [1],[2,7],  32)
 def s_curve(n_pulse, cal, row, pixel, step = 1, start = 0, stop = 256, print_file =1, filename = "../cernbox/MPA_Results/scurve"):
 	clear_counters()
@@ -427,18 +494,6 @@ def s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1
 		plt.show()
 	return data_array
 
-def memory_test(latency, row, pixel, diff):
-	t0 = time.time()
-	activate_I2C_chip()
-	disable_pixel(0,0)
-	for r in row:
-		I2C.row_write('L1Offset_1', r,  latency - diff)
-		I2C.row_write('L1Offset_2', r,  0)
-		for p in pixel:
-			enable_dig_cal(r, p)
-	send_pulse_trigger(number_of_test_pulses = 1, delay_after_fast_reset = 200, delay_after_test_pulse = latency, delay_before_next_pulse = 200)
-	sleep(0.1)
-	read_L1()
 def reset_trim(value = 15):
 	I2C.pixel_write("TrimDAC",0,0,value)
 # trimming_noise(nominal_DAC = 70, plot = 1, start = 0, stop = 150, ratio = 3.32, row = [1], pixel = range(1,120))
@@ -687,7 +742,7 @@ def test_DLL(row, pixel, delay_reset, iteration = 10):
 		latency[delay] = np.average(latency_map[delay])
 	return 	latency
 
-def char_DLL(row, pixel, delay_reset, curr = range(0,32), plot = 1):
+def char_DLL(row, pixel, delay_reset, curr = range(0,32), plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/DLL_char"):
 	activate_pp()
 	activate_sync()
 	disable_pixel(0,0)
@@ -699,7 +754,8 @@ def char_DLL(row, pixel, delay_reset, curr = range(0,32), plot = 1):
 	for i in curr:
 		I2C.peri_write('F0',i)
 		latency[i] = test_DLL(row, pixel, delay_reset)
-
+	if print_file:
+		CSV.ArrayToCSV (latency, str(filename) + ".csv")
 	if plot:
 		for i in curr:
 			plt.plot(range(0,64),latency[i],'o-', label = i)
