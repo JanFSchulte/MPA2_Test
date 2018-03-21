@@ -4,23 +4,19 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from mpa_methods.mpa_i2c_conf import *
-from mpa_methods.cal_utility import *
+from mpa_methods.fast_readout_utility import *
 import numpy as np
 import time
 import sys
+import matplotlib.pyplot as plt
+from mpa_methods.bias_calibration import *
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+from scipy.special import erfc
+from scipy.special import erf
+import matplotlib.cm as cm
+from mpa_methods.cal_utility import *
 
-def activate_shift():
-	I2C.peri_write('ReadoutMode',0b10)
-
-def activate_pp():
-	I2C.peri_write('ECM',0b10000001)
-
-def activate_ss():
-	I2C.peri_write('ECM',0b01000001)
-
-def enable_dig_cal(r,p, pattern = 0b00000001):
-	I2C.pixel_write('ENFLAGS', r, p, 0x20)
-	I2C.pixel_write('DigPattern', r, p, pattern)
 
 def enable_pix_sync(r,p):
 	I2C.pixel_write('ENFLAGS', r, p, 0x53)
@@ -33,55 +29,119 @@ def set_out_mapping(map = [1, 2, 3, 4, 5, 0]):
 	I2C.peri_write('OutSetting_4',map[4])
 	I2C.peri_write('OutSetting_5',map[5])
 
-def alignment_slvs(align_word = 128, step = 10):
-	t0 = time.time()
-	activate_I2C_chip()
-	I2C.peri_write('LFSR_data', align_word)
-	activate_shift()
-	phase = 0
-	fc7.write("ctrl_phy_fast_cmd_phase",phase)
-	aligned = 0
-	count = 0
-	while ((not aligned) or (count <= (168/step))):
-		send_test()
-		send_trigger()
-		array_stubs = read_stubs(1)
-		array_l1 = read_L1()
-		aligned = 1
-		for word in array_stubs[:,0]: # CHheck stub lines alignment
-			if (word != align_word):
-				aligned = 0
-		if (array_l1[0,0] != align_word): # CHheck L1 lines alignment
-			aligned = 0
-		if (not aligned): # if not alignment change phase with T1
-			phase += step
-			fc7.write("ctrl_phy_fast_cmd_phase",phase)
-		count += 1
-	if (not aligned):
-		print "Try with finer step"
-	else:
-		print "All stubs line aligned!"
-	t1 = time.time()
-	print "Elapsed Time: " + str(t1 - t0)
-
-def test_ss_data(val = 0):
-	fc7.write("cnfg_phy_SSA_gen_stub_data_format", val)
-	activate_I2C_chip()
-	activate_ss()
+### New alignment method - USE THIS FUNCTION
+def align_MPA():
 	send_test()
-	pos = read_stubs()
-	return pos
+	test = read_regs(0)
+	if ((test[0] == 2147516416) or (test[0] == 8388736)):
+		print "Output already aligned"
+	else:
+		align_out()
+		send_test()
+		test = read_regs(0)
+		if ((test[0] == 2147516416) or (test[0] == 8388736)):
+			print "Output successfully aligned"
+		else:
+			print "alignment failed"
 
-def test_pp_data(row, pixel, pattern = 0b10000000):
+# Pixel-Pixel Test section
+#############################
+# Digital Calibration test #
+def test_pp_digital(row, pixel, pattern = 0b10000000):
+	enable_dig_cal(row, pixel, pattern)
+	sleep(0.01)
+	send_test(8)
+	return read_stubs()
+
+def digital_pixel_test(row = range(1,17), pixel = range(1,121), print_log = 1, filename =  "../cernbox/MPA_Results/digital_pixel_test.log"):
+	t0 = time.time()
+	if print_log:
+		f = open(filename, 'w')
+		f.write("Starting Test:\n")
 	activate_I2C_chip()
+	activate_sync()
 	activate_pp()
 	for r in row:
 		for p in pixel:
-			enable_dig_cal(r,p, pattern)
-	send_test()
-	pos = read_stubs()
-	return pos
+			disable_pixel(0,0)
+			nst, pos, Z, bend = test_pp_digital(r, p)
+			check_pix = 0
+			check_row = 0
+			err = 0
+			for centr in pos[:,0]:
+				if (centr == p*2):
+					check_pix += 1
+				elif (centr != 0):
+					err =+ 1
+			for row in Z[:,0]:
+				if (row == r-1):
+					if (r-1 == 0):
+						check_row = 1
+					else:
+						check_row += 1
+				elif (row != 0):
+					err =+ 1
+			if ((check_pix != 1) or (check_row != 1) or (err != 0)):
+				error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(check_pix) + " " +  str(check_row) + " " + str(err) + "\n"
+				print error_message
+				if print_log:
+					f.write(error_message)
+	if print_log:
+		f.write("Test Completed")
+		f.close()
+	t1 = time.time()
+	print "END"
+	print "Elapsed Time: " + str(t1 - t0)
+# Analog Calibration test #
+def test_pp_analog(row, pixel):
+	enable_pix_EdgeBRcal(row, pixel)
+	sleep(0.01)
+	send_test(8)
+	return read_stubs()
 
+def analog_pixel_test(row = range(1,17), pixel = range(1,121), print_log = 1, filename =  "../cernbox/MPA_Results/analog_pixel_test.log"):
+	t0 = time.time()
+	if print_log:
+		f = open(filename, 'w')
+		f.write("Starting Test:\n")
+	activate_I2C_chip()
+	set_calibration(200)
+	set_threshold(200)
+	activate_sync()
+	activate_pp()
+	for r in row:
+		for p in pixel:
+			disable_pixel(0,0)
+			nst, pos, Z, bend = test_pp_analog(r, p)
+			check_pix = 0
+			check_row = 0
+			err = 0
+			for centr in pos[:,0]:
+				if (centr == p*2):
+					check_pix += 1
+				elif (centr != 0):
+					err =+ 1
+			for row in Z[:,0]:
+				if (row == r-1):
+					if (r-1 == 0):
+						check_row = 1
+					else:
+						check_row += 1
+				elif (row != 0):
+					err =+ 1
+			if ((check_pix != 1) or (check_row != 1) or (err != 0)):
+				error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(check_pix) + " " +  str(check_row) + " " + str(err) + "\n"
+				print error_message
+				if print_log:
+					f.write(error_message)
+	if print_log:
+		f.write("Test Completed")
+		f.close()
+	t1 = time.time()
+	print "END"
+	print "Elapsed Time: " + str(t1 - t0)
+
+###############################
 def check_calpulse(row, pixel, pattern = 0b00000001, n_pulse = 1000):
 	count = 0
 	activate_I2C_chip()
@@ -103,56 +163,6 @@ def check_calpulse(row, pixel, pattern = 0b00000001, n_pulse = 1000):
 	print "Efficiency:" + str(count) + "/" + str(n_pulse)
 	return pos_init
 
-def StartCountersRead():
-    encode_fast_reset = fc7AddrTable.getItem("ctrl_fast_signal_fast_reset").shiftDataToMask(1)
-    encode_orbit_reset = fc7AddrTable.getItem("ctrl_fast_signal_orbit_reset").shiftDataToMask(1)
-    fc7.write("ctrl_fast", encode_fast_reset + encode_orbit_reset)
-
-##----- begin main
-def ReadoutCounters(raw_mode_en = 0):
-	# set the raw mode to the firmware
-	fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)
-	t0 = time.time()
-	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
-	#print "---> Sending Start and Waiting for Data"
-	#StartCountersRead()
-	start_counters_read(8)
-	timeout = 0
-	while ((mpa_counters_ready == 0) & (timeout < 50)):
-		sleep(0.01)
-		mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
-		timeout += 1
-	if (timeout >= 50):
-		failed = True;
-		return failed, 0
-	#print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
-	if raw_mode_en == 1:
-		count = np.zeros((2040, ), dtype = np.uint16)
-		cycle = 0
-		for i in range(0,20000):
-			fifo1_word = fc7.read("ctrl_slvs_debug_fifo1_data")
-			fifo2_word = fc7.read("ctrl_slvs_debug_fifo2_data")
-			line1 = to_number(fifo1_word,8,0)
-			line2 = to_number(fifo1_word,16,8)
-			line3 = to_number(fifo1_word,24,16)
-			line4 = to_number(fifo2_word,8,0)
-			line5 = to_number(fifo2_word,16,8)
-			if (((line1 & 0b10000000) == 128) & ((line4 & 0b10000000) == 128)):
-				temp = ((line2 & 0b00100000) << 9) | ((line3 & 0b00100000) << 8) | ((line4 & 0b00100000) << 7) | ((line5 & 0b00100000) << 6) | ((line1 & 0b00010000) << 6) | ((line2 & 0b00010000) << 5) | ((line3 & 0b00010000) << 4) | ((line4 & 0b00010000) << 3) | ((line5 & 0b10000000) >> 1) | ((line1 & 0b01000000) >> 1) | ((line2 & 0b01000000) >> 2) | ((line3 & 0b01000000) >> 3) | ((line4 & 0b01000000) >> 4) | ((line5 & 0b01000000) >> 5) | ((line1 & 0b00100000) >> 5)
-				if (temp != 0):
-					count[cycle] = temp - 1
-					cycle += 1
-	else:
-		# here is the parsed mode, when the fpga parses all the counters
-		count = fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 2040)
-		for i in range(2040):
-			count[i] = count[i] - 1
-
-	sleep(0.001)
-	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
-	failed = False
-	return failed, count
-
 def reset_strip_in( line = range(0,8), strip = [0, 0, 0, 0, 0, 0, 0, 0]):
 	value = strip[0] << 24 | strip[1] << 16 | strip[2] << 8 | strip[3]
 	for l in line:
@@ -170,10 +180,10 @@ def strip_in_def( line ,strip = 8*[128]):
 	reg = "cnfg_phy_SSA_gen_stub_data_format_" +str(line) + "_1"
 	fc7.write(reg, value)
 
-def strip_in_test(n_pulse = 10, line = range(0,8),  value = [128, 64, 32, 16, 8, 4, 2, 1], latency = 0b00111011):
-	t0 = time.time()
-	activate_ss()
-	I2C.peri_write('EdgeSelTrig',0)
+def strip_in_test(n_pulse = 10, line = range(0,8),  value = [128, 64, 32, 16, 8, 4, 2, 1], latency = 0b00111011, edge = 0):
+	#t0 = time.time()
+
+	I2C.peri_write('EdgeSelTrig',edge) # 1 = rising
 	I2C.peri_write('LatencyRx320', latency) # Trigger line aligned with FC7
 	#I2C.peri_write('EdgeSelTrig', 0b000000000)
 	line = np.array(line)
@@ -200,11 +210,34 @@ def strip_in_test(n_pulse = 10, line = range(0,8),  value = [128, 64, 32, 16, 8,
 			line_check[count_line, count_val ] = check
 			count_val += 1
 		count_line += 1
+	#t1 = time.time()
+	#print "END"
+	#print "Elapsed Time: " + str(t1 - t0)
+
+	return line_check
+
+def strip_in_scan(n_pulse = 10, print_file = 1, filename =  "../cernbox/MPA_Results/strip_in_scan"):
+	t0 = time.time()
+	activate_I2C_chip()
+	activate_ss()
+	data_array = np.zeros((16, 8 ), dtype = np.float16 )
+	for i in range(0,8):
+		latency = (i  << 3)
+		edge = 255
+		print "Testing Latency ", i
+		temp = strip_in_test(n_pulse = n_pulse, latency = latency , edge = edge)
+		for line in range(0,8):
+			data_array[i*2, line ] = np.average(temp[line])/(n_pulse*8)
+		edge = 0
+		temp = strip_in_test(n_pulse = n_pulse, latency = latency , edge = edge)
+		for line in range(0,8):
+			data_array[i*2+1, line ] = np.average(temp[line])/(n_pulse*8)
+	if print_file:
+		CSV.ArrayToCSV (data_array, str(filename) + "_npulse_" + str(n_pulse) + ".csv")
 	t1 = time.time()
 	print "END"
 	print "Elapsed Time: " + str(t1 - t0)
-
-	return line_check
+	return data_array
 
 #def strip_in_l1():
 #	reset()
@@ -230,3 +263,36 @@ def test_L1_fast_command(npulse):
 		L1_ID = read_L1()
 		if (L1_ID!=0): print "ERROR 2"
 		sleep(0.001)
+
+def memory_test(latency, row, pixel, diff, verbose = 1): # Diff = 2
+	disable_pixel(0,0)
+	for r in row:
+		I2C.row_write('L1Offset_1', r,  latency - diff)
+		I2C.row_write('L1Offset_2', r,  0)
+		for p in pixel:
+			enable_dig_cal(r, p)
+	send_pulse_trigger(number_of_test_pulses = 1, delay_after_fast_reset = 200, delay_after_test_pulse = latency, delay_before_next_pulse = 200)
+	return read_L1(verbose)
+
+def digital_mem_test(latency = 10, row = range(1,17), pixel = range(1,121), diff = 2, print_log = 1, filename =  "../cernbox/MPA_Results/digital_mem_test.log"):
+	t0 = time.time()
+	if print_log:
+		f = open(filename, 'w')
+		f.write("Starting Test:\n")
+	activate_I2C_chip()
+	activate_sync()
+	activate_pp()
+	for r in row:
+		for p in pixel:
+			strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = memory_test(latency, [r], [p], diff, 0)
+			if ((pixel_counter != 1) or (pos_pixel[0] != p) or (Z[0] != r)):
+					error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(pixel_counter) + " " +  str(pos_pixel) + " " + str(Z) + "\n"
+					print error_message
+					if print_log:
+						f.write(error_message)
+	if print_log:
+		f.write("Test Completed")
+		f.close()
+	t1 = time.time()
+	print "END"
+	print "Elapsed Time: " + str(t1 - t0)
