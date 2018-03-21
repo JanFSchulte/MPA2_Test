@@ -69,9 +69,9 @@ class ssa_ctrl_strip:
 		elif(strip == 'none'):
 			self.I2C.strip_write("ENFLAGS", 0, 0b00001)
 		elif(isinstance(strip, list)):
-			self.I2C.strip_write("ENFLAGS", 0, 0b00001)
+			self.I2C.strip_write("ENFLAGS", 0, 0b00000)
 			for s in strip:
-				self.I2C.strip_write("ENFLAGS", 0, activeval)
+				self.I2C.strip_write("ENFLAGS", s, activeval)
 		elif(isinstance(strip, int)):
 			self.I2C.strip_write("ENFLAGS", 0, 0b00000)
 			self.I2C.strip_write("ENFLAGS", strip, activeval)

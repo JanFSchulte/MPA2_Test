@@ -19,9 +19,12 @@ class ssa_ctrl_base:
 		self.I2C               = I2C
 		self.fc7               = FC7
 		self.dll_chargepump    = 0b00
+		self.bias_dl_enable    = False
 
 	def set_output_mux(self, testline = 'highimpedence'):
 		ctrl = self.analog_mux_map[testline]
+		self.I2C.peri_write('Bias_TEST_LSB', 0) # to avoid short
+		self.I2C.peri_write('Bias_TEST_MSB', 0) # to avoid short
 		self.I2C.peri_write('Bias_TEST_LSB', (ctrl >> 0) & 0xff)
 		self.I2C.peri_write('Bias_TEST_MSB', (ctrl >> 8) & 0xff)
 		r = ((self.I2C.peri_read('Bias_TEST_LSB') & 0xff))
@@ -32,7 +35,7 @@ class ssa_ctrl_base:
 		else:
 			return True
 
-	def init_slvs(self, current = 0b001):
+	def init_slvs(self, current = 0b100):
 		self.I2C.peri_write('SLVS_pad_current', current)
 		r = self.I2C.peri_read('SLVS_pad_current')
 		if (self.I2C.peri_read("SLVS_pad_current") != (current & 0b111) ):
@@ -169,12 +172,16 @@ class ssa_ctrl_base:
 		if(isinstance(delay, str)):
 			if(delay == 'disable' or delay == 'off'):
 				self.I2C.peri_write("Bias_DL_en", 0)
+				self.bias_dl_enable = False
 			elif(delay == 'enable'or delay == 'on'):
 				self.I2C.peri_write("Bias_DL_en", 1)
+				self.bias_dl_enable = True
 			elif(delay == 'keep'): pass
 			else: exit(1)
 		elif(isinstance(delay, int)):
-			self.I2C.peri_write("Bias_DL_en", 1)
+			if (not self.bias_dl_enable):
+				self.I2C.peri_write("Bias_DL_en", 1)
+				self.bias_dl_enable = True
 			self.I2C.peri_write("Bias_DL_ctrl", delay)
 		return True
 

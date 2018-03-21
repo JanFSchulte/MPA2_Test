@@ -18,25 +18,38 @@ class SSA_ASIC:
 		self.inject            = SSA_inject(I2C, FC7, self.ctrl, self.strip)
 		self.readout           = SSA_readout(I2C, FC7, self.ctrl, self.strip)
 	
-	def init_all(self, slvs_current = 1, edge = "negative"):
-		sys.stdout.write("->  Initialising..\r")
-		sys.stdout.flush()
-		reset()
+	def init_all(self, slvs_current = 0b110, edge = "negative", display = True):
+		if(display): 
+			sys.stdout.write("->  Initialising..\r")
+			sys.stdout.flush()
+		fc7.write("ctrl_command_global_reset", 1)
+		if(display): 
+			sleep(0.5)
+		else: 
+			sleep(0.1)
 		utils.print_enable(False)
 		activate_I2C_chip()
 		utils.print_enable(True)
-		sys.stdout.write("->  Tuning sampling phases..\r")
-		sys.stdout.flush()
+		if(display): 
+			sys.stdout.write("->  Tuning sampling phases..\r")
+			sys.stdout.flush()
 		self.ctrl.set_t1_sampling_edge(edge)
 		self.ctrl.init_slvs(slvs_current)
 		self.ctrl.phase_tuning()
-		time.sleep(0.5)
+		if(display): 
+			sleep(0.5)
+		else: 
+			sleep(0.1)
 		self.ctrl.activate_readout_normal()
-		sys.stdout.write("->  Ready!                  \r")
-		sys.stdout.flush()
-		time.sleep(0.5)
-		sys.stdout.write("                            \n")
-		sys.stdout.flush()
+		if(display): 
+			sys.stdout.write("->  Ready!                  \r")
+			sys.stdout.flush()
+			sleep(0.5)
+		else: 
+			sleep(0.1)
+		if(display): 
+			sys.stdout.write("                            \n")
+			sys.stdout.flush()
 
 
 

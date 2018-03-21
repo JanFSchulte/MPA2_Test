@@ -48,7 +48,7 @@ class ssa_calibration():
 
 		# iterate and measure
 		for par in par_list:
-			value, voltage = self.__get_value_and_voltage(par.par_name, inst)
+			value, voltage = self.get_value_and_voltage(par.par_name, inst)
 			voltage = voltage*1E3
 			print par.full_name, ": "
 			print "\tCheck the initial value: "
@@ -59,7 +59,7 @@ class ssa_calibration():
 
 		print "\n\nSummary of tuning (tuned values):"
 		for par in par_list:
-			value, voltage = self.__get_value_and_voltage(par.par_name, inst)
+			value, voltage = self.get_value_and_voltage(par.par_name, inst)
 			voltage = voltage*1E3
 			print par.full_name, ": "
 			print ("\t Best DAC: %4d,\t V: %8.3f mV") % (value, voltage)
@@ -67,28 +67,36 @@ class ssa_calibration():
 		self.ssa.ctrl.set_output_mux('highimpedence')
 
 
-	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot = True):
+	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot = True, average = 5):
+		# ['Bias_D5BFEED'] ['Bias_D5PREAMP']['Bias_D5TDR']['Bias_D5ALLV']['Bias_D5ALLI']
+		# ['Bias_CALDAC']['Bias_BOOSTERBASELINE']['Bias_THDAC']['Bias_THDACHIGH']['Bias_D5DAC8']              
 		if(not name in self.analog_mux_map):
 			print "->  \tInvalid DAC name"
 			return False
 		fullscale = 2**nbits
-		inst = self.multimeter.init_keithley(3)
+		inst = self.multimeter.init_keithley(avg = average)
 		self.ssa.ctrl.set_output_mux(name)	
 		data = np.zeros(fullscale, dtype=np.float);
-
 		for i in range(0, fullscale):
 			self.I2C.peri_write(name, i)
 			sleep(0.1)
 			data[i] = self.multimeter.measure(inst)
 			utils.ShowPercent(i, fullscale-1, "Measuring "+name+" linearity                         ")
-		
 		if( isinstance(filename, str) ):
 			fo = "../SSA_Results/" + filename + "_Linearity_" + name + filename2
 			CSV.ArrayToCSV (array = data, filename = fo + ".csv", transpose = True)
-		
-		inl = self.__dac_inl(data = data, nbits = nbits, plot = False)
+		dnl, inl = self.__dac_dnl_inl(data = data, nbits = nbits, plot = False)
 		inl_max = np.max(np.abs(inl))
-
+		dnl_max = np.max(np.abs(dnl))
+		g, ofs, sigma = utils.linear_fit(range(0,2**nbits), data)
+		self.ssa.ctrl.set_output_mux('highimpedence')
+		print ""
+		print "DAC "+name+'['+str(nbits)+'-bit]:'
+		print "->       GAIN = %6.3f mV/cnt" % (g*1000.0)
+		print "->     OFFSET = %6.3f mV"     % (ofs*1000.0)
+		print "->    INL MAX = %6.3f cnts"   % (inl_max)
+		print "->    DNL INL = %6.3f cnts"   % (dnl_max)
+		print ""
 		if(plot):
 			plt.clf()
 			plt.figure(1)
@@ -103,27 +111,45 @@ class ssa_calibration():
 				plt.savefig(fo+".pdf")
 			else:
 				plt.show()
-
-		g, ofs, sigma = utils.linear_fit(range(0,2**nbits), data)
-		
-		return g, ofs, sigma/g, inl_max
+		fit_params = [g, ofs, sigma/g]
+		raw = [range(0,fullscale), data]
+		nlin_data = [dnl, inl]
+		nlin_params = dnl_max, inl_max
+		return  nlin_params, nlin_data, fit_params, raw
 	
-	def __dac_inl(self, data, nbits, plot = True):
+	def __dac_dnl_inl(self, data, nbits, plot = True):
 		fullscale = 2**nbits
 		INL = np.zeros(fullscale, dtype=np.float)
-		m = float(data[fullscale-1] - data[0]) / (fullscale-1)
+		DNL = np.zeros(fullscale, dtype=np.float)
+		LSB = float(data[fullscale-1] - data[0]) / (fullscale-1)
 		for i in range(0, fullscale):
-			INL[i] = (( data[i]-data[0] )/m)-float(i)
-		if(plot):
-			plt.clf()
-			plt.ylim([-2,2])
-			plt.plot(range(0,fullscale), INL, '-o')
-			plt.plot(range(0,fullscale), [1]*fullscale, 'r')
-			plt.plot(range(0,fullscale),[-1]*fullscale, 'r')
-			plt.show()
-		return INL
+			INL[i] = ((data[i]-data[0])/LSB)-float(i)
+		for i in range(1, fullscale):
+			DNL[i] = ((data[i]-data[i-1])/LSB)-1
+		return DNL, INL
+	
+	def get_value_and_voltage(self, name, inst0 = -1):
+		# get instrument
+		if (inst0 == -1): inst = self.multimeter.init_keithley()
+		else: inst = inst0
+		self.ssa.ctrl.set_output_mux(name)
+		value = self.__d5_value(str(name), 'r')
+		measurement = self.multimeter.measure(inst)
+		self.ssa.ctrl.set_output_mux('highimpedence')
+		return value, measurement
 
-		
+
+	def get_voltage(self, name, inst0 = -1):
+		if (inst0 == -1):
+			inst = self.multimeter.init_keithley()
+		else:
+			inst = inst0
+		self.ssa.ctrl.set_output_mux(name)
+		measurement = self.multimeter.measure(inst)
+		self.ssa.ctrl.set_output_mux('highimpedence')
+		return measurement
+
+
 	def __d5_value(self, name, mode = 'r', value = -1):
 		# check the read value
 		if ((mode == 'w') & (value == -1)):
@@ -145,29 +171,14 @@ class ssa_calibration():
 			return read_value
 		else:
 			return -1
-			
-
-	def __get_value_and_voltage(self, name, inst0 = -1):
-		# get instrument
-		if (inst0 == -1):
-			inst = self.multimeter.init_keithley()
-		else:
-			inst = inst0
-		# demux the line
-		self.ssa.ctrl.set_output_mux(name)
-		# read value
-		value = self.__d5_value(str(name), 'r')
-		measurement = self.multimeter.measure(inst)
-		# return	
-		return value, measurement
-
+		
 
 	def __tune_parameter(self, inst, name, nominal):
 		if (nominal == -1):
 			return
 
 		# check initials
-		dac_value, voltage = self.__get_value_and_voltage(name, inst)
+		dac_value, voltage = self.get_value_and_voltage(name, inst)
 		voltage = voltage*1E3
 		print "\t\tInitial Set: ", dac_value, voltage
 		# best values
@@ -216,7 +227,7 @@ class ssa_calibration():
 		
 		# verify the value
 		self.__d5_value(str(name), 'w', best_dac_value)
-		dac_value, voltage = self.__get_value_and_voltage(name, inst)
+		dac_value, voltage = self.get_value_and_voltage(name, inst)
 		print "\t\tBest Set: ", dac_value, 1E3*voltage
 
 		return best_dac_value

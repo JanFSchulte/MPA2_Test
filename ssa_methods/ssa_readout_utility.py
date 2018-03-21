@@ -21,22 +21,30 @@ class SSA_readout():
 		self.ofs_initialised = False
 		self.ofs = [0]*6
 
-	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False):
-	 	coordinates = []
+	def status(self):
+		status = self.fc7.read("stat_slvs_debug_general")
+		l1_data_ready   = ((status & 0x1) >> 0)
+		stub_data_ready = ((status & 0x2) >> 1)
+		counters_ready  = ((status & 0x4) >> 2)
+		return [l1_data_ready, stub_data_ready, counters_ready]
+
+	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False, getstatus = False):
 	 	data = []	 	
 	 	tmp = []
 	 	counter = 0
 	 	data_loc = 21 + shift
+	 	status = [0]*3
+	 	status_init = [0]*3
+	 	timeout = 10
 	 	if(initialize == True):
-			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
+			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1000)
 			sleep(0.001)
+		status_init = self.status()
 		SendCommand_CTRL("start_trigger")
-		SendCommand_CTRL("start_trigger")
-		status = 0
-		while ((status & 0x00000002) >> 1) != 1: 
+		while (status[1] != 1 and counter<timeout): 
 			sleep(0.001)
-			status = self.fc7.read("stat_slvs_debug_general")
-			counter = 0 
+			status = self.status()
+			counter += 1
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
 		counter = 0
 	 	for word in ssa_stub_data:
@@ -52,30 +60,38 @@ class SSA_readout():
  			for i in data:
  				print "-->  ", i 
  		if (not lookaround): 
+ 			coordinates = []
 	 		for block in data:
 	 			if block[ data_loc ] != 0:
 	 				val = self.__apply_offset_correction(block[ data_loc ], apply_offset_correction)
 					coordinates.append( val )
 		else:
-			for i in range(data_loc-2, data_loc+3):
+			coordinates = np.zeros([8,16], dtype = np.float16)
+			cnt0 = 0
+			for i in range(data_loc-7, data_loc+9):
 				tmp = []
+				cnt1 = 0
 				for block in data:
 		 			if block[ i ] != 0:
 		 				val = self.__apply_offset_correction(block[ i ], apply_offset_correction)
 						tmp.append( val )
-				coordinates.append(tmp)
-
-		return coordinates
+				for st in tmp:
+					coordinates[cnt1, cnt0] = st
+					cnt1 += 1
+				cnt0 += 1
+		#print coordinates[0]
+		if(getstatus): 	return coordinates, status, status_init
+		else: return coordinates
 
 	def cluster_data_delay(self, shift = 0): 
 		cl_array = self.cluster_data(lookaround = True, shift = shift )
-		delay = []
-		cnt = -2
+		delay = [0]*len(cl_array)
+		cnt = -5
 		for cl in cl_array:
 			if(cl != []):
 				delay.append(cnt)
 			cnt += 1
-		return cl_array, delay
+		return delay
 
 	def l1_data(self, latency = 50, display = False, shift = 0, initialise = True, mipadapterdisable = False):
 		if(initialise == True):
@@ -89,10 +105,11 @@ class SSA_readout():
 			sleep(0.001)
 	
 		SendCommand_CTRL("start_trigger")
-
 		sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
+		sleep(0.001)
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
+		sleep(0.001)
 
 		if(display is True): 
 			print "\n--> L1 Data: "
@@ -305,8 +322,6 @@ class SSA_inject():
 		
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
-			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
-			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 			self.I2C.peri_write("CalPulse_duration", times)
 			self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 			#fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
@@ -328,6 +343,7 @@ class SSA_inject():
 
 		for cl in hip_list:	
 			self.I2C.strip_write("DigCalibPattern_H", cl, 0xff)
+		sleep(0.001)
 
 
 	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [20, 100], cal_pulse_amplitude = 200, initialise = True, trigger = False):
@@ -353,9 +369,10 @@ class SSA_inject():
 				sleep(0.01)
 
 		if(trigger == True):
-			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
+			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
 			SendCommand_CTRL("start_trigger")
 			sleep(0.01)
+		sleep(0.001)
 
 
 
