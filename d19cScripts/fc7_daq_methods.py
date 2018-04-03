@@ -176,11 +176,11 @@ def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_be
   sleep(0.1)
 
 def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses):
-	fc7.write("cnfg_fast_initial_fast_reset_enable", 0)
+	fc7.write("cnfg_fast_initial_fast_reset_enable", 1)
 	fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
 	fc7.write("cnfg_fast_delay_after_test_pulse", delay_after_test_pulse)
 	fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
-	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
+	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 1)
 	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 	fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
 	fc7.write("cnfg_fast_triggers_to_accept", number_of_test_pulses)
