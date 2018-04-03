@@ -16,15 +16,14 @@ import matplotlib.pyplot as plt
 class SSA_measurements():
 
 	def __init__(self, ssa, I2C, fc7, cal, analog_mux_map, biascal = False):
-		self.ssa    = ssa
-		self.I2C    = I2C
-		self.fc7    = fc7
-		self.cal    = cal
-		self.bias   = biascal
-		self.muxmap = analog_mux_map
-
-
-	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', name = "Chip1", plot = True):
+		self.ssa      = ssa
+		self.I2C      = I2C
+		self.fc7      = fc7
+		self.cal      = cal
+		self.bias     = biascal
+		self.muxmap   = analog_mux_map
+	
+	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', name = False, plot = True):
 		plt.clf()
 		data = []
 		for cal in cal_list:
@@ -40,7 +39,8 @@ class SSA_measurements():
 		return data
 
 
-	def baseline_noise(self, striplist = range(1,120), filename = 'Chip1'):
+
+	def baseline_noise(self, striplist = range(1,120), filename = False, plot = True):
 		data = np.zeros([120, 256])
 		parameters = []
 		cnt = 0
@@ -56,8 +56,10 @@ class SSA_measurements():
 			fo = "../SSA_Results/" + filename + "/Scurve_NoiseBaseline/" + filename + "_scurve_trim31__cal_0.csv"
 			CSV.ArrayToCSV (array = data, filename = fo, transpose = False)
 			print "->  \tData saved in" + fo
-		plt.show()
-		return  par
+		if(plot): 
+			plt.show()
+		return  parameters #[A, mu, sigma]
+
 
 
 	def scurve_trim_spread(self, filename = 'Chip1', calpulse = 50, plot = True, iterations = 5):
@@ -92,15 +94,45 @@ class SSA_measurements():
 			return scurve_trim, scurve_init
 
 
-	def shaper_pulse(self, calrange = [20, 40, 60, 80]):
+
+	def shaper_pulse(self, calrange = [40, 80, 120], strip = 5, baseline = 'auto'):
 		shaper_rise = []
+		self.cal.set_trimming(0, 'all')
+		self.cal.set_trimming(31, [strip])
+
+		if(isinstance(baseline, int)):
+			self.cal.baseline = baseline
+		else:
+			a, mu, sigma = self.baseline_noise([strip], plot=False)[0]
+			self.cal.baseline = int(np.round(mu))
+
+		thmin = self.cal.baseline+8   # thmin measured = 8.5 THDAC (0.3fC)
+
 		for cal in calrange:
-			latency, thlist = self.cal.shaper_pulse_reconstruction(cal, 'caldll', targetbx = 1, thmin = 1, thmax = 100, resolution = 1, iterations = 3, basedelay = 30, plot = False)
+			latency, thlist = self.cal.shaper_pulse_reconstruction(
+				calpulse = cal, 
+				mode = 'caldll', 
+				targetbx = 25, 
+				thmin = int(thmin), thmax = 255, 
+				resolution = 1, iterations = 50, 
+				basedelay = 10, plot = False)
 			shaper_rise.append(latency)
-			plt.axis([0, np.max(latency)+3, 0, np.max(thlist) + 10])
-			plt.plot(latency, thlist, '-o')			
+			thlistnew = np.array(thlist)
+
+			for i in np.unique(latency):
+				tmp = np.where(latency == i)
+				mean = np.mean( thlistnew[tmp])
+				thlistnew[tmp] = mean
+
+			thresholds = np.array(thlistnew)-self.cal.baseline
+			plt.axis([0, np.max(latency)+5, 0, thresholds[ np.where(latency>-256)[0] ][-1] + 20 ])
+			plt.plot(latency, thresholds, '-o')
+
+
 		plt.show()
-		return shaper_rise, thlist
+		return x, y
+
+
 
 	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, ideal_gain = 1.840, ideal_offset = 0.8, filename = False, plot = True):
 		if(self.bias == False): return False, False

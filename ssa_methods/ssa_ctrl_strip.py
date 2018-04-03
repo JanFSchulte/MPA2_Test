@@ -23,13 +23,11 @@ class ssa_ctrl_strip:
 	def set_enable(self, strip, enable, polarity = 0, hitcounter = 0, digitalpulse = 0, analogpulse = 0):
 		if(strip == 'all'): 
 			strip = 0
-		value = (
-			(0b1 & analogpulse  ) << 4 |
+		value =((0b1 & analogpulse  ) << 4 |
 			(0b1 & digitalpulse ) << 3 |
 			(0b1 & hitcounter   ) << 2 |
 			(0b1 & polarity     ) << 1 |
-			(0b1 & enable       ) << 0
-		)
+			(0b1 & enable       ) << 0)
 		r = self.I2C.strip_write("ENFLAGS", strip, value)
 
 	def set_trimming(self, strip, value):
@@ -77,4 +75,17 @@ class ssa_ctrl_strip:
 			self.I2C.strip_write("ENFLAGS", strip, activeval)
 		else:
 			exit(1)
+
+	def set_polarity(self, pol, strip = 'all'):
+		if (strip == 'all'): 
+			strip = range(1,121)
+		elif(isinstance(strip, int)):
+			strip = [strip]
+		elif(not isinstance(strip, list)):
+			return False
+		for i in strip:
+			r = self.I2C.strip_read("ENFLAGS", i)
+			val = (r&0b11101) | (pol<<1)
+			self.I2C.strip_write("ENFLAGS", i, val)
+
 
