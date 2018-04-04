@@ -124,7 +124,7 @@ def power_memory(row = range(1,17), plot = 1, print_file =1, filename = "../cern
 		plt.ylabel('Power consumption [mW]')
 		plt.show()
 
-def power_on(VDDPST = 1.25, DVDD = 1.0, AVDD = 1.25, VBG = 0.3):
+def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
 	read = 1
 	write = 0
 	cbc3 = 15
@@ -343,4 +343,3 @@ def set_nominal():
 	I2C.row_write('MemGatEn',0,0)
 	I2C.peri_write('ConfSLVS', 0b00111111)
 	set_threshold(110)
-	
