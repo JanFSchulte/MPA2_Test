@@ -147,10 +147,13 @@ def read_L1(verbose = 1):
 			print "pixel_counter: " + str(pixel_counter)
 			print "Strip Cluster:"
 		for i in range(0, strip_counter):
-			strip_cluster[i] 	=  int(strip_data[11*i:11*(i+1)], 2)
-			pos_strip[i] 		= (int(strip_data[11*i:11*(i+1)], 2) & 0b11111110000) >> 4
-			width_strip[i] 		= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000001110) >> 1
-			MIP[i] 				= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000000001)
+			try:
+				strip_cluster[i] 	=  int(strip_data[11*i:11*(i+1)], 2)
+				pos_strip[i] 		= (int(strip_data[11*i:11*(i+1)], 2) & 0b11111110000) >> 4
+				width_strip[i] 		= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000001110) >> 1
+				MIP[i] 				= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000000001)
+			except ValueError:
+				print "Parsing problem"
 			if verbose:
 				print "Position: " + str(pos_strip[i]) + " Width: " + str(width_strip[i]) + " MIP: " + str(MIP[i])
 		if verbose:
@@ -159,10 +162,13 @@ def read_L1(verbose = 1):
 		width_pixel = np.zeros((pixel_counter,), dtype = np.int)
 		Z = np.zeros((pixel_counter,), dtype = np.int)
 		for i in range(0, pixel_counter):
-			pixel_cluster[i] = int(pixel_data[14*i:14*(i+1)], 2)
-			pos_pixel[i] 	= (int(pixel_data[14*i:14*(i+1)], 2) & 0b11111110000000) >> 7
-			width_pixel[i] 	= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000001110000) >> 4
-			Z[i] 			= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000000001111) + 1
+			try:
+				pixel_cluster[i] = int(pixel_data[14*i:14*(i+1)], 2)
+				pos_pixel[i] 	= (int(pixel_data[14*i:14*(i+1)], 2) & 0b11111110000000) >> 7
+				width_pixel[i] 	= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000001110000) >> 4
+				Z[i] 			= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000000001111) + 1
+			except ValueError:
+				print "Parsing problem"
 			if verbose:
 				print "Position: " + str(pos_pixel[i]) + " Width: " + str(width_pixel[i]) + " Row Number: " + str(Z[i])
 		return strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z
