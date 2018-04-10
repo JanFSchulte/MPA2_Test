@@ -769,6 +769,8 @@ def ssaenable():
     Configure_MPA_SSA_I2C_Master(1, SLOW)
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
     Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2)  # set reset bit
+    print hex(val)
+    print hex(val2)
 
 def ssadisable():
     print "SSA disable"

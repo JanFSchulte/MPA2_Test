@@ -18,7 +18,7 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 
 
-class Utilities: 
+class Utilities:
 
 	def __init__(self):
 		p = []
@@ -27,21 +27,21 @@ class Utilities:
 	    def __repr__(self):
 	        return "{:6.1f}".format(self)
 
-	def ShowPercent(self, val , max = 100, message = ""): 
+	def ShowPercent(self, val , max = 100, message = ""):
 		i = int( (float(val)/max) * 100.0) - 1
 		#row = ""*i + message
-		row = "\t" + message 
+		row = "\t" + message
 		sys.stdout.write("%s\r%d%%" %(row, i + 1))
 		sys.stdout.flush()
 		time.sleep(0.001)
-		if (i == 99): 
+		if (i == 99):
 			sys.stdout.write('\n')
 
 	def linear_fit(self, xdata, ydata):
 		par, cov = curve_fit(
-			f= f_line,  
-			xdata = np.array(xdata), 
-			ydata = np.array(ydata), 
+			f= f_line,
+			xdata = np.array(xdata),
+			ydata = np.array(ydata),
 			p0 = [0, 0])
 		gain = par[0]
 		offset = par[1]
@@ -57,16 +57,16 @@ class Utilities:
 			plt.plot(xnew, ynew, par)
 		elif(dim == 2):
 			for i in ynp:
-				ynew = interpspline(x,i,xnew) 
+				ynew = interpspline(x,i,xnew)
 				plt.plot(xnew, ynew, par)
 		else:
 			return False
-	
+
 	def cl2str(self, clist = [0]):
 		if isinstance(clist, list):
-			if len(clist) > 0: 
+			if len(clist) > 0:
 				rstr = str(map(self.cl_clustdispl, clist))
-			else: 
+			else:
 				rstr = "[      ]"
 		else:
 			rstr = "[{:6.1f}]".format(clist)
@@ -74,16 +74,16 @@ class Utilities:
 
 	def __plot_graph(self, *args):
 	    plt.show()
-	
+
 	def PltPlot(self, data, show = True):
 		plt.plot(data)
-		self.p.append( Process(target=self.__plot_graph, args='') ) 
+		self.p.append( Process(target=self.__plot_graph, args='') )
 		self.p[-1].start()
-	
+
 	def PltShow(self):
 		self.p.append( Process(target=self.__plot_graph, args='') )
 		self.p[-1].start()
-	
+
 	def PltClose(self):
 		for i in p:
 			i.join()
@@ -91,14 +91,17 @@ class Utilities:
 	def print_enable(self, ctr = True):
 		if(ctr):
 			sys.stdout = sys.__stdout__
-		else: 
+		else:
 			sys.stdout = open(os.devnull, "w")
 
-	def activate_I2C_chip(self):
-		utils.print_enable(False)
+	def activate_I2C_chip(self, pr = ''):
+		if(not pr == 'debug'):
+			utils.print_enable(False)
 		activate_I2C_chip()
-		utils.print_enable(True)
-
+		if(not pr == 'debug'):
+			utils.print_enable(True)
+		if(pr == 'print'):
+			print '->  \tEnabled I2C master for chips control'
 
 
 def print_method(name):
@@ -123,6 +126,3 @@ def f_gauss(x, *p):
 def f_errorfc(x, *p):
     a, mu, sigma = p
     return a*0.5*erfc((x-mu)/sigma)
-
-
-

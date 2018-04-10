@@ -22,13 +22,15 @@ class SSA_measurements():
 		self.cal      = cal
 		self.bias     = biascal
 		self.muxmap   = analog_mux_map
-	
+
 	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', name = False, plot = True):
 		plt.clf()
+		if (isinstance(name, str)):
+			name =  name+'/'+name
 		data = []
 		for cal in cal_list:
 			if(trim_list == 'keep'):
-				d = self.cal.scurves(cal_ampl = cal, filename = name+'/'+name, mode = mode, rdmode = rdmode, filename2 = 'trim', plot = False, msg = "CAL = " + str(cal))
+				d = self.cal.scurves(cal_ampl = cal, filename = name, mode = mode, rdmode = rdmode, filename2 = 'trim', plot = False, msg = "CAL = " + str(cal))
 				data.append(d)
 			else:
 				for trim in trim_list:
@@ -46,7 +48,7 @@ class SSA_measurements():
 		cnt = 0
 		for s in striplist:
 			tmp = self.cal.scurves(cal_ampl='baseline', rdmode = 'i2c', mode = 'sbs', striplist = [s], plot = False)
-			data[s-1] = tmp[:,s-1] 
+			data[s-1] = tmp[:,s-1]
 			cnt += 1
 			par, cov = self.cal._scurve_fit_gaussian(curve = data[s-1], errmsg=' for strip %d'%s)
 			parameters.append(par)
@@ -56,7 +58,7 @@ class SSA_measurements():
 			fo = "../SSA_Results/" + filename + "/Scurve_NoiseBaseline/" + filename + "_scurve_trim31__cal_0.csv"
 			CSV.ArrayToCSV (array = data, filename = fo, transpose = False)
 			print "->  \tData saved in" + fo
-		if(plot): 
+		if(plot):
 			plt.show()
 		return  parameters #[A, mu, sigma]
 
@@ -72,7 +74,7 @@ class SSA_measurements():
 			CSV.ArrayToCSV (array = scurve_init, filename = fo, transpose = True)
 			fo = "../SSA_Results/" + filename + "/" + filename + "_scurve_trim__cal_" + str(calpulse) +".csv"
 			CSV.ArrayToCSV (array = scurve_trim, filename = fo, transpose = True)
-		if plot: 
+		if plot:
 			plt.clf()
 			plt.figure(1)
 			plt.plot(scurve_init, 'b', alpha = 0.5)
@@ -95,42 +97,54 @@ class SSA_measurements():
 
 
 
-	def shaper_pulse(self, calrange = [40, 80, 120], strip = 5, baseline = 'auto'):
-		shaper_rise = []
+	def shaper_pulse(self, calrange = [46, 58, 69, 81], strip = 5, baseline = 'auto', iterations = 10, pattern = False):
+		shaper_rise = []; shaper_fall = [];
+		thresholds_list = []; shapervalues_list = [];
 		self.cal.set_trimming(0, 'all')
 		self.cal.set_trimming(31, [strip])
-
 		if(isinstance(baseline, int)):
 			self.cal.baseline = baseline
 		else:
 			a, mu, sigma = self.baseline_noise([strip], plot=False)[0]
 			self.cal.baseline = int(np.round(mu))
-
-		thmin = self.cal.baseline+8   # thmin measured = 8.5 THDAC (0.3fC)
-
+			print "->  \tBaseline = %3.2f" % self.cal.baseline
+		thmin = self.cal.baseline+5   # thmin measured = 8.5 THDAC (0.3fC)
 		for cal in calrange:
-			latency, thlist = self.cal.shaper_pulse_reconstruction(
-				calpulse = cal, 
-				mode = 'caldll', 
-				targetbx = 25, 
-				thmin = int(thmin), thmax = 255, 
-				resolution = 1, iterations = 50, 
-				basedelay = 10, plot = False)
+			latency, thlist = self.cal.shaper_pulse_rising(
+				calpulse = cal,
+				mode = 'caldll', targetbx = 25,
+				thmin = int(thmin), thmax = 255,
+				resolution = 5, iterations = iterations,
+				basedelay = 10, plot = False, display_pattern = pattern)
 			shaper_rise.append(latency)
-			thlistnew = np.array(thlist)
+			thlist_rise = np.array(thlist)
 
-			for i in np.unique(latency):
-				tmp = np.where(latency == i)
-				mean = np.mean( thlistnew[tmp])
-				thlistnew[tmp] = mean
+			latency, thlist = self.cal.shaper_pulse_falling(
+				calpulse = cal,
+				mode = 'caldll', targetbx = 25,
+				thmin = int(thmin), thmax = 255,
+				resolution = 5, iterations = iterations,
+				basedelay = 10, plot = False, display_pattern = pattern)
+			shaper_fall.append(latency)
+			thlist_fall = np.array(thlist)
 
-			thresholds = np.array(thlistnew)-self.cal.baseline
-			plt.axis([0, np.max(latency)+5, 0, thresholds[ np.where(latency>-256)[0] ][-1] + 20 ])
-			plt.plot(latency, thresholds, '-o')
 
+			#for i in np.unique(shaper_rise[-1]):
+			#	tmp = np.where(shaper_rise[-1] == i)
+			#	mean = np.mean( thlist_rise[tmp])
+			#	thlist_rise[tmp] = mean
+			#for i in np.unique(shaper_fall[-1]):
+			#	tmp = np.where(shaper_fall[-1] == i)
+			#	mean = np.mean( thlist_fall[tmp])
+			#	thlist_fall[tmp] = mean
 
+			thresholds = np.concatenate( [ np.array(thlist_rise)-self.cal.baseline , np.array(thlist_fall)-self.cal.baseline ] )
+			shapervalu = np.concatenate( [ shaper_rise[-1], shaper_fall[-1] ] )
+			plt.axis([0, np.max(shaper_rise[-1])*2.5, 0, thresholds[ np.where(shaper_rise[-1]>-256)[0] ][-1] + 20 ])
+			plt.plot(shapervalu, thresholds, 'o')
+			thresholds_list.append(thresholds); shapervalues_list.append(shapervalu)
 		plt.show()
-		return x, y
+		return thresholds_list, shapervalues_list
 
 
 
@@ -138,10 +152,10 @@ class SSA_measurements():
 		if(self.bias == False): return False, False
 		if(not (name in self.muxmap)): return False, False
 		nlin_params, nlin_data, fit_params, raw = self.bias.measure_dac_linearity(
-			name = name, 
-			nbits = nbits, 
-			filename = filename, 
-			filename2 = "", 
+			name = name,
+			nbits = nbits,
+			filename = filename,
+			filename2 = "",
 			plot = False,
 			average = 10)
 		g, ofs, sigma = fit_params
@@ -154,7 +168,7 @@ class SSA_measurements():
 		elif name in self.muxmap:
 			data = np.array(data)
 		else: return False
-		if plot: 
+		if plot:
 			plt.clf()
 			plt.figure(1)
 			plt.plot(x, f_line(x, ideal_gain/1000, ideal_offset/1000), '-b', linewidth=5, alpha = 0.5)
@@ -167,6 +181,13 @@ class SSA_measurements():
 
 		return DNL, INL, x, data
 		return DNLMAX, INLMAX
+
+	def delayline_resolution(self, debug = False):
+		resolution = []
+		resolution.append( "MAX: " + self.cal.delayline_resolution(set_bias = 31, shift = 3, display = debug, debug = False) )
+		resolution.append( "TYP: " + self.cal.delayline_resolution(set_bias = 15, shift = 3, display = debug, debug = False) )
+		#resolution.append( "MIN: " + self.cal.delayline_resolution(set_bias =  1, shift = 3, display = debug, debug = False) )
+		return resolution
 
 
 

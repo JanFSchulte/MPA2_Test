@@ -32,15 +32,15 @@ class SSA_test_utility():
 		elif(mode == "analog"):
 			self.ssa.inject.analog_pulse(hit_list = [], initialise = True)
 			shift += 2
-		else: 
+		else:
 			return False
-		if(doreset):  
+		if(doreset):
 			initialise = True
-		else: 
+		else:
 			initialise = False
-		if(lateral): 
+		if(lateral):
 			clrange = random.sample(range(-2, 125), 127)
-		else: 
+		else:
 			clrange = random.sample(range(1, 121), 120)
 		self.ssa.readout.cluster_data(initialize = True)
 		cnt = 0
@@ -54,7 +54,7 @@ class SSA_test_utility():
 			elif(mode == "analog"):
 				self.ssa.inject.analog_pulse(hit_list = [i], initialise = initialise)
 			time.sleep(0.01)
-			r, status, status_init = self.ssa.readout.cluster_data(initialize = initialise, shift = shift, getstatus = True)
+			r, status = self.ssa.readout.cluster_data(initialize = initialise, shift = shift, getstatus = True)
 			l = []
 			if(i>0 and i < 121):
 				if (len(r) != 1): err[0] = True
@@ -67,18 +67,18 @@ class SSA_test_utility():
 				l = self.ssa.readout.lateral_data(initialize = False)
 				if (len(l) != 1): err[2] = True
 				elif (l[0] != i): err[2] = True
-			dstr = " -> expected: "+utils.cl2str(i)+" | cl: " + utils.cl2str(r) + " | lat: " + utils.cl2str(l) + " | prev: " + utils.cl2str(prev) + " | st: [" + str(status[1]) + "-" + str(status_init[1]) +"]" 
+			dstr = " -> expected: "+utils.cl2str(i)+" | cl: " + utils.cl2str(r) + " | lat: " + utils.cl2str(l) + " | prev: " + utils.cl2str(prev) + " | st: [" + str(status[1]) + "-" + str(status[1]) +"]"
 			if (err[0]):
-				r, status, status_init = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
+				r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 				dstr += " | Reread: "+utils.cl2str(r)
 				print "\tCluster data Error   " + dstr
 			elif(err[1]):
-				print "\tLateral Input Error  " + dstr  
+				print "\tLateral Input Error  " + dstr
 			elif(err[2]):
-				print "\tLateral Output Error " + dstr  
+				print "\tLateral Output Error " + dstr
 			else:
-				if(display == True): 
-					print "\tPassed       " + dstr 
+				if(display == True):
+					print "\tPassed       " + dstr
 			prev = i
 
 			utils.ShowPercent(cnt, 130, "Running clusters test based on digital test pulses")
@@ -86,19 +86,20 @@ class SSA_test_utility():
 
 
 
-	def l1_data_basic(self, mode = "digital", calpulse = [50, 200], threshold = [10, 100], shift = 0, display = False, doreset = False):
+	def l1_data_basic(self, mode = "digital", calpulse = [50, 200], threshold = [10, 100], shift = 0, display = False, doreset = False, latency = 50):
 		counter = [0,0]
 		utils.activate_I2C_chip()
 		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
 		if(mode == "analog"): shift += 2
-		L1_counter_init, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = True, shift = shift)
+		L1_counter_init, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = True, shift = shift, latency = latency)
+		if(L1_counter_init < 0): return 'error'
 		l1hitlistprev = []
 		hiplistprev = []
 		if(doreset):  initialise = True
 		else: initialise = False
 		for H in range(0,2):
-			if(mode == "digital"): 
+			if(mode == "digital"):
 				self.ssa.inject.digital_pulse(initialise = True)
 			else:
 				self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', threshold = threshold, cal_pulse_amplitude = calpulse[H])
@@ -113,19 +114,20 @@ class SSA_test_utility():
 				counter[0] += 1
 				#self.ssa.inject.digital_pulse(hit_list = [i], initialise = False)
 				time.sleep(0.03)
-				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = initialise, shift = shift)
-				
-				if   ((L1_counter & 0b1111) != ((L1_counter_init + 1) & 0b1111) ): err = True
-				if   (len(l1hitlist) != 1): err = True
-				if   (len(hiplist) > 0):
+				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = initialise, shift = shift, latency = latency)
+				if(L1_counter < 0): return 'error'
+				if ((L1_counter & 0b1111) != ((L1_counter_init + 1) & 0b1111) ): err = True
+				if (len(l1hitlist) != 1): err = True
+				if (len(l1hitlist) > 0):
+					if (l1hitlist[0] != i): err = True
+				if (len(hiplist) != H): err = True
+				if (len(hiplist) > 0):
 					if (hiplist[0] != H): err = True
-				elif (l1hitlist[0] != i): err = True
-				if   (len(hiplist) != H): err = True
 
 				dstr = "expected: [%2d][%3s][%3s]\t  |  found: [%2d][%3s][%3s]  |  previously: [%2d][%3s][%3s]" % (
 				        (L1_counter_init+1)&0b1111, i, H,
 				        L1_counter,      ', '.join(map(str, l1hitlist)),       ', '.join(map(str, hiplist)) ,
-				        L1_counter_init, ', '.join(map(str, l1hitlistprev)) ,  ', '.join(map(str, hiplistprev)) 
+				        L1_counter_init, ', '.join(map(str, l1hitlistprev)) ,  ', '.join(map(str, hiplistprev))
 				       )
 				l1hitlistprev = l1hitlist
 				hiplistprev   = hiplist
@@ -134,7 +136,7 @@ class SSA_test_utility():
 					counter[1] += 1
 					print "\tError -> " + dstr + "                                  "
 				else:
-					if(display == True): 
+					if(display == True):
 						print "\tOk    -> " + dstr + "                                  "
 				if(display): utils.ShowPercent(counter[0], 240, "")
 				else: utils.ShowPercent(counter[0], 240, "Running basic HIP flag test based on digital test pulses")
@@ -153,7 +155,7 @@ class SSA_test_utility():
 
 		self.ssa.ctrl.set_lateral_data(0b00001001, 0)
 		cnt = 0
-		while ((alined_left == False) and (cnt < timeout)):  
+		while ((alined_left == False) and (cnt < timeout)):
 			clusters = self.ssa.readout.cluster_data()
 			if len(clusters) == 2:
 				if(clusters[0] == 121 and clusters[1] == 124):
@@ -165,13 +167,13 @@ class SSA_test_utility():
 			cnt += 1
 		if(alined_left == True):
 			utils.ShowPercent(100, 100, "Left Input line alined    \t\t" + str(clusters) + "           ")
-		else: 
+		else:
 			utils.ShowPercent(100, 100, "Impossible to align left input data line  ")
-		print "   " 
+		print "   "
 
 		self.ssa.ctrl.set_lateral_data(0, 0b10100000)
 		cnt = 0
-		while ((alined_right == False) and (cnt < timeout)):  
+		while ((alined_right == False) and (cnt < timeout)):
 			clusters = self.ssa.readout.cluster_data()
 			if len(clusters) == 2:
 				if(clusters[0] == -2 and clusters[1] == 0):
@@ -183,9 +185,9 @@ class SSA_test_utility():
 			cnt += 1
 		if(alined_right == True):
 			utils.ShowPercent(100, 100, "Right input line alined     \t\t" + str(clusters) + "           ")
-		else: 
+		else:
 			utils.ShowPercent(100, 100, "Impossible to align right input data line")
-		print "   " 
+		print "   "
 
 
 
