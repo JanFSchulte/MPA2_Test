@@ -23,19 +23,19 @@ class SSA_measurements():
 		self.bias     = biascal
 		self.muxmap   = analog_mux_map
 
-	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', name = False, plot = True):
+	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, plot = True):
 		plt.clf()
-		if (isinstance(name, str)):
-			name =  name+'/'+name
+		if (isinstance(filename, str)):
+			filename =  filename+'/'+filename
 		data = []
 		for cal in cal_list:
 			if(trim_list == 'keep'):
-				d = self.cal.scurves(cal_ampl = cal, filename = name, mode = mode, rdmode = rdmode, filename2 = 'trim', plot = False, msg = "CAL = " + str(cal))
+				d = self.cal.scurves(cal_ampl = cal, filename = filename, mode = mode, rdmode = rdmode, filename2 = 'trim', plot = False, msg = "CAL = " + str(cal))
 				data.append(d)
 			else:
 				for trim in trim_list:
 					t = self.cal.set_trimming(trim, 'all', False)
-					d = self.cal.scurves(cal_ampl = cal, filename = name+'/'+name, mode = mode, rdmode = rdmode, filename2 = 'trim'+str(trim), plot = False, msg = "[CAL=" + str(cal) +"][TRIM="+str(trim)+']')
+					d = self.cal.scurves(cal_ampl = cal, filename = filename, mode = mode, rdmode = rdmode, filename2 = 'trim'+str(trim), plot = False, msg = "[CAL=" + str(cal) +"][TRIM="+str(trim)+']')
 					data.append(d)
 		if plot: plt.show()
 		return data

@@ -120,8 +120,6 @@ class SSA_readout():
 		status = self.fc7.read("stat_slvs_debug_general")
 		sleep(0.001)
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
-		sleep(0.001)
-
 		if(display is True):
 			print "\n--> L1 Data: "
 			for word in ssa_l1_data:

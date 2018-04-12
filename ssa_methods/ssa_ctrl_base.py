@@ -13,22 +13,17 @@ import matplotlib.pyplot as plt
 class ssa_ctrl_base:
 
 	def __init__(self, I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
-		self.analog_mux_map    = analog_mux_map
-		self.ssa_peri_reg_map  = ssa_peri_reg_map
-		self.ssa_strip_reg_map = ssa_strip_reg_map
-		self.I2C               = I2C
-		self.fc7               = FC7
-		self.dll_chargepump    = 0b00
-		self.bias_dl_enable    = False
-		self.pcf8574           = 1
-		self.pcbwrite          = 0
-		self.pcbread           = 1
-		self.pcbi2cmux         = 0
+		self.pcf8574 = 1;   self.pcbwrite = 0;   self.pcbread = 1;  self.pcbi2cmux = 0;
+		self.i2cmux = 0;    self.dac7678 = 4;    self.Vc = 0.0003632813;
+		self.I2C = I2C;     self.fc7 = FC7;      self.dll_chargepump = 0b00;
+		self.bias_dl_enable = False;             self.ssa_strip_reg_map = ssa_strip_reg_map;
+		self.analog_mux_map = analog_mux_map;    self.ssa_peri_reg_map = ssa_peri_reg_map;
 
 	def resync(self):
 		SendCommand_CTRL("fast_fast_reset");
 		print '->  \tSent Re-Sync command'
 		sleep(0.001)
+
 
 	def reset(self):
 		utils.print_enable(False)
@@ -40,6 +35,20 @@ class ssa_ctrl_base:
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
 		print '->  \tSent Hard-Reset pulse '
+
+
+	def set_dvdd(self, targetvoltage):
+		utils.print_enable(False)
+		if (targetvoltage > 1.25): targetvoltage = 1.25
+		diffvoltage = 1.5 - targetvoltage
+		setvoltage = int(round(diffvoltage / self.Vc))
+		if (setvoltage > 4095): setvoltage = 4095
+		setvoltage = setvoltage << 4
+		Configure_MPA_SSA_I2C_Master(1, 2)
+		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
+		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x31, setvoltage)  # tx to DAC C
+		utils.activate_I2C_chip()
+		utils.print_enable(True)
 
 	def set_output_mux(self, testline = 'highimpedence'):
 		ctrl = self.analog_mux_map[testline]
