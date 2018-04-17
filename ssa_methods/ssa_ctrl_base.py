@@ -13,13 +13,42 @@ import matplotlib.pyplot as plt
 class ssa_ctrl_base:
 
 	def __init__(self, I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
-		self.analog_mux_map    = analog_mux_map
-		self.ssa_peri_reg_map  = ssa_peri_reg_map
-		self.ssa_strip_reg_map = ssa_strip_reg_map
-		self.I2C               = I2C
-		self.fc7               = FC7
-		self.dll_chargepump    = 0b00
-		self.bias_dl_enable    = False
+		self.pcf8574 = 1;   self.pcbwrite = 0;   self.pcbread = 1;  self.pcbi2cmux = 0;
+		self.i2cmux = 0;    self.dac7678 = 4;    self.Vc = 0.0003632813;
+		self.I2C = I2C;     self.fc7 = FC7;      self.dll_chargepump = 0b00;
+		self.bias_dl_enable = False;             self.ssa_strip_reg_map = ssa_strip_reg_map;
+		self.analog_mux_map = analog_mux_map;    self.ssa_peri_reg_map = ssa_peri_reg_map;
+
+	def resync(self):
+		SendCommand_CTRL("fast_fast_reset");
+		print '->  \tSent Re-Sync command'
+		sleep(0.001)
+
+
+	def reset(self):
+		utils.print_enable(False)
+		sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2);
+		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux,  0, self.pcbwrite, 0, 0x02);  # route to 2nd PCF8574
+		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574, 0, self.pcbwrite, 0, 0b0);  # drop reset bit
+		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574, 0, self.pcbwrite, 0, 0b1);  # set reset bit
+		sleep(0.01);
+		utils.activate_I2C_chip()
+		utils.print_enable(True)
+		print '->  \tSent Hard-Reset pulse '
+
+
+	def set_dvdd(self, targetvoltage):
+		utils.print_enable(False)
+		if (targetvoltage > 1.25): targetvoltage = 1.25
+		diffvoltage = 1.5 - targetvoltage
+		setvoltage = int(round(diffvoltage / self.Vc))
+		if (setvoltage > 4095): setvoltage = 4095
+		setvoltage = setvoltage << 4
+		Configure_MPA_SSA_I2C_Master(1, 2)
+		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
+		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x31, setvoltage)  # tx to DAC C
+		utils.activate_I2C_chip()
+		utils.print_enable(True)
 
 	def set_output_mux(self, testline = 'highimpedence'):
 		ctrl = self.analog_mux_map[testline]
@@ -57,7 +86,7 @@ class ssa_ctrl_base:
 		self.I2C.strip_write("DigCalibPattern_L", 0, 0)
 		self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 
-	def do_phase_tuning(self):
+	def __do_phase_tuning(self):
 		self.fc7.write("ctrl_phy_phase_tune_again", 1)
 		send_test(15)
 		while(self.fc7.read("stat_phy_phase_tuning_done") == 0):
@@ -66,11 +95,11 @@ class ssa_ctrl_base:
 
 	def phase_tuning(self):
 		self.activate_readout_shift()
-		self.set_shift_pattern_all(128) 
+		self.set_shift_pattern_all(128)
 		time.sleep(0.01)
 		self.set_lateral_lines_alignament()
 		time.sleep(0.01)
-		self.do_phase_tuning()
+		self.__do_phase_tuning()
 		self.I2C.peri_write('OutPattern7/FIFOconfig', 7)
 		self.reset_pattern_injection()
 		self.activate_readout_normal()
@@ -101,7 +130,7 @@ class ssa_ctrl_base:
 			exit(1)
 		# ssa set delay of the counters
 		self.fc7.write("cnfg_phy_slvs_ssa_first_counter_del", ssa_first_counter_delay+24+correction)
-		
+
 	def activate_readout_shift(self):
 	        self.I2C.peri_write('ReadoutMode',0b10)
 
@@ -120,7 +149,7 @@ class ssa_ctrl_base:
 
 	def set_async_delay(self, value):
 		msb = (value & 0xFF00) >> 8
-		lsb = (value & 0x00FF) >> 0 
+		lsb = (value & 0x00FF) >> 0
 		self.I2C.peri_write('AsyncRead_StartDel_MSB', msb)
 		self.I2C.peri_write('AsyncRead_StartDel_LSB', lsb)
 
@@ -132,7 +161,7 @@ class ssa_ctrl_base:
 			print "Was writing: ", value, ", got: ", test_read
 			print "Error. Failed to set the threshold"
 			error(1)
-	
+
 	def set_threshold_H(self, value):
 		self.I2C.peri_write("Bias_THDACHIGH", value)
 		sleep(0.01)
@@ -159,7 +188,7 @@ class ssa_ctrl_base:
 		for i in repT:
 			if (i != th_trimming): error = True
 		for i in repG:
-			if (i != gain_trimming): error = True	
+			if (i != gain_trimming): error = True
 		if error:
 			print "Error. Failed to set the trimming"
 
@@ -197,7 +226,7 @@ class ssa_ctrl_base:
 			((value & 0b1111) << 0) |
 			((self.dll_chargepump & 0b11) << 4) |
 			((bypass & 0b1) << 6) |
-			((enable & 0b1) << 7) 
+			((enable & 0b1) << 7)
 		)
 		self.I2C.peri_write("ClockDeskewing", word)
 		r = self.I2C.peri_read("ClockDeskewing")
@@ -211,7 +240,7 @@ class ssa_ctrl_base:
 		self.I2C.peri_write("ClockDeskewing", word)
 		r = self.I2C.peri_read("ClockDeskewing")
 		if(r != word): return False
-		else: return True		
+		else: return True
 
 	def set_lateral_data_phase(self, left, right):
 		self.fc7.write("ctrl_phy_ssa_gen_lateral_phase_1", right)
@@ -220,10 +249,3 @@ class ssa_ctrl_base:
 	def set_lateral_data(self, left, right):
 		self.fc7.write("cnfg_phy_SSA_gen_right_lateral_data_format", right)
 		self.fc7.write("cnfg_phy_SSA_gen_left_lateral_data_format", left)
-
-
-
-
-
-
-

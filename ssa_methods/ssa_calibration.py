@@ -15,6 +15,15 @@ import matplotlib.pyplot as plt
 
 class ssa_calibration():
 
+	class Parameter():
+		def __init__(self, full_name, par_name, nominal = -1, best_dac = -1, docalibrate = 'set_dont_calibrate'):
+			self.full_name = full_name
+			self.par_name = par_name
+			self.nominal = nominal
+			self.best_dac = best_dac
+			self.docalibrate = docalibrate
+
+
 	def __init__(self, ssa, I2C, fc7, multimeter, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
 		self.ssa = ssa
 		self.I2C = I2C
@@ -23,64 +32,68 @@ class ssa_calibration():
 		self.ssa_peri_reg_map = ssa_peri_reg_map
 		self.ssa_strip_reg_map = ssa_strip_reg_map
 		self.analog_mux_map = analog_mux_map
+		self.initialised = False
+		self.par_list = [
+			self.Parameter("Booster Feedback Bias ", "Bias_D5BFEED",  82.0,  -1, 'set_calibrate'),
+			self.Parameter("Preamplifier Bias     ", "Bias_D5PREAMP", 82.0,  -1, 'set_calibrate'),
+			self.Parameter("TRIM DAC range        ", "Bias_D5TDR",    115.0, -1, 'set_calibrate'),
+			self.Parameter("DAC for voltage biases", "Bias_D5ALLV",   82.0,  -1, 'set_calibrate'),
+			self.Parameter("DAC for current biases", "Bias_D5ALLI",   82.0,  -1, 'set_calibrate'),
+			self.Parameter("DAC for th and cal    ", "Bias_D5DAC8",   86.0,  -1, 'set_calibrate'),
+			self.Parameter("Threshold Low DAC     ", "Bias_THDAC",    622.0, -1, 'set_dont_calibrate'),
+			self.Parameter("Threshold High DAC    ", "Bias_THDACHIGH",622.0, -1, 'set_dont_calibrate'),
+			self.Parameter("Calibration DAC       ", "Bias_CALDAC",   100.0, -1, 'set_dont_calibrate')]
+
+
+	def __initialise(self):
+		self.multimeterinst = self.multimeter.init_keithley()
+		self.initialised = True
+		return self.multimeterinst
+
 
 	def calibrate_to_nominals(self):
-		# init keithley
-		inst = self.multimeter.init_keithley()
-		# for simplicity define a par class
-		class Parameter:
-			def __init__(self, full_name, par_name, nominal = -1, best_dac = -1):
-				self.full_name = full_name
-				self.par_name = par_name
-				self.nominal = nominal
-				self.best_dac = best_dac
-		# define the pars
-		par_list = [
-			Parameter("Booster Feedback Bias", "Bias_D5BFEED", 82.0), 
-			Parameter("Preamplifier Bias", "Bias_D5PREAMP", 82.0), 
-			Parameter("TRIM DAC range", "Bias_D5TDR", 115.0), 
-			Parameter("DAC for voltage biases","Bias_D5ALLV", 82.0), 
-			Parameter("DAC for current biases","Bias_D5ALLI", 82.0), 
-			Parameter("DAC for threshold and calibration", "Bias_D5DAC8", 86.0)]
-			#Parameter("Threshold DAC", "THDAC", 622.0), 
-			#Parameter("Threshold High DAC", "THDACHIGH", 622.0), 
-			#Parameter("Calibration DAC", "CALDAC", 100.0)]
-
-		# iterate and measure
-		for par in par_list:
-			value, voltage = self.get_value_and_voltage(par.par_name, inst)
-			voltage = voltage*1E3
-			print par.full_name, ": "
-			print "\tCheck the initial value: "
-			print ("\t\t DAC: %4d\t V: %8.3f mV") % (value, voltage)
-			print "\tTune the value (", par.nominal, "):"
-			best_dac = self.__tune_parameter(inst, par.par_name, par.nominal)
-			par.best_dac = best_dac
-
+		if(not self.initialised):
+			self.__initialise()
+		for par in self.par_list:
+			if(par.docalibrate == 'set_calibrate'):
+				value, voltage = self.get_value_and_voltage(par.par_name, self.multimeterinst)
+				voltage = voltage*1E3
+				print par.full_name, ": "
+				print "\tCheck the initial value: "
+				print ("\t\t DAC: %4d\t V: %8.3f mV") % (value, voltage)
+				print "\tTune the value (", par.nominal, "):"
+				best_dac = self.__tune_parameter(self.multimeterinst, par.par_name, par.nominal)
+				par.best_dac = best_dac
 		print "\n\nSummary of tuning (tuned values):"
-		for par in par_list:
-			value, voltage = self.get_value_and_voltage(par.par_name, inst)
-			voltage = voltage*1E3
-			print par.full_name, ": "
-			print ("\t Best DAC: %4d,\t V: %8.3f mV") % (value, voltage)
+		self.measure_bias()
+		self.ssa.ctrl.set_output_mux('highimpedence')
 
+
+	def measure_bias(self):
+		if(not self.initialised):
+			self.__initialise()
+		for par in self.par_list:
+			value, voltage = self.get_value_and_voltage(par.par_name, self.multimeterinst)
+			voltage = voltage*1E3
+			print par.full_name, ": ", (" [%3d] %7.3f mV") % (value, voltage)
 		self.ssa.ctrl.set_output_mux('highimpedence')
 
 
 	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot = True, average = 5):
 		# ['Bias_D5BFEED'] ['Bias_D5PREAMP']['Bias_D5TDR']['Bias_D5ALLV']['Bias_D5ALLI']
-		# ['Bias_CALDAC']['Bias_BOOSTERBASELINE']['Bias_THDAC']['Bias_THDACHIGH']['Bias_D5DAC8']              
+		# ['Bias_CALDAC']['Bias_BOOSTERBASELINE']['Bias_THDAC']['Bias_THDACHIGH']['Bias_D5DAC8']
 		if(not name in self.analog_mux_map):
 			print "->  \tInvalid DAC name"
 			return False
 		fullscale = 2**nbits
-		inst = self.multimeter.init_keithley(avg = average)
-		self.ssa.ctrl.set_output_mux(name)	
+		if(not self.initialised):
+			self.__initialise()
+		self.ssa.ctrl.set_output_mux(name)
 		data = np.zeros(fullscale, dtype=np.float);
 		for i in range(0, fullscale):
 			self.I2C.peri_write(name, i)
 			sleep(0.1)
-			data[i] = self.multimeter.measure(inst)
+			data[i] = self.multimeter.measure(self.multimeterinst)
 			utils.ShowPercent(i, fullscale-1, "Measuring "+name+" linearity                         ")
 		if( isinstance(filename, str) ):
 			fo = "../SSA_Results/" + filename + "_Linearity_" + name + filename2
@@ -116,7 +129,8 @@ class ssa_calibration():
 		nlin_data = [dnl, inl]
 		nlin_params = dnl_max, inl_max
 		return  nlin_params, nlin_data, fit_params, raw
-	
+
+
 	def __dac_dnl_inl(self, data, nbits, plot = True):
 		fullscale = 2**nbits
 		INL = np.zeros(fullscale, dtype=np.float)
@@ -127,13 +141,16 @@ class ssa_calibration():
 		for i in range(1, fullscale):
 			DNL[i] = ((data[i]-data[i-1])/LSB)-1
 		return DNL, INL
-	
+
+
 	def get_value_and_voltage(self, name, inst0 = -1):
-		# get instrument
-		if (inst0 == -1): inst = self.multimeter.init_keithley()
+		if (inst0 == -1):
+			if(not self.initialised):
+				self.__initialise()
+			inst = self.multimeterinst
 		else: inst = inst0
 		self.ssa.ctrl.set_output_mux(name)
-		value = self.__d5_value(str(name), 'r')
+		value = self._d5_value(str(name), 'r')
 		measurement = self.multimeter.measure(inst)
 		self.ssa.ctrl.set_output_mux('highimpedence')
 		return value, measurement
@@ -141,27 +158,24 @@ class ssa_calibration():
 
 	def get_voltage(self, name, inst0 = -1):
 		if (inst0 == -1):
-			inst = self.multimeter.init_keithley()
-		else:
-			inst = inst0
+			if(not self.initialised):
+				self.__initialise()
+				inst = self.multimeterinst
+		else: inst = inst0
 		self.ssa.ctrl.set_output_mux(name)
 		measurement = self.multimeter.measure(inst)
 		self.ssa.ctrl.set_output_mux('highimpedence')
 		return measurement
 
 
-	def __d5_value(self, name, mode = 'r', value = -1):
-		# check the read value
-		if ((mode == 'w') & (value == -1)):
+	def _d5_value(self, name, mode = 'r', value = -1):
+		if ((mode == 'w') & (value == -1)):# check the read value
 			print "Error! Can not use default value for writing. Please set the value"
-			exit(1)        
-		# write now	
-		if (mode == 'w'):
+			exit(1)
+		if (mode == 'w'):# write now
 			self.I2C.peri_write(name, value)
-		# read back
-		read_value = self.I2C.peri_read(name)
-		# if it was write - check the result
-		if (mode == 'w'):
+		read_value = self.I2C.peri_read(name)# read back
+		if (mode == 'w'):# if it was write - check the result
 			if (value != read_value):
 				print "Error! The write was not succesfull"
 				return -1
@@ -171,36 +185,29 @@ class ssa_calibration():
 			return read_value
 		else:
 			return -1
-		
+
 
 	def __tune_parameter(self, inst, name, nominal):
-		if (nominal == -1):
-			return
-
-		# check initials
+		if (nominal == -1):return
 		dac_value, voltage = self.get_value_and_voltage(name, inst)
 		voltage = voltage*1E3
-		print "\t\tInitial Set: ", dac_value, voltage
-		# best values
+		print "\t\t\tdac: ", dac_value, " voltage: ", voltage
 		best_dac_value = dac_value
 		best_voltage_diff = abs(voltage-nominal)
-		# sign changed 
 		start_value = dac_value
 		sign_changed = False
-		if(dac_value == 0):
-			sign = 1
-		else:
-			sign = -1
+		if(dac_value == 0): sign = 1
+		else: sign = -1
 		# prev value
 		prev_voltage_diff = abs(voltage-nominal)
 		while(True):
 			# set new value
 			dac_value = dac_value + sign
-			self.__d5_value(str(name), 'w', dac_value)
-			# measure
-			voltage = 1E3*self.multimeter.measure(inst)
+			self._d5_value(str(name), 'w', dac_value)
+			dac_value, voltage = self.get_value_and_voltage(name, inst)
+			voltage *= 1E3
+			#voltage = 1E3*self.multimeter.measure(inst)
 			print "\t\t\tdac: ", dac_value, " voltage: ", voltage
-			# compare
 			current_voltage_diff = abs(voltage-nominal)
 			if current_voltage_diff < best_voltage_diff:
 				best_voltage_diff = current_voltage_diff
@@ -216,21 +223,11 @@ class ssa_calibration():
 						else:
 							sign_changed = True
 					else:
-						#print "tuning done"
-						# then done
 						break
 				else:
-					# it is ok we are moving in the good direction
-					pass
-			# update the voltage diff
-			prev_voltage_diff = current_voltage_diff
-		
-		# verify the value
-		self.__d5_value(str(name), 'w', best_dac_value)
+					pass # it is ok we are moving in the good direction
+			prev_voltage_diff = current_voltage_diff  # update the voltage diff
+		self._d5_value(str(name), 'w', best_dac_value) # verify the value
 		dac_value, voltage = self.get_value_and_voltage(name, inst)
 		print "\t\tBest Set: ", dac_value, 1E3*voltage
-
 		return best_dac_value
-
-
-
