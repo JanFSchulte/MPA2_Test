@@ -413,7 +413,8 @@ def s_curve_rbr_fr(n_pulse = 1000, cal = 50, row = range(1,17), step = 1, start 
 			data_array [:, count_th]= temp
 			count_th += 1
 			th += step
-			clear_counters(8)
+		clear_counters(8)
+		clear_counters(8)
 	t1 = time.time()
 	print "END"
 	print "Elapsed Time: " + str(t1 - t0)
@@ -502,7 +503,8 @@ def s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1
 			data_array [:, count_th]= temp
 			count_th += 1
 			th += step
-			clear_counters()
+		clear_counters(8)
+		clear_counters(8)
 	t1 = time.time()
 	print "END"
 	print "Elapsed Time: " + str(t1 - t0)
