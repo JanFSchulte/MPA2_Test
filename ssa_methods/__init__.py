@@ -1,3 +1,4 @@
+
 from ssa_methods.ssa import *
 from ssa_methods.ssa_cal_utility import *
 from ssa_methods.ssa_test_utility import *
@@ -18,9 +19,20 @@ except ImportError:
 
 measure     = SSA_measurements(ssa, I2C, fc7, cal, analog_mux_map, biascal)
 
-def init():
-	ssa.init_all(display=True)
+def init(val = 'internal'):
+	ssa.init(reset_board = True, reset_chip = False, display = True)
 
-activate_I2C_chip()
+def reset_fc7():
+	fc7.write("ctrl_command_global_reset", 1);
+
+def reset_ssa():
+	ssa.reset()
+
+def set_clock(val = 'internal'):
+	ssa.set_clock_source(val)
+	sleep(0.1)
+	ssa.init(reset_board = False, reset_chip = False, display = True)
+
+utils.activate_I2C_chip()
 
 print "_____________________________________________________\n\n"

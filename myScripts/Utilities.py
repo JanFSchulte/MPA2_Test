@@ -96,10 +96,10 @@ class Utilities:
 
 	def activate_I2C_chip(self, pr = ''):
 		if(not pr == 'debug'):
-			utils.print_enable(False)
+			self.print_enable(False)
 		activate_I2C_chip()
 		if(not pr == 'debug'):
-			utils.print_enable(True)
+			self.print_enable(True)
 		if(pr == 'print'):
 			print '->  \tEnabled I2C master for chips control'
 
