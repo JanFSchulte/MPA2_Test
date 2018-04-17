@@ -1,8 +1,10 @@
 #!/usr/bin/bash
 
-if ! ifconfig | grep 'em1:1'; then
+# 08:00:30:00:22:58
+
+if ! ifconfig | grep 'enp0s25:1'; then
 	sudo /usr/sbin/rarpd -a
-	sudo ifconfig em1:1 192.168.01.81
+	sudo ifconfig enp0s25:1 192.168.01.04
 fi
 
 ping 192.168.1.79 -c 1

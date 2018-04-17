@@ -155,7 +155,7 @@ def send_pulses_fast(number_of_test_pulses = 100, delay_after_fast_reset = 200, 
 
 	fc7.write("cnfg_fast_backpressure_enable", 0)
 	## now configure the test pulse machine
-	Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses)
+	Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst_L1 = 0)
 	open_shutter()
 	sleep(0.01)
 	SendCommand_CTRL("start_trigger")
@@ -170,7 +170,7 @@ def send_pulse_trigger(number_of_test_pulses = 1, delay_after_fast_reset = 200, 
 
 	fc7.write("cnfg_fast_backpressure_enable", 0)
 	## now configure the test pulse machine
-	Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses)
+	Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst_L1 = 1)
 	SendCommand_CTRL("start_trigger")
 
 def read_pixel_counter(row, pixel):
@@ -315,14 +315,15 @@ def hit_map(n_pulse, cal, th, row = range(1,17), pixel = range (2,120) , print_f
 	return data_array
 #a = s_curve_rbr(100, 50, [1], 1)
 
-def s_curve_rbr(n_pulse, cal, row, step = 1, start = 0, stop = 256, print_file =1, filename = "../cernbox/MPA_Results/scurve"):
+def s_curve_rbr(n_pulse, cal, row, step = 1, start = 0, stop = 256, plot = 1, print_file =1, filename = "../cernbox/MPA_Results/scurve"):
 	t0 = time.time()
 	clear_counters()
 	clear_counters()
 	activate_I2C_chip()
 	row = np.array(row)
 	nrow = int(row.shape[0])
-	data_array = np.zeros(((stop-start)/step+1, nrow*118), dtype = np.int )
+	nstep = (stop-start)/step+1
+	data_array = np.zeros((nstep, nrow*118), dtype = np.int )
 	data_array[0,0] = n_pulse
 	activate_async()
 	set_calibration(cal)
@@ -350,6 +351,14 @@ def s_curve_rbr(n_pulse, cal, row, step = 1, start = 0, stop = 256, print_file =
 	if print_file:
 		CSV.ArrayToCSV (data_array, str(filename) + "_cal_" + str(cal) + ".csv")
 	t1 = time.time()
+
+	if plot:
+		for r in row:
+			for p in range(1,120):
+				plt.plot(range(0,nstep), data_array[(r-1)*120+p,:],'-')
+		plt.xlabel('Threshold DAC value')
+		plt.ylabel('Counter Value')
+		plt.show()
 	print "END"
 	print "Elapsed Time: " + str(t1 - t0)
 	return data_array
@@ -371,7 +380,7 @@ def s_curve_rbr_fr(n_pulse = 1000, cal = 50, row = range(1,17), step = 1, start 
 	sys.stdout.write("Progress Scurve: ")
 	sys.stdout.flush()
 	fc7.write("cnfg_fast_backpressure_enable", 0)
-	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse)
+	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
 	count_th = 0
 	th = start
 	while (th < stop): # Temoporary: need to add clear counter fast command
@@ -459,7 +468,7 @@ def s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1
 	sys.stdout.flush()
 	fc7.write("cnfg_fast_backpressure_enable", 0)
 	## now configure the test pulse machine
-	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse)
+	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
 	count_th = 0
 	th = start
 	while (th < stop): # Temoporary: need to add clear counter fast command

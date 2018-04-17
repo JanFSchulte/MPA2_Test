@@ -132,7 +132,7 @@ def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data):
 	reply_data = DataFromMask(reply, "mpa_ssa_i2c_reply_data")
 
 	# print full word
-	print "Full Reply Word: ", hex(reply)
+	#print "Full Reply Word: ", hex(reply)
 
 	# check the data
 	if reply_err == 1:
