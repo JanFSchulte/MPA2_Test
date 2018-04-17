@@ -20,7 +20,7 @@ class ProbeMeasurement:
         self.start = time.time()
         self.tag = tag # UNIQUE ID
         colprint("Creating new chip measurement: "+self.tag)
-        self.DIR = "ProbeStationResults/"+self.tag
+        self.DIR = "../ProbeStationResults/"+self.tag
         if not os.path.exists(self.DIR):	os.makedirs(self.DIR)
         try:
             PowerStatus = self.PowerOnCheck()
@@ -32,20 +32,33 @@ class ProbeMeasurement:
                 colprint("Shift Test Passed!")
             else:
                 colprint("Shift Test Failed!")
-            #self.PixTests(2)
-            #self.Curves()
-            #colprint("DONE!")
+            self.PixTests(2)
+            self.Curves()
+            colprint("DONE!")
             sleep(4)
         except: colprint("WE MESSED UP!!!")
         power_off()
+        self.end = time.time()
+        colprint("TOTAL TIME:")
+        colprint(str((self.end - self.start)/60.))
     def Curves(self):
+        colprint("Getting Curves")
+        activate_I2C_chip()
         trimDAC_amplitude(20)
-        data_array = trimming_chip_noise(nominal_DAC = 77, nstep = 16, plot = 1, start = 0, stop = 150, ratio = 3.92, print_file =1, filename = self.DIR+"/test1")
-        data_array = trimming_chip_cal(nominal_DAC = 110, cal = 15, nstep = 4, plot = 1, data_array = data_array, ratio = 3.92, print_file =1, filename = self.DIR+"/test2")
-        s_curve_rbr_fr(n_pulse = 1000, cal = 10, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 50, plot = 1, print_file =1, filename = self.DIR+"/test3")
-        s_curve_rbr_fr(n_pulse = 1000, cal = 20, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 50, plot = 1, print_file =1, filename = self.DIR+"/test4")
-        s_curve_rbr_fr(n_pulse = 1000, cal = 30, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 50, plot = 1, print_file =1, filename = self.DIR+"/test5")
+        colprint("Trimmed")
+        data_array = trimming_chip_noise(nominal_DAC = 70, nstep = 2, plot = 0, start = 0, stop = 150, ratio = 3.92, print_file =1, filename = self.DIR+"/test1")
+        colprint("Noised")
+        data_array = trimming_chip_cal(nominal_DAC = 100, cal = 15, nstep = 2, plot = 0, data_array = data_array, ratio = 3.92, print_file =1, filename = self.DIR+"/test2")
+        colprint("Caled")
+        s_curve_rbr_fr(n_pulse = 200, cal = 10, row = range(1,17), step = 1, start = 50, stop = 200, pulse_delay = 50, plot = 0, print_file =1, filename = self.DIR+"/test3")
+        colprint("CAL10")
+        s_curve_rbr_fr(n_pulse = 200, cal = 20, row = range(1,17), step = 1, start = 50, stop = 200, pulse_delay = 50, plot = 0, print_file =1, filename = self.DIR+"/test4")
+        colprint("CAL20")
+        s_curve_rbr_fr(n_pulse = 200, cal = 30, row = range(1,17), step = 1, start = 50, stop = 200, pulse_delay = 50, plot = 1, print_file =1, filename = self.DIR+"/test5")
+        colprint("CAL30")
     def PixTests(self, N):
+        colprint("Doing Pixel Tests")
+        activate_I2C_chip()
         digipix = []
         anapix = []
         for i in range(N):
@@ -55,6 +68,9 @@ class ProbeMeasurement:
         colprint(str(BadPixD) + " << Bad Pixels (Digi)")
         BadPixA = self.GetActualBadPixels(anapix)
         colprint(str(BadPixA) + " << Bad Pixels (Ana)")
+
+        strip_in_scan(n_pulse = 5, filename = self.DIR + "/striptest")
+        mem_test(filename = self.DIR + "/memtest.csv")
     def GetActualBadPixels(self, BPA):
         print BPA
         badpix = BPA[0]
@@ -67,6 +83,7 @@ class ProbeMeasurement:
             badpix.remove(i)
         return badpix
     def Shift(self):
+        colprint("Doing Shift/Mem Tests")
         activate_I2C_chip()
         I2C.peri_write("LFSR_data", 0b10101010)
         Check1 = I2C.peri_read("LFSR_data")
@@ -86,12 +103,15 @@ class ProbeMeasurement:
                 OK = False
         return OK
     def AlignTests(self):
+        activate_I2C_chip()
+        activate_sync()
         colprint("Trying to Align...")
         align_out()
         align_MPA()
         self.ground = measure_gnd()
         colprint("GROUND IS " + str(self.ground))
         self.CV = calibrate_chip(self.ground)
+        set_nominal()
         with open(self.DIR+'/CAL_VDACs.csv', 'wb') as csvfile:
             CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
             for i in self.CV: CVwriter.writerow(i)

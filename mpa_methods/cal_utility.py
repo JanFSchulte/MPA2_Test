@@ -574,7 +574,7 @@ def trimming_noise(iteration = 2, nominal_DAC = 41, data_array = np.zeros(2040, 
 		plt.show()
 	return data_array
 
-def trimming_chip_noise(nominal_DAC = 75, nstep = 4, data_array = np.zeros(2040, dtype = np.int ), plot = 1, start = 0, stop = 150, ratio = 3.68):
+def trimming_chip_noise(nominal_DAC = 75, nstep = 4, data_array = np.zeros(2040, dtype = np.int ), plot = 1, start = 0, stop = 150, ratio = 3.68, print_file = 0, filename = "../cernbox/MPA_Results/Test"):
 	activate_I2C_chip()
 	for i in range(1,nstep+1):
 		I2C.pixel_write("TrimDAC",0,0,0)
@@ -594,6 +594,8 @@ def trimming_chip_noise(nominal_DAC = 75, nstep = 4, data_array = np.zeros(2040,
 		plt.xlabel('Threshold DAC value')
 		plt.ylabel('Counter Value')
 		plt.show()
+	if print_file:
+		CSV.ArrayToCSV (data_array, str(filename) + "_noiseTrimming" + str(nominal_DAC) + ".csv")
 	return data_array
 
 def trimming_cal(n_pulse = 300, cal = 10, iteration = 2, nominal_DAC = 110, data_array = np.zeros(2040, dtype = np.int ), plot = 1,  stop = 150, ratio = 3.90, row = range(1,17), pixel = range(1,120)):
@@ -654,7 +656,7 @@ def trimming_cal(n_pulse = 300, cal = 10, iteration = 2, nominal_DAC = 110, data
 		plt.show()
 	return data_array
 
-def trimming_chip_cal(nominal_DAC = 110, nstep = 4, data_array = np.zeros(2040, dtype = np.int ), n_pulse = 300, cal = 20, iteration = 2, plot = 1, stop = 256, ratio = 3.68):
+def trimming_chip_cal(nominal_DAC = 110, nstep = 4, data_array = np.zeros(2040, dtype = np.int ), n_pulse = 300, cal = 20, iteration = 2, plot = 1, stop = 256, ratio = 3.68, print_file = 0, filename = "../cernbox/MPA_Results/Test"):
 	activate_I2C_chip()
 	for i in range(1,nstep+1):
 		I2C.pixel_write("TrimDAC",0,0,0)
@@ -674,6 +676,8 @@ def trimming_chip_cal(nominal_DAC = 110, nstep = 4, data_array = np.zeros(2040, 
 		plt.xlabel('Threshold DAC value')
 		plt.ylabel('Counter Value')
 		plt.show()
+	if print_file:
+		CSV.ArrayToCSV (data_array, str(filename) + "_noiseCal" + str(nominal_DAC) + ".csv")
 	return data_array
 
 def trimDAC_linearity_rbr(row, pixel = range(1,120), plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/TrimDAC"):
