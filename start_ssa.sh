@@ -2,7 +2,7 @@
 
 if ! ifconfig | grep 'eno1:1'; then
 	sudo /usr/sbin/rarpd -a
-	sudo ifconfig eno1:1 192.168.01.03
+	sudo ifconfig em1:1 192.168.01.05
 fi
 
 ping 192.168.1.33 -c 1

@@ -163,7 +163,7 @@ def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
 	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x34, setvoltage)  # tx to DAC C
 	sleep(5)
 # mpavddDwrite():
-	Vlimit = 1.1
+	Vlimit = 1.2
 	if (DVDD > Vlimit):
 		DVDD = Vlimit
 	diffvoltage = 1.5 - DVDD

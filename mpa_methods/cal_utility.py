@@ -122,7 +122,7 @@ def enable_pix_LevelBRcal(r,p, polarity = "rise"):
 
 def disable_pixel(r,p):
 	I2C.pixel_write('ENFLAGS', r, p, 0x00)
-	I2C.pixel_write('ModeSel', r, p, 0x00)
+	#I2C.pixel_write('ModeSel', r, p, 0x00)
 
 def activate_shift():
 	I2C.peri_write('ReadoutMode',0b10)
@@ -198,15 +198,18 @@ def ReadoutCounters(raw_mode_en = 0):
 	fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)
 	t0 = time.time()
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
+	sleep(0.1)
 	#print "---> Sending Start and Waiting for Data"
 	#StartCountersRead()
-	start_counters_read(8)
+	start_counters_read()
 	timeout = 0
 	while ((mpa_counters_ready == 0) & (timeout < 50)):
 		sleep(0.01)
 		mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
 		timeout += 1
 	if (timeout >= 50):
+		print "Fail: "
+		print fc7.read("stat_slvs_debug_mpa_counters_store_fsm_state")
 		failed = True;
 		return failed, 0
 	#print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
@@ -381,6 +384,7 @@ def s_curve_rbr_fr(n_pulse = 1000, cal = 50, row = range(1,17), step = 1, start 
 		for r in row:
 			disable_pixel(0, 0)
 			enable_pix_counter(r, 0)
+
 			sleep(0.0025)
 			open_shutter(8)
 			if (cal != 0):
@@ -398,13 +402,18 @@ def s_curve_rbr_fr(n_pulse = 1000, cal = 50, row = range(1,17), step = 1, start 
 		fail, temp = ReadoutCounters()
 		tC = time.time()
 		#print "Elapsed Time: " + str(tC - tB) + " " + str(tB - tA)
+		sleep(0.005)
 		if fail:
 			print "FailedPoint, repeat!"
 		else:
 			data_array [:, count_th]= temp
 			count_th += 1
 			th += step
-			clear_counters(8)
+		sleep(0.01)
+		clear_counters(8)
+		clear_counters(8)
+
+
 	t1 = time.time()
 	print "END"
 	print "Elapsed Time: " + str(t1 - t0)
@@ -470,6 +479,9 @@ def s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1
 			for p in pixel:
 				disable_pixel(0, 0)
 				enable_pix_counter(r, p)
+				testI2C = I2C.pixel_read('ENFLAGS', r, p)
+				if (testI2C != 83):
+					print "Failed I2C"
 				sleep(0.0025)
 				open_shutter(8)
 				if (cal != 0):
@@ -493,7 +505,7 @@ def s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1
 			data_array [:, count_th]= temp
 			count_th += 1
 			th += step
-			clear_counters()
+			clear_counters(8)
 	t1 = time.time()
 	print "END"
 	print "Elapsed Time: " + str(t1 - t0)
@@ -512,7 +524,7 @@ def s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1
 def reset_trim(value = 15):
 	I2C.pixel_write("TrimDAC",0,0,value)
 # trimming_noise(nominal_DAC = 70, plot = 1, start = 0, stop = 150, ratio = 3.32, row = [1], pixel = range(1,120))
-def trimming_noise(iteration = 2, nominal_DAC = 41, data_array = np.zeros(2040, dtype = np.int ), plot = 1, start = 0, stop = 150, ratio = 3.90, row = range(1,17), pixel = range(1,120)):
+def trimming_noise(iteration = 1, nominal_DAC = 41, data_array = np.zeros(2040, dtype = np.int ), plot = 1, start = 0, stop = 150, ratio = 3.90, row = range(1,17), pixel = range(1,120)):
 	t0 = time.time()
 	for r in row:
 		I2C.pixel_write("TrimDAC",r,0,15)
@@ -585,7 +597,7 @@ def trimming_chip_noise(nominal_DAC = 75, nstep = 4, data_array = np.zeros(2040,
 		plt.show()
 	return data_array
 
-def trimming_cal(n_pulse = 300, cal = 10, iteration = 2, nominal_DAC = 110, data_array = np.zeros(2040, dtype = np.int ), plot = 1,  stop = 150, ratio = 3.90, row = range(1,17), pixel = range(1,120)):
+def trimming_cal(n_pulse = 300, cal = 10, iteration = 1, nominal_DAC = 110, data_array = np.zeros(2040, dtype = np.int ), plot = 1,  stop = 150, ratio = 3.90, row = range(1,17), pixel = range(1,120)):
 	t0 = time.time()
 	for r in row:
 		for p in pixel:
@@ -643,7 +655,7 @@ def trimming_cal(n_pulse = 300, cal = 10, iteration = 2, nominal_DAC = 110, data
 		plt.show()
 	return data_array
 
-def trimming_chip_cal(nominal_DAC = 110, nstep = 4, data_array = np.zeros(2040, dtype = np.int ), n_pulse = 300, cal = 20, iteration = 2, plot = 1, stop = 256, ratio = 3.68):
+def trimming_chip_cal(nominal_DAC = 110, nstep = 4, data_array = np.zeros(2040, dtype = np.int ), n_pulse = 300, cal = 20, iteration = 1, plot = 1, stop = 256, ratio = 3.68):
 	activate_I2C_chip()
 	for i in range(1,nstep+1):
 		I2C.pixel_write("TrimDAC",0,0,0)
@@ -946,3 +958,18 @@ def timewalk(row, pixel, delay_reset, BX, cal = range(15,255,10), th = 100, iter
 		plt.show()
 
 	return latency, data_array
+
+def download_trimming(filename = "trimming_value"):
+		data_array = np.zeros((118,16), dtype = np.int )
+		for r in range(0,16):
+			for p in range(0,118):
+				data_array[p,r] = I2C.pixel_read("TrimDAC",r+1,p+2)
+				sleep(0.001)
+		CSV.ArrayToCSV (data_array, str(filename) + ".csv")
+
+def upload_trimming(filename = "trimming_value.csv"):
+		array = CSV.csv_to_array(filename)
+		for r in range(0,16):
+			for p in range(0,118):
+				I2C.pixel_write("TrimDAC",r+1,p+2,array[p, r+1])
+				sleep(0.001)

@@ -78,22 +78,31 @@ def calibrate_bias(point, block, DAC_val, exp_val, inst):
 	act_val = multimeter.measure(inst)
 	LSB = (act_val - off_val) / DAC_val
 	DAC_new_val = DAC_val- int(round((act_val - exp_val)/LSB))
-	I2C.peri_write(DAC, DAC_new_val)
-	new_val = multimeter.measure(inst)
-	if (new_val < exp_val + exp_val*0.02)&(new_val > exp_val - exp_val*0.02):
-		print "Calibration bias point ", point, "of test point", block, "--> Done (", new_val, "V for ", DAC_new_val, " DAC)"
+	if ((DAC_new_val >= 0) and (DAC_new_val <= 31)):
+		I2C.peri_write(DAC, DAC_new_val)
+		new_val = multimeter.measure(inst)
+		if (new_val < exp_val + exp_val*0.02)&(new_val > exp_val - exp_val*0.02):
+			print "Calibration bias point ", point, "of test point", block, "--> Done (", new_val, "V for ", DAC_new_val, " DAC)"
+		else:
+			print "Calibration bias point ", point, "of test point", block, "--> Failed (", new_val, "V for ", DAC_new_val, " DAC)"
 	else:
-		print "Calibration bias point ", point, "of test point", block, "--> Failed (", new_val, "V for ", DAC_new_val, " DAC)"
+		print "New Value out of range: " , DAC_new_val, " Measure: ", act_val, " expected value: ", exp_val
+	return DAC_new_val
 
-def calibrate_chip():
+def calibrate_chip(print_file = 1, filename ="test"):
 	activate_I2C_chip()
 	inst = multimeter.init_keithley(3)
 	DAC_val = [15, 15, 15, 15, 15]
 	exp_val = [0.082, 0.082, 0.108, 0.082, 0.082]
+	data = np.zeros((5, 7), dtype = np.int16 )
 	for point in range(0,5):
 		for block in range(0,7):
-			calibrate_bias(point, block, DAC_val[point], exp_val[point], inst)
+			data[point, block] = calibrate_bias(point, block, DAC_val[point], exp_val[point], inst)
 	disable_test()
+	if print_file:
+		CSV.ArrayToCSV (data, str(filename) + ".csv")
+
+	return data
 
 def trimDAC_amplitude(value):
 	activate_I2C_chip()
