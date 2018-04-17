@@ -1,11 +1,11 @@
 #!/usr/bin/bash
 
-if ! ifconfig | grep 'eno1:1'; then
+if ! ifconfig | grep 'enp0s25:1'; then
 	sudo /usr/sbin/rarpd -a
-	sudo ifconfig em1:1 192.168.01.05
+	sudo ifconfig enp0s25:1 192.168.01.04
 fi
 
-ping 192.168.1.33 -c 1
+ping 192.168.1.79 -c 1
 source ~/FC7/sw/fc7/setup.sh
 echo ""
 echo "from d19cScripts import *"                                              >  LaunchPy.py

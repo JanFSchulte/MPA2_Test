@@ -161,9 +161,9 @@ def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
 	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x34, setvoltage)  # tx to DAC C
-	sleep(5)
+	sleep(2)
 # mpavddDwrite():
-	Vlimit = 1.2
+	Vlimit = 1.32
 	if (DVDD > Vlimit):
 		DVDD = Vlimit
 	diffvoltage = 1.5 - DVDD
@@ -174,7 +174,7 @@ def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
 	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x30, setvoltage)  # tx to DAC C
-	sleep(5)
+	sleep(2)
 #mpavddAwrite():
 	Vlimit = 1.32
 	if (AVDD > Vlimit):
@@ -187,7 +187,7 @@ def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
 	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x32, setvoltage)  # tx to DAC C
-	sleep(5)
+	sleep(2)
 
 # bgtestwrite():
 	Vlimit = 0.5
@@ -199,13 +199,13 @@ def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
 	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x36, setvoltage)  # tx to DAC C
-	sleep(5)
+	sleep(2)
 # mpaenable():
 	val2 = (mpaid << 5) + 16 # reset bit for MPA
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
 	Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2)  # set reset bit
-	sleep(5)
+
 
 
 def measure_current(print_file = 1, filename =  "../cernbox/MPA_Results/digital_pixel_test.log"):
@@ -293,7 +293,7 @@ def power_off():
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
 	Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val)  # set reset bit
-	sleep(5)
+	sleep(2)
 
 # bgtestwrite():
 	setvoltage = 0
@@ -301,7 +301,7 @@ def power_off():
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
 	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x36, setvoltage)  # tx to DAC C
-	sleep(5)
+	sleep(2)
 
 #mpavddAwrite():
 	diffvoltage = 1.5
@@ -312,7 +312,7 @@ def power_off():
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
 	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x32, setvoltage)  # tx to DAC C
-	sleep(5)
+	sleep(2)
 
 # mpavddDwrite():
 	diffvoltage = 1.5
@@ -323,7 +323,7 @@ def power_off():
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
 	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x30, setvoltage)  # tx to DAC C
-	sleep(5)
+	sleep(2)
 
 # mpavddwrite():
 	diffvoltage = 1.5
@@ -334,7 +334,7 @@ def power_off():
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
 	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x34, setvoltage)  # tx to DAC C
-	sleep(5)
+
 
 def set_nominal():
 	activate_I2C_chip()

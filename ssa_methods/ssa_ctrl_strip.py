@@ -87,5 +87,26 @@ class ssa_ctrl_strip:
 			r = self.I2C.strip_read("ENFLAGS", i)
 			val = (r&0b11101) | (pol<<1)
 			self.I2C.strip_write("ENFLAGS", i, val)
+		return True
+
+	def set_hipcut(self, value = 'default', strip = 'all'):
+		if(value == 'disable'):
+			value = 7
+		if(value == 'default'):
+			value = 1
+		elif(not isinstance(value, int)):
+			return False
+		if(strip == 'all'):
+			self.I2C.strip_write("HIPCUT", 0, value)
+		elif(isinstance(strip, int)):
+			self.I2C.strip_write("HIPCUT", strip, value)
+		elif(isinstance(strip, list)):
+			for i in strip:
+				self.I2C.strip_write("HIPCUT", i, value)
+		else:
+			return False
+		return True
+
+
 
 

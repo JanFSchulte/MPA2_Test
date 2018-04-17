@@ -13,54 +13,71 @@ from ssa_methods.ssa_readout_utility import *
 class SSA_ASIC:
 
 	def __init__(self, I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
-		self.ctrl              = ssa_ctrl_base(I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
-		self.strip             = ssa_ctrl_strip(I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
-		self.inject            = SSA_inject(I2C, FC7, self.ctrl, self.strip)
-		self.readout           = SSA_readout(I2C, FC7, self.ctrl, self.strip)
-	
-	def init_all(self, slvs_current = 0b110, edge = "negative", display = True):
-		if(display): 
+		self.i2c     = I2C
+		self.ctrl    = ssa_ctrl_base(I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+		self.strip   = ssa_ctrl_strip(I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+		self.inject  = SSA_inject(I2C, FC7, self.ctrl, self.strip)
+		self.readout = SSA_readout(I2C, FC7, self.ctrl, self.strip)
+		self.fc7     = FC7
+		self.__initialise_constants()
+
+	def reset(self):
+		self.ctrl.reset()
+		self.ctrl.set_t1_sampling_edge("negative")
+
+	def resync(self):
+		self.ctrl.resync()
+
+	def debug(self, value = True):
+		self.i2c.set_debug_mode(value)
+		self.i2c.set_readback_mode()
+
+	def init(self, reset_board = False, reset_chip = False, slvs_current = 0b111, edge = "negative", display = True):
+		if(display):
 			sys.stdout.write("->  Initialising..\r")
 			sys.stdout.flush()
-		fc7.write("ctrl_command_global_reset", 1)
-		if(display): 
-			sleep(0.5)
-		else: 
-			sleep(0.1)
+		if(reset_board):
+			fc7.write("ctrl_command_global_reset", 1)
+		if(reset_chip):
+			self.ctrl.reset()
+		if(display): sleep(0.2)
+		else: sleep(0.1)
 		utils.print_enable(False)
 		activate_I2C_chip()
 		utils.print_enable(True)
-		if(display): 
+		if(display):
 			sys.stdout.write("->  Tuning sampling phases..\r")
 			sys.stdout.flush()
 		self.ctrl.set_t1_sampling_edge(edge)
 		self.ctrl.init_slvs(slvs_current)
 		self.ctrl.phase_tuning()
-		if(display): 
-			sleep(0.5)
-		else: 
-			sleep(0.1)
+		if(display): sleep(0.2)
+		else: sleep(0.1)
 		self.ctrl.activate_readout_normal()
-		if(display): 
+		if(display):
 			sys.stdout.write("->  Ready!                  \r")
 			sys.stdout.flush()
-			sleep(0.5)
-		else: 
-			sleep(0.1)
-		if(display): 
-			sys.stdout.write("                            \n")
+			sleep(0.2)
+			sys.stdout.write("                            \r")
 			sys.stdout.flush()
+			if(reset_board): print "->  \tReset FC7 Firmware"
+			if(reset_chip):  print "->  \tReset SSA Chip"
+			print "->  \tInitialised SLVS pads and sampling edges"
+			print "->  \tSampling phases tuned"
+			print "->  \tActivated normal readout mode"
+			self.ctrl.get_power(display = True)
 
 
+	def init_all(self):
+		self.init(reset_board = True, reset_chip = False)
 
 
-
-
-
-
-
-
-
-
-
-
+	def __initialise_constants(self):
+		self.pcf8574 = 1;
+		self.pcbwrite = 0;
+		self.pcbread = 1;
+		self.pcbi2cmux = 0;
+		self.i2cmux = 0;
+		self.dac7678 = 4;
+		self.Vc = 0.0003632813;
+		self.dll_chargepump = 0b00;
