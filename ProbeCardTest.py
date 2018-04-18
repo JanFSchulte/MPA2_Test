@@ -69,10 +69,11 @@ class ProbeMeasurement:
         activate_I2C_chip()
         trimDAC_amplitude(20)
         self.colprint("Trimmed")
-        data_array = trimming_chip_noise(nominal_DAC = 70, nstep = 2, plot = 1, start = 0, stop = 150, ratio = 3.92, print_file =1, filename = self.DIR+"/TrimNoise")
+        data_array = trimming_chip_noise(nominal_DAC = 70, nstep = 2, plot = 1, start = 0, stop = 150, ratio = 3.92)
         self.colprint("Noised")
-        data_array = trimming_chip_cal(nominal_DAC = 100, cal = 15, nstep = 2, plot = 1, data_array = data_array, ratio = 3.92, print_file =1, filename = self.DIR+"/TrimCal")
+        data_array = trimming_chip_cal(nominal_DAC = 100, cal = 15, nstep = 2, plot = 1, data_array = data_array, ratio = 3.92)
         self.colprint("Caled")
+        download_trimming(self.DIR+"/Trimming")
         s_curve_rbr_fr(n_pulse = 200, cal = 10, row = range(1,17), step = 1, start = 50, stop = 200, pulse_delay = 50, plot = 0, print_file =1, filename = self.DIR+"/Strobe10")
         self.colprint("CAL10")
         s_curve_rbr_fr(n_pulse = 200, cal = 20, row = range(1,17), step = 1, start = 50, stop = 200, pulse_delay = 50, plot = 0, print_file =1, filename = self.DIR+"/Strobe20")
@@ -98,7 +99,7 @@ class ProbeMeasurement:
         with open(self.DIR+'/BadPixelsD.csv', 'wb') as csvfile:
             CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
             for i in BadPixD: CVwriter.writerow(i)
-        strip_in_scan(n_pulse = 5, filename = self.DIR + "/striptest")
+        strip_in_scan(n_pulse = 5, filename = self.DIR + "/striptest", probe=1)
         mem_test(filename = self.DIR + "/memtest.csv")
     def GetActualBadPixels(self, BPA):
         print BPA
@@ -139,21 +140,18 @@ class ProbeMeasurement:
         align_MPA()
         self.ground = measure_gnd()
         self.colprint("GROUND IS " + str(self.ground))
-        self.CV = calibrate_chip(self.ground)
+        self.CV = calibrate_chip(self.ground, filename = self.DIR+"/Bias_DAC")
         set_nominal()
         n = 0
         Sum = 0
         Min = 99999
         Max = 0
-        with open(self.DIR+'/CAL_VDACs.csv', 'wb') as csvfile:
-            CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            for i in self.CV:
-                CVwriter.writerow(i)
-                for j in i:
-                    n += 1
-                    Sum = Sum + j[1]
-                    if j[1] < Min: Min = j[1]
-                    if j[1] > Max: Max = j[1]
+        for j in self.CV:
+            for i in j:
+                n += 1
+                Sum = Sum + i
+                if i < Min: Min = i
+                if i > Max: Max = i
         avg = Sum/n
         self.colprint("Alignment DAC Values (avg, min, max)")
         self.colprint(str(avg) +", "+ str(Min) +", "+ str(Max))

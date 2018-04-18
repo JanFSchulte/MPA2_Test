@@ -1,11 +1,11 @@
 #!/usr/bin/bash
 
-if ! ifconfig | grep 'em1:1'; then
+if ! ifconfig | grep 'enp0s25:1'; then
 	sudo /usr/sbin/rarpd -a
-	sudo ifconfig em1:1 192.168.5.81
+	sudo ifconfig enp0s25:1 192.168.1.82
 fi
 
-ping 192.168.5.202 -c 1
+ping 192.168.1.79 -c 1
 source ~/FC7/sw/fc7/setup.sh
 echo ""
 echo ""

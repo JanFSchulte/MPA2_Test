@@ -84,7 +84,7 @@ def calibrate_bias(point, block, DAC_val, exp_val, inst, gnd_corr):
 		print "Calibration bias point ", point, "of test point", block, "--> Done (", new_val, "V for ", DAC_new_val, " DAC)"
 	else:
 		print "Calibration bias point ", point, "of test point", block, "--> Failed (", new_val, "V for ", DAC_new_val, " DAC)"
-	return (new_val, DAC_new_val)
+	return DAC_new_val
 
 def measure_gnd():
 	inst = multimeter.init_keithley(3)
@@ -99,7 +99,7 @@ def measure_gnd():
 	print data
 	return np.mean(data)
 
-def calibrate_chip(gnd_corr):
+def calibrate_chip(gnd_corr, print_file = 1, filename = "test"):
 	activate_I2C_chip()
 	inst = multimeter.init_keithley(3)
 	DAC_val = [15, 15, 15, 15, 15]
@@ -108,11 +108,10 @@ def calibrate_chip(gnd_corr):
 	for point in range(0,5):
 		calrowval = []
 		for block in range(0,7):
-			data[point, block] = calibrate_bias(point, block, DAC_val[point], exp_val[point], inst)
+			data[point, block] = calibrate_bias(point, block, DAC_val[point], exp_val[point], inst, gnd_corr)
 	disable_test()
 	if print_file:
 		CSV.ArrayToCSV (data, str(filename) + ".csv")
-
 	return data
 
 def trimDAC_amplitude(value):
@@ -123,3 +122,12 @@ def trimDAC_amplitude(value):
 		I2C.peri_write("C"+str(block), value)
 	trm_LSB = round(((0.172-0.048)/32.0*value+0.048)/32.0*1000.0,2)
 	return trm_LSB
+
+def upload_bias(filename = "bias.csv"):
+	nameDAC = ["A", "B", "C", "D", "E", "ThDAC", "CalDAC"]
+	array = CSV.csv_to_array(filename)
+	for point in range(0,5):
+		for block in range(0,7):
+			DAC = nameDAC[point] + str(block)
+			I2C.peri_write(DAC, array[point, block+1])
+			sleep(0.001)
