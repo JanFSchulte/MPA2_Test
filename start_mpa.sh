@@ -4,7 +4,7 @@
 
 if ! ifconfig | grep 'enp0s25:1'; then
 	sudo /usr/sbin/rarpd -a
-	sudo ifconfig enp0s25:1 192.168.01.04
+	sudo ifconfig enp0s25:1 192.168.5.87
 fi
 
 #ping 192.168.1.79 -c 1
