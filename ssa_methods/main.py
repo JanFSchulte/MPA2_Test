@@ -1,11 +1,9 @@
-
 from ssa_methods.ssa import *
 from ssa_methods.ssa_power_utility import *
 from ssa_methods.ssa_cal_utility import *
 from ssa_methods.ssa_test_utility import *
 from ssa_methods.ssa_readout_utility import *
 from ssa_methods.ssa_measurements import *
-from ssa_methods.main import *
 
 I2C   = ssa_i2c_conf()
 pwr   = ssa_power_utility(I2C, fc7)
@@ -21,3 +19,28 @@ except ImportError:
 	print "- Impossible to access GPIB instruments"
 
 measure     = SSA_measurements(ssa, I2C, fc7, cal, analog_mux_map, biascal)
+
+def on():
+	sleep(0.1);  pwr.set_supply('on')
+	sleep(0.1);  pwr.set_clock_source('internal')
+	sleep(0.1);  ssa.init(reset_board = True, reset_chip = True, display = True)
+
+def off():
+	pwr.set_supply('off')
+
+def init():
+	ssa.init(reset_board = True, reset_chip = False, display = True)
+
+def reset_fc7():
+	fc7.write("ctrl_command_global_reset", 1);
+
+def reset_ssa():
+	ssa.reset()
+
+def set_clock(val = 'internal'):
+	pwr.set_clock_source(val)
+	sleep(0.1);  ssa.init(reset_board = False, reset_chip = False, display = True)
+
+#utils.activate_I2C_chip()
+
+print "_____________________________________________________\n\n"
