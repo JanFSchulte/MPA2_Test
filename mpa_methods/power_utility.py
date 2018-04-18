@@ -205,7 +205,7 @@ def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
 	Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2)  # set reset bit
-	
+
 
 
 def measure_current(print_file = 1, filename =  "../cernbox/MPA_Results/digital_pixel_test.log"):

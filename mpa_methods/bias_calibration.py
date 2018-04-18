@@ -90,10 +90,10 @@ def measure_gnd():
 	inst = multimeter.init_keithley(3)
 	disable_test()
 	data = np.zeros((7, ), dtype=np.float)
-	for block in range(0,7):	
+	for block in range(0,7):
 		test = "TEST" + str(block)
 		I2C.peri_write('TESTMUX',0b00000001 << block)
-		I2C.peri_write(test, 0b10000000)	
+		I2C.peri_write(test, 0b10000000)
 		data[block] = multimeter.measure(inst)
 	disable_test()
 	print data
@@ -104,15 +104,16 @@ def calibrate_chip(gnd_corr):
 	inst = multimeter.init_keithley(3)
 	DAC_val = [15, 15, 15, 15, 15]
 	exp_val = [0.082, 0.082, 0.108, 0.082, 0.082]
-	calval = []
+	data = np.zeros((5, 7), dtype = np.int16 )
 	for point in range(0,5):
 		calrowval = []
 		for block in range(0,7):
-			v = calibrate_bias(point, block, DAC_val[point], exp_val[point], inst, gnd_corr)
-			calrowval.append(v)
-		calval.append(calrowval)
+			data[point, block] = calibrate_bias(point, block, DAC_val[point], exp_val[point], inst)
 	disable_test()
-	return calval
+	if print_file:
+		CSV.ArrayToCSV (data, str(filename) + ".csv")
+
+	return data
 
 def trimDAC_amplitude(value):
 	activate_I2C_chip()
