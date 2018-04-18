@@ -12,13 +12,13 @@ import matplotlib.pyplot as plt
 
 class ssa_ctrl_base:
 
-	def __init__(self, I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
+	def __init__(self, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
 		self.ssa_strip_reg_map = ssa_strip_reg_map;
 		self.analog_mux_map = analog_mux_map;
 		self.ssa_peri_reg_map = ssa_peri_reg_map;
 		self.I2C = I2C;
 		self.fc7 = FC7;
-		self.__initialise_constants()
+		self.pwr = pwr
 
 
 	def resync(self):
@@ -28,44 +28,9 @@ class ssa_ctrl_base:
 
 
 	def reset(self):
-		utils.print_enable(False)
-		sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2);
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0);  # drop reset bit
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1);  # set reset bit
-		sleep(0.01);
-		utils.activate_I2C_chip()
-		utils.print_enable(True)
-		print '->  \tSent Hard-Reset pulse '
-
-
-	def set_clock_source(self, value = 'internal'):
-		if(value == 'internal' or value == 0):
-			self.fc7.write("cnfg_clock_ext_clk_en", 0)
-		elif (value == 'external' or value == 1):
-			self.fc7.write("cnfg_clock_ext_clk_en", 1)
-
-
-	def set_supply(self, mode = 'on', d = 1.0, a = 1.25, p = 1.25):
-		if(mode == 'on' or mode == 1):
-			sleep(0); self.set_pvdd(p);
-			sleep(5); self.set_dvdd(d);
-			sleep(0); self.set_avdd(a);
-			sleep(2); self.reset()
-		elif(mode == 'off' or mode == 0):
-			sleep(0); self.set_avdd(0);
-			sleep(0); self.set_dvdd(0);
-			sleep(5); self.set_pvdd(0)
-			sleep(2);
-		self.get_power(display = True)
-
-
-	def get_power(self, display = True):
-		d = self.get_power_digital(display)
-		a = self.get_power_analog(display)
-		p = self.get_power_pads(display)
-		if(not display):
-			return [d,a,p]
+		rp = self.pwr.reset()
+		self.set_t1_sampling_edge("negative")
+		return rp
 
 
 	def set_output_mux(self, testline = 'highimpedence'):
@@ -290,134 +255,3 @@ class ssa_ctrl_base:
 	def set_lateral_data(self, left, right):
 		self.fc7.write("cnfg_phy_SSA_gen_right_lateral_data_format", right)
 		self.fc7.write("cnfg_phy_SSA_gen_left_lateral_data_format", left)
-
-
-	def get_power_digital(self, display = True):
-		utils.print_enable(False)
-		Configure_MPA_SSA_I2C_Master(1, 2)
-		Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08)  # to SC3 on PCA9646
-		ret  = Send_MPA_SSA_I2C_Command(self.ina226_6, 0, self.pcbread, 0x02, 0)  # read V on shunt
-		vret = 0.00125 * ret
-		pret = float(round(vret, 3))
-		ret  = Send_MPA_SSA_I2C_Command(self.ina226_6, 0, self.pcbread, 0x01, 0)  # read V on shunt
-		iret = (self.Vcshunt * ret)/self.Rshunt
-		iret = float(round(iret, 3))
-		pret = iret * vret
-		pret = float(round(pret, 3))
-		utils.activate_I2C_chip()
-		utils.print_enable(True)
-		if(display):
-			print '->  \tP_dig: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret)
-		return pret
-
-
-	def get_power_analog(self, display = True):
-		utils.print_enable(False)
-		Configure_MPA_SSA_I2C_Master(1, 2)
-		Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08)  # to SC3 on PCA9646
-		ret  = Send_MPA_SSA_I2C_Command(self.ina226_5, 0, self.pcbread, 0x02, 0)  # read V on shunt
-		vret = 0.00125 * ret
-		vret = float(round(vret, 3))
-		ret  = Send_MPA_SSA_I2C_Command(self.ina226_5, 0, self.pcbread, 0x01, 0)  # read V on shunt
-		iret = (self.Vcshunt * ret)/self.Rshunt
-		iret = float(round(iret, 3))
-		pret = iret * vret
-		pret = float(round(pret, 3))
-		utils.activate_I2C_chip()
-		utils.print_enable(True)
-		if(display):
-			print '->  \tP_ana: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret)
-		return pret
-
-
-	def get_power_pads(self, display = True):
-		utils.print_enable(False)
-		Configure_MPA_SSA_I2C_Master(1, 2)
-		Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08)  # to SC3 on PCA9646
-		ret  = Send_MPA_SSA_I2C_Command(self.ina226_7, 0, self.pcbread, 0x02, 0)  # read V on shunt
-		vret = 0.00125 * ret
-		vret = float(round(vret, 3))
-		ret  = Send_MPA_SSA_I2C_Command(self.ina226_7, 0, self.pcbread, 0x01, 0)  # read V on shunt
-		iret = (self.Vcshunt * ret)/self.Rshunt
-		iret = float(round(iret, 3))
-		pret = iret * vret
-		pret = float(round(pret, 3))
-		utils.activate_I2C_chip()
-		utils.print_enable(True)
-		if(display):
-			print '->  \tP_pad: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret)
-		return pret
-
-
-	def set_dvdd(self, targetvoltage):
-		utils.print_enable(False)
-		if (targetvoltage > 1.25): targetvoltage = 1.25
-		diffvoltage = 1.5 - targetvoltage
-		setvoltage = int(round(diffvoltage / self.Vc))
-		if (setvoltage > 4095): setvoltage = 4095
-		setvoltage = setvoltage << 4
-		Configure_MPA_SSA_I2C_Master(1, 2)
-		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
-		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x31, setvoltage)  # tx to DAC C
-		utils.activate_I2C_chip()
-		utils.print_enable(True)
-
-
-	def set_avdd(self, targetvoltage):
-		utils.print_enable(False)
-		if (targetvoltage > 1.25): targetvoltage = 1.25
-		diffvoltage = 1.5 - targetvoltage
-		setvoltage = int(round(diffvoltage / self.Vc))
-		if (setvoltage > 4095): setvoltage = 4095
-		setvoltage = setvoltage << 4
-		Configure_MPA_SSA_I2C_Master(1, 2)
-		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
-		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x35, setvoltage)  # tx to DAC C
-		utils.activate_I2C_chip()
-		utils.print_enable(True)
-
-
-	def set_pvdd(self, targetvoltage):
-		utils.print_enable(False)
-		if (targetvoltage > 1.25): targetvoltage = 1.25
-		diffvoltage = 1.5 - targetvoltage
-		setvoltage = int(round(diffvoltage / self.Vc))
-		if (setvoltage > 4095): setvoltage = 4095
-		setvoltage = setvoltage << 4
-		Configure_MPA_SSA_I2C_Master(1, 2)
-		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
-		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x33, setvoltage)  # tx to DAC C
-		utils.activate_I2C_chip()
-		utils.print_enable(True)
-
-
-
-
-
-	def __initialise_constants(self):
-		self.pcbwrite = 0;
-		self.pcbread = 1;
-		self.pcbi2cmux = 0;
-		self.i2cmux = 0;
-		self.Vc = 0.0003632813;
-		self.dll_chargepump = 0b00;
-		self.bias_dl_enable    = False
-		self.cbc3 = 15
-		self.FAST = 4
-		self.SLOW = 2
-		self.mpaid = 0
-		self.ssaid = 0
-		self.i2cmux = 0
-		self.pcf8574 = 1
-		self.powerenable = 2
-		self.dac7678 = 4
-		self.ina226_5 = 5
-		self.ina226_6 = 6
-		self.ina226_7 = 7
-		self.ina226_8 = 8
-		self.ina226_9 = 9
-		self.ina226_10 = 10
-		self.ltc2487 = 3
-		self.Vc = 0.0003632813 # V/Dac step
-		self.Vcshunt = 0.00250
-		self.Rshunt = 0.1

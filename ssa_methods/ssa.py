@@ -12,18 +12,17 @@ from ssa_methods.ssa_readout_utility import *
 
 class SSA_ASIC:
 
-	def __init__(self, I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
+	def __init__(self, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
 		self.i2c     = I2C
-		self.ctrl    = ssa_ctrl_base(I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+		self.ctrl    = ssa_ctrl_base(I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
 		self.strip   = ssa_ctrl_strip(I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
 		self.inject  = SSA_inject(I2C, FC7, self.ctrl, self.strip)
 		self.readout = SSA_readout(I2C, FC7, self.ctrl, self.strip)
+		self.pwr     = pwr
 		self.fc7     = FC7
-		self.__initialise_constants()
 
 	def reset(self):
 		self.ctrl.reset()
-		self.ctrl.set_t1_sampling_edge("negative")
 
 	def resync(self):
 		self.ctrl.resync()
@@ -65,19 +64,8 @@ class SSA_ASIC:
 			print "->  \tInitialised SLVS pads and sampling edges"
 			print "->  \tSampling phases tuned"
 			print "->  \tActivated normal readout mode"
-			self.ctrl.get_power(display = True)
+			self.pwr.get_power(display = True)
 
 
 	def init_all(self):
 		self.init(reset_board = True, reset_chip = False)
-
-
-	def __initialise_constants(self):
-		self.pcf8574 = 1;
-		self.pcbwrite = 0;
-		self.pcbread = 1;
-		self.pcbi2cmux = 0;
-		self.i2cmux = 0;
-		self.dac7678 = 4;
-		self.Vc = 0.0003632813;
-		self.dll_chargepump = 0b00;

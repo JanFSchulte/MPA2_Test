@@ -228,11 +228,22 @@ def strip_in_test(n_pulse = 10, line = range(0,8),  value = [128, 64, 32, 16, 8,
 
 	return line_check
 
-def strip_in_scan(n_pulse = 10, print_file = 1, filename =  "../cernbox/MPA_Results/strip_in_scan"):
+def strip_in_scan(n_pulse = 10, probe = 0, print_file = 1, filename =  "../cernbox/MPA_Results/strip_in_scan"):
 	t0 = time.time()
 	activate_I2C_chip()
 	activate_ss()
 	data_array = np.zeros((16, 8 ), dtype = np.float16 )
+	if probe:
+		I2C.peri_write("InSetting_0",0)
+		I2C.peri_write("InSetting_1",1)
+		I2C.peri_write("InSetting_2",2)
+		I2C.peri_write("InSetting_3",3)
+		I2C.peri_write("InSetting_4",4)
+		I2C.peri_write("InSetting_5",5)
+		I2C.peri_write("InSetting_6",6)
+		I2C.peri_write("InSetting_7",7)
+		I2C.peri_write("InSetting_8",8)
+	sleep(1)
 	for i in range(0,8):
 		latency = (i  << 3)
 		edge = 255

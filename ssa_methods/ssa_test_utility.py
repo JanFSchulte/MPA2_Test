@@ -14,11 +14,10 @@ import matplotlib.pyplot as plt
 
 class SSA_test_utility():
 
-	def __init__(self, ssa, I2C, fc7, cal):
-		self.ssa = ssa
-		self.I2C = I2C
-		self.fc7 = fc7
-		self.cal = cal
+	def __init__(self, ssa, I2C, fc7, cal, pwr):
+		self.ssa = ssa;	self.I2C = I2C;	self.fc7 = fc7;
+		self.cal = cal; self.pwr = pwr;
+		
 
 	def cluster_data_basic(self, mode = "digital", chip = '0', shift = -1, shiftL = 1, display=False, lateral = True, init = True, hfi = True):
 		if(isinstance(chip, int)): chip = str(chip)
@@ -91,7 +90,7 @@ class SSA_test_utility():
 
 
 
-	def lateral_input_phase_tuning(self, display = False, timeout = 256*3, delay = 4, shift = -1, init = True):
+	def lateral_input_phase_tuning(self, display = False, timeout = 256*3, delay = 4, shift = 0, init = True):
 		utils.activate_I2C_chip()
 		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
 		self.ssa.readout.cluster_data(initialize = True)
@@ -253,7 +252,7 @@ class SSA_test_utility():
 		fo = open("../SSA_Results/" + "TestLogs" + "/" + str(chip) + "_Test_Memory-Supply" + ".log", 'w')
 		fo.write("DVDD;       EFFICIENCY;    ERROR LIST; \n")
 		for dvdd in np.arange(start, stop, -step):
-			self.ssa.ctrl.set_dvdd( dvdd )
+			self.pwr.set_dvdd( dvdd )
 			eff, erlist = self.memory(display = 0, latency = latency, shift = shift)
 			fo.write("%4.3fV ;     %7.2f%% ;       %s ; \n" % (dvdd, eff, erlist))
 			print "%4.3fV ;  %7.2f%% ;" % (dvdd, eff)

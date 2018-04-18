@@ -513,7 +513,6 @@ def s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1
 			th += step
 		clear_counters(8)
 		clear_counters(8)
-
 	t1 = time.time()
 	print "END"
 	print "Elapsed Time: " + str(t1 - t0)
