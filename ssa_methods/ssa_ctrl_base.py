@@ -19,6 +19,8 @@ class ssa_ctrl_base:
 		self.I2C = I2C;
 		self.fc7 = FC7;
 		self.pwr = pwr
+		self.dll_chargepump = 0b00;
+		self.bias_dl_enable = False
 
 
 	def resync(self):
@@ -27,8 +29,8 @@ class ssa_ctrl_base:
 		sleep(0.001)
 
 
-	def reset(self):
-		rp = self.pwr.reset()
+	def reset(self, display=True):
+		rp = self.pwr.reset(display=display)
 		self.set_t1_sampling_edge("negative")
 		return rp
 

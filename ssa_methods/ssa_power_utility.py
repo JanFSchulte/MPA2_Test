@@ -13,8 +13,8 @@ class ssa_power_utility:
 	def __init__(self, I2C, FC7):
 		self.I2C = I2C;
 		self.fc7 = FC7;
-		self.status
 		self.__initialise_constants()
+		self.state = curstate(main = 0, dvdd = 0, avdd = 0, pvdd = 0)
 
 
 	def set_clock_source(self, value = 'internal'):
@@ -24,10 +24,10 @@ class ssa_power_utility:
 			self.fc7.write("cnfg_clock_ext_clk_en", 1)
 
 
-	def set_supply(self, mode = 'on', d = 1.0, a = 1.25, p = 1.25, bg = 0.3):
+	def set_supply(self, mode = 'on', d = 1.0, a = 1.25, p = 1.25, bg = 0.3, display = True):
 		if(mode == 'on' or mode == 1):
 			sleep(0); self.set_pvdd(p);
-			sleep(5); self.set_dvdd(d);
+			sleep(2); self.set_dvdd(d);
 			sleep(0); self.set_avdd(a);
 			sleep(0); self.set_vbf(bg)
 			sleep(1); self.reset()
@@ -35,8 +35,8 @@ class ssa_power_utility:
 			sleep(0); self.set_vbf(0)
 			sleep(0); self.set_avdd(0);
 			sleep(0); self.set_dvdd(0);
-			sleep(5); self.set_pvdd(0)
-		sleep(1); self.get_power(display = True)
+			sleep(3); self.set_pvdd(0)
+		sleep(1); self.get_power(display = display)
 
 
 	def get_power(self, display = True):
@@ -63,6 +63,7 @@ class ssa_power_utility:
 		utils.print_enable(True)
 		if(display):
 			print '->  \tP_dig: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret)
+		self.state.dvdd = pret
 		return pret
 
 
@@ -82,6 +83,7 @@ class ssa_power_utility:
 		utils.print_enable(True)
 		if(display):
 			print '->  \tP_ana: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret)
+		self.state.avdd = pret
 		return pret
 
 
@@ -101,6 +103,7 @@ class ssa_power_utility:
 		utils.print_enable(True)
 		if(display):
 			print '->  \tP_pad: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret)
+		self.state.pvdd = pret
 		return pret
 
 
@@ -116,6 +119,7 @@ class ssa_power_utility:
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x31, setvoltage)  # tx to DAC C
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
+		self.state.dvdd = targetvoltage
 
 
 	def set_avdd(self, targetvoltage):
@@ -130,6 +134,7 @@ class ssa_power_utility:
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x35, setvoltage)  # tx to DAC C
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
+		self.state.avdd = targetvoltage
 
 
 	def set_pvdd(self, targetvoltage):
@@ -144,6 +149,7 @@ class ssa_power_utility:
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x33, setvoltage)  # tx to DAC C
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
+		self.state.pvdd = targetvoltage
 
 
 	def set_vbf(self, targetvoltage):
@@ -163,12 +169,14 @@ class ssa_power_utility:
 		Configure_MPA_SSA_I2C_Master(1, 2)
 		Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x02)  # route to 2nd PCF8574
 		Send_MPA_SSA_I2C_Command(self.powerenable, 0, self.pcbwrite, 0, 0x00)  # send on bit
+		self.state.main = 1
 
 
 	def mainpoweroff():
 		Configure_MPA_SSA_I2C_Master(1, 2)
 		Send_MPA_SSA_I2C_Command(self.i2cmux,0, self.pcbwrite, 0, 0x02)  # route to 2nd PCF8574
 		Send_MPA_SSA_I2C_Command(self.powerenable, 0, self.pcbwrite, 0, 0x01)  # send off bit
+		self.state.main = 0
 
 
 
@@ -178,7 +186,7 @@ class ssa_power_utility:
 		sleep(0.001)
 
 
-	def reset(self):
+	def reset(self, display=True):
 		utils.print_enable(False)
 		sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2);
 		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
@@ -187,7 +195,7 @@ class ssa_power_utility:
 		sleep(0.01);
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
-		print '->  \tSent Hard-Reset pulse '
+		if(display): print '->  \tSent Hard-Reset pulse '
 
 
 	def __initialise_constants(self):

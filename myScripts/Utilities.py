@@ -16,7 +16,11 @@ from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
+from datetime import datetime
 
+class curstate():
+	def __init__(self, **kwds):
+		self.__dict__.update(kwds)
 
 class Utilities:
 
@@ -24,8 +28,8 @@ class Utilities:
 		p = []
 
 	class cl_clustdispl(float):
-	    def __repr__(self):
-	        return "{:6.1f}".format(self)
+		def __repr__(self):
+			return "{:6.1f}".format(self)
 
 	def ShowPercent(self, val , max = 100, message = ""):
 		i = int( (float(val)/max) * 100.0) - 1
@@ -102,6 +106,11 @@ class Utilities:
 			self.print_enable(True)
 		if(pr == 'print'):
 			print '->  \tEnabled I2C master for chips control'
+
+	def date_time(self):
+		st = datetime.now().strftime("%Y-%m-%d_%H:%M")
+		return st
+
 
 
 def print_method(name):

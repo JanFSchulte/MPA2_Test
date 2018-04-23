@@ -47,7 +47,7 @@ class SSA_measurements():
 		parameters = []
 		cnt = 0
 		for s in striplist:
-			tmp = self.cal.scurves(cal_ampl='baseline', rdmode = 'i2c', mode = 'sbs', striplist = [s], plot = False)
+			tmp = self.cal.scurves(cal_ampl='baseline', rdmode = 'i2c', mode = 'sbs', striplist = [s], plot = False, speedup = True)
 			data[s-1] = tmp[:,s-1]
 			cnt += 1
 			par, cov = self.cal._scurve_fit_gaussian(curve = data[s-1], errmsg=' for strip %d'%s)

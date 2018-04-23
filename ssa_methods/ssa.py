@@ -22,7 +22,7 @@ class SSA_ASIC:
 		self.fc7     = FC7
 
 	def reset(self):
-		self.ctrl.reset()
+		self.ctrl.reset(display=True)
 
 	def resync(self):
 		self.ctrl.resync()
@@ -33,19 +33,19 @@ class SSA_ASIC:
 
 	def init(self, reset_board = False, reset_chip = False, slvs_current = 0b111, edge = "negative", display = True):
 		if(display):
-			sys.stdout.write("->  Initialising..\r")
+			sys.stdout.write("->  \tInitialising..\r")
 			sys.stdout.flush()
 		if(reset_board):
 			fc7.write("ctrl_command_global_reset", 1)
 		if(reset_chip):
-			self.ctrl.reset()
+			self.ctrl.reset(display=False)
 		if(display): sleep(0.2)
 		else: sleep(0.1)
 		utils.print_enable(False)
 		activate_I2C_chip()
 		utils.print_enable(True)
 		if(display):
-			sys.stdout.write("->  Tuning sampling phases..\r")
+			sys.stdout.write("->  \tTuning sampling phases..\r")
 			sys.stdout.flush()
 		self.ctrl.set_t1_sampling_edge(edge)
 		self.ctrl.init_slvs(slvs_current)
@@ -54,10 +54,10 @@ class SSA_ASIC:
 		else: sleep(0.1)
 		self.ctrl.activate_readout_normal()
 		if(display):
-			sys.stdout.write("->  Ready!                  \r")
+			sys.stdout.write("->  \tReady!                  \r")
 			sys.stdout.flush()
 			sleep(0.2)
-			sys.stdout.write("                            \r")
+			sys.stdout.write("                              \r")
 			sys.stdout.flush()
 			if(reset_board): print "->  \tReset FC7 Firmware"
 			if(reset_chip):  print "->  \tReset SSA Chip"
