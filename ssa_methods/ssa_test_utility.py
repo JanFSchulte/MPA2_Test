@@ -25,8 +25,8 @@ class SSA_test_utility():
 		#print "->  \tRemember to call test.lateral_input_phase_tuning() before to run this test"
 		utils.activate_I2C_chip()
 		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
-		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
-		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
+		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 3)
+		self.ssa.ctrl.set_sampling_deskewing_fine(value = 20, enable = True, bypass = True)
 		self.ssa.ctrl.set_cal_pulse_delay(0)
 		prev = 0xff
 		if(mode == "digital"):
@@ -74,7 +74,7 @@ class SSA_test_utility():
 			stexpected = utils.cl2str(i);
 			stfound = utils.cl2str(r);
 			stlateralout = utils.cl2str(l);
-			dstr = stexpected + ';  \t' + stfound + ';  \t' + stlateralout
+			dstr = stexpected + ';    ' + stfound + ';    ' + stlateralout + "                                            "
 			if (err[0]):
 				erlog = "Cluster-Data-Error;   " + dstr
 				cnt['cl_err'] += 1

@@ -8,6 +8,7 @@ from scipy.special import erfc
 from scipy.special import erf
 from scipy.interpolate import spline
 from itertools import product as itertools_product
+from lmfit import Model as lmfitModel
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import time
@@ -32,7 +33,7 @@ class SSA_cal_utility():
 		self.tempvalue = np.inf
 		self.baseline = 'nondefined'
 
-	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = False, filename2 = "trim0", msg = "", striplist = range(1,121)):
+	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = False, filename2 = "trim0", msg = "", striplist = range(1,121), speeduplevel = 0):
 		'''	cal_ampl  -> int |'baseline'  -> Calibration pulse charge (in CALDAC LSBs)
 			mode      -> 'all' | 'sbs'   -> All strips together or one by one
 			nevents   -> int number      -> Number of calibration pulses (default 1000)
@@ -44,13 +45,11 @@ class SSA_cal_utility():
 			filename2 -> 'string'        -> Additional string to complete the filename
 			msg       -> internal use
 		'''
-		utils.print_enable(False)
-		activate_I2C_chip()
-		utils.print_enable(True)
+		if(speeduplevel > 0):
+			utils.activate_I2C_chip()
 		# first go to the async mode
 		self.ssa.ctrl.activate_readout_async()
 		ermsg = ''
-
 		baseline = False
 
 		if isinstance(cal_ampl, int):
@@ -83,8 +82,7 @@ class SSA_cal_utility():
 				error = False
 				#print "Setting the threshold to ", threshold, ", sending the test pulse and reading the counters"
 				strout += "threshold = " + str(threshold) + ".   "
-				self.ssa.ctrl.set_threshold(threshold)# set the threshold
-				sleep(0.05)
+				self.ssa.ctrl.set_threshold(threshold); sleep(0.05); # set the threshold
 
 				if (not baseline and (mode == 'all')):	# provide cal pulse to all strips together
 					clear_counters(2)
@@ -98,40 +96,31 @@ class SSA_cal_utility():
 					clear_counters(1)
 					for s in striplist:
 						self.ssa.strip.set_cal_strips(mode = 'counter', strip = s )
-						sleep(0.01)
-						open_shutter(2)
-						sleep(0.01)
-						SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
-						sleep(0.01)
-						while(self.fc7.read("stat_fast_fsm_state") != 0): sleep(0.01)
-						close_shutter(2)
-						sleep(0.01)
+						sleep(0.01);
+						open_shutter(2); sleep(0.01);
+						SendCommand_CTRL("start_trigger"); sleep(0.01); # send sequence of NEVENTS pulses
+						while(self.fc7.read("stat_fast_fsm_state") != 0):
+							sleep(0.01)
+						close_shutter(2); sleep(0.01);
 
 				elif(baseline and (mode == 'all')):
-					clear_counters(1)
-					sleep(0.01)
-					open_shutter(2)
-					sleep(0.01)
-					close_shutter(2)
-					sleep(0.01)
+					clear_counters(2); sleep(0.01);
+					open_shutter(2);   sleep(0.01);
+					close_shutter(2);  sleep(0.01);
 
 				elif(baseline and (mode == 'sbs')):
 					# with this method, the time between open and close shutter
 					# change from strip to strip due to the communication time
 					# so do not use to compare the counters value,
 					# from the point of view of the atandard deviation is not influent
-					clear_counters(2)# clear counters
-					sleep(0.01)
+					clear_counters(2); sleep(0.01);
 					for s in striplist:
 						# all trims at 0 and one at 31 to remove the crosstalks effect
 						self.ssa.strip.set_trimming('all', 0)
 						self.ssa.strip.set_trimming(s, 31)
-						sleep(0.01)
-						open_shutter(2)
-						sleep(0.01)
-						close_shutter(2)
-						sleep(0.01)
-
+						sleep(0.01);
+						open_shutter(2);  sleep(0.01);
+						close_shutter(2); sleep(0.01);
 				if(rdmode == 'fast'):
 					failed, scurves[threshold] = self.ssa.readout.read_counters_fast(striplist)
 				elif(rdmode == 'i2c'):
@@ -147,6 +136,7 @@ class SSA_cal_utility():
 							error = True; ermsg = '[Condition 1]' + str(scurves[threshold,s]) +'  ' + str(scurves[threshold-1,s])
 						elif ((not baseline) and (threshold > 0) and (scurves[threshold,s])== 2*scurves[threshold-1,s] and (scurves[threshold,s] != 0)):
 							error = True; ermsg = '[Condition 2]'
+
 				if (error == True):
 					threshold = threshold - 1
 					utils.ShowPercent(threshold, 256, "Failed to read counters for threshold " + str(threshold) + ". Redoing. " +  ermsg)
@@ -155,13 +145,15 @@ class SSA_cal_utility():
 				else:
 					strout += "Counters samples = 1->[" + str(scurves[threshold][0]) + "]  30->[" + str(scurves[threshold][29]) + "]  60->[" + str(scurves[threshold][59]) + "]  90->[" + str(scurves[threshold][89]) + "]  120->[" + str(scurves[threshold][119]) + "]"
 
-				# threshold increment
-				threshold = threshold + 1
+				if(speeduplevel >= 2 and threshold > 16):
+					if( (scurves[-9: -1] == np.zeros((8,120), dtype=np.int)).all() ):
+						break
 
 				if (display == True):
 					utils.ShowPercent(threshold, 256, strout)
 				else:
 					utils.ShowPercent(threshold, 256, "Calculating S-Curves "+msg+"                                      ")
+				threshold = threshold + 1
 
 			utils.ShowPercent(256, 256, "Done calculating S-Curves "+msg+"                                            ")
 
@@ -459,11 +451,14 @@ class SSA_cal_utility():
 			thidx = int(round(par[1]))
 			return thidx, par
 
-	def _scurve_fit_gaussian(self, curve, errmsg="", reiterate = 3):
+	def _scurve_fit_gaussian(self, curve, errmsg="", reiterate = 10):
 		guess_mean = np.argmax(curve)
 		guess_sigma = np.size( np.where(curve > 10) )/6.0
-		err = True
-		itr = 0
+		errret = [np.inf, np.inf, np.inf]
+		if(guess_mean == 0 or guess_sigma == 0 ):
+			print "Fitting zeros " + errmsg
+			return errret
+		err = True; itr = 0;
 		while(err == True and itr < reiterate):
 			try:
 				par, cov = curve_fit(
@@ -471,16 +466,40 @@ class SSA_cal_utility():
 					xdata = range(0, np.size(curve)-1),
 					ydata = curve[0 : np.size(curve)-1],
 					p0 = [1, guess_mean, guess_sigma])
-			except RuntimeError:
+			except:
 				itr += 1
 			else:
 				err = False
 		if(err):
 			print "Fitting failed " + errmsg
-			return False
+			return errret
 		else:
-			return par, cov
+			return par
 
+	def _scurve_fit_gaussian1(self, curve, errmsg="", reiterate = 10):
+		guess_mean = np.argmax(curve)
+		guess_sigma = np.size( np.where(curve > 10) )/6.0
+		errret = [np.inf, np.inf, np.inf]
+		if(guess_mean == 0 or guess_sigma == 0 ):
+			print "Fitting zeros " + errmsg
+			return errret
+		gmodel = lmfitModel(f_gauss1)
+		err = True; itr = 0;
+		while(err == True and itr < reiterate):
+			try:
+				result = gmodel.fit(curve, x=range(np.size(curve)), A=1, mu=guess_mean, sigma=(guess_sigma) )
+			except:
+				itr += 1
+			else:
+				err = False
+		if(err):
+			print "Fitting failed " + errmsg
+			return errret
+		else:
+			sigma = np.abs(result.params['sigma'].value)
+			A = result.params['A'].value
+			mu = result.params['mu'].value
+			return  [A, mu, sigma]
 
 
 

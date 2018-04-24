@@ -42,25 +42,46 @@ class SSA_measurements():
 
 
 
-	def baseline_noise(self, striplist = range(1,120), filename = False, plot = True):
+	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', filename = False, runname= '', plot = True):
 		data = np.zeros([120, 256])
-		parameters = []
-		cnt = 0
+		A = []; sigma = []; mu = []; cnt = 0;
+		if(mode == 'sbs'):
+			for s in striplist:
+				tmp = self.cal.scurves(cal_ampl='baseline', rdmode = 'i2c', mode = 'sbs', striplist = [s], plot = False, speeduplevel = 2)
+				data[s-1] = tmp[:,s-1]
+				cnt += 1
+		elif(mode == 'all'):
+			tmp = self.cal.scurves(cal_ampl='baseline', rdmode = 'fast', mode = 'all', striplist = striplist, plot = False, speeduplevel = 2)
+			data = np.transpose(tmp)
+		plt.clf()
+		plt.figure(1)
 		for s in striplist:
-			tmp = self.cal.scurves(cal_ampl='baseline', rdmode = 'i2c', mode = 'sbs', striplist = [s], plot = False, speedup = True)
-			data[s-1] = tmp[:,s-1]
-			cnt += 1
-			par, cov = self.cal._scurve_fit_gaussian(curve = data[s-1], errmsg=' for strip %d'%s)
-			parameters.append(par)
+			par = self.cal._scurve_fit_gaussian1(curve = data[s-1], errmsg=' for strip %d'%s)
+			A.append(par[0]);
+			mu.append(par[1]);
+			sigma.append(par[2]);
 			x = range(1, np.size(data[s-1]))
-			plt.plot(x, f_gauss(x, par[0], par[1], par[2]))
+			if(plot and par[2] < np.inf):
+				plt.plot(data[s-1], 'og')
+				plt.plot(x, f_gauss(x, par[0], par[1], par[2]), '-r')
+
 		if( isinstance(filename, str) ):
-			fo = "../SSA_Results/" + filename + "/Scurve_NoiseBaseline/" + filename + "_scurve_trim31__cal_0.csv"
+			#f1 = "../SSA_Results/" + filename + "/Scurve_NoiseBaseline/" + filename + "_scurve_trim31__cal_0.csv"
+			fo = "../SSA_Results/" + filename + "_Baseline_scurve_trim31_cal0.csv"
 			CSV.ArrayToCSV (array = data, filename = fo, transpose = False)
-			print "->  \tData saved in" + fo
+			fo = "../SSA_Results/" + filename + "_Baseline_Noise.csv"
+			CSV.ArrayToCSV (array = [[runname]*len(striplist), striplist, A, mu, sigma], filename = fo, transpose = False)
+
 		if(plot):
+			plt.figure(2)
+			plt.plot(striplist, sigma, 'go-')
 			plt.show()
-		return  parameters #[A, mu, sigma]
+
+		sigma = np.array(sigma)
+		highnoise = np.where( sigma > 3)[0]
+		sigma_filter = sigma[(np.where(sigma < 100)[0])]
+		average_noise = np.mean(sigma_filter)
+		return  [average_noise, highnoise, sigma]
 
 
 

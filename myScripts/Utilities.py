@@ -120,18 +120,22 @@ def print_method(name):
 utils = Utilities()
 
 def f_errorf(x, *p):
-    a, mu, sigma = p
-#    print x
-    return 0.5*a*(1.0+erf((x-mu)/sigma))
+	a, mu, sigma = p
+	#    print x
+	return 0.5*a*(1.0+erf((x-mu)/sigma))
 
 def f_line(x, *p):
-    g, offset = p
-    return  np.array(x) *g + offset
+	g, offset = p
+	return  np.array(x) *g + offset
 
 def f_gauss(x, *p):
-    A, mu, sigma = p
-    return A*np.exp(-(x-mu)**2/(2.*sigma**2))
+	A, mu, sigma = p
+	return A*np.exp(-(x-mu)**2/(2.*sigma**2))
+
+def f_gauss1(x, A, mu, sigma):
+	'''1-d gaussian: gaussian(x, A, mu, sigma)'''
+	return A * np.exp(-(x-mu)**2 / (2.*sigma**2))
 
 def f_errorfc(x, *p):
-    a, mu, sigma = p
-    return a*0.5*erfc((x-mu)/sigma)
+	a, mu, sigma = p
+	return a*0.5*erfc((x-mu)/sigma)
