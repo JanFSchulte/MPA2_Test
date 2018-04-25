@@ -43,8 +43,7 @@ class ssa_power_utility:
 		d = self.get_power_digital(display)
 		a = self.get_power_analog(display)
 		p = self.get_power_pads(display)
-		if(not display):
-			return [d,a,p]
+		return [d,a,p]
 
 
 	def get_power_digital(self, display = True):

@@ -32,6 +32,7 @@ class SSA_cal_utility():
 		self.calpulse_dll_resolution = 1.2
 		self.tempvalue = np.inf
 		self.baseline = 'nondefined'
+		self.storedscurve = {}
 
 	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = False, filename2 = "trim0", msg = "", striplist = range(1,121), speeduplevel = 0):
 		'''	cal_ampl  -> int |'baseline'  -> Calibration pulse charge (in CALDAC LSBs)
@@ -298,32 +299,56 @@ class SSA_cal_utility():
 		return scurve_init , scurve
 
 
-	def evaluate_fe_gain(self, callist = [30, 60, 90], nevents=1000, plot = True):
-		utils.print_enable(False)
-		activate_I2C_chip()
-		utils.print_enable(True)
-		thmean = []
-		cnt = 0
-		for cal in callist:
-			s = self.scurves(
-				cal_ampl = cal,
-				nevents = nevents,
-				display = False,
-				plot = False,
-				filename = False,
-				msg = "")
-			thlist, p = self.evaluate_scurve_thresholds(scurve = s, nevents = nevents)
-			thmean.append( np.mean(thmean) )
-
-		par, cov = curve_fit(f= f_line,  xdata = callist, ydata = thmean, p0 = [0, 0])
-		gain = par[0]
-		offset = par[1]
+	def gain_offset_noise(self, calpulse = 50, nevents=1000, plot = True, use_stored_data = False, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+		utils.activate_I2C_chip()
+		fo = open("../SSA_Results/" + file + "_Measure_Gain_Offset_Noise.log", filemode)
+		callist = [calpulse-20, calpulse, calpulse+20]
+		thresholds = []; sigmas = [];
+		gain = []; offset = []; cnt = 0;
+		noise = np.zeros(120)
 		if(plot):
-			plt.clf()
-			plt.plot(callist, offset+gain*np.array(callist))
-			plt.plot(callist, thmean, 'o')
+			plt.clf();
+			plt.figure(1)
+
+		for cal in callist:
+			if(use_stored_data and (('CAL%dE%d'%(cal,nevents)) in self.storedscurve) ):
+				s = self.storedscurve[ ('CAL%dE%d'%(cal,nevents)) ]
+			else:
+				s = self.scurves(
+					cal_ampl = cal,
+					nevents = nevents,
+					display = False,
+					plot = False,
+					filename = False,
+					msg = "")
+				self.storedscurve[ ('CAL%dE%d'%(cal,nevents)) ] = s
+			thlist, p = self.evaluate_scurve_thresholds(scurve = s, nevents = nevents)
+			thresholds.append( np.array(p)[:,1] ) #threshold per strip
+			sigmas.append( np.array(p)[:,2] ) #threshold per strip
+
+		if(plot): plt.figure(2)
+		for i in range(0,120):
+			ths = np.array(thresholds)[:,i]
+			par, cov = curve_fit(f= f_line,  xdata = callist, ydata = ths, p0 = [0, 0])
+			gain.append(par[0])
+			offset.append(par[1])
+			if(plot):
+				plt.plot(callist, offset[i]+gain[i]*np.array(callist))
+				plt.plot(callist, ths, 'o')
+		gain=np.array(gain)
+		offset=np.array(offset)
+		for i in range(0,120):
+			noise[i] = np.average(np.array(sigmas)[:,i])
+		if(plot):
+			plt.figure(3)
+			plt.bar(range(0,120), noise)
+		if(plot):
 			plt.show()
-		return gain, offset
+
+		storedata = np.array([ np.array([runname]*120) , np.array(range(1,121)) , gain , noise , offset])
+		CSV.ArrayToCSV(array = storedata, filename = fo)
+
+		return gain, offset, noise
 
 
 	def set_trimming(self, default_trimming = 'keep', striprange = 'all', display = True):
@@ -411,9 +436,14 @@ class SSA_cal_utility():
 
 
 	def _scurve_fit_errorfunction(self, curve, nevents, expected = 'autodefine', errmsg="", reiterate = 3):
-		sct = curve
-		err = True
-		itr = 0
+		sct = curve;
+		err = True;	itr = 0;
+		erret = (-1, [-1, -1, -1])
+
+		if( np.size(np.where( curve > (nevents-1) )) < 1):
+			print "Fitting Zeros " + errmsg
+			return erret
+
 		# get read of the noise peack
 		while ( not ((sct[0] == nevents) and (sct[1] == nevents)) ):
 			sct = sct[ np.argmax(sct)+1 : ]
@@ -427,8 +457,8 @@ class SSA_cal_utility():
 		elif(isinstance(expected, int) or isinstance(expected, float)):
 			par_guess = expected
 		else:
-			err = True
-			return False
+			print "Fitting failed " + errmsg
+			return erret
 
 		while(err == True and itr < reiterate):
 			try:
@@ -445,11 +475,12 @@ class SSA_cal_utility():
 				err = False
 		if(err):
 			print "Fitting failed " + errmsg
-			return False
+			return erret
 		else:
 			# readd number of th points removed by the noise cleaning
 			thidx = int(round(par[1]))
 			return thidx, par
+
 
 	def _scurve_fit_gaussian(self, curve, errmsg="", reiterate = 10):
 		guess_mean = np.argmax(curve)

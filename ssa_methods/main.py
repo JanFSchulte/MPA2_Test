@@ -20,7 +20,7 @@ except ImportError:
 	print "- Impossible to access GPIB instruments"
 
 measure     = SSA_measurements(ssa, I2C, fc7, cal, analog_mux_map, biascal)
-xray        = SSA_test_XRay(ssa, I2C, fc7, cal, pwr, test, measure)
+xray        = SSA_test_XRay(ssa, I2C, fc7, cal, biascal, pwr, test, measure)
 
 def on():
 	sleep(0.1);  pwr.set_supply('on', display=False)

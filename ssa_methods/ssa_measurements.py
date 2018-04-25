@@ -85,6 +85,7 @@ class SSA_measurements():
 
 
 
+
 	def scurve_trim_spread(self, filename = 'Chip1', calpulse = 50, plot = True, iterations = 5):
 		scurve_init, scurve_trim = self.cal.trimming_scurves(method = 'center', default_trimming = 15, cal_ampl = calpulse, iterations = iterations, plot = False)
 		data = self.scurves(cal_list = [calpulse], trim_list = [0, 31], name = filename)
