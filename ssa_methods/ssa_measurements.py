@@ -23,6 +23,8 @@ class SSA_measurements():
 		self.bias     = biascal
 		self.muxmap   = analog_mux_map
 
+
+
 	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, plot = True):
 		plt.clf()
 		if (isinstance(filename, str)):
@@ -42,7 +44,7 @@ class SSA_measurements():
 
 
 
-	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', filename = False, runname= '', plot = True):
+	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', ret_average = True, filename = False, runname= '', plot = True):
 		data = np.zeros([120, 256])
 		A = []; sigma = []; mu = []; cnt = 0;
 		if(mode == 'sbs'):
@@ -78,11 +80,13 @@ class SSA_measurements():
 			plt.show()
 
 		sigma = np.array(sigma)
-		highnoise = np.where( sigma > 3)[0]
-		sigma_filter = sigma[(np.where(sigma < 100)[0])]
-		average_noise = np.mean(sigma_filter)
-		return  [average_noise, highnoise, sigma]
-
+		if(ret_average):
+			highnoise = np.where( sigma > 3)[0]
+			sigma_filter = sigma[(np.where(sigma < 100)[0])]
+			average_noise = np.mean(sigma_filter)
+			return [average_noise, highnoise]
+		else:
+			return sigma
 
 
 
@@ -116,6 +120,69 @@ class SSA_measurements():
 			plt.plot(scurve_trim, 'y', alpha = 0.5)
 			plt.show()
 			return scurve_trim, scurve_init
+
+
+
+	def gain_offset_noise(self, calpulse = 50, nevents=1000, ret_average = True, plot = True, use_stored_data = False, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+
+		utils.activate_I2C_chip()
+		fo = open("../SSA_Results/" + file + "_Measure_Gain_Offset_Noise.log", filemode)
+
+		callist = [calpulse-20, calpulse, calpulse+20]
+		thresholds = []; sigmas = [];
+		gain = []; offset = []; cnt = 0;
+		noise = np.zeros(120)
+		if(plot):
+			plt.clf();
+			plt.figure(1)
+
+		for cal in callist:
+			if(use_stored_data and (('CAL%dE%d'%(cal,nevents)) in self.cal.storedscurve) ):
+				s = self.cal.storedscurve[ ('CAL%dE%d'%(cal,nevents)) ]
+			else:
+				s = self.cal.scurves(
+					cal_ampl = cal,
+					nevents = nevents,
+					display = False,
+					plot = False,
+					filename = file,
+					msg = "")
+				self.cal.storedscurve[ ('CAL%dE%d'%(cal,nevents)) ] = s
+			thlist, p = self.cal.evaluate_scurve_thresholds(scurve = s, nevents = nevents)
+			thresholds.append( np.array(p)[:,1] ) #threshold per strip
+			sigmas.append( np.array(p)[:,2] ) #threshold per strip
+
+		if(plot): plt.figure(2)
+		for i in range(0,120):
+			ths = np.array(thresholds)[:,i]
+			par, cov = curve_fit(f= f_line,  xdata = callist, ydata = ths, p0 = [0, 0])
+			gain.append(par[0])
+			offset.append(par[1])
+			if(plot):
+				plt.plot(callist, offset[i]+gain[i]*np.array(callist))
+				plt.plot(callist, ths, 'o')
+		gain=np.array(gain)
+		offset=np.array(offset)
+		for i in range(0,120):
+			noise[i] = np.average(np.array(sigmas)[:,i])
+		if(plot):
+			plt.figure(3)
+			plt.bar(range(0,120), noise)
+		if(plot):
+			plt.show()
+
+		storedata = np.array([ np.array([runname]*120) , np.array(range(1,121)) , gain , offset , noise])
+		CSV.ArrayToCSV(array = storedata, filename = fo)
+
+		if(ret_average):
+			highnoise = np.concatenate([np.where( noise < 0 )[0], np.where( noise > 3 )[0]])
+			noise_filter = noise[  np.where( noise > 0 )[0]  ]
+			average_noise = np.mean(noise_filter)
+			gain_mean = np.mean(gain)
+			offset_mean = np.mean(offset)
+			return [gain_mean, offset_mean, average_noise, highnoise]
+		else:
+			return gain, offset, noise
 
 
 
@@ -203,6 +270,8 @@ class SSA_measurements():
 
 		return DNL, INL, x, data
 		return DNLMAX, INLMAX
+
+
 
 	def delayline_resolution(self, debug = False):
 		resolution = []

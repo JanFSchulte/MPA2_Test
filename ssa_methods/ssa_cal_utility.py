@@ -34,7 +34,7 @@ class SSA_cal_utility():
 		self.baseline = 'nondefined'
 		self.storedscurve = {}
 
-	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = False, filename2 = "trim0", msg = "", striplist = range(1,121), speeduplevel = 0):
+	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 0):
 		'''	cal_ampl  -> int |'baseline'  -> Calibration pulse charge (in CALDAC LSBs)
 			mode      -> 'all' | 'sbs'   -> All strips together or one by one
 			nevents   -> int number      -> Number of calibration pulses (default 1000)
@@ -297,58 +297,6 @@ class SSA_cal_utility():
 			plt.show()
 
 		return scurve_init , scurve
-
-
-	def gain_offset_noise(self, calpulse = 50, nevents=1000, plot = True, use_stored_data = False, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
-		utils.activate_I2C_chip()
-		fo = open("../SSA_Results/" + file + "_Measure_Gain_Offset_Noise.log", filemode)
-		callist = [calpulse-20, calpulse, calpulse+20]
-		thresholds = []; sigmas = [];
-		gain = []; offset = []; cnt = 0;
-		noise = np.zeros(120)
-		if(plot):
-			plt.clf();
-			plt.figure(1)
-
-		for cal in callist:
-			if(use_stored_data and (('CAL%dE%d'%(cal,nevents)) in self.storedscurve) ):
-				s = self.storedscurve[ ('CAL%dE%d'%(cal,nevents)) ]
-			else:
-				s = self.scurves(
-					cal_ampl = cal,
-					nevents = nevents,
-					display = False,
-					plot = False,
-					filename = False,
-					msg = "")
-				self.storedscurve[ ('CAL%dE%d'%(cal,nevents)) ] = s
-			thlist, p = self.evaluate_scurve_thresholds(scurve = s, nevents = nevents)
-			thresholds.append( np.array(p)[:,1] ) #threshold per strip
-			sigmas.append( np.array(p)[:,2] ) #threshold per strip
-
-		if(plot): plt.figure(2)
-		for i in range(0,120):
-			ths = np.array(thresholds)[:,i]
-			par, cov = curve_fit(f= f_line,  xdata = callist, ydata = ths, p0 = [0, 0])
-			gain.append(par[0])
-			offset.append(par[1])
-			if(plot):
-				plt.plot(callist, offset[i]+gain[i]*np.array(callist))
-				plt.plot(callist, ths, 'o')
-		gain=np.array(gain)
-		offset=np.array(offset)
-		for i in range(0,120):
-			noise[i] = np.average(np.array(sigmas)[:,i])
-		if(plot):
-			plt.figure(3)
-			plt.bar(range(0,120), noise)
-		if(plot):
-			plt.show()
-
-		storedata = np.array([ np.array([runname]*120) , np.array(range(1,121)) , gain , noise , offset])
-		CSV.ArrayToCSV(array = storedata, filename = fo)
-
-		return gain, offset, noise
 
 
 	def set_trimming(self, default_trimming = 'keep', striprange = 'all', display = True):

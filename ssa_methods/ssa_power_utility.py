@@ -23,6 +23,11 @@ class ssa_power_utility:
 		elif (value == 'external' or value == 1):
 			self.fc7.write("cnfg_clock_ext_clk_en", 1)
 
+	def on(self):
+		self.set_supply('on')
+
+	def off(self):
+		self.set_supply('off')
 
 	def set_supply(self, mode = 'on', d = 1.0, a = 1.25, p = 1.25, bg = 0.3, display = True):
 		if(mode == 'on' or mode == 1):
