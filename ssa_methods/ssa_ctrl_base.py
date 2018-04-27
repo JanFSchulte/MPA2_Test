@@ -34,6 +34,32 @@ class ssa_ctrl_base:
 		self.set_t1_sampling_edge("negative")
 		return rp
 
+	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
+		registers = []
+		for reg in self.ssa_peri_reg_map:
+			tmp = [-1, reg, self.I2C.peri_read(reg)]
+			registers.append(tmp)
+		for strip in range(1,121):
+			for reg in self.ssa_strip_reg_map:
+				tmp = [strip, reg, self.I2C.strip_read(reg, strip)]
+				registers.append(tmp)
+		print "->  \tConfiguration Saved on file"
+		if display:
+			for i in registers:
+				print i
+		CSV.ArrayToCSV(registers, file)
+
+	def load_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
+		registers = CSV.CsvToArray(file)[:,1:4]
+		for tmp in registers:
+			if(tmp[0] == -1):
+				self.I2C.peri_write(tmp[1], tmp[2])
+			elif(tmp[0]>=1 and tmp[0]<=120):
+				self.I2C.strip_write(tmp[1], tmp[0], tmp[2])
+			if display:
+				print [tmp[0], tmp[1], tmp[2]]
+		print "->  \tConfiguration Loaded from file"
+
 
 	def set_output_mux(self, testline = 'highimpedence'):
 		ctrl = self.analog_mux_map[testline]

@@ -19,4 +19,7 @@ class CSVutility:
 		array = np.array(temp)
 		return array
 
+	def CsvToArray(self, filename):
+		return self.csv_to_array(filename)
+
 CSV = CSVutility()

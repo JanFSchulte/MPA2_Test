@@ -25,18 +25,15 @@ class SSA_test_XRay():
 	def initialise(self):
 		self.ssa.init(reset_board = True, reset_chip = True)
 		self.scurve_trim_spread()
-		self.biascal.calibrate_to_nominals()
-		#\
-
-
-		self.ssa.save_configuration(self.config_file)
+		#self.biascal.calibrate_to_nominals()
+		self.ssa.ctrl.save_configuration(self.config_file, display=False)
 
 
 	def test_routine(self, runname = 'OMrad'):
 		time_init = time.time()
 		fo = "../SSA_Results/X-Ray/" + runname + '_' + utils.date_time() + '_X-Ray_'
 		self.ssa.init(reset_board = True, reset_chip = True)
-		#self.ssa.load_configuration(self.config_file)
+		self.ssa.load_configuration(self.config_file, display = False)
 
 		#self.test_routine_parameters(filename = fo, runname = runname)
 		self.test_routine_digital(filename = fo, runname = runname)
