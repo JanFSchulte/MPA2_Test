@@ -255,20 +255,20 @@ class SSA_test_utility():
 					print "\tOk            -> " + dstr + "                                  "
 				cnt[0] += 1
 		eff = ((1-(cnt[1]/float(cnt[0])))*100 )
-		fo.write( "%s ;\t %7.2f%% ;\t %s" % (runname, eff, '; '.join(map(str, errlist)) ))
+		fo.write( "\n%s ;\t %7.2f%% ;\t %s" % (runname, eff, '; '.join(map(str, errlist)) ))
 		fo.close()
 		self.memerrlist = errlist
 		return eff
 
-	def memory_vs_voltage(self, memory = 1, step = 0.01, start = 1.25, stop = 0.9, latency = 200, shift = 0, file = 'TestLogs/Chip-0', filemode = 'w'):
+	def memory_vs_voltage(self, memory = 1, step = 0.005, start = 1.25, stop = 0.9, latency = 200, shift = 0, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
 		utils.activate_I2C_chip()
 		fo = open("../SSA_Results/" + file + "_Test_Memory-Supply_" + str(memory) + ".log", filemode)
-		fo.write("DVDD;       EFFICIENCY;    ERROR LIST; \n")
+		fo.write("\n    RUN ; DVDD;       EFFICIENCY;    ERROR LIST; \n")
 		for dvdd in np.arange(start, stop, -step):
 			self.pwr.set_dvdd( dvdd )
 			eff = self.memory(memory = memory, display = 0, latency = latency, shift = shift)
 			erlist = self.memerrlist
-			fo.write("%4.3fV ;     %7.2f%% ;       %s ; \n" % (dvdd, eff, erlist))
+			fo.write("%8s ; %4.3fV ;     %7.2f%% ;       %s ; \n" % (runname, dvdd, eff, erlist))
 			print "%4.3fV ;  %7.2f%% ;" % (dvdd, eff)
 			if eff == 0:
 				break

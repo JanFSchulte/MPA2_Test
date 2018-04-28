@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-
+source ~/FC7/sw/fc7/setup.sh
 if ! ifconfig | grep 'enp0s31f6:1'; then
 	sudo /usr/sbin/rarpd -a
 	sudo ifconfig enp0s31f6:1 192.168.01.04

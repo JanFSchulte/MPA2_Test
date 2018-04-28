@@ -37,7 +37,7 @@ class SSA_test_XRay():
 
 		#self.test_routine_parameters(filename = fo, runname = runname)
 		self.test_routine_digital(filename = fo, runname = runname)
-		#self.test_routine_analog(filename = fo, runname = runname)
+		self.test_routine_analog(filename = fo, runname = runname)
 		self.summary.display(runname)
 		self.summary.save(fo, runname)
 
@@ -45,16 +45,16 @@ class SSA_test_XRay():
 	def test_routine_digital(self, filename = 'default', runname = '  0Mrad'):
 		filename = self.summary.get_file_name(filename)
 
-		r1, r2 = self.test.lateral_input_phase_tuning(display=False, file = filename, filemode = 'a', runname = runname)
+		r1, r2 = self.test.lateral_input_phase_tuning(display=False, file = filename, filemode = 'a', runname = runname, shift = -1)
 		self.summary.set('Lateral_In_L', r1, '', '',  runname)
 		self.summary.set('Lateral_In_R', r2, '', '',  runname)
 
-		r1, r2, r3 = self.test.cluster_data_basic(mode = 'digital', shift = 0, shiftL = 0, display=False, file = filename, filemode = 'a', runname = runname)
+		r1, r2, r3 = self.test.cluster_data_basic(mode = 'digital', shift = -1, shiftL = 1, display=False, file = filename, filemode = 'a', runname = runname)
 		self.summary.set('Cluster_Data',         r1, '%', '',  runname)
 		self.summary.set('Lateral_In_Clusters',  r2, '%', '',  runname)
 		self.summary.set('Lateral_Out_Clusters', r3, '%', '',  runname)
 
-	 	r1, r2, r3 = self.test.cluster_data_basic(mode = 'analog',  shift = 0, shiftL = 0, display=False, file = filename, filemode = 'a', runname = runname)
+	 	r1, r2, r3 = self.test.cluster_data_basic(mode = 'analog',  shift = -2, shiftL = 0, display=False, file = filename, filemode = 'a', runname = runname)
 		self.summary.set('Pulse_Injection', r1, '%', '',  runname)
 
 		r1 = self.test.memory(memory = 1, display= 0,  file = filename, filemode = 'a', runname = runname)
@@ -67,6 +67,10 @@ class SSA_test_XRay():
 		self.summary.set('L1_data',    r1, '%', '',  runname)
 		self.summary.set('HIP_flags',  r2, '%', '',  runname)
 
+		self.test.memory_vs_voltage(memory = 1, step = 0.005, start = 1.25, stop = 0.9, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
+
+		self.summary.display(runname)
+		#self.summary.save(filename, runname)
 
 
 	def test_routine_analog(self, filename = 'default', runname = '  0Mrad'):
