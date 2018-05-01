@@ -25,35 +25,40 @@ class SSA_measurements():
 
 
 
-	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, plot = True):
+	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2):
 		plt.clf()
-		if (isinstance(filename, str)):
-			filename =  filename+'/'+filename
 		data = []
+		if(isinstance(filename, str)):
+			fo = "../SSA_Results/" + filename + "_" + str(runname)
 		for cal in cal_list:
 			if(trim_list == 'keep'):
-				d = self.cal.scurves(cal_ampl = cal, filename = filename, mode = mode, rdmode = rdmode, filename2 = 'trim', plot = False, msg = "CAL = " + str(cal))
+				d = self.cal.scurves(cal_ampl = cal, nevents = nevents,filename = fo, mode = mode, rdmode = rdmode,filename2 = 'trim',speeduplevel = speeduplevel,plot = False, msg = "CAL = " + str(cal))
 				data.append(d)
 			else:
 				for trim in trim_list:
 					t = self.cal.set_trimming(trim, 'all', False)
-					d = self.cal.scurves(cal_ampl = cal, filename = filename, mode = mode, rdmode = rdmode, filename2 = 'trim'+str(trim), plot = False, msg = "[CAL=" + str(cal) +"][TRIM="+str(trim)+']')
+					d = self.cal.scurves(cal_ampl = cal, nevents = nevents,filename = fo, mode = mode, rdmode = rdmode,filename2 = 'trim'+str(trim),speeduplevel = speeduplevel,plot = False, msg = "[CAL=" + str(cal) +"][TRIM="+str(trim)+']')
 					data.append(d)
-		if plot: plt.show()
+		if plot:
+			plt.clf()
+			for i in data:
+				plt.plot(i)
+			plt.show()
 		return data
 
 
 
-	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', ret_average = True, filename = False, runname= '', plot = True):
+	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', ret_average = True, filename = False, runname= '', plot = True, filemode = 'w'):
+		print "->  \tBaseline Noise Measurement"
 		data = np.zeros([120, 256])
 		A = []; sigma = []; mu = []; cnt = 0;
 		if(mode == 'sbs'):
 			for s in striplist:
-				tmp = self.cal.scurves(cal_ampl='baseline', rdmode = 'i2c', mode = 'sbs', striplist = [s], plot = False, speeduplevel = 2)
+				tmp = self.cal.scurves(cal_ampl='baseline', filename = "../SSA_Results/" + filename + "_" + str(runname), rdmode = 'i2c', mode = 'sbs', striplist = [s], plot = False, speeduplevel = 2)
 				data[s-1] = tmp[:,s-1]
 				cnt += 1
 		elif(mode == 'all'):
-			tmp = self.cal.scurves(cal_ampl='baseline', rdmode = 'fast', mode = 'all', striplist = striplist, plot = False, speeduplevel = 2)
+			tmp = self.cal.scurves(cal_ampl='baseline', filename = "../SSA_Results/" + filename + "_" + str(runname), rdmode = 'fast', mode = 'all', striplist = striplist, plot = False, speeduplevel = 2)
 			data = np.transpose(tmp)
 		plt.clf()
 		plt.figure(1)
@@ -66,14 +71,16 @@ class SSA_measurements():
 			if(plot and par[2] < np.inf):
 				plt.plot(data[s-1], 'og')
 				plt.plot(x, f_gauss(x, par[0], par[1], par[2]), '-r')
-
 		if( isinstance(filename, str) ):
 			#f1 = "../SSA_Results/" + filename + "/Scurve_NoiseBaseline/" + filename + "_scurve_trim31__cal_0.csv"
-			fo = "../SSA_Results/" + filename + "_Baseline_scurve_trim31_cal0.csv"
-			CSV.ArrayToCSV (array = data, filename = fo, transpose = False)
-			fo = "../SSA_Results/" + filename + "_Baseline_Noise.csv"
-			CSV.ArrayToCSV (array = [[runname]*len(striplist), striplist, A, mu, sigma], filename = fo, transpose = False)
-
+			#fo = "../SSA_Results/" + filename + "_Baseline_scurve_trim31_cal0.csv"
+			#CSV.ArrayToCSV (array = data, filename = fo, transpose = False)
+			#fo = "../SSA_Results/" + filename + "_" + str(runname) + "_Baseline_Noise.csv"
+			#CSV.ArrayToCSV (array = [[runname]*len(striplist), striplist, A, mu, sigma], filename = fo, transpose = False)
+			fo = open("../SSA_Results/" + filename + "_Measure_Noise_Baseline.csv", filemode)
+			fo.write( "\n%s ; Amplitude ;  %s" % (runname, '; '.join(map(str, A)) ))
+			fo.write( "\n%s ; Mean      ;  %s" % (runname, '; '.join(map(str, mu)) ))
+			fo.write( "\n%s ; Sigma     ;  %s" % (runname, '; '.join(map(str, sigma)) ))
 		if(plot):
 			plt.figure(2)
 			plt.plot(striplist, sigma, 'go-')
@@ -90,16 +97,25 @@ class SSA_measurements():
 
 
 
-	def scurve_trim_spread(self, filename = 'Chip1', calpulse = 50, plot = True, iterations = 5):
-		scurve_init, scurve_trim = self.cal.trimming_scurves(method = 'center', default_trimming = 15, cal_ampl = calpulse, iterations = iterations, plot = False)
-		data = self.scurves(cal_list = [calpulse], trim_list = [0, 31], name = filename)
-		scurve_0 = data[0]
-		scurve_31 = data[1]
+	def scurve_trim(self, filename = '../SSA_results/Chip0', calpulse = 50, plot = True, iterations = 5):
+		print "->  \tS-Curve Trimming"
+		if plot:
+			data = self.scurves(mode = 'all', rdmode = 'fast', cal_list = [calpulse], trim_list = [0, 31], filename = filename, plot = False)
+			scurve_0 = data[0]; scurve_31 = data[1];
+
+		scurve_init, scurve_trim = self.cal.trimming_scurves(
+			method = 'center',
+			default_trimming = 15,
+			cal_ampl = calpulse,
+			iterations = iterations,
+			plot = False)
+
 		if( isinstance(filename, str) ):
-			fo = "../SSA_Results/" + filename + "/" + filename + "_scurve_trim15__cal_" + str(calpulse) +".csv"
+			fo = "../SSA_Results/" + filename + "_scurve_" + "trim15" + "__cal_" + str(calpulse) + ".csv"
 			CSV.ArrayToCSV (array = scurve_init, filename = fo, transpose = True)
-			fo = "../SSA_Results/" + filename + "/" + filename + "_scurve_trim__cal_" + str(calpulse) +".csv"
+			fo = "../SSA_Results/" + filename + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
 			CSV.ArrayToCSV (array = scurve_trim, filename = fo, transpose = True)
+
 		if plot:
 			plt.clf()
 			plt.figure(1)
@@ -119,15 +135,44 @@ class SSA_measurements():
 			plt.plot(scurve_31,   'r', alpha = 0.5)
 			plt.plot(scurve_trim, 'y', alpha = 0.5)
 			plt.show()
-			return scurve_trim, scurve_init
+
+		return scurve_trim, scurve_init
+
+
+	def threshold_spread(self, calpulse = 50, file = '../SSA_results/Chip0', runname = '', use_stored_data = False, plot = True, nevents=1000, speeduplevel = 2, filemode = 'w'):
+		print "->  \tthreshold Spread Measurement"
+		fi = "../SSA_Results/" + file + "_" + str(runname) + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
+		if(use_stored_data and os.path.exists(fi)):
+			s = CSV.CsvToArray(fi)
+			s = np.transpose(s)
+		else:
+			s = self.scurves(
+				cal_list = [calpulse],
+				trim_list = 'keep',
+				mode = 'all',
+				rdmode = 'fast',
+				filename = file,
+				runname = runname,
+				nevents = nevents,
+				speeduplevel = speeduplevel,
+				plot = False)[0]
+
+		tmp, par = self.cal.evaluate_scurve_thresholds(scurve = s, nevents = nevents)
+		thresholds = par[:,1]
+		std = np.std(thresholds)
+		fo = open("../SSA_Results/" + file + "_Measure_ThresholdSpread.csv", filemode)
+		fo.write( "\n%s ; %7.2f ; %s" % (runname, std, '; '.join(map(str, thresholds)) ))
+		if(plot):
+			plt.clf()
+			plt.hist(thresholds)
+			plt.show()
+		return std
 
 
 
-	def gain_offset_noise(self, calpulse = 50, nevents=1000, ret_average = True, plot = True, use_stored_data = False, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
-
+	def gain_offset_noise(self, calpulse = 50, ret_average = True, plot = True, use_stored_data = False, file = 'TestLogs/Chip0', filemode = 'w', runname = '', nevents=1000, speeduplevel = 2):
+		print "->  \tSCurve Gain, Offset and Noise Measurement"
 		utils.activate_I2C_chip()
-		fo = open("../SSA_Results/" + file + "_Measure_Gain_Offset_Noise.log", filemode)
-
 		callist = [calpulse-20, calpulse, calpulse+20]
 		thresholds = []; sigmas = [];
 		gain = []; offset = []; cnt = 0;
@@ -137,17 +182,22 @@ class SSA_measurements():
 			plt.figure(1)
 
 		for cal in callist:
-			if(use_stored_data and (('CAL%dE%d'%(cal,nevents)) in self.cal.storedscurve) ):
-				s = self.cal.storedscurve[ ('CAL%dE%d'%(cal,nevents)) ]
+			fi = "../SSA_Results/" + file + "_" + str(runname) + "_scurve_" + "trim" + "__cal_" + str(cal) + ".csv"
+			if(use_stored_data and os.path.exists(fi)):
+				s = CSV.CsvToArray(fi)
+				s = np.transpose(s)
 			else:
-				s = self.cal.scurves(
-					cal_ampl = cal,
-					nevents = nevents,
-					display = False,
-					plot = False,
+				s = self.scurves(
+					cal_list = [cal],
+					trim_list = 'keep',
+					mode = 'all',
+					rdmode = 'fast',
 					filename = file,
-					msg = "")
-				self.cal.storedscurve[ ('CAL%dE%d'%(cal,nevents)) ] = s
+					runname = runname,
+					speeduplevel = speeduplevel,
+					nevents = nevents,
+					plot = False)[0]
+
 			thlist, p = self.cal.evaluate_scurve_thresholds(scurve = s, nevents = nevents)
 			thresholds.append( np.array(p)[:,1] ) #threshold per strip
 			sigmas.append( np.array(p)[:,2] ) #threshold per strip
@@ -168,11 +218,14 @@ class SSA_measurements():
 		if(plot):
 			plt.figure(3)
 			plt.bar(range(0,120), noise)
-		if(plot):
 			plt.show()
 
-		storedata = np.array([ np.array([runname]*120) , np.array(range(1,121)) , gain , offset , noise])
-		CSV.ArrayToCSV(array = storedata, filename = fo)
+		fo = open("../SSA_Results/" + file + "_Measure_Noise_SCurve.csv", filemode)
+		fo.write( "\n%s ; Noise S-Curve ; %s" % (runname, '; '.join(map(str, noise)) ))
+		fo = open("../SSA_Results/" + file + "_Measure_Gain_SCurve.csv", filemode)
+		fo.write( "\n%s ; Gain          ; %s" % (runname, '; '.join(map(str, gain)) ))
+		fo = open("../SSA_Results/" + file + "_Measure_Offset_SCurve.csv", filemode)
+		fo.write( "\n%s ; Offset        ; %s" % (runname, '; '.join(map(str, offset)) ))
 
 		if(ret_average):
 			highnoise = np.concatenate([np.where( noise < 0 )[0], np.where( noise > 3 )[0]])

@@ -34,7 +34,8 @@ class ssa_i2c_conf:
 
 
 	def peri_write(self, register, data):
-		st = True
+		st = True;
+		data = data & 0xff
 		if register not in self.ssa_peri_reg_map.keys():
 			print "->  \tRegister name not found"
 			rep = False

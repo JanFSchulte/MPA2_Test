@@ -43,7 +43,7 @@ class ssa_ctrl_base:
 			for reg in self.ssa_strip_reg_map:
 				tmp = [strip, reg, self.I2C.strip_read(reg, strip)]
 				registers.append(tmp)
-		print "->  \tConfiguration Saved on file"
+		print "->  \tConfiguration Saved on file:   " + str(file)
 		if display:
 			for i in registers:
 				print i

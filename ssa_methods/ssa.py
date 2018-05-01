@@ -31,6 +31,12 @@ class SSA_ASIC:
 		self.i2c.set_debug_mode(value)
 		self.i2c.set_readback_mode()
 
+	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
+		self.ctrl.save_configuration(file = file, display = display)
+
+	def load_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
+		self.ctrl.load_configuration(file = file, display = display)
+
 	def init(self, reset_board = False, reset_chip = False, slvs_current = 0b111, edge = "negative", display = True):
 		if(display):
 			sys.stdout.write("->  \tInitialising..\r")

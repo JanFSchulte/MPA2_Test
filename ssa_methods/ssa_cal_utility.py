@@ -34,7 +34,7 @@ class SSA_cal_utility():
 		self.baseline = 'nondefined'
 		self.storedscurve = {}
 
-	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 0):
+	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2):
 		'''	cal_ampl  -> int |'baseline'  -> Calibration pulse charge (in CALDAC LSBs)
 			mode      -> 'all' | 'sbs'   -> All strips together or one by one
 			nevents   -> int number      -> Number of calibration pulses (default 1000)
@@ -135,11 +135,11 @@ class SSA_cal_utility():
 					for s in range(0,120):
 						if ((threshold > 0) and (scurves[threshold,s])==0 and (scurves[threshold-1,s]>(nevents*0.8)) ) :
 							error = True; ermsg = '[Condition 1]' + str(scurves[threshold,s]) +'  ' + str(scurves[threshold-1,s])
-						elif ((not baseline) and (threshold > 0) and (scurves[threshold,s])== 2*scurves[threshold-1,s] and (scurves[threshold,s] != 0)):
+						elif ((not baseline) and (threshold > 10) and (scurves[threshold,s])== 2*scurves[threshold-1,s] and (scurves[threshold,s] != 0)):
 							error = True; ermsg = '[Condition 2]'
 
 				if (error == True):
-					threshold = threshold - 1
+					threshold = (threshold-1) if (threshold>0) else 0
 					utils.ShowPercent(threshold, 256, "Failed to read counters for threshold " + str(threshold) + ". Redoing. " +  ermsg)
 					sleep(0.5)
 					continue
@@ -147,7 +147,7 @@ class SSA_cal_utility():
 					strout += "Counters samples = 1->[" + str(scurves[threshold][0]) + "]  30->[" + str(scurves[threshold][29]) + "]  60->[" + str(scurves[threshold][59]) + "]  90->[" + str(scurves[threshold][89]) + "]  120->[" + str(scurves[threshold][119]) + "]"
 
 				if(speeduplevel >= 2 and threshold > 16):
-					if( (scurves[-9: -1] == np.zeros((8,120), dtype=np.int)).all() ):
+					if( (scurves[threshold-8: threshold ] == np.zeros((8,120), dtype=np.int)).all() ):
 						break
 
 				if (display == True):
@@ -174,9 +174,7 @@ class SSA_cal_utility():
 
 
 	def trimming_scurves(self, method = 'expected', cal_ampl = 100, th_nominal = 'default', default_trimming = 'keep', striprange = range(1,121), ratio = 'default', iterations = 5, nevents = 1000, plot = True, display = False, reevaluate = True):
-		utils.print_enable(False)
-		activate_I2C_chip()
-		utils.print_enable(True)
+		utils.activate_I2C_chip()
 		# trimdac/thdac ratio
 		if(ratio == 'evaluate'):
 			dacratiolist = np.array(self.evaluate_thdac_trimdac_ratio(trimdac_pvt_calib = False, cal_ampl = cal_ampl, th_nominal = th_nominal,  nevents = nevents, plot = False))
@@ -234,7 +232,7 @@ class SSA_cal_utility():
 		scurve = scurve_init
 		par = par_init
 
-		print "Difference = " +  str(np.max(thlist)-np.min(thlist))
+		print "->  \tDifference = " +  str(np.max(thlist)-np.min(thlist))
 
 		# start trimming on the S-Curves
 		for i in range(0, iterations):
@@ -455,7 +453,9 @@ class SSA_cal_utility():
 		else:
 			return par
 
-	def _scurve_fit_gaussian1(self, curve, errmsg="", reiterate = 10):
+	def _scurve_fit_gaussian1(self, curve, x = 'default', errmsg="", reiterate = 10):
+		if(x == 'default'):
+			x = range(np.size(curve))
 		guess_mean = np.argmax(curve)
 		guess_sigma = np.size( np.where(curve > 10) )/6.0
 		errret = [np.inf, np.inf, np.inf]
@@ -466,7 +466,7 @@ class SSA_cal_utility():
 		err = True; itr = 0;
 		while(err == True and itr < reiterate):
 			try:
-				result = gmodel.fit(curve, x=range(np.size(curve)), A=1, mu=guess_mean, sigma=(guess_sigma) )
+				result = gmodel.fit(curve, x=x, A=1, mu=guess_mean, sigma=(guess_sigma) )
 			except:
 				itr += 1
 			else:
