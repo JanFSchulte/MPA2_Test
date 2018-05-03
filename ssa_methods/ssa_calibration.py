@@ -169,8 +169,9 @@ class ssa_calibration():
 		if (inst0 == -1):
 			if(not self.initialised):
 				self.__initialise()
-				inst = self.multimeterinst
-		else: inst = inst0
+			inst = self.multimeterinst
+		else:
+			inst = inst0
 		self.ssa.ctrl.set_output_mux(name)
 		measurement = self.multimeter.measure(inst)
 		self.ssa.ctrl.set_output_mux('highimpedence')

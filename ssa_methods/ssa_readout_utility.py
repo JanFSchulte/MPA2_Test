@@ -220,9 +220,11 @@ class SSA_readout():
 		return coordinates
 
 
-	def read_counters_fast(self, striplist = range(1,121), raw_mode_en = 0):
+	def read_counters_fast(self, striplist = range(1,121), raw_mode_en = 0, shift = 0):
 		self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
+		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8 + shift) )
+		self.I2C.peri_write('AsyncRead_StartDel_LSB', (9) )
 		start_counters_read(1)
 		timeout = 0
 		failed = False

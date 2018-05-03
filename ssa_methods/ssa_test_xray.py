@@ -18,7 +18,7 @@ runtest.enable('Pulse_Injection')
 runtest.enable('Memory_1')
 runtest.enable('Memory_2')
 runtest.enable('L1_data')
-runtest.enable('memory_vs_voltage')
+runtest.disable('memory_vs_voltage')
 runtest.enable('noise_baseline')
 runtest.enable('gain_offset_noise')
 runtest.enable('threshold_spread')
@@ -47,6 +47,11 @@ class SSA_test_XRay():
 
 
 	def test_routine(self, filename, runname = 'OMrad'):
+		print '\n\n\n\n'
+		print '========================================================'
+		print '     STARTING TEST   ' + str(runname)
+		print '========================================================'
+		print '\n\n'
 		time_init = time.time()
 		#fo = "../SSA_Results/X-Ray/" + runname + '_' + utils.date_time() + '_X-Ray_'
 		if(self.config_file == ''):
@@ -60,11 +65,18 @@ class SSA_test_XRay():
 		self.test_routine_digital(filename = fo, runname = runname)
 		self.summary.display(runname)
 		self.summary.save(fo, runname)
-		print "->  \tRun time = %7.2f" % (time.time() - time_init)
+		print '\n\n'
+		print '========================================================'
+		print "->  END TEST \tRun time = %7.2f" % (time.time() - time_init)
+		print '========================================================'
+		print '\n\n\n\n'
+		self.ssa.init(reset_board = True, reset_chip = True)
+		self.ssa.load_configuration(self.config_file, display = False)
 
 
 
 	def test_routine_parameters(self, filename = 'default', runname = '  0Mrad'):
+
 		filename = self.summary.get_file_name(filename)
 
 		r1, r2, r3 = self.pwr.get_power(display=True)
@@ -78,13 +90,16 @@ class SSA_test_XRay():
 
 
 
-	def test_routine_digital(self, filename = 'default', runname = '  0Mrad', shift = [0,0,-1,-1,0,0]):
+	def test_routine_digital(self, filename = 'default', runname = '  0Mrad', shift = [-1,1,-2,-2,0,0,-1]):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 
+		self.ssa.init(reset_board = True, reset_chip = True)
+		self.ssa.load_configuration(self.config_file, display = False)
+
 		while runtest.is_active('Lateral_In'):
 			try:
-				r1, r2 = self.test.lateral_input_phase_tuning(display=False, file = filename, filemode = 'a', runname = runname, shift = 0)
+				r1, r2 = self.test.lateral_input_phase_tuning(display=False, file = filename, filemode = 'a', runname = runname, shift = shift[6])
 				self.summary.set('Lateral_In_L', r1, '', '',  runname)
 				self.summary.set('Lateral_In_R', r2, '', '',  runname)
 				print "->  \tlateral_input_phase_tuning test Time = %7.2f" % (time.time() - time_init); time_init = time.time();
@@ -151,6 +166,9 @@ class SSA_test_XRay():
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 
+		self.ssa.init(reset_board = True, reset_chip = True)
+		self.ssa.load_configuration(self.config_file, display = False)
+
 		while runtest.is_active('noise_baseline'):
 			try:
 				self.ssa.load_configuration(self.config_file, display = False)
@@ -181,6 +199,33 @@ class SSA_test_XRay():
 				break
 			except:
 				print "X>  \tError in threshold_spread test. Reiterating."
+
+	def set_start_irradiation_time(self, filename, ):
+		print 'ciao'
+
+	def idle_routine(self):
+		try:
+			self.test.cluster_data_basic(mode = 'analog',  shift = -2, shiftL = -2, display=False, file = '../SSA_Results/temp', filemode = 'w', runname = '')
+			self.test.l1_data_basic(mode = 'digital', shift = 0, file = '../SSA_Results/temp', filemode = 'w', runname = '')
+		except:
+			print '========= ERROR ========'
+
+	def xray_loop(self, filename, runtime = (60*60*114), rate = (30*60) ):
+		time_init = time.time()
+		time_base = time_init
+		time_curr = time_init
+		iteration = 0
+		self.test_routine(filename = filename, runname = utils.date_time())
+		while ((time_curr-time_init) < runtime):
+			time_curr = time.time()
+			if( float(time_curr-time_base) > float(rate) ):
+				time_base = time_curr
+				iteration += 1
+				self.test_routine(filename = filename, runname = utils.date_time())
+			else:
+				self.idle_routine()
+
+
 
 
 

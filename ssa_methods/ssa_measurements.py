@@ -30,6 +30,8 @@ class SSA_measurements():
 		data = []
 		if(isinstance(filename, str)):
 			fo = "../SSA_Results/" + filename + "_" + str(runname)
+		else:
+			fo = False
 		for cal in cal_list:
 			if(trim_list == 'keep'):
 				d = self.cal.scurves(cal_ampl = cal, nevents = nevents,filename = fo, mode = mode, rdmode = rdmode,filename2 = 'trim',speeduplevel = speeduplevel,plot = False, msg = "CAL = " + str(cal))

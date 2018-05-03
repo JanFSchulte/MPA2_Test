@@ -34,7 +34,7 @@ class SSA_cal_utility():
 		self.baseline = 'nondefined'
 		self.storedscurve = {}
 
-	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2):
+	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2, countershift = 1):
 		'''	cal_ampl  -> int |'baseline'  -> Calibration pulse charge (in CALDAC LSBs)
 			mode      -> 'all' | 'sbs'   -> All strips together or one by one
 			nevents   -> int number      -> Number of calibration pulses (default 1000)
@@ -123,7 +123,7 @@ class SSA_cal_utility():
 						open_shutter(2);  sleep(0.01);
 						close_shutter(2); sleep(0.01);
 				if(rdmode == 'fast'):
-					failed, scurves[threshold] = self.ssa.readout.read_counters_fast(striplist)
+					failed, scurves[threshold] = self.ssa.readout.read_counters_fast(striplist, shift = countershift)
 				elif(rdmode == 'i2c'):
 					failed, scurves[threshold] = self.ssa.readout.read_counters_i2c(striplist)
 				else:
