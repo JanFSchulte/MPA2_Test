@@ -52,8 +52,11 @@ class SSA_test_utility():
 			time.sleep(0.001)
 			r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 			if(hfi):
-				while(r==prev):
-					time.sleep(0.1)
+				while(r==prev): ## for firmware bug in D19C
+					if(mode == "digital"):
+						self.ssa.inject.digital_pulse(hit_list = [i], initialise = False)
+					elif(mode == "analog"):
+						self.ssa.inject.analog_pulse(hit_list = [i], initialise = False)
 					r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 					if(wd>10): break
 					wd += 1;
@@ -101,7 +104,7 @@ class SSA_test_utility():
 
 
 
-	def cluster_data(self, mode = "digital", shift = -1,nstrips = 5, display=False, init = True, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+	def cluster_data(self, mode = "digital", shift = -1, nstrips = 7, display=False, init = True, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
 		fo = open("../SSA_Results/" + file + "_Test_ClusterData2_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = '';
 		utils.activate_I2C_chip()
@@ -109,7 +112,7 @@ class SSA_test_utility():
 		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 3)
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 20, enable = True, bypass = True)
 		self.ssa.ctrl.set_cal_pulse_delay(0)
-		prev = 0xff
+		prev = [0xff]*nstrips
 		if(mode == "digital"):
 			self.ssa.inject.digital_pulse(hit_list = [], hip_list = [], initialise = True)
 		elif(mode == "analog"):
@@ -120,7 +123,7 @@ class SSA_test_utility():
 		self.ssa.readout.cluster_data(initialize = True)
 		cnt = {'cl_sum': 0, 'cl_err' : 0};
 		for i in range(0,100):
-			clrange = random.sample(range(1, 121), nstrips)
+			clrange = np.array( random.sample(range(1, 60), nstrips)) * 2
 			cnt['cl_sum'] += 1; wd = 0;
 			err = [False]*3
 			if(mode == "digital"):
@@ -130,8 +133,8 @@ class SSA_test_utility():
 			time.sleep(0.001)
 			r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 			if(hfi):
-				while(r==prev): #for firmware issure to be fix in D19C
-					time.sleep(0.1)
+				while(r[0]==prev[0]): #for firmware issure to be fix in D19C
+					#time.sleep(0.1)
 					if(mode == "digital"):
 						self.ssa.inject.digital_pulse(hit_list = clrange, initialise = False)
 					elif(mode == "analog"):
@@ -139,10 +142,14 @@ class SSA_test_utility():
 					r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 					if(wd>10): break
 					wd += 1;
-			if (len(r) != nstrips): err[0] = True
-			elif (r != clrange): err[0] = True
-			stexpected = utils.cl2str(clrange);
-			stfound = utils.cl2str(r);
+			if (len(r) != nstrips):
+				err[0] = True
+			else:
+				for k in clrange:
+					if k not in r:
+						err[0] = Tru;e
+			stexpected = utils.cl2str(np.ndarray.tolist(clrange));
+			stfound = utils.cl2str(r)
 			stprev = utils.cl2str(prev)
 			dstr = stexpected + ';    ' + stfound + '; ' + ';    ' + stprev + ';    ' + "                                            "
 			if (err[0]):
@@ -151,7 +158,7 @@ class SSA_test_utility():
 			else:
 				if(display == True):
 					print   "\tPassed                " + dstr
-			prev = clrange
+			prev = r
 			if True in err:
 				fo.write(runname + ' ; ' + erlog + ' \n')
 				print '\t' + erlog
