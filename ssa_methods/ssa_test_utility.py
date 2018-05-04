@@ -101,6 +101,71 @@ class SSA_test_utility():
 
 
 
+	def cluster_data(self, mode = "digital", shift = -1,nstrips = 5, display=False, init = True, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+		fo = open("../SSA_Results/" + file + "_Test_ClusterData2_" + mode + ".csv", filemode)
+		stexpected = ''; stfound = '';
+		utils.activate_I2C_chip()
+		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
+		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 3)
+		self.ssa.ctrl.set_sampling_deskewing_fine(value = 20, enable = True, bypass = True)
+		self.ssa.ctrl.set_cal_pulse_delay(0)
+		prev = 0xff
+		if(mode == "digital"):
+			self.ssa.inject.digital_pulse(hit_list = [], hip_list = [], initialise = True)
+		elif(mode == "analog"):
+			self.ssa.inject.analog_pulse(hit_list = [], initialise = True)
+			shift += 2
+		else:
+			return False
+		self.ssa.readout.cluster_data(initialize = True)
+		cnt = {'cl_sum': 0, 'cl_err' : 0};
+		for i in range(0,100):
+			clrange = random.sample(range(1, 121), nstrips)
+			cnt['cl_sum'] += 1; wd = 0;
+			err = [False]*3
+			if(mode == "digital"):
+				self.ssa.inject.digital_pulse(hit_list = clrange, initialise = False)
+			elif(mode == "analog"):
+				self.ssa.inject.analog_pulse( hit_list = clrange, initialise = False)
+			time.sleep(0.001)
+			r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
+			if(hfi):
+				while(r==prev): #for firmware issure to be fix in D19C
+					time.sleep(0.1)
+					if(mode == "digital"):
+						self.ssa.inject.digital_pulse(hit_list = clrange, initialise = False)
+					elif(mode == "analog"):
+						self.ssa.inject.analog_pulse( hit_list = clrange, initialise = False)
+					r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
+					if(wd>10): break
+					wd += 1;
+			if (len(r) != nstrips): err[0] = True
+			elif (r != clrange): err[0] = True
+			stexpected = utils.cl2str(clrange);
+			stfound = utils.cl2str(r);
+			stprev = utils.cl2str(prev)
+			dstr = stexpected + ';    ' + stfound + '; ' + ';    ' + stprev + ';    ' + "                                            "
+			if (err[0]):
+				erlog = "Cluster-Data-Error;   " + dstr
+				cnt['cl_err'] += 1
+			else:
+				if(display == True):
+					print   "\tPassed                " + dstr
+			prev = clrange
+			if True in err:
+				fo.write(runname + ' ; ' + erlog + ' \n')
+				print '\t' + erlog
+			utils.ShowPercent(cnt['cl_sum'], 100, "Running clusters test based on digital test pulses")
+		utils.ShowPercent(100, 100, "Done                                                      ")
+		fo.close()
+		rt = 100*(1-cnt['cl_err']/float(cnt['cl_sum']))
+		return rt
+
+
+
+
+
+
 	def lateral_input_phase_tuning(self, display = False, timeout = 256*3, delay = 4, shift = 0, init = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
 		utils.activate_I2C_chip()
 		fo = open("../SSA_Results/" + file + "_Test_LateralInput.csv", filemode)

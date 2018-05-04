@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 runtest.enable('Lateral_In')
 runtest.enable('Cluster_Data')
 runtest.enable('Pulse_Injection')
+runtest.enable('Cluster_Data2')
 runtest.enable('Memory_1')
 runtest.enable('Memory_2')
 runtest.enable('L1_data')
@@ -127,6 +128,14 @@ class SSA_test_XRay():
 				break
 			except:
 				print "X>  \tError in Pulse_Injection test. Reiterating."
+		while runtest.is_active('Cluster_Data2'):
+			try:
+				r1, = self.test.cluster_data(mode = 'digital', nstrips = 5, shift = shift[0], display=False, file = filename, filemode = 'a', runname = runname)
+				self.summary.set('Cluster_Data2',  r1, '%', '',  runname)
+				print "->  \tcluster_data_basic test Time = %7.2f" % (time.time() - time_init); time_init = time.time();
+				break
+			except:
+				print "X>  \tError in Cluster_Data2 test. Reiterating."
 		while runtest.is_active('Memory_1'):
 			try:
 				r1 = self.test.memory(memory = 1, shift = shift[4], display= 0,  file = filename, filemode = 'a', runname = runname)
