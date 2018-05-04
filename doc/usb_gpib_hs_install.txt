@@ -33,8 +33,11 @@ USB-GPIB-HS with CentOS + Python:
 8. reload the udev rules: "sudo udevadm control --reload-rules"
 9. load the module: "sudo modprobe ni_usb_gpib"
 10. reconnect the device 
-11. sudo chown user  /dev/gpib* - sudo chown user /dev/usb_gpib
+11. 
+sudo chown acarat  /dev/gpib*  
+sudo chown acarat /dev/usb_gpib
 11. try to run in python:
+python
 import Gpib
 inst = Gpib.Gpib(0,16) # Device address 16
 inst.write("*IDN?")

@@ -70,7 +70,7 @@ class ssa_ctrl_base:
 		r = ((self.I2C.peri_read('Bias_TEST_LSB') & 0xff))
 		r = ((self.I2C.peri_read('Bias_TEST_MSB') & 0xff) << 8) | r
 		if(r != ctrl):
-			print "Error. Failed to set the trimming"
+			print "Error. Failed to set the MUX"
 			return False
 		else:
 			return True

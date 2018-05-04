@@ -88,7 +88,7 @@ class ssa_calibration():
 			return data
 
 
-	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot = True, average = 5):
+	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot = True, average = 5, runname = '', filemode = 'w'):
 		# ['Bias_D5BFEED'] ['Bias_D5PREAMP']['Bias_D5TDR']['Bias_D5ALLV']['Bias_D5ALLI']
 		# ['Bias_CALDAC']['Bias_BOOSTERBASELINE']['Bias_THDAC']['Bias_THDACHIGH']['Bias_D5DAC8']
 		if(not name in self.analog_mux_map):
@@ -105,7 +105,7 @@ class ssa_calibration():
 			data[i] = self.multimeter.measure(self.multimeterinst)
 			utils.ShowPercent(i, fullscale-1, "Measuring "+name+" linearity                         ")
 		if( isinstance(filename, str) ):
-			fo = "../SSA_Results/" + filename + "_Linearity_" + name + filename2
+			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_Caracteristics_" + name + filename2
 			CSV.ArrayToCSV (array = data, filename = fo + ".csv", transpose = True)
 		dnl, inl = self.__dac_dnl_inl(data = data, nbits = nbits, plot = False)
 		inl_max = np.max(np.abs(inl))
@@ -129,14 +129,20 @@ class ssa_calibration():
 			plt.plot(range(0,fullscale),[-1]*fullscale, 'r')
 			plt.subplot(212)
 			plt.plot(range(0,fullscale), data, '-x')
-			if( isinstance(filename, str) ):
-				plt.savefig(fo+".pdf")
-			else:
-				plt.show()
+			#if( isinstance(filename, str) ):
+			#	plt.savefig(fo+".pdf")
+			#else:
+			#	plt.show()
 		fit_params = [g, ofs, sigma/g]
 		raw = [range(0,fullscale), data]
 		nlin_data = [dnl, inl]
 		nlin_params = dnl_max, inl_max
+		if( isinstance(filename, str) ):
+			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_DNL_INL_" + name + filename2 + '.csv'
+			CSV.ArrayToCSV (array = np.array([data, dnl, inl]), filename = fo + ".csv", transpose = True)
+			fo = open("../SSA_Results/" + filename + "_Parameters_" + name + filename2 + '.csv', filemode)
+			fo.write( "\n%s ; %s10.3f ; %s10.3f ; %s10.3f ;" % (runname, g, ofs, sigma) )
+			fo.close()
 		return  nlin_params, nlin_data, fit_params, raw
 
 

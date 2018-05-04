@@ -292,16 +292,21 @@ class SSA_measurements():
 
 
 
-	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, ideal_gain = 1.840, ideal_offset = 0.8, filename = False, plot = True):
+	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, ideal_gain = 1.840, ideal_offset = 0.8, filename = False, plot = True, filemode = 'w', runname = ''):
+		utils.activate_I2C_chip()
 		if(self.bias == False): return False, False
 		if(not (name in self.muxmap)): return False, False
+		if(isinstance(filename, str)):
+			fo = "../SSA_Results/" + filename
 		nlin_params, nlin_data, fit_params, raw = self.bias.measure_dac_linearity(
 			name = name,
 			nbits = nbits,
-			filename = filename,
+			filename = fo,
 			filename2 = "",
 			plot = False,
-			average = 10)
+			average = 10,
+			runname = runname,
+			filemode = filemode)
 		g, ofs, sigma = fit_params
 		DNL, INL = nlin_data
 		DNLMAX, INLMAX = nlin_params
@@ -315,7 +320,7 @@ class SSA_measurements():
 		if plot:
 			plt.clf()
 			plt.figure(1)
-			plt.plot(x, f_line(x, ideal_gain/1000, ideal_offset/1000), '-b', linewidth=5, alpha = 0.5)
+			#plt.plot(x, f_line(x, ideal_gain/1000, ideal_offset/1000), '-b', linewidth=5, alpha = 0.5)
 			plt.plot(x, data, '-r', linewidth=5,  alpha = 0.5)
 			plt.figure(2); plt.ylim(-1, 1); plt.bar( x, DNL, color='b', edgecolor = 'b', align='center')
 			plt.figure(3); plt.ylim(-1, 1); plt.bar( x, INL, color='r', edgecolor = 'r', align='center')
@@ -323,8 +328,8 @@ class SSA_measurements():
 
 			plt.show()
 
-		return DNL, INL, x, data
-		return DNLMAX, INLMAX
+		#return DNL, INL, x, data
+		return DNLMAX, INLMAX, g, ofs
 
 
 

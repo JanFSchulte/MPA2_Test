@@ -22,6 +22,8 @@ runtest.disable('memory_vs_voltage')
 runtest.enable('noise_baseline')
 runtest.enable('gain_offset_noise')
 runtest.enable('threshold_spread')
+runtest.enable('Bias_THDAC')
+runtest.enable('Bias_CALDAC')
 
 
 class SSA_test_XRay():
@@ -63,6 +65,7 @@ class SSA_test_XRay():
 		self.test_routine_parameters(filename = fo, runname = runname)
 		self.test_routine_analog(filename = fo, runname = runname)
 		self.test_routine_digital(filename = fo, runname = runname)
+		self.test_routine_dacs(filename = fo, runname = runname)
 		self.summary.display(runname)
 		self.summary.save(fo, runname)
 		print '\n\n'
@@ -199,6 +202,35 @@ class SSA_test_XRay():
 				break
 			except:
 				print "X>  \tError in threshold_spread test. Reiterating."
+
+
+	def test_routine_dacs(self, filename = 'default', runname = '  0Mrad'):
+		filename = self.summary.get_file_name(filename)
+		time_init = time.time()
+		self.ssa.init(reset_board = True, reset_chip = True)
+		self.ssa.load_configuration(self.config_file, display = False)
+		while runtest.is_active('Bias_THDAC'):
+			try:
+				r1, r2, r3, r4 = self.measure.dac_linearity(name = 'Bias_THDAC', nbits = 8, filename = filename, plot = False, filemode = 'a', runname = runname)
+				self.summary.set('Bias_THDAC_DNL'     , r1, '', '',  runname)
+				self.summary.set('Bias_THDAC_INL'     , r2, '', '',  runname)
+				self.summary.set('Bias_THDAC_GAIN'    , r3, '', '',  runname)
+				self.summary.set('Bias_THDAC_OFFS'    , r4, '', '',  runname)
+				break
+			except:
+				print "X>  \tError in Bias_THDAC test. Reiterating."
+		while runtest.is_active('Bias_CALDAC'):
+			try:
+				r1, r2, r3, r4 = self.measure.dac_linearity(name = 'Bias_CALDAC', nbits = 8, filename = filename, plot = False, filemode = 'a', runname = runname)
+				self.summary.set('Bias_CALDAC_DNL'   , r1, '', '',  runname)
+				self.summary.set('Bias_CALDAC_INL'   , r2, '', '',  runname)
+				self.summary.set('Bias_CALDAC_GAIN'  , r3, '', '',  runname)
+				self.summary.set('Bias_CALDAC_OFFS'  , r4, '', '',  runname)
+				break
+			except:
+				print "X>  \tError in Bias_CALDAC test. Reiterating."
+
+
 
 	def set_start_irradiation_time(self, filename, ):
 		print 'ciao'
