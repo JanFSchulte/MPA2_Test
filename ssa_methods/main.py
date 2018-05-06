@@ -4,7 +4,9 @@ from ssa_methods.ssa_cal_utility import *
 from ssa_methods.ssa_test_utility import *
 from ssa_methods.ssa_readout_utility import *
 from ssa_methods.ssa_measurements import *
+from ssa_methods.ssa_test_top import *
 from ssa_methods.ssa_test_xray import *
+
 
 I2C   = ssa_i2c_conf()
 pwr   = ssa_power_utility(I2C, fc7)
@@ -20,7 +22,8 @@ except ImportError:
 	print "- Impossible to access GPIB instruments"
 
 measure     = SSA_measurements(ssa, I2C, fc7, cal, analog_mux_map, biascal)
-xray        = SSA_test_XRay(ssa, I2C, fc7, cal, biascal, pwr, test, measure)
+toptest     = SSA_test_top(ssa, I2C, fc7, cal, biascal, pwr, test, measure)
+xray        = SSA_test_xray(toptest, ssa, I2C, fc7, cal, biascal, pwr, test, measure)
 
 def on():
 	sleep(0.1);  pwr.set_supply('on', display=False)

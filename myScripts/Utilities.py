@@ -139,24 +139,3 @@ def f_gauss1(x, A, mu, sigma):
 def f_errorfc(x, *p):
 	a, mu, sigma = p
 	return a*0.5*erfc((x-mu)/sigma)
-
-class RunTest():
-	def __init__(self):
-		self.test = {}
-
-	def enable(self, name):
-		 self.test[name] = True
-
-	def disable(self, name):
-		self.test[name] = False
-
-	def is_active(self, name):
-		if(not name in self.test):
-			return False
-		else:
-			r = self.test[name]
-			if(r):
-				print "------- Running test: " + str(name)
-			return r
-
-runtest = RunTest()
