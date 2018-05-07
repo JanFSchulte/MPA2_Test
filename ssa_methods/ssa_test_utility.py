@@ -133,21 +133,23 @@ class SSA_test_utility():
 			time.sleep(0.001)
 			r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 			if(hfi):
-				while(r[0]==prev[0]): #for firmware issure to be fix in D19C
-					#time.sleep(0.1)
+				while(r == prev): #for firmware issure to be fix in D19C
+					print '\nhfi\n'
+					time.sleep(0.01)
 					if(mode == "digital"):
 						self.ssa.inject.digital_pulse(hit_list = clrange, initialise = False)
 					elif(mode == "analog"):
 						self.ssa.inject.analog_pulse( hit_list = clrange, initialise = False)
+					time.sleep(0.01)
 					r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
-					if(wd>10): break
+					if(wd>3): break
 					wd += 1;
 			if (len(r) != nstrips):
 				err[0] = True
 			else:
 				for k in clrange:
 					if k not in r:
-						err[0] = Tru;e
+						err[0] = True
 			stexpected = utils.cl2str(np.ndarray.tolist(clrange));
 			stfound = utils.cl2str(r)
 			stprev = utils.cl2str(prev)
