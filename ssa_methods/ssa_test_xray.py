@@ -35,34 +35,29 @@ class SSA_test_xray():
 			runtest.enable('noise_baseline')
 			runtest.enable('gain_offset_noise')
 			runtest.enable('threshold_spread')
+			runtest.enable('Power')
+			runtest.enable('Bias')
 			runtest.enable('Bias_THDAC')
 			runtest.enable('Bias_CALDAC')
 			self.toptest.configure_tests( runtest )
 
+	def initialise(self, file):
+		initialise(file = file, plot = True)
 
-	def xray_loop(self, filename, runtime = (60*60*114), rate = (30*60) ):
-		time_init = time.time()
-		time_base = time_init; time_curr = time_init;
+	def xray_loop(self, filename, runtime = (60*60*114), rate = (30*60), init_wait = 0 ):
 		self.configure_tests()
-		iteration = 0
-		self.toptest.test_routine_main(filename = filename, runname = utils.date_time())
+		time_init = time.time()
+		time_base = time_init - (rate - init_wait);
+		time_curr = time_init;
 		while ((time_curr-time_init) < runtime):
 			time_curr = time.time()
 			if( float(time_curr-time_base) > float(rate) ):
 				time_base = time_curr
-				iteration += 1
 				self.toptest.test_routine_main(filename = filename, runname = utils.date_time())
 			else:
-				self.idle_routine()
+				time.sleep(0.1); utils.activate_I2C_chip()
+				time.sleep(0.1); self.toptest.idle_routine()
 
 
 	def set_start_irradiation_time(self, filename, ):
 		print 'ciao'
-
-
-	def idle_routine(self):
-		try:
-			self.test.cluster_data_basic(mode = 'analog',  shift = -2, shiftL = -2, display=False, file = '../SSA_Results/temp', filemode = 'w', runname = '')
-			self.test.l1_data_basic(mode = 'digital', shift = 0, file = '../SSA_Results/temp', filemode = 'w', runname = '')
-		except:
-			print '========= ERROR ========'

@@ -38,6 +38,8 @@ class SSA_test_top():
 			self.runtest.enable('noise_baseline')
 			self.runtest.enable('gain_offset_noise')
 			self.runtest.enable('threshold_spread')
+			self.runtest.enable('Power')
+			self.runtest.enable('Bias')
 			self.runtest.enable('Bias_THDAC')
 			self.runtest.enable('Bias_CALDAC')
 		else:
@@ -70,8 +72,8 @@ class SSA_test_top():
 			self.config_file = '../SSA_Results/' + filename + '_Configuration_Init.scv'
 		fo = filename
 		self.pwr.set_dvdd(self.dvdd)
-		self.ssa.init(reset_board = True, reset_chip = True)
-		self.ssa.load_configuration(self.config_file, display = False)
+		self.ssa.init(reset_board = True, reset_chip = False)
+		#self.ssa.load_configuration(self.config_file, display = False)
 		self.test_routine_parameters(filename = fo, runname = runname)
 		self.test_routine_analog(filename = fo, runname = runname)
 		self.test_routine_digital(filename = fo, runname = runname)
@@ -83,22 +85,32 @@ class SSA_test_top():
 		print "->  END TEST \tRun time = %7.2f" % (time.time() - time_init)
 		print '========================================================'
 		print '\n\n\n\n'
-		self.ssa.init(reset_board = True, reset_chip = True)
-		self.ssa.load_configuration(self.config_file, display = False)
+		#self.ssa.init(reset_board = True, reset_chip = True)
+		#self.ssa.load_configuration(self.config_file, display = False)
 
 
 
 	def test_routine_parameters(self, filename = 'default', runname = '  0Mrad'):
 		filename = self.summary.get_file_name(filename)
 
-		r1, r2, r3 = self.pwr.get_power(display=True)
-		self.summary.set('Power_DVDD', r1, 'mW', '',  runname)
-		self.summary.set('Power_AVDD', r2, 'mW', '',  runname)
-		self.summary.set('Power_PVDD', r3, 'mW', '',  runname)
+		while runtest.is_active('Power'):
+			try:
+				r1, r2, r3 = self.pwr.get_power(display=True)
+				self.summary.set('Power_DVDD', r1, 'mW', '',  runname)
+				self.summary.set('Power_AVDD', r2, 'mW', '',  runname)
+				self.summary.set('Power_PVDD', r3, 'mW', '',  runname)
+				break
+			except:
+				print "X>  \tError in Power test. Reiterating."
 
-		r1 = self.biascal.measure_bias(return_data=True)
-		for i in r1:
-			self.summary.set( i[0], i[1], 'mV', '',  runname)
+		while runtest.is_active('Bias'):
+			try:
+				r1 = self.biascal.measure_bias(return_data=True)
+				for i in r1:
+					self.summary.set( i[0], i[1], 'mV', '',  runname)
+				break
+			except:
+				print "X>  \tError in Bias test. Reiterating."
 
 
 
@@ -106,8 +118,8 @@ class SSA_test_top():
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 
-		self.ssa.init(reset_board = True, reset_chip = True)
-		self.ssa.load_configuration(self.config_file, display = False)
+		#self.ssa.init(reset_board = True, reset_chip = True)
+		#self.ssa.load_configuration(self.config_file, display = False)
 
 		while runtest.is_active('Lateral_In'):
 			try:
@@ -193,12 +205,12 @@ class SSA_test_top():
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 
-		self.ssa.init(reset_board = True, reset_chip = True)
-		self.ssa.load_configuration(self.config_file, display = False)
+		#self.ssa.init(reset_board = True, reset_chip = True)
+		#self.ssa.load_configuration(self.config_file, display = False)
 
 		while runtest.is_active('noise_baseline'):
 			try:
-				self.ssa.load_configuration(self.config_file, display = False)
+				#self.ssa.load_configuration(self.config_file, display = False)
 				r1, r2 = self.measure.baseline_noise(ret_average = True, plot = False, mode = 'all', filename = filename, runname = runname, filemode = 'a')
 				self.summary.set('noise_baseline' , r1, 'LSB', '',  runname)
 				self.summary.set('baseline_issues', r2, '#',   '',  runname)
@@ -209,12 +221,12 @@ class SSA_test_top():
 
 		while runtest.is_active('gain_offset_noise'):
 			try:
-				self.ssa.load_configuration(self.config_file, display = False)
+				#self.ssa.load_configuration(self.config_file, display = False)
 				r1, r2, r3, r4 = self.measure.gain_offset_noise(calpulse = 50, ret_average = True, plot = False, use_stored_data = False, file = filename, filemode = 'a', runname = runname)
 				self.summary.set('gain'          , r1, 'ThDAC/CalDAC', '',  runname)
 				self.summary.set('offset'        , r2, 'ThDAC'       , '',  runname)
-				self.summary.set('noise_scurve'  , r1, 'ThDAC/CalDAC', '',  runname)
-				self.summary.set('scurve_issues' , r1, 'ThDAC/CalDAC', '',  runname)
+				self.summary.set('noise_scurve'  , r3, 'ThDAC'       , '',  runname)
+				self.summary.set('scurve_issues' , r4, 'list'        , '',  runname)
 				print "->  \tgain_offset_noise Time = %7.2f" % (time.time() - time_init); time_init = time.time();
 				break
 			except:
@@ -233,8 +245,8 @@ class SSA_test_top():
 	def test_routine_dacs(self, filename = 'default', runname = '  0Mrad'):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
-		self.ssa.init(reset_board = True, reset_chip = True)
-		self.ssa.load_configuration(self.config_file, display = False)
+		#self.ssa.init(reset_board = True, reset_chip = True)
+		#self.ssa.load_configuration(self.config_file, display = False)
 
 		while runtest.is_active('Bias_THDAC'):
 			try:
@@ -257,3 +269,17 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in Bias_CALDAC test. Reiterating."
+
+
+	def idle_routine(self, filename = 'default', runname = ''):
+		r1, r2, r3 = [0]*3
+		filename = self.summary.get_file_name(filename + '_IDLE')
+		print filename
+		try:
+			time.sleep(0.1); r1 = self.test.cluster_data(mode = 'analog', nstrips = 5, shift = -2,  display=False, file = '../SSA_Results/temp1', filemode = 'a', runname = runname + '_idle')
+			time.sleep(0.1); r1, r2 = self.test.l1_data_basic(mode = 'digital', shift = 0, file = '../SSA_Results/temp2', filemode = 'a', runname = runname + '_idle')
+		except:
+			print "X>  \tError in Idle Routine."
+		fo = open(filename, 'a')
+		fo.write('\n%16s,   %10.3f,   %10.3f,   %10.3f,' % (runname, r1, r2, r3))
+		fo.close()

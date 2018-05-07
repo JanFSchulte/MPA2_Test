@@ -123,32 +123,33 @@ class SSA_test_utility():
 		self.ssa.readout.cluster_data(initialize = True)
 		cnt = {'cl_sum': 0, 'cl_err' : 0};
 		for i in range(0,100):
-			clrange = np.array( random.sample(range(1, 60), nstrips)) * 2
+			#clrange = np.array( random.sample(range(1, 60), nstrips)) * 2
+			cl_hits, cl_centroids= _generate_clusters(7, 1)
 			cnt['cl_sum'] += 1; wd = 0;
 			err = [False]*3
 			if(mode == "digital"):
-				self.ssa.inject.digital_pulse(hit_list = clrange, initialise = False)
+				self.ssa.inject.digital_pulse(hit_list = cl_hits, initialise = False)
 			elif(mode == "analog"):
-				self.ssa.inject.analog_pulse( hit_list = clrange, initialise = False)
+				self.ssa.inject.analog_pulse( hit_list = cl_hits, initialise = False)
 			time.sleep(0.001)
 			r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 			if(hfi):
 				while(r[0]==prev[0]): #for firmware issure to be fix in D19C
 					#time.sleep(0.1)
 					if(mode == "digital"):
-						self.ssa.inject.digital_pulse(hit_list = clrange, initialise = False)
+						self.ssa.inject.digital_pulse(hit_list = cl_hits, initialise = False)
 					elif(mode == "analog"):
-						self.ssa.inject.analog_pulse( hit_list = clrange, initialise = False)
+						self.ssa.inject.analog_pulse( hit_list = cl_hits, initialise = False)
 					r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 					if(wd>10): break
 					wd += 1;
 			if (len(r) != nstrips):
 				err[0] = True
 			else:
-				for k in clrange:
+				for k in cl_centroids:
 					if k not in r:
-						err[0] = Tru;e
-			stexpected = utils.cl2str(np.ndarray.tolist(clrange));
+						err[0] = True
+			stexpected = utils.cl2str(np.ndarray.tolist(cl_centroids));
 			stfound = utils.cl2str(r)
 			stprev = utils.cl2str(prev)
 			dstr = stexpected + ';    ' + stfound + '; ' + ';    ' + stprev + ';    ' + "                                            "
@@ -373,6 +374,15 @@ class SSA_test_utility():
 		dstr = "[%3d][%3d][%3s][%3s]" % (L1_counter, BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
 		print dstr
 
+
+	def _generate_clusters(self, nclusters, radius):
+		hit = []; c = []; exc = []; r = radius;
+		for i in range(nclusters):
+			rangelist = list( set(range(1, 121)) - set(exc) )
+			c.append( random.sample(rangelist, 1)[0] )
+			hit += range(c[-1]-r, c[-1]+r+1)
+			exc += range(c[-1]-2*r-1, c[-1]+2*r+2)
+		return hit, c
 
 
 '''

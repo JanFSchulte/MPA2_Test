@@ -6,6 +6,8 @@ from ssa_methods.ssa_readout_utility import *
 from ssa_methods.ssa_measurements import *
 from ssa_methods.ssa_test_top import *
 from ssa_methods.ssa_test_xray import *
+from ssa_methods.ssa_analise_utility import *
+
 
 
 I2C   = ssa_i2c_conf()
@@ -24,6 +26,7 @@ except ImportError:
 measure     = SSA_measurements(ssa, I2C, fc7, cal, analog_mux_map, biascal)
 toptest     = SSA_test_top(ssa, I2C, fc7, cal, biascal, pwr, test, measure)
 xray        = SSA_test_xray(toptest, ssa, I2C, fc7, cal, biascal, pwr, test, measure)
+anl         = SSA_Analise_Test_results(toptest, test, measure, biascal)
 
 def on():
 	sleep(0.1);  pwr.set_supply('on', display=False)
