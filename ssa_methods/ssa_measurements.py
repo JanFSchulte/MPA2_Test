@@ -144,9 +144,13 @@ class SSA_measurements():
 	def threshold_spread(self, calpulse = 50, file = '../SSA_results/Chip0', runname = '', use_stored_data = False, plot = True, nevents=1000, speeduplevel = 2, filemode = 'w'):
 		print "->  \tthreshold Spread Measurement"
 		fi = "../SSA_Results/" + file + "_" + str(runname) + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
-		if(use_stored_data and os.path.exists(fi)):
-			s = CSV.CsvToArray(fi)
-			s = np.transpose(s)
+		print fi
+		if(use_stored_data):
+			if(os.path.exists(fi)):
+				s = CSV.CsvToArray(fi)
+				s = np.transpose(s)
+			else:
+				return -1
 		else:
 			s = self.scurves(
 				cal_list = [calpulse],

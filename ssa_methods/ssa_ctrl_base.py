@@ -102,8 +102,11 @@ class ssa_ctrl_base:
 
 
 	def __do_phase_tuning(self):
+		print self.fc7.read("stat_phy_phase_tuning_done")
 		self.fc7.write("ctrl_phy_phase_tune_again", 1)
+		print self.fc7.read("stat_phy_phase_tuning_done")
 		send_test(15)
+		print self.fc7.read("stat_phy_phase_tuning_done")
 		while(self.fc7.read("stat_phy_phase_tuning_done") == 0):
 			sleep(0.5)
 			print "Waiting for the phase tuning"

@@ -15,7 +15,9 @@ if ! ifconfig | grep ${eth}:'1'; then
 	sudo udevadm control --reload-rules	
 	sudo modprobe ni_usb_gpib
 else
-	printf '\n->  Ethernet interface found \n\n'
+	printf '\n->  Ethernet interface found  ' 
+	echo ${eth}
+	printf '\n'
 fi
 
 echo ""

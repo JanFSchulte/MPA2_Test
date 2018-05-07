@@ -41,10 +41,10 @@ class SSA_test_xray():
 			runtest.enable('Bias_CALDAC')
 			self.toptest.configure_tests( runtest )
 
-	def initialise(self, file):
-		initialise(file = file, plot = True)
+	def initialise(self, filename):
+		self.toptest.initialise(file = filename, plot = True)
 
-	def xray_loop(self, filename, runtime = (60*60*114), rate = (30*60), init_wait = 0 ):
+	def xray_loop(self, filename, runtime = (60*60*100), rate = (30*60), init_wait = 0 ):
 		self.configure_tests()
 		time_init = time.time()
 		time_base = time_init - (rate - init_wait);

@@ -333,6 +333,8 @@ class SSA_inject():
 		self.ctrl = ssactrl
 		self.strip = ssastrip
 		self.hitmode = 'none'
+		self.data_l = 0
+		self.data_r = 0
 
 
 	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, initialise = True):
@@ -352,7 +354,9 @@ class SSA_inject():
 				leftdata = leftdata | (0b1 << (cl-121))
 			else:
 				self.I2C.strip_write("DigCalibPattern_L", cl, 0xff)
+		#if(self.data_l != 0 or self.data_r != 0):
 		self.ctrl.set_lateral_data(left = leftdata, right = rightdata)
+		self.data_l = leftdata; self.data_r = rightdata;
 		for cl in hip_list:
 			self.I2C.strip_write("DigCalibPattern_H", cl, 0xff)
 		sleep(0.001)

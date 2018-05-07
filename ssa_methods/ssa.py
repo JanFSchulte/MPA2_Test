@@ -45,6 +45,7 @@ class SSA_ASIC:
 			fc7.write("ctrl_command_global_reset", 1)
 		if(reset_chip):
 			self.ctrl.reset(display=False)
+		utils.activate_I2C_chip()
 		if(display): sleep(0.2)
 		else: sleep(0.1)
 		utils.print_enable(False)

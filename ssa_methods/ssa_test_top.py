@@ -93,7 +93,7 @@ class SSA_test_top():
 	def test_routine_parameters(self, filename = 'default', runname = '  0Mrad'):
 		filename = self.summary.get_file_name(filename)
 
-		while runtest.is_active('Power'):
+		while self.runtest.is_active('Power'):
 			try:
 				r1, r2, r3 = self.pwr.get_power(display=True)
 				self.summary.set('Power_DVDD', r1, 'mW', '',  runname)
@@ -103,7 +103,7 @@ class SSA_test_top():
 			except:
 				print "X>  \tError in Power test. Reiterating."
 
-		while runtest.is_active('Bias'):
+		while self.runtest.is_active('Bias'):
 			try:
 				r1 = self.biascal.measure_bias(return_data=True)
 				for i in r1:
@@ -117,11 +117,12 @@ class SSA_test_top():
 	def test_routine_digital(self, filename = 'default', runname = '  0Mrad', shift = [-1,1,-2,-2,0,0,-1]):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
-
+		self.ssa.init(reset_board = True, reset_chip = False, display = False)
 		#self.ssa.init(reset_board = True, reset_chip = True)
 		#self.ssa.load_configuration(self.config_file, display = False)
+		print 'start'
 
-		while runtest.is_active('Lateral_In'):
+		while self.runtest.is_active('Lateral_In'):
 			try:
 				r1, r2 = self.test.lateral_input_phase_tuning(display=False, file = filename, filemode = 'a', runname = runname, shift = shift[6])
 				self.summary.set('Lateral_In_L', r1, '', '',  runname)
@@ -131,7 +132,7 @@ class SSA_test_top():
 			except:
 				print "X>  \tError in lateral_input_phase_tuning test. Reiterating."
 
-		while runtest.is_active('Cluster_Data'):
+		while self.runtest.is_active('Cluster_Data'):
 			try:
 				r1, r2, r3 = self.test.cluster_data_basic(mode = 'digital', shift = shift[0], shiftL = shift[1], display=False, file = filename, filemode = 'a', runname = runname)
 				self.summary.set('Cluster_Data',         r1, '%', '',  runname)
@@ -142,7 +143,7 @@ class SSA_test_top():
 			except:
 				print "X>  \tError in cluster_data_basic test. Reiterating."
 
-		while runtest.is_active('Pulse_Injection'):
+		while self.runtest.is_active('Pulse_Injection'):
 			try:
 			 	r1, r2, r3 = self.test.cluster_data_basic(mode = 'analog',  shift = shift[2], shiftL = shift[3], display=False, file = filename, filemode = 'a', runname = runname)
 				self.summary.set('Pulse_Injection', r1, '%', '',  runname)
@@ -151,16 +152,16 @@ class SSA_test_top():
 			except:
 				print "X>  \tError in Pulse_Injection test. Reiterating."
 
-		while runtest.is_active('Cluster_Data2'):
+		while self.runtest.is_active('Cluster_Data2'):
 			#try:
-			r1 = self.test.cluster_data(mode = 'digital', nstrips = 7, shift = shift[0], display=False, file = filename, filemode = 'a', runname = runname)
+			r1 = self.test.cluster_data(mode = 'digital', nstrips = 6, shift = shift[0], display=False, file = filename, filemode = 'a', runname = runname)
 			self.summary.set('Cluster_Data2',  r1, '%', '',  runname)
 			print "->  \tcluster_data_basic test Time = %7.2f" % (time.time() - time_init); time_init = time.time();
 			break
 			#except:
 			#	print "X>  \tError in Cluster_Data2 test. Reiterating."
 
-		while runtest.is_active('Memory_1'):
+		while self.runtest.is_active('Memory_1'):
 			try:
 				r1 = self.test.memory(memory = 1, shift = shift[4], display= 0,  file = filename, filemode = 'a', runname = runname)
 				self.summary.set('Memory_1', r1, '%', '',  runname)
@@ -169,7 +170,7 @@ class SSA_test_top():
 			except:
 				print "X>  \tError in Memory_1 test. Reiterating."
 
-		while runtest.is_active('Memory_2'):
+		while self.runtest.is_active('Memory_2'):
 			try:
 				r1 = self.test.memory(memory = 2, shift = shift[4], display= 0,  file = filename, filemode = 'a', runname = runname)
 				self.summary.set('Memory_2', r1, '%', '',  runname)
@@ -178,7 +179,7 @@ class SSA_test_top():
 			except:
 				print "X>  \tError in Memory_2 test. Reiterating."
 
-		while runtest.is_active('L1_data'):
+		while self.runtest.is_active('L1_data'):
 			try:
 				r1, r2 = self.test.l1_data_basic(mode = 'digital', shift = shift[5], file = filename, filemode = 'a', runname = runname)
 				self.summary.set('L1_data',    r1, '%', '',  runname)
@@ -188,7 +189,7 @@ class SSA_test_top():
 			except:
 				print "X>  \tError in l1_data_basic test. Reiterating."
 
-		while runtest.is_active('memory_vs_voltage'):
+		while self.runtest.is_active('memory_vs_voltage'):
 			try:
 				self.test.memory_vs_voltage(memory = 1, step = 0.005, start = 1.25, stop = 0.9, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
 				print "->  \t memory_vs_voltage Time = %7.2f" % (time.time() - time_init); time_init = time.time();
@@ -208,7 +209,7 @@ class SSA_test_top():
 		#self.ssa.init(reset_board = True, reset_chip = True)
 		#self.ssa.load_configuration(self.config_file, display = False)
 
-		while runtest.is_active('noise_baseline'):
+		while self.runtest.is_active('noise_baseline'):
 			try:
 				#self.ssa.load_configuration(self.config_file, display = False)
 				r1, r2 = self.measure.baseline_noise(ret_average = True, plot = False, mode = 'all', filename = filename, runname = runname, filemode = 'a')
@@ -219,7 +220,7 @@ class SSA_test_top():
 			except:
 				print "X>  \tError in baseline_noise test. Reiterating."
 
-		while runtest.is_active('gain_offset_noise'):
+		while self.runtest.is_active('gain_offset_noise'):
 			try:
 				#self.ssa.load_configuration(self.config_file, display = False)
 				r1, r2, r3, r4 = self.measure.gain_offset_noise(calpulse = 50, ret_average = True, plot = False, use_stored_data = False, file = filename, filemode = 'a', runname = runname)
@@ -232,7 +233,7 @@ class SSA_test_top():
 			except:
 				print "X>  \tError in gain_offset_noise test. Reiterating."
 
-		while runtest.is_active('threshold_spread'):
+		while self.runtest.is_active('threshold_spread'):
 			try:
 				r1 = self.measure.threshold_spread(calpulse = 50, use_stored_data = True, plot = False, file = filename, filemode = 'a', runname = runname)
 				self.summary.set('threshold std' , r1, 'ThDAC', '',  runname)
@@ -248,7 +249,7 @@ class SSA_test_top():
 		#self.ssa.init(reset_board = True, reset_chip = True)
 		#self.ssa.load_configuration(self.config_file, display = False)
 
-		while runtest.is_active('Bias_THDAC'):
+		while self.runtest.is_active('Bias_THDAC'):
 			try:
 				r1, r2, r3, r4 = self.measure.dac_linearity(name = 'Bias_THDAC', nbits = 8, filename = filename, plot = False, filemode = 'a', runname = runname)
 				self.summary.set('Bias_THDAC_DNL'     , r1, '', '',  runname)
@@ -259,7 +260,7 @@ class SSA_test_top():
 			except:
 				print "X>  \tError in Bias_THDAC test. Reiterating."
 
-		while runtest.is_active('Bias_CALDAC'):
+		while self.runtest.is_active('Bias_CALDAC'):
 			try:
 				r1, r2, r3, r4 = self.measure.dac_linearity(name = 'Bias_CALDAC', nbits = 8, filename = filename, plot = False, filemode = 'a', runname = runname)
 				self.summary.set('Bias_CALDAC_DNL'   , r1, '', '',  runname)
