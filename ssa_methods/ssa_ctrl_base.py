@@ -53,11 +53,20 @@ class ssa_ctrl_base:
 		registers = CSV.CsvToArray(file)[:,1:4]
 		for tmp in registers:
 			if(tmp[0] == -1):
+				if display: print 'writing'
 				self.I2C.peri_write(tmp[1], tmp[2])
+				r = self.I2C.peri_read(tmp[1])
+				if(r != tmp[2]):
+					print 'X>  \t Configuration ERROR Periphery'
 			elif(tmp[0]>=1 and tmp[0]<=120):
-				self.I2C.strip_write(tmp[1], tmp[0], tmp[2])
+				if display: print 'writing'
+				if(tmp[1] != 'ReadCounter_LSB' and tmp[1] != 'ReadCounter_MSB'):
+					self.I2C.strip_write(tmp[1], tmp[0], tmp[2])
+					r = self.I2C.strip_read(tmp[1], tmp[0])
+					if(r != tmp[2]):
+						print 'X>  \t Configuration ERROR Strip ' + str(tmp[0])
 			if display:
-				print [tmp[0], tmp[1], tmp[2]]
+				print [tmp[0], tmp[1], tmp[2], r]
 		print "->  \tConfiguration Loaded from file"
 
 
@@ -102,8 +111,11 @@ class ssa_ctrl_base:
 
 
 	def __do_phase_tuning(self):
+		print self.fc7.read("stat_phy_phase_tuning_done")
 		self.fc7.write("ctrl_phy_phase_tune_again", 1)
+		print self.fc7.read("stat_phy_phase_tuning_done")
 		send_test(15)
+		print self.fc7.read("stat_phy_phase_tuning_done")
 		while(self.fc7.read("stat_phy_phase_tuning_done") == 0):
 			sleep(0.5)
 			print "Waiting for the phase tuning"

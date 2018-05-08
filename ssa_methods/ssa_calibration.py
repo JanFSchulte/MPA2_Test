@@ -107,7 +107,7 @@ class ssa_calibration():
 		if( isinstance(filename, str) ):
 			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_Caracteristics_" + name + filename2
 			CSV.ArrayToCSV (array = data, filename = fo + ".csv", transpose = True)
-		dnl, inl = self.__dac_dnl_inl(data = data, nbits = nbits, plot = False)
+		dnl, inl = self._dac_dnl_inl(data = data, nbits = nbits, plot = False)
 		inl_max = np.max(np.abs(inl))
 		dnl_max = np.max(np.abs(dnl))
 		g, ofs, sigma = utils.linear_fit(range(0,2**nbits), data)
@@ -146,7 +146,7 @@ class ssa_calibration():
 		return  nlin_params, nlin_data, fit_params, raw
 
 
-	def __dac_dnl_inl(self, data, nbits, plot = True):
+	def _dac_dnl_inl(self, data, nbits, plot = True):
 		fullscale = 2**nbits
 		INL = np.zeros(fullscale, dtype=np.float)
 		DNL = np.zeros(fullscale, dtype=np.float)

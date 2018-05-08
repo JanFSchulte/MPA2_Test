@@ -37,7 +37,7 @@ class SSA_ASIC:
 	def load_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
 		self.ctrl.load_configuration(file = file, display = display)
 
-	def init(self, reset_board = False, reset_chip = False, slvs_current = 0b111, edge = "negative", display = True):
+	def init(self, reset_board = False, reset_chip = False, slvs_current = 0b111, edge = "negative", display = True, read_current = False):
 		if(display):
 			sys.stdout.write("->  \tInitialising..\r")
 			sys.stdout.flush()
@@ -45,6 +45,7 @@ class SSA_ASIC:
 			fc7.write("ctrl_command_global_reset", 1)
 		if(reset_chip):
 			self.ctrl.reset(display=False)
+		utils.activate_I2C_chip()
 		if(display): sleep(0.2)
 		else: sleep(0.1)
 		utils.print_enable(False)
@@ -59,6 +60,7 @@ class SSA_ASIC:
 		if(display): sleep(0.2)
 		else: sleep(0.1)
 		self.ctrl.activate_readout_normal()
+		self.ctrl.activate_readout_normal()
 		if(display):
 			sys.stdout.write("->  \tReady!                  \r")
 			sys.stdout.flush()
@@ -70,7 +72,8 @@ class SSA_ASIC:
 			print "->  \tInitialised SLVS pads and sampling edges"
 			print "->  \tSampling phases tuned"
 			print "->  \tActivated normal readout mode"
-			self.pwr.get_power(display = True)
+			if(read_current):
+				self.pwr.get_power(display = True)
 
 
 	def init_all(self):
