@@ -39,6 +39,7 @@ class SSA_test_xray():
 			runtest.enable('Bias')
 			runtest.enable('Bias_THDAC')
 			runtest.enable('Bias_CALDAC')
+			runtest.enable('Configuration')
 			self.toptest.configure_tests( runtest )
 
 	def initialise(self, filename):
@@ -46,17 +47,22 @@ class SSA_test_xray():
 
 	def xray_loop(self, filename, runtime = (60*60*100), rate = (30*60), init_wait = 0 ):
 		self.configure_tests()
+		self.pwr.set_dvdd(self.toptest.dvdd)
+		self.ssa.init(reset_board = True, reset_chip = False, read_current = True)
+		utils.activate_I2C_chip()
 		time_init = time.time()
 		time_base = time_init - (rate - init_wait);
 		time_curr = time_init;
+
 		while ((time_curr-time_init) < runtime):
 			time_curr = time.time()
 			if( float(time_curr-time_base) > float(rate) ):
 				time_base = time_curr
 				self.toptest.test_routine_main(filename = filename, runname = utils.date_time())
+				utils.activate_I2C_chip()
 			else:
-				time.sleep(0.1); utils.activate_I2C_chip()
-				time.sleep(0.1); self.toptest.idle_routine()
+				time.sleep(0.1);
+				self.toptest.idle_routine(filename = filename, runname = utils.date_time())
 
 
 	def set_start_irradiation_time(self, filename, ):

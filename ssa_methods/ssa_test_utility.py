@@ -25,8 +25,8 @@ class SSA_test_utility():
 		#print "->  \tRemember to call test.lateral_input_phase_tuning() before to run this test"
 		utils.activate_I2C_chip()
 		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
-		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 3)
-		self.ssa.ctrl.set_sampling_deskewing_fine(value = 20, enable = True, bypass = True)
+		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
+		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
 		self.ssa.ctrl.set_cal_pulse_delay(0)
 		prev = 0xff
 		if(mode == "digital"):
@@ -40,6 +40,7 @@ class SSA_test_utility():
 			clrange = random.sample(range(-2, 125), 127)
 		else:
 			clrange = random.sample(range(1, 121), 120)
+		clrange *= 5
 		self.ssa.readout.cluster_data(initialize = True)
 		cnt = {'cl_sum': 0, 'cl_err' : 0, 'li_sum': 0, 'li_err' : 0, 'lo_sum': 0, 'lo_err' : 0};
 		for i in clrange:
@@ -97,7 +98,7 @@ class SSA_test_utility():
 			if True in err:
 				fo.write(runname + ' ; ' + erlog + ' \n')
 				print '\t' + erlog
-			utils.ShowPercent(cnt['cl_sum'], 130, "Running clusters test based on digital test pulses")
+			utils.ShowPercent(cnt['cl_sum'], 130, "Running clusters test based on " + mode + " test pulses")
 		utils.ShowPercent(120, 120, "Done                                                      ")
 		fo.close()
 		rt = [100*(1-cnt['cl_err']/float(cnt['cl_sum'])) , 100*(1-cnt['li_err']/float(cnt['li_sum'])) , 100*(1-cnt['lo_err']/float(cnt['lo_sum'])) ]
@@ -105,13 +106,13 @@ class SSA_test_utility():
 
 
 
-	def cluster_data(self, mode = "digital", shift = -1, nstrips = 7, display=False, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+	def cluster_data(self, mode = "digital", shift = -1, nstrips = 5, display=False, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
 		fo = open("../SSA_Results/" + file + "_Test_ClusterData2_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = '';
 		utils.activate_I2C_chip()
 		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
-		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 3)
-		self.ssa.ctrl.set_sampling_deskewing_fine(value = 20, enable = True, bypass = True)
+		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
+		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
 		self.ssa.ctrl.set_cal_pulse_delay(0)
 		prev = [0xff]*nstrips
 		if(mode == "digital"):
@@ -134,11 +135,11 @@ class SSA_test_utility():
 			if(mode == "digital"):
 				self.ssa.inject.digital_pulse(hit_list = cl_hits, initialise = False)
 			elif(mode == "analog"):
-				self.ssa.inject.analog_pulse( hit_list = cl_hits, initialise = False)
+				self.ssa.inject.analog_pulse( hit_list = cl_hits, initialise = False, cal_pulse_amplitude = 255)
 			time.sleep(0.001)
 			r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 			if(hfi):
-				while(r==prev): #for firmware issure to be fix in D19C
+				while(r==prev and len(prev)>0): #for firmware issure to be fix in D19C
 					#time.sleep(0.1)
 					print 'HFI'
 					if(mode == "digital"):

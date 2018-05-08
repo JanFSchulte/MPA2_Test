@@ -22,7 +22,7 @@ class SSA_test_top():
 		self.test = test; self.measure = measure;
 		self.summary = results()
 		self.runtest = RunTest('default')
-		self.config_file = ''; self.dvdd = 1.0
+		self.config_file = ''; self.dvdd = 1.05 #for the offset of the board
 
 
 	def configure_tests(self, runtest = 'default'):
@@ -42,6 +42,7 @@ class SSA_test_top():
 			self.runtest.enable('Bias')
 			self.runtest.enable('Bias_THDAC')
 			self.runtest.enable('Bias_CALDAC')
+			self.runtest.enable('Configuration')
 		else:
 			self.runtest = runtest
 
@@ -68,12 +69,12 @@ class SSA_test_top():
 		print '\n\n'
 		time_init = time.time()
 		#fo = "../SSA_Results/X-Ray/" + runname + '_' + utils.date_time() + '_X-Ray_'
-		if(self.config_file == ''):
-			self.config_file = '../SSA_Results/' + filename + '_Configuration_Init.scv'
+		#if(self.config_file == ''):
+		self.config_file = '../SSA_Results/' + filename + '_Configuration_Init.scv'
 		fo = filename
 		self.pwr.set_dvdd(self.dvdd)
 		self.ssa.init(reset_board = True, reset_chip = False)
-		#self.ssa.load_configuration(self.config_file, display = False)
+		self.ssa.load_configuration(self.config_file, display = False)
 		self.test_routine_parameters(filename = fo, runname = runname)
 		self.test_routine_analog(filename = fo, runname = runname)
 		self.test_routine_digital(filename = fo, runname = runname)
@@ -87,6 +88,7 @@ class SSA_test_top():
 		print '\n\n\n\n'
 		#self.ssa.init(reset_board = True, reset_chip = True)
 		#self.ssa.load_configuration(self.config_file, display = False)
+		self.ssa.init(reset_board = True, reset_chip = False, display = False)
 
 
 
@@ -111,10 +113,16 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in Bias test. Reiterating."
+		while self.runtest.is_active('Configuration'):
+			try:
+				self.ssa.save_configuration('../SSA_Results/' + filename + '_Configuration_' + str(runname) + '.scv', display=False)
+				break
+			except:
+				print "X>  \tError in reading Config regs. Reiterating."
 
 
 
-	def test_routine_digital(self, filename = 'default', runname = '  0Mrad', shift = [-1,1,-2,-2,0,0,-1]):
+	def test_routine_digital(self, filename = 'default', runname = '  0Mrad', shift = [0,0,0,0,0,0,0]):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		self.ssa.init(reset_board = True, reset_chip = False, display = False)
@@ -154,7 +162,7 @@ class SSA_test_top():
 
 		while self.runtest.is_active('Cluster_Data2'):
 			#try:
-			r1 = self.test.cluster_data(mode = 'digital', nstrips = 6, shift = shift[0], display=False, file = filename, filemode = 'a', runname = runname)
+			r1 = self.test.cluster_data(mode = 'digital', nstrips = 5, shift = shift[0], display=False, file = filename, filemode = 'a', runname = runname)
 			self.summary.set('Cluster_Data2',  r1, '%', '',  runname)
 			print "->  \tcluster_data_basic test Time = %7.2f" % (time.time() - time_init); time_init = time.time();
 			break
@@ -222,7 +230,7 @@ class SSA_test_top():
 
 		while self.runtest.is_active('gain_offset_noise'):
 			try:
-				#self.ssa.load_configuration(self.config_file, display = False)
+				self.ssa.load_configuration(self.config_file, display = False)
 				r1, r2, r3, r4 = self.measure.gain_offset_noise(calpulse = 50, ret_average = True, plot = False, use_stored_data = False, file = filename, filemode = 'a', runname = runname)
 				self.summary.set('gain'          , r1, 'ThDAC/CalDAC', '',  runname)
 				self.summary.set('offset'        , r2, 'ThDAC'       , '',  runname)
@@ -254,8 +262,8 @@ class SSA_test_top():
 				r1, r2, r3, r4 = self.measure.dac_linearity(name = 'Bias_THDAC', nbits = 8, filename = filename, plot = False, filemode = 'a', runname = runname)
 				self.summary.set('Bias_THDAC_DNL'     , r1, '', '',  runname)
 				self.summary.set('Bias_THDAC_INL'     , r2, '', '',  runname)
-				self.summary.set('Bias_THDAC_GAIN'    , r3, '', '',  runname)
-				self.summary.set('Bias_THDAC_OFFS'    , r4, '', '',  runname)
+				self.summary.set('Bias_THDAC_GAIN'    , r3*1E3, '', '',  runname)
+				self.summary.set('Bias_THDAC_OFFS'    , r4*1E3, '', '',  runname)
 				break
 			except:
 				print "X>  \tError in Bias_THDAC test. Reiterating."
@@ -265,8 +273,8 @@ class SSA_test_top():
 				r1, r2, r3, r4 = self.measure.dac_linearity(name = 'Bias_CALDAC', nbits = 8, filename = filename, plot = False, filemode = 'a', runname = runname)
 				self.summary.set('Bias_CALDAC_DNL'   , r1, '', '',  runname)
 				self.summary.set('Bias_CALDAC_INL'   , r2, '', '',  runname)
-				self.summary.set('Bias_CALDAC_GAIN'  , r3, '', '',  runname)
-				self.summary.set('Bias_CALDAC_OFFS'  , r4, '', '',  runname)
+				self.summary.set('Bias_CALDAC_GAIN'  , r3*1E3, '', '',  runname)
+				self.summary.set('Bias_CALDAC_OFFS'  , r4*1E3, '', '',  runname)
 				break
 			except:
 				print "X>  \tError in Bias_CALDAC test. Reiterating."
@@ -274,13 +282,13 @@ class SSA_test_top():
 
 	def idle_routine(self, filename = 'default', runname = ''):
 		r1, r2, r3 = [0]*3
-		filename = self.summary.get_file_name(filename + '_IDLE')
+		filename = self.summary.get_file_name('../SSA_Results/' + filename + '_IDLE')
 		print filename
 		try:
-			time.sleep(0.1); r1 = self.test.cluster_data(mode = 'analog', nstrips = 5, shift = -2,  display=False, file = '../SSA_Results/temp1', filemode = 'a', runname = runname + '_idle')
-			time.sleep(0.1); r1, r2 = self.test.l1_data_basic(mode = 'digital', shift = 0, file = '../SSA_Results/temp2', filemode = 'a', runname = runname + '_idle')
+			time.sleep(0.1); r1 = self.test.cluster_data(mode = 'digital', nstrips = 5, shift = 0,  display=False, file = '../SSA_Results/' + filename + '_CL.csv', filemode = 'a', runname = runname + '_idle')
+			time.sleep(0.1); r2, r3 = self.test.l1_data_basic(mode = 'digital', shift = 0, file = '../SSA_Results/' + filename + '_L1.csv', filemode = 'a', runname = runname + '_idle')
 		except:
 			print "X>  \tError in Idle Routine."
-		fo = open(filename, 'a')
+		fo = open(filename+'.csv', 'a')
 		fo.write('\n%16s,   %10.3f,   %10.3f,   %10.3f,' % (runname, r1, r2, r3))
 		fo.close()
