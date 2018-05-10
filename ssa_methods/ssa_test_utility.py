@@ -19,7 +19,7 @@ class SSA_test_utility():
 		self.cal = cal; self.pwr = pwr;
 
 
-	def cluster_data_basic(self, mode = "digital", shift = -1, shiftL = 1, display=False, lateral = True, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+	def cluster_data_basic(self, mode = "digital", shift = 0, shiftL = 0, display=False, lateral = True, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
 		fo = open("../SSA_Results/" + file + "_Test_ClusterData_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = ''; stlateralout = '';
 		#print "->  \tRemember to call test.lateral_input_phase_tuning() before to run this test"
@@ -106,7 +106,7 @@ class SSA_test_utility():
 
 
 
-	def cluster_data(self, mode = "digital", shift = -1, nstrips = 5, display=False, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+	def cluster_data(self, mode = "digital", shift = 0, nstrips = 5, display=False, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
 		fo = open("../SSA_Results/" + file + "_Test_ClusterData2_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = '';
 		utils.activate_I2C_chip()

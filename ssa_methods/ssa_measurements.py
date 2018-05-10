@@ -56,9 +56,12 @@ class SSA_measurements():
 		A = []; sigma = []; mu = []; cnt = 0;
 		if(mode == 'sbs'):
 			for s in striplist:
-				tmp = self.cal.scurves(cal_ampl='baseline', filename = "../SSA_Results/" + filename + "_" + str(runname), rdmode = 'i2c', mode = 'sbs', striplist = [s], plot = False, speeduplevel = 2)
-				data[s-1] = tmp[:,s-1]
-				cnt += 1
+				tmp = self.cal.scurves(cal_ampl='baseline', filename = False, rdmode = 'i2c', mode = 'sbs', striplist = [s], plot = False, speeduplevel = 2)
+				data[s-1] = tmp[:,s-1];	cnt += 1;
+			if isinstance(filename, str):
+				fo = "../SSA_Results/" + filename + "_" + str(runname) + "_scurve_SbS__cal_" + str(0) + ".csv"
+				CSV.ArrayToCSV (array = data, filename = fo, transpose = False)
+				print "->  \tData saved in" + fo
 		elif(mode == 'all'):
 			tmp = self.cal.scurves(cal_ampl='baseline', filename = "../SSA_Results/" + filename + "_" + str(runname), rdmode = 'fast', mode = 'all', striplist = striplist, plot = False, speeduplevel = 2)
 			data = np.transpose(tmp)

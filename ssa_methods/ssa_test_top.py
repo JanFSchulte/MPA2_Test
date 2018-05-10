@@ -199,12 +199,24 @@ class SSA_test_top():
 
 		while self.runtest.is_active('memory_vs_voltage'):
 			try:
-				self.test.memory_vs_voltage(memory = 1, step = 0.005, start = 1.25, stop = 0.9, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
+				self.test.memory_vs_voltage(memory = 2, step = 0.005, start = 1.15, stop = 0.90, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
 				print "->  \t memory_vs_voltage Time = %7.2f" % (time.time() - time_init); time_init = time.time();
 				self.pwr.set_dvdd(self.dvdd)
 				break
 			except:
 				print "X>  \tError in memory_vs_voltage test. Reiterating."
+
+
+		while self.runtest.is_active('memory_vs_voltage'):
+			try:
+				self.test.memory_vs_voltage(memory = 1, step = 0.005, start = 1.15, stop = 0.90, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
+				print "->  \t memory_vs_voltage Time = %7.2f" % (time.time() - time_init); time_init = time.time();
+				self.pwr.set_dvdd(self.dvdd)
+				break
+			except:
+				print "X>  \tError in memory_vs_voltage test. Reiterating."
+
+		self.pwr.set_dvdd(self.dvdd)
 		#self.summary.display(runname)
 		#self.summary.save(filename, runname)
 

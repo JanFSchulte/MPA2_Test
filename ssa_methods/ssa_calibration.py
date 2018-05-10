@@ -35,17 +35,18 @@ class ssa_calibration():
 		self.analog_mux_map = analog_mux_map
 		self.initialised = False
 		self.par_list = [
-			self.Parameter("Analog Ground Interal ", "GND",             0.0, -1, -1, 'set_dont_calibrate'),
-			self.Parameter("Bandgap Voltage       ", "VBG",             0.3, -1, -1, 'set_dont_calibrate'),
-			self.Parameter("Booster Feedback Bias ", "Bias_D5BFEED",   82.0, -1, -1, 'set_calibrate'),
-			self.Parameter("Preamplifier Bias     ", "Bias_D5PREAMP",  82.0, -1, -1, 'set_calibrate'),
-			self.Parameter("TRIM DAC range        ", "Bias_D5TDR",    115.0, -1, -1, 'set_calibrate'),
-			self.Parameter("DAC for voltage biases", "Bias_D5ALLV",    82.0, -1, -1, 'set_calibrate'),
-			self.Parameter("DAC for current biases", "Bias_D5ALLI",    82.0, -1, -1, 'set_calibrate'),
-			self.Parameter("DAC for th and cal    ", "Bias_D5DAC8",    86.0, -1, -1, 'set_calibrate'),
-			self.Parameter("Threshold Low DAC     ", "Bias_THDAC",    622.0, -1, -1, 'set_dont_calibrate'),
-			self.Parameter("Threshold High DAC    ", "Bias_THDACHIGH",622.0, -1, -1, 'set_dont_calibrate'),
-			self.Parameter("Calibration DAC       ", "Bias_CALDAC",   100.0, -1, -1, 'set_dont_calibrate')]
+			self.Parameter("Analog Ground Interal ", "GND",                   0.0, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("Bandgap Voltage       ", "VBG",                   0.3, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("Bandgap Voltage       ", "Bias_BOOSTERBASELINE",  0.6, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("Booster Feedback Bias ", "Bias_D5BFEED",         82.0, -1, -1, 'set_calibrate'),
+			self.Parameter("Preamplifier Bias     ", "Bias_D5PREAMP",        82.0, -1, -1, 'set_calibrate'),
+			self.Parameter("TRIM DAC range        ", "Bias_D5TDR",          115.0, -1, -1, 'set_calibrate'),
+			self.Parameter("DAC for voltage biases", "Bias_D5ALLV",          82.0, -1, -1, 'set_calibrate'),
+			self.Parameter("DAC for current biases", "Bias_D5ALLI",          82.0, -1, -1, 'set_calibrate'),
+			self.Parameter("DAC for th and cal    ", "Bias_D5DAC8",          86.0, -1, -1, 'set_calibrate'),
+			self.Parameter("Threshold Low DAC     ", "Bias_THDAC",          622.0, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("Threshold High DAC    ", "Bias_THDACHIGH",      622.0, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("Calibration DAC       ", "Bias_CALDAC",         100.0, -1, -1, 'set_dont_calibrate')]
 
 
 	def __initialise(self):
