@@ -138,4 +138,4 @@ def f_gauss1(x, A, mu, sigma):
 
 def f_errorfc(x, *p):
 	a, mu, sigma = p
-	return a*0.5*erfc((x-mu)/sigma)
+	return a*0.5*erfc((x-mu)/(sigma*np.sqrt(2)))
