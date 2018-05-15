@@ -34,7 +34,8 @@ class SSA_Analise_Test_results():
 	## Setup Plots ####################################################################################
 
 	def set_configuration(self, preset = 'custom'):
-		self.noise_mean = []; self.noise_std = []; self.noise_x = [];
+		self.noise_mean = []; self.noise_std = []; self.noise_x = [];self.PAVDD = []; self.PDVDD = []; self.pwr_x = [];
+		self.VBG = []; self.thresholds = []; self.DAC_GAINs = [];
 		if preset == 'custom:':  print 'Use set_data_path(), set_test_name(), set_data_rate(), set_dataseries_name() methods.'
 		else: self.__set_run_preset(preset)
 
@@ -78,14 +79,17 @@ class SSA_Analise_Test_results():
 		return G
 
 	def Multi_run(self, runlist = [2,5]):
-		self.noise_mean = []; self.noise_std = []; self.noise_x = [];self.PAVDD = []; self.PDVDD = []; self.pwr_x = []; self.VBG = [];
+		self.noise_mean = []; self.noise_std = []; self.noise_x = [];self.PAVDD = []; self.PDVDD = []; self.pwr_x = []; self.VBG = []; self.thresholds = [];
 		for r in runlist:
 			self.__set_run_preset(r)
+			self.pltname = 'MULTI-1'
 			self.DAC_Gain_Ofs_Dnl_Inl_all()
 			self.FE_Gain_Noise_Std()
 			self.Power_plot()
 		self.noise_gain_multirun_plot(len(runlist))
 		self.power_multirun_plot(len(runlist))
+		self.dacs_multirun_plot(len(runlist))
+
 
 	def DAC_Gain_Ofs_Dnl_Inl(self, name = 'CALDAC', plot = True, return_values = False):
 		DNLs, INLs, GAINs, OFSs, vals, INLs_array = self.DAC_Gain_Ofs_Dnl_Inl__Calculate(name = name)
@@ -155,13 +159,14 @@ class SSA_Analise_Test_results():
 			CSV.array_to_csv(c_sigmamean,  self.path + 'ANALYSIS/S-Curve_Noise_Mean_cal_'+str(cal)+'.csv')
 		# FE Gain and offset
 		print '->  \tEvaluating Front-End Gain'
+		if not (np.shape(thresholds[ str(calpulses[0])])[0] == np.shape(thresholds[ str(calpulses[1])])[0] == np.shape(thresholds[ str(calpulses[2])])[0]):
+			print '->  \t ERROR. The number of files for different calibration charge are not equal. This may make the fitting fail.'
 		nelements = np.shape(thresholds[ str(calpulses[0])])[0]
 		gains = np.zeros([120,nelements]);
 		gainmean = np.zeros(nelements);
 		#return thresholds, calpulses
 		print nelements
 		#print gains
-		self.thresholds = thresholds
 		for s in range(0,120):
 			ths = np.array( [np.array( thresholds[k] , dtype = float)[ : , s ] for k in thresholds if k in list(map(str, calpulses))] )
 			self.ths = ths
@@ -205,7 +210,9 @@ class SSA_Analise_Test_results():
 
 	def FE_Gain_Noise_Std__Plot(self, calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean):
 		typcal = str(calpulses[int(len(calpulses)/2)])
+		self.typcal = typcal
 		multifile = (np.shape(thresholds[typcal])[0] > 1)
+		self.thresholds.append(thresholds)
 		if multifile:
 			# FE Gain evolution #################################
 			plt.clf();
@@ -385,7 +392,7 @@ class SSA_Analise_Test_results():
 			plt.hist(ser[i], normed = True, bins = bn, alpha = 0.7)
 			xt = plt.xticks()[0] # find minimum and maximum of xticks to know where we should compute theoretical distribution
 			xmin, xmax = min(xt), max(xt)
-			lnspc = np.linspace(xmin, xmax, len(ser[i]))
+			lnspc = np.linspace(xmin, xmax, len(ser[i])*100)
 			m, s = stats.norm.fit(ser[i]) # get mean and standard deviation
 			sigma.append(s)
 			pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
@@ -534,9 +541,9 @@ class SSA_Analise_Test_results():
 		PAVDD_int = interpolate.spline(x, PAVDD, xnew)
 		PDVDD_int = interpolate.spline(x, PDVDD, xnew)
 		VBG_int   = interpolate.spline(x, VBG, xnew)
-		self.PAVDD.append(PAVDD_int)
-		self.PDVDD.append(PDVDD_int)
-		self.VBG.append(VBG_int)
+		self.PAVDD.append(PAVDD)
+		self.PDVDD.append(PDVDD)
+		self.VBG.append(VBG)
 		self.pwr_x.append(xnew)
 		c = next(color)
 		plt.plot(xnew, PAVDD_int, color=c, lw=3)
@@ -557,14 +564,14 @@ class SSA_Analise_Test_results():
 		plt.xticks(range(np.int(np.round(float(np.min(x))/10)*10), np.int(np.round(float(np.max(x))/10)*10) , 20), fontsize=16)
 		plt.yticks(fontsize=16)
 		plt.ylabel("mW", fontsize=16)
-		plt.ylim(10, 35)
+		#plt.ylim(10, 35)
 		plt.xlabel(self.XLabel_Series, fontsize=16)
 		color=iter(sns.color_palette('deep'))
-		for i in range(nplots-1, -1, -1):
+		for i in range(nplots):
 			c = next(color);
 			plt.plot(x, self.PAVDD[i][x], color=c, lw=3, alpha = 0.8)
 			plt.plot(x, self.PDVDD[i][x], color=c, lw=3, alpha = 0.8)
-			c = next(color);
+			#c = next(color);
 		plt.savefig(self.path + 'ANALYSIS/Power'+self.pltname+'_multirun.png', bbox_inches="tight");
 		fig = plt.figure(figsize=(w,h))
 		ax = plt.subplot(111)
@@ -573,14 +580,45 @@ class SSA_Analise_Test_results():
 		plt.xticks(range(np.int(np.round(float(np.min(x))/10)*10), np.int(np.round(float(np.max(x))/10)*10) , 20), fontsize=16)
 		plt.yticks(fontsize=16)
 		plt.ylabel("Bandgap [mV]", fontsize=16)
-		plt.ylim(240, 290)
+		#plt.ylim(240, 290)
 		plt.xlabel(self.XLabel_Series, fontsize=16)
 		color=iter(sns.color_palette('deep'))
-		for i in range(nplots-1, -1, -1):
+		xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
+		for i in range(nplots):
 			c = next(color);
-			plt.plot(x, self.VBG[i][x], color=c, lw=3, alpha = 0.8)
-			c = next(color);
+			vbg_smuth = interpolate.spline(x, np.array(self.VBG[i][x]), xnew)
+			vbg_hat = scypy_signal.savgol_filter(x = vbg_smuth , window_length = 999, polyorder = 5)
+			plt.plot(xnew, vbg_smuth , color=c, lw=0.8, alpha = 0.8)
+			plt.plot(xnew, vbg_hat   , color=c, lw=3, alpha = 0.8)
+			#c = next(color);
 		plt.savefig(self.path + 'ANALYSIS/V_BG'+self.pltname+'_multirun.png', bbox_inches="tight");
+
+
+
+	def dacs_multirun_plot(self, nplots):
+		xmax = np.min( list(len(self.DAC_GAINs[i]) for i in range(nplots) ))
+		x = range(np.int(xmax))
+		w, h = plt.figaspect(1/4.0)
+		fig = plt.figure(figsize=(w,h))
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
+		ax.get_xaxis().tick_bottom(); ax.get_yaxis().tick_left()
+		plt.xticks(range(np.int(np.round(float(np.min(x))/10)*10), np.int(np.round(float(np.max(x))/10)*10) , 20), fontsize=16)
+		plt.yticks(fontsize=16)
+		plt.ylabel("mV/cnt", fontsize=16)
+		#plt.ylim(10, 35)
+		plt.xlabel(self.XLabel_Series, fontsize=16)
+		color=iter(sns.color_palette('deep'))
+		xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
+		for i in range(nplots):
+			c = next(color);
+			gain_smuth = interpolate.spline(x, -1*np.array(self.DAC_GAINs[i][0:xmax]), xnew)
+			gain_hat = scypy_signal.savgol_filter(x = gain_smuth , window_length = 999, polyorder = 5)
+			plt.plot(xnew, gain_smuth , color=c, lw=0.8, alpha = 0.8)
+			plt.plot(xnew, gain_hat , color=c, lw=3, alpha = 0.8)
+
+			#c = next(color);
+		plt.savefig(self.path + 'ANALYSIS/DAC_GAIN'+self.pltname+'_multirun.png', bbox_inches="tight");
 
 
 
@@ -640,9 +678,11 @@ class SSA_Analise_Test_results():
 		gain_std  = np.array([ np.std(GAINs) for i in x])
 		plt.ylim(np.mean(gain_mean)-np.max(gain_std)*5, np.mean(gain_mean)+np.max(gain_std)*5)
 		#plt.title("Chess games are getting longer", fontsize=22)
-		sl_mean = self._sliding_mean(gain_std , 1)
-		sl_std  = self._sliding_mean(gain_mean , 1)
+		#sl_mean = self._sliding_mean(gain_std , 1)
+		#sl_std  = self._sliding_mean(gain_mean , 1)
 		# plt.fill_between(range(len(GAINs[0,:])), sl_mean - sl_std,  sl_mean + sl_std, color="#3F5D7D")
+		if name == 'THDAC':
+			self.DAC_GAINs.append(GAINs)
 		plt.plot(x, GAINs, color="#3F5D7D", lw=3)
 		plt.savefig(self.path + 'ANALYSIS/' + name + '_GAIN_Evolution'+self.pltname+'.png', bbox_inches="tight");
 
@@ -718,6 +758,40 @@ class SSA_Analise_Test_results():
 			plt.fill_between(xnew, noise_mean_hat - noise_std_hat,  noise_mean_hat + noise_std_hat, alpha = 0.3, color = c)
 			plt.plot(xnew, noise_mean_hat, lw=2, color = c)
 			plt.savefig(self.path + 'ANALYSIS/S-Curve_Noise_Mean_DoubleRun'+self.pltname+'.png', bbox_inches="tight");
+
+		plt.clf();
+		w, h = plt.figaspect(1/6.0)
+		fig = plt.figure(figsize=(w,h))
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(False)
+		ax.spines["right"].set_visible(False)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.xticks(range(np.int(np.round(float(np.min(x))/10)*10), np.int(np.round(float(np.max(x))/10)*10) , 20), fontsize=16)
+		plt.yticks(fontsize=16)
+		plt.ylabel("FE Threshold mean [LSB]", fontsize=16)
+		plt.xlabel(self.XLabel_Series, fontsize=16)
+		xmax = np.min( list(len(self.thresholds[i][self.typcal][:,0]) for i in range(nplots) ))
+		x = range(xmax)
+		color=iter(sns.color_palette('deep'))
+		for p in range(nplots):
+			th_mean = np.zeros(xmax, dtype = float)
+			th_std = np.zeros(xmax, dtype = float)
+			for i in x:
+				th_mean[i], th_std[i] = stats.norm.fit(self.thresholds[p][self.typcal][i,:])
+			xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
+			th_mean_smooth = interpolate.spline(x, th_mean[x], xnew)
+			th_std_smooth = interpolate.spline(x, th_std[x], xnew)
+			th_mean_hat = scypy_signal.savgol_filter(x = th_mean_smooth , window_length = 501, polyorder = 5)
+			th_std_hat = scypy_signal.savgol_filter(x = th_std_smooth , window_length = 501, polyorder = 5)
+			c = next(color)
+			plt.fill_between(xnew, th_mean_hat - th_std_hat,  th_mean_hat + th_std_hat, alpha = 0.3, color = c)
+			plt.plot(xnew, th_mean_smooth, lw=2, color = c)
+			plt.savefig(self.path + 'ANALYSIS/S-Curve_Threshold_Mean_DoubleRun'+self.pltname+'.png', bbox_inches="tight");
+
+
+
+
 
 
 	##############################################################################################
@@ -814,7 +888,7 @@ class SSA_Analise_Test_results():
 			self.measure_rate = 1
 			self.XLabel_Series = 'Total Ionising Dose [Mrad]'
 			self.instances_to_plot = [0, -1] #first and last
-			self.pltname = ''
+			self.pltname = 'PROVA'
 			self.label = [' Pre-Rad :', '100 Mrad :', '200 Mrad :']
 		elif(n==4):
 			self.path =  '../../Desktop/aaa/Chip1/ALL/'
@@ -831,11 +905,16 @@ class SSA_Analise_Test_results():
 			self.measure_rate = 1
 			self.XLabel_Series = 'Total Ionising Dose [Mrad]'
 			self.instances_to_plot = [0, 100] #first and last
-			self.pltname = '_Run2'
+			self.pltname = '_Run3'
 			self.label = [' Pre-Rad :', '100 Mrad :', '200 Mrad :']
-
-
-
+		elif(n==6):
+			self.path =  '../../Desktop/aaa/NEW_RECALIB/'
+			self.run_name = 'X-Ray_ChipC7_T25C'
+			self.measure_rate = 1
+			self.XLabel_Series = 'Total Ionising Dose [Mrad]'
+			self.instances_to_plot = [0,1,2]
+			self.pltname = '_Run3'
+			self.label = [' Pre-Rad :', '120 Mrad :', '120 Mrad Re-Calib :']
 
 
 
