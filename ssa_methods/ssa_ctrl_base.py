@@ -54,13 +54,14 @@ class ssa_ctrl_base:
 		for tmp in registers:
 			if(tmp[0] == -1):
 				if display: print 'writing'
-				self.I2C.peri_write(tmp[1], tmp[2])
-				r = self.I2C.peri_read(tmp[1])
-				if(r != tmp[2]):
-					print 'X>  \t Configuration ERROR Periphery'
+				if (not 'Fuse' in tmp[1]):
+					self.I2C.peri_write(tmp[1], tmp[2])
+					r = self.I2C.peri_read(tmp[1])
+					if(r != tmp[2]):
+						print 'X>  \t Configuration ERROR Periphery  ' + str(tmp[1]) + '  ' + str(tmp[2]) + '  ' + str(r)
 			elif(tmp[0]>=1 and tmp[0]<=120):
 				if display: print 'writing'
-				if(tmp[1] != 'ReadCounter_LSB' and tmp[1] != 'ReadCounter_MSB'):
+				if ((not 'ReadCounter' in tmp[1]) and ((not 'Fuse' in tmp[1]))):
 					self.I2C.strip_write(tmp[1], tmp[0], tmp[2])
 					r = self.I2C.strip_read(tmp[1], tmp[0])
 					if(r != tmp[2]):

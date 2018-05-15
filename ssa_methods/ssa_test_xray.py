@@ -31,7 +31,7 @@ class SSA_test_xray():
 			runtest.enable('Memory_1')
 			runtest.enable('Memory_2')
 			runtest.enable('L1_data')
-			runtest.disable('memory_vs_voltage')
+			runtest.enable('memory_vs_voltage')
 			runtest.enable('noise_baseline')
 			runtest.enable('gain_offset_noise')
 			runtest.enable('threshold_spread')
@@ -62,6 +62,7 @@ class SSA_test_xray():
 				utils.activate_I2C_chip()
 			else:
 				time.sleep(0.1);
+				self.ssa.init(reset_board = True, reset_chip = False, read_current = False)
 				self.toptest.idle_routine(filename = filename, runname = utils.date_time())
 
 

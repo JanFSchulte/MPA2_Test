@@ -146,7 +146,7 @@ class SSA_cal_utility():
 				else:
 					strout += "Counters samples = 1->[" + str(scurves[threshold][0]) + "]  30->[" + str(scurves[threshold][29]) + "]  60->[" + str(scurves[threshold][59]) + "]  90->[" + str(scurves[threshold][89]) + "]  120->[" + str(scurves[threshold][119]) + "]"
 
-				if(speeduplevel >= 2 and threshold > 16):
+				if(speeduplevel >= 2 and threshold > 32):
 					if( (scurves[threshold-8: threshold ] == np.zeros((8,120), dtype=np.int)).all() ):
 						break
 

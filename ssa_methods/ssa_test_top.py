@@ -22,7 +22,7 @@ class SSA_test_top():
 		self.test = test; self.measure = measure;
 		self.summary = results()
 		self.runtest = RunTest('default')
-		self.config_file = ''; self.dvdd = 1.05 #for the offset of the board
+		self.config_file = ''; self.dvdd = 1.05; self.pvdd = 1.20; #for the offset of the board
 
 
 	def configure_tests(self, runtest = 'default'):
@@ -73,6 +73,7 @@ class SSA_test_top():
 		self.config_file = '../SSA_Results/' + filename + '_Configuration_Init.scv'
 		fo = filename
 		self.pwr.set_dvdd(self.dvdd)
+		self.pwr.set_pvdd(self.pvdd)
 		self.ssa.init(reset_board = True, reset_chip = False)
 		self.ssa.load_configuration(self.config_file, display = False)
 		self.test_routine_parameters(filename = fo, runname = runname)
@@ -128,7 +129,11 @@ class SSA_test_top():
 		self.ssa.init(reset_board = True, reset_chip = False, display = False)
 		#self.ssa.init(reset_board = True, reset_chip = True)
 		#self.ssa.load_configuration(self.config_file, display = False)
-		print 'start'
+		#try:
+		#	self.test.force_alinament()
+		#except:
+		#	print "X>  \tError in Initial Alinement"
+		#print 'start'
 
 		while self.runtest.is_active('Lateral_In'):
 			try:
@@ -199,12 +204,26 @@ class SSA_test_top():
 
 		while self.runtest.is_active('memory_vs_voltage'):
 			try:
-				self.test.memory_vs_voltage(memory = 1, step = 0.005, start = 1.25, stop = 0.9, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
+				time.sleep(0.1)
+				self.test.memory_vs_voltage(memory = 2, step = 0.005, start = 1.2, stop = 0.90, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
 				print "->  \t memory_vs_voltage Time = %7.2f" % (time.time() - time_init); time_init = time.time();
 				self.pwr.set_dvdd(self.dvdd)
 				break
 			except:
 				print "X>  \tError in memory_vs_voltage test. Reiterating."
+
+
+		while self.runtest.is_active('memory_vs_voltage'):
+			try:
+				time.sleep(0.1)
+				self.test.memory_vs_voltage(memory = 1, step = 0.005, start = 1.2, stop = 0.90, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
+				print "->  \t memory_vs_voltage Time = %7.2f" % (time.time() - time_init); time_init = time.time();
+				self.pwr.set_dvdd(self.dvdd)
+				break
+			except:
+				print "X>  \tError in memory_vs_voltage test. Reiterating."
+
+		self.pwr.set_dvdd(self.dvdd)
 		#self.summary.display(runname)
 		#self.summary.save(filename, runname)
 
@@ -285,6 +304,7 @@ class SSA_test_top():
 		filename = self.summary.get_file_name('../SSA_Results/' + filename + '_IDLE')
 		print filename
 		try:
+			time.sleep(0.1); r4, r5 = self.test.lateral_input_phase_tuning(display=False, file = '../SSA_Results/' + filename + '_lateral.csv', filemode = 'a', runname = runname + '_idle', shift = 0)
 			time.sleep(0.1); r1 = self.test.cluster_data(mode = 'digital', nstrips = 5, shift = 0,  display=False, file = '../SSA_Results/' + filename + '_CL.csv', filemode = 'a', runname = runname + '_idle')
 			time.sleep(0.1); r2, r3 = self.test.l1_data_basic(mode = 'digital', shift = 0, file = '../SSA_Results/' + filename + '_L1.csv', filemode = 'a', runname = runname + '_idle')
 		except:

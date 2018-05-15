@@ -362,7 +362,7 @@ class SSA_inject():
 		sleep(0.001)
 
 
-	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [20, 100], cal_pulse_amplitude = 200, initialise = True, trigger = False):
+	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [50, 100], cal_pulse_amplitude = 255, initialise = True, trigger = False):
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
 			self.ctrl.set_cal_pulse(amplitude = cal_pulse_amplitude, duration = 15, delay = 'keep')
