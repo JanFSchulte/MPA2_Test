@@ -19,7 +19,7 @@ class SSA_test_utility():
 		self.cal = cal; self.pwr = pwr;
 
 
-	def cluster_data_basic(self, mode = "digital", shift = 0, shiftL = 0, display=False, lateral = True, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+	def cluster_data_basic(self, mode = "digital", shift = 0, shiftL = 0, display=False, lateral = True, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
 		fo = open("../SSA_Results/" + file + "_Test_ClusterData_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = ''; stlateralout = '';
 		#print "->  \tRemember to call test.lateral_input_phase_tuning() before to run this test"
@@ -98,6 +98,8 @@ class SSA_test_utility():
 			if True in err:
 				fo.write(runname + ' ; ' + erlog + ' \n')
 				print '\t' + erlog
+				if(stop_on_error):
+					return [0,0,0]
 			utils.ShowPercent(cnt['cl_sum'], 130, "Running clusters test based on " + mode + " test pulses")
 		utils.ShowPercent(120, 120, "Done                                                      ")
 		fo.close()
@@ -106,7 +108,7 @@ class SSA_test_utility():
 
 
 
-	def cluster_data(self, mode = "digital", shift = 0, nstrips = 5, display=False, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+	def cluster_data(self, mode = "digital", shift = 0, nstrips = 5, display=False, init = False, hfi = True, nruns = 1000, file = 'TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
 		fo = open("../SSA_Results/" + file + "_Test_ClusterData2_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = '';
 		utils.activate_I2C_chip()
@@ -124,7 +126,7 @@ class SSA_test_utility():
 			return False
 		self.ssa.readout.cluster_data(initialize = True)
 		cnt = {'cl_sum': 0, 'cl_err' : 0};
-		for i in range(0,1000):
+		for i in range(0,nruns):
 			#clrange = np.array( random.sample(range(1, 60), nstrips)) * 2
 			cl_hits, cl_centroids = self._generate_clusters(nstrips, 1)
 			#cl_hits = [13, 14, 15, 30, 33, 80, 100, 99, 101]
@@ -162,6 +164,8 @@ class SSA_test_utility():
 			if (err[0]):
 				erlog = "Cluster-Data-Error;   " + dstr
 				cnt['cl_err'] += 1
+				if stop_on_error:
+					return 100*(1-cnt['cl_err']/float(cnt['cl_sum']))
 				#print cl_hits
 			else:
 				if(display == True):
@@ -350,6 +354,7 @@ class SSA_test_utility():
 		fo.write("\n    RUN ; DVDD;       EFFICIENCY;    ERROR LIST; \n")
 		for dvdd in np.arange(start, stop, -step):
 			self.pwr.set_dvdd( dvdd )
+			self.ssa.init(reset_board = True, reset_chip = False, display = False) #alignement
 			eff = self.memory(memory = memory, display = 0, latency = latency, shift = shift)
 			erlist = self.memerrlist
 			fo.write("%8s ; %4.3fV ;     %7.2f%% ;       %s ; \n" % (runname, dvdd, eff, erlist))
@@ -394,6 +399,20 @@ class SSA_test_utility():
 		c.sort()
 		return hit, c
 
+
+	def force_alinament(self, maxtime = 5*60):
+		time_init = time.time()
+		while ((time.time()-time_init) < maxtime):
+			print '________________________________'
+			rt = self.cluster_data(nruns = 50, stop_on_error = True)
+			if(rt==100):
+				rt1 = self.cluster_data(nruns = 1000, stop_on_error = True)
+				if rt == 100: break
+				fc7.write("ctrl_phy_fast_cmd_phase",3)
+			else:
+				fc7.write("ctrl_phy_fast_cmd_phase",24)
+			print 'SHIFT = 20'
+			print rt
 
 '''
 def prova(i):
