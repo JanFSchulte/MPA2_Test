@@ -23,7 +23,7 @@ except ImportError:
 	biascal = False
 	print "- Impossible to access GPIB instruments"
 
-measure     = SSA_measurements(ssa, I2C, fc7, cal, analog_mux_map, biascal)
+measure     = SSA_measurements(ssa, I2C, fc7, cal, analog_mux_map, pwr, biascal)
 toptest     = SSA_test_top(ssa, I2C, fc7, cal, biascal, pwr, test, measure)
 xray        = SSA_test_xray(toptest, ssa, I2C, fc7, cal, biascal, pwr, test, measure)
 anl         = SSA_Analise_Test_results(toptest, test, measure, biascal)

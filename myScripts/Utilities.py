@@ -31,9 +31,13 @@ class Utilities:
 		def __repr__(self):
 			return "{:6.1f}".format(self)
 
+	def reverse_bit_order(self, n, width = 32):
+		b = '{:0{width}b}'.format(n, width=width)
+		r = int(b[::-1], 2)
+		return r
+
 	def ShowPercent(self, val , max = 100, message = ""):
 		i = int( (float(val)/max) * 100.0) - 1
-		#row = ""*i + message
 		row = "\t" + message
 		sys.stdout.write("%s\r%d%%" %(row, i + 1))
 		sys.stdout.flush()
@@ -110,8 +114,6 @@ class Utilities:
 	def date_time(self):
 		st = datetime.now().strftime("%Y-%m-%d_%H:%M")
 		return st
-
-
 
 def print_method(name):
 	lines = inspect.getsourcelines(name)

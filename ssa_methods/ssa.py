@@ -21,11 +21,17 @@ class SSA_ASIC:
 		self.pwr     = pwr
 		self.fc7     = FC7
 
-	def reset(self):
-		self.ctrl.reset(display=True)
+	def reset(self, display=True):
+		self.ctrl.reset(display = display)
 
 	def resync(self):
 		self.ctrl.resync()
+
+	def disable(self, display=True):
+		self.pwr._disable_ssa(display = display)
+
+	def enable(self, display=True):
+		self.pwr._enable_ssa(display = display)
 
 	def debug(self, value = True):
 		self.i2c.set_debug_mode(value)

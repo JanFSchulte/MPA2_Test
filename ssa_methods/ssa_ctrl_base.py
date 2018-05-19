@@ -154,14 +154,17 @@ class ssa_ctrl_base:
 	def activate_readout_async(self, ssa_first_counter_delay = 8, correction = 0):
 		self.I2C.peri_write('ReadoutMode',0b01)
 		# write to the I2C
-		self.I2C.peri_write("AsyncRead_StartDel_MSB", 0)
-		self.I2C.peri_write("AsyncRead_StartDel_LSB", ssa_first_counter_delay)
+		self.I2C.peri_write("AsyncRead_StartDel_MSB", ((ssa_first_counter_delay >> 8) & 0x01))
+		self.I2C.peri_write("AsyncRead_StartDel_LSB", (ssa_first_counter_delay & 0xff))
 		# check the value
-		if (self.I2C.peri_read("AsyncRead_StartDel_LSB") != ssa_first_counter_delay):
+		if (self.I2C.peri_read("AsyncRead_StartDel_LSB") != ssa_first_counter_delay & 0xff):
 			print "Error! I2C did not work properly"
-			exit(1)
+			error(1)
 		# ssa set delay of the counters
-		self.fc7.write("cnfg_phy_slvs_ssa_first_counter_del", ssa_first_counter_delay+24+correction)
+		fwdel = ssa_first_counter_delay + 24 + correction
+		if(fwdel >= 255):
+			print '->  \tThe counters delay value selected is not supposrted by the firmware [> 255]'
+		self.fc7.write("cnfg_phy_slvs_ssa_first_counter_del", fwdel & 0xff)
 
 
 	def activate_readout_shift(self):

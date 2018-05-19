@@ -14,12 +14,9 @@ import matplotlib.pyplot as plt
 class SSA_readout():
 
 	def __init__(self, I2C, FC7, ssactrl, ssastrip):
-		self.I2C = I2C
-		self.fc7 = FC7
-		self.ctrl = ssactrl
-		self.strip = ssastrip
-		self.ofs_initialised = False
-		self.ofs = [0]*6
+		self.I2C = I2C;	self.fc7 = FC7;self.ctrl = ssactrl;
+		self.strip = ssastrip; self.utils = utils;
+		self.ofs_initialised = False;  self.ofs = [0]*6;
 
 
 	def status(self):
@@ -30,42 +27,41 @@ class SSA_readout():
 		return [l1_data_ready, stub_data_ready, counters_ready]
 
 
-	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False, getstatus = False, display_pattern = False):
-	 	data = []
-	 	tmp = []
-	 	counter = 0
-	 	data_loc = 21 + shift
-	 	status = [0]*3
-	 	#status_init = [0]*3
-	 	timeout = 10
-	 	if(initialize == True):
-			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
-			sleep(0.001)
-		#status_init = self.status()
-		SendCommand_CTRL("start_trigger")
+	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False):
+	 	data = []; tmp = [];
+	 	counter = 0; data_loc = 21 + shift;
+	 	status = [0]*3; timeout = 10;
+		if(send_test_pulse):
+		 	if(initialize):
+				Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
+				sleep(0.001)
+			#status_init = self.status()
+			SendCommand_CTRL("start_trigger")
 		while (status[1] != 1 and counter<timeout):
 			sleep(0.001)
 			status = self.status()
 			counter += 1
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
 		counter = 0
-	 	for word in ssa_stub_data:
-	 		counter += 1
- 			tmp.append( to_number(word, 8, 0)/2.0 )
- 			tmp.append( to_number(word,16, 8)/2.0 )
- 			tmp.append( to_number(word,24,16)/2.0 )
- 			tmp.append( to_number(word,32,24)/2.0 )
- 			if (counter % 10 == 0):
- 				data.append(tmp)
- 				tmp = []
+		for word in ssa_stub_data:
+			counter += 1
+			tmp.append( to_number(word, 8, 0)/2.0 )
+			tmp.append( to_number(word,16, 8)/2.0 )
+			tmp.append( to_number(word,24,16)/2.0 )
+			tmp.append( to_number(word,32,24)/2.0 )
+			if (counter % 10 == 0):
+				data.append(tmp)
+				tmp = []
+		if raw:
+			return data
 		if(display):
- 			for i in data:
- 				print "-->  ", i
- 		if (not lookaround):
- 			coordinates = []
-	 		for block in data:
-	 			if block[ data_loc ] != 0:
-	 				val = self.__apply_offset_correction(block[ data_loc ], apply_offset_correction)
+			for i in data:
+				print "-->  ", i
+		if (not lookaround):
+			coordinates = []
+			for block in data:
+				if block[ data_loc ] != 0:
+					val = self.__apply_offset_correction(block[ data_loc ], apply_offset_correction)
 					coordinates.append( val )
 		else:
 			coordinates = np.zeros([8,40], dtype = np.float16)
@@ -102,7 +98,7 @@ class SSA_readout():
 	def send_trigger(duration = 0):
 		compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
-	def l1_data(self, latency = 50, display = False, shift = 0, initialise = True, mipadapterdisable = False):
+	def l1_data(self, latency = 50, display = False, shift = 0, initialise = True, mipadapterdisable = False, trigger = True):
 		if(initialise == True):
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
@@ -114,7 +110,8 @@ class SSA_readout():
 			self.ctrl.activate_readout_normal(mipadapterdisable = mipadapterdisable)
 			sleep(0.001)
 
-		SendCommand_CTRL("start_trigger")
+		if trigger:
+			SendCommand_CTRL("start_trigger")
 		#send_trigger(1)
 		sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
@@ -224,7 +221,7 @@ class SSA_readout():
 		self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8 + shift) )
-		self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
+		self.I2C.peri_write('AsyncRead_StartDel_LSB', (9) )
 		start_counters_read(1)
 		timeout = 0
 		failed = False

@@ -4,7 +4,7 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from itertools import product as itertools_product
-
+from collections import OrderedDict
 import time
 import sys
 import inspect
@@ -15,15 +15,9 @@ import matplotlib.pyplot as plt
 
 class SSA_measurements():
 
-	def __init__(self, ssa, I2C, fc7, cal, analog_mux_map, biascal = False):
-		self.ssa      = ssa
-		self.I2C      = I2C
-		self.fc7      = fc7
-		self.cal      = cal
-		self.bias     = biascal
-		self.muxmap   = analog_mux_map
-
-
+	def __init__(self, ssa, I2C, fc7, cal, analog_mux_map, pwr, biascal = False):
+		self.ssa = ssa; self.I2C = I2C; self.fc7 = fc7; self.utils = utils;
+		self.cal = cal; self.bias = biascal; self.muxmap = analog_mux_map; self.pwr = pwr;
 
 	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2):
 		plt.clf()
@@ -346,6 +340,85 @@ class SSA_measurements():
 		resolution.append( "TYP: " + self.cal.delayline_resolution(set_bias = 15, shift = 3, display = debug, debug = False) )
 		#resolution.append( "MIN: " + self.cal.delayline_resolution(set_bias =  1, shift = 3, display = debug, debug = False) )
 		return resolution
+
+
+
+	def power_vs_occupancy(self, th = range(2,13), trim = False, plot = 1, print_file =1, filename = "pwr1", itr = 1000, rp= 1):
+		self.ssa.inject.analog_pulse(initialise = True)
+		if trim:
+			cal.trimming_scurves(method = 'highest', iterations = 3)
+		else:
+			self.cal.set_trimming(default_trimming = 31, striprange = 'all', display=False)
+		th = np.array(th)
+		data = np.zeros((len(th)*rp, 3), dtype = float )
+		self.I2C.strip_write("ENFLAGS", 0, 0b10001)
+		nitr = 0
+		for i in range(len(th)):
+			for l in range(rp):
+				cnt = np.zeros(itr, dtype = int)
+				self.utils.activate_I2C_chip()
+				self.ssa.ctrl.set_threshold(th[i])
+				for m in range(itr):
+					compose_fast_command(duration = 0, resync_en = 0, l1a_en = 0, cal_pulse_en = 1, bc0_en = 0)
+					cl = self.ssa.readout.cluster_data(raw = False, apply_offset_correction = False, send_test_pulse = False, shift = 0, initialize = False, lookaround = False, getstatus = False, display_pattern = False, display = False)
+					cnt[m] = len(cl)
+				sleep(0.1)
+				data[nitr, 0] = th[i]
+				data[nitr, 1] = np.average(cnt)
+				data[nitr, 2] = self.pwr.get_power_digital(display = False)
+				print '->  \tth = %3d | pwr = %7.3f | ncl = %8.5f | itr = %3d' % (data[nitr, 0], data[nitr, 2], data[nitr, 1], nitr)
+				nitr += 1
+		self.ssa.ctrl.set_threshold(100)
+		if print_file:
+			CSV.ArrayToCSV (data, '../SSA_Results/'+filename+'_PowerVsOccupancy.csv')
+		if plot:
+			plt.clf()
+			w, h = plt.figaspect(1/1.5)
+			fig = plt.figure(figsize=(8,5.2))
+			ax = plt.subplot(111)
+			ax.spines["top"].set_visible(False)
+			ax.spines["right"].set_visible(False)
+			ax.get_xaxis().tick_bottom()
+			ax.get_yaxis().tick_left()
+			plt.xticks(range(0,9,1), fontsize=16)
+			plt.yticks(fontsize=16)
+			plt.ylabel("Digital power consuption [ mW ]", fontsize=16)
+			plt.xlabel("Strip Occupancy [Hit/Bx]", fontsize=16)
+			p = np.poly1d(np.polyfit(data[:,1], data[:,2], 3))
+			t = np.linspace(0, 8, 1000)
+			plt.plot(data[:,1], data[:,2], 'o', t, p(t), '-')
+			plt.show()
+		return data
+
+	def power_vs_state(self, display = True):
+		data = OrderedDict()
+		self.ssa.disable(display=False)
+		data['reset'] = self.pwr.get_power(display = False)
+		self._display_power_value(data.items()[-1], display)
+		self.ssa.enable(display=False)
+		data['enable'] = self.pwr.get_power(display = False)
+		self._display_power_value(data.items()[-1], display)
+		self.ssa.ctrl.init_slvs(0b100)
+		data['min-pad'] = self.pwr.get_power(display = False)
+		self._display_power_value(data.items()[-1], display)
+		self.ssa.ctrl.init_slvs(0b111)
+		data['max-pad'] = self.pwr.get_power(display = False)
+		self._display_power_value(data.items()[-1], display)
+		self.ssa.ctrl.activate_readout_async(ssa_first_counter_delay = 0xffff, correction = 0)
+		start_counters_read(1)
+		data['async'] = self.pwr.get_power(display = False)
+		self._display_power_value(data.items()[-1], display)
+		self.bias.calibrate_to_nominals()
+		data['calib'] = self.pwr.get_power(display = False)
+		self._display_power_value(data.items()[-1], display)
+
+		return data
+
+
+
+	def _display_power_value(self, data, display):
+		if(display):
+			print "->  \t%8s : Digital = %7.3f, Analog = %7.3f, Pads = %7.3f" %(data[0], data[1][0], data[1][1], data[1][2])
 
 
 

@@ -173,7 +173,7 @@ class SSA_cal_utility():
 		return scurves
 
 
-	def trimming_scurves(self, method = 'expected', cal_ampl = 100, th_nominal = 'default', default_trimming = 'keep', striprange = range(1,121), ratio = 'default', iterations = 5, nevents = 1000, plot = True, display = False, reevaluate = True):
+	def trimming_scurves(self, method = 'expected', cal_ampl = 30, th_nominal = 'default', default_trimming = 'keep', striprange = range(1,121), ratio = 'default', iterations = 5, nevents = 1000, plot = True, display = False, reevaluate = True):
 		utils.activate_I2C_chip()
 		# trimdac/thdac ratio
 		if(ratio == 'evaluate'):
@@ -183,7 +183,6 @@ class SSA_cal_utility():
 		elif isinstance(ratio, float) or isinstance(ratio, int):
 			dacratiolist = np.array([ratio]*120)
 		else: exit(1)
-
 		# apply starting trimming
 		if(method == 'expected'):
 			if( isinstance(default_trimming, np.ndarray) or isinstance(default_trimming, list) or isinstance(default_trimming, int)):
@@ -199,7 +198,6 @@ class SSA_cal_utility():
 		elif (method == 'highest'):
 			trimdac_value = self.set_trimming(0, striprange, display = False)
 		else: return False
-
 		# evaluate initial S-Curves
 		scurve_init = self.scurves(
 			cal_ampl = cal_ampl,
@@ -227,40 +225,31 @@ class SSA_cal_utility():
 			th_expected = np.mean(thlist_init)
 		elif (method == 'highest'):
 			th_expected = np.max(thlist_init)
-
 		thlist = thlist_init
 		scurve = scurve_init
 		par = par_init
-
-		print "->  \tDifference = " +  str(np.max(thlist)-np.min(thlist))
-
+		print "->  \tStandard deviation = %5.3f" % (np.std(thlist))
 		# start trimming on the S-Curves
 		for i in range(0, iterations):
 			trimdac_correction = np.zeros(120)
-
 			for strip in striprange:
-
 				th_initial                  = thlist[strip-1]
 				trimdac_correction[strip-1] = int(round((th_expected - th_initial) * dacratiolist[strip-1] ))
 				trimdac_current_value       = self.ssa.strip.get_trimming(strip)
 				trimdac_value[strip-1]      = trimdac_current_value + trimdac_correction[strip-1]
-
 				if(trimdac_value[strip-1] > 31):
 					print "->  \tReached high trimming limit for strip" + str(strip)
 					trimdac_value[strip-1] = 31
 				elif(trimdac_value[strip-1] < 0):
 					print "->  \tReached low trimming limit for strip" + str(strip)
 					trimdac_value[strip-1] = 0
-
 				# Apply correction to the trimming DAC
 				self.ssa.strip.set_trimming(strip, int(trimdac_value[strip-1]))
-
 			if(display):
 				print "->  \tInitial threshold    " + str(thlist[0:10])
 				print "->  \tTarget threshold     " + str([th_expected]*10)
 				print "->  \tTrim-DAC Correction  " + str(trimdac_correction[0:10])
 				print "->  \tTrimming DAC values: " + str(trimdac_value[0:10])
-
 			# evaluate new S-Curves
 			scurve = self.scurves(
 				cal_ampl = cal_ampl,
@@ -269,19 +258,15 @@ class SSA_cal_utility():
 				plot = False,
 				filename = False,
 				msg = "for iteration " + str(i+1))
-
 			thlist, par = self.evaluate_scurve_thresholds(
 				scurve = scurve,
 				nevents = nevents)
-
 			dacratiolist = dacratiolist/2.0
-
-			print "Difference = " +  str(np.max(thlist)-np.min(thlist))
+			print "->  \tStandard deviation = %5.3f" % (np.std(thlist))
 			if ((np.max(thlist)-np.min(thlist)) < 1):
 				break
 			if (i == iterations-1):
 				print "->  \tReached the maximum number of iterations (d = " + str(np.max(thlist)-np.min(thlist)) + ")"
-
 		#plot initial and final S-Curves
 		if(plot):
 			xplt = np.linspace(int(th_expected-30), int(th_expected+31), 601)
@@ -293,7 +278,6 @@ class SSA_cal_utility():
 			#utils.smuth_plot(scurve_init[xplt], xplt, 'b')
 			#utils.smuth_plot(scurve[xplt], xplt, 'r')
 			plt.show()
-
 		return scurve_init , scurve
 
 
