@@ -112,14 +112,19 @@ class ssa_ctrl_base:
 
 
 	def __do_phase_tuning(self):
+		cnt = 0; done = True
 		print self.fc7.read("stat_phy_phase_tuning_done")
 		self.fc7.write("ctrl_phy_phase_tune_again", 1)
 		print self.fc7.read("stat_phy_phase_tuning_done")
 		send_test(15)
 		print self.fc7.read("stat_phy_phase_tuning_done")
-		while(self.fc7.read("stat_phy_phase_tuning_done") == 0):
-			sleep(0.5)
+		while(self.fc7.read("stat_phy_phase_tuning_done") == 0 and cnt < 5):
+			sleep(0.1)
 			print "Waiting for the phase tuning"
+			cnt += 1
+		if cnt>4: 
+			done = False
+		return  done
 
 
 	def phase_tuning(self):
@@ -128,10 +133,11 @@ class ssa_ctrl_base:
 		time.sleep(0.01)
 		self.set_lateral_lines_alignament()
 		time.sleep(0.01)
-		self.__do_phase_tuning()
+		rt = self.__do_phase_tuning()
 		self.I2C.peri_write('OutPattern7/FIFOconfig', 7)
 		self.reset_pattern_injection()
 		self.activate_readout_normal()
+		return rt
 
 
 	def set_t1_sampling_edge(self, edge):

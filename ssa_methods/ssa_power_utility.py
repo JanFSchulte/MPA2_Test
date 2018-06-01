@@ -46,13 +46,16 @@ class ssa_power_utility:
 		sleep(1); self.get_power(display = display)
 
 
-	def get_power(self, display = True):
+	def get_power(self, display = True, return_all = False):
 		Pd, Vd, Id = self.get_power_digital(display, False, True)
 		Pa, Va, Ia = self.get_power_analog(display, False, True)
 		Pp, Vp, Ip = self.get_power_pads(display, False, True)
 		print '->  \tTotal: %7.3fmW  [I=%7.3fmA]' % (Pd+Pa+Pp, Id+Ia+Ip )
 		utils.activate_I2C_chip()
-		return [Pd,Pa,Pp]
+		if not return_all:
+			return [Pd,Pa,Pp]
+		else:
+			return [Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip]
 
 
 	def get_power_digital(self, display = True, i2cact = True, rtv1 = False):

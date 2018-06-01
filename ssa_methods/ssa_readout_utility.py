@@ -221,7 +221,7 @@ class SSA_readout():
 		self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8 + shift) )
-		self.I2C.peri_write('AsyncRead_StartDel_LSB', (9) )
+		self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
 		start_counters_read(1)
 		timeout = 0
 		failed = False

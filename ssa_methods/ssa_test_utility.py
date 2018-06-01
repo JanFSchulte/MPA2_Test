@@ -328,8 +328,8 @@ class SSA_test_utility():
 					cnt[2] += 1
 				dstr = "expected: [L1 =  1][BX =%3d][HIT =%3s][HIP =%3d]\t  |  found: [L1 =%3d][BX =%3d][HIT =%3s][HIP =%3s]" % (
 						(d+1)%16, strip, HIP,     L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
-				if(((L1_counter != 1) or (BX_counter != (d+1)%16)) ):
-					print "\tCounter Error -> " + dstr + "                                  "
+				#if(((L1_counter != 1) or (BX_counter != (d+1)%16)) ):
+				#	print "\tCounter Error -> " + dstr + "                                  "
 				error = False
 				if not HIP:
 					if(len(l1hitlist) != 1): error = True
@@ -357,7 +357,9 @@ class SSA_test_utility():
 		fo.write("\n    RUN ; DVDD;       EFFICIENCY;    ERROR LIST; \n")
 		for dvdd in np.arange(start, stop, -step):
 			self.pwr.set_dvdd( dvdd )
-			self.ssa.init(reset_board = True, reset_chip = False, display = False) #alignement
+			rt = self.ssa.init(reset_board = True, reset_chip = False, display = False) #alignement
+			if not rt:
+				eff = 0; erlist = [];
 			eff = self.memory(memory = memory, display = 0, latency = latency, shift = shift)
 			erlist = self.memerrlist
 			fo.write("%8s ; %4.3fV ;     %7.2f%% ;       %s ; \n" % (runname, dvdd, eff, erlist))

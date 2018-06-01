@@ -62,7 +62,7 @@ class SSA_ASIC:
 			sys.stdout.flush()
 		self.ctrl.set_t1_sampling_edge(edge)
 		self.ctrl.init_slvs(slvs_current)
-		self.ctrl.phase_tuning()
+		rt = self.ctrl.phase_tuning()
 		if(display): sleep(0.2)
 		else: sleep(0.1)
 		self.ctrl.activate_readout_normal()
@@ -80,6 +80,7 @@ class SSA_ASIC:
 			print "->  \tActivated normal readout mode"
 			if(read_current):
 				self.pwr.get_power(display = True)
+		return rt
 
 
 	def init_all(self):

@@ -49,15 +49,16 @@ class SSA_test_top():
 
 
 	def initialise(self, file = False, plot = False):
+		if (not isinstance(file, str)): return
+		filename = '../SSA_Results/' + file
+		dir = filename[:filename.rindex(os.path.sep)]
+		if not os.path.exists(dir):
+			os.makedirs(dir)
 		self.ssa.init(reset_board = True, reset_chip = True)
 		self.biascal.calibrate_to_nominals()
 		self.measure.scurve_trim(plot = plot, filename = file + '_Init')
-		if (isinstance(file, str)):
-			configfile = '../SSA_Results/' + file + '_Configuration_Init.scv'
-			self.config_file = configfile
-		else:
-			configfile = self.config_file
-		self.ssa.save_configuration(configfile, display=False)
+		self.config_file = filename + '_Configuration_Init.scv'
+		self.ssa.save_configuration(self.config_file, display=False)
 
 
 
@@ -70,12 +71,18 @@ class SSA_test_top():
 		time_init = time.time()
 		#fo = "../SSA_Results/X-Ray/" + runname + '_' + utils.date_time() + '_X-Ray_'
 		#if(self.config_file == ''):
-		self.config_file = '../SSA_Results/' + filename + '_Configuration_Init.scv'
-		fo = filename
+		fo = '../SSA_Results/' + filename
+		dir = fo[:fo.rindex(os.path.sep)]
+		if not os.path.exists(dir):
+			os.makedirs(dir)
+		self.config_file = fo + '_Configuration_Init.scv'
 		self.pwr.set_dvdd(self.dvdd)
 		self.pwr.set_pvdd(self.pvdd)
+		time.sleep(0.5)
 		self.ssa.init(reset_board = True, reset_chip = False)
+		time.sleep(0.5)
 		self.ssa.load_configuration(self.config_file, display = False)
+		time.sleep(0.5)
 		self.test_routine_parameters(filename = fo, runname = runname)
 		self.test_routine_analog(filename = fo, runname = runname)
 		self.test_routine_digital(filename = fo, runname = runname)
@@ -95,18 +102,25 @@ class SSA_test_top():
 
 	def test_routine_parameters(self, filename = 'default', runname = '  0Mrad'):
 		filename = self.summary.get_file_name(filename)
-
-		while self.runtest.is_active('Power'):
+		wd = 0
+		while self.runtest.is_active('Power') and wd < 3:
 			try:
-				r1, r2, r3 = self.pwr.get_power(display=True)
-				self.summary.set('Power_DVDD', r1, 'mW', '',  runname)
-				self.summary.set('Power_AVDD', r2, 'mW', '',  runname)
-				self.summary.set('Power_PVDD', r3, 'mW', '',  runname)
+				[Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip] = self.pwr.get_power(display=True, return_all = True)
+				self.summary.set('P_DVDD', Pd, 'mW', '',  runname)
+				self.summary.set('P_AVDD', Pa, 'mW', '',  runname)
+				self.summary.set('P_PVDD', Pp, 'mW', '',  runname)
+				self.summary.set('V_DVDD', Vd, 'mW', '',  runname)
+				self.summary.set('V_AVDD', Va, 'mW', '',  runname)
+				self.summary.set('V_PVDD', Vp, 'mW', '',  runname)
+				self.summary.set('I_DVDD', Id, 'mW', '',  runname)
+				self.summary.set('I_AVDD', Ia, 'mW', '',  runname)
+				self.summary.set('I_PVDD', Ip, 'mW', '',  runname)
 				break
 			except:
 				print "X>  \tError in Power test. Reiterating."
-
-		while self.runtest.is_active('Bias'):
+				wd +=1
+		wd = 0
+		while self.runtest.is_active('Bias') and wd < 3:
 			try:
 				r1 = self.biascal.measure_bias(return_data=True)
 				for i in r1:
@@ -114,12 +128,16 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in Bias test. Reiterating."
-		while self.runtest.is_active('Configuration'):
+				wd +=1
+		wd = 0
+		while self.runtest.is_active('Configuration') and wd < 3:
 			try:
 				self.ssa.save_configuration('../SSA_Results/' + filename + '_Configuration_' + str(runname) + '.scv', display=False)
 				break
 			except:
 				print "X>  \tError in reading Config regs. Reiterating."
+				wd +=1
+		wd = 0
 
 
 
@@ -127,6 +145,7 @@ class SSA_test_top():
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		self.ssa.init(reset_board = True, reset_chip = False, display = False)
+		wd = 0
 		#self.ssa.init(reset_board = True, reset_chip = True)
 		#self.ssa.load_configuration(self.config_file, display = False)
 		#try:
@@ -135,7 +154,7 @@ class SSA_test_top():
 		#	print "X>  \tError in Initial Alinement"
 		#print 'start'
 
-		while self.runtest.is_active('Lateral_In'):
+		while self.runtest.is_active('Lateral_In') and wd < 3:
 			try:
 				r1, r2 = self.test.lateral_input_phase_tuning(display=False, file = filename, filemode = 'a', runname = runname, shift = shift[6])
 				self.summary.set('Lateral_In_L', r1, '', '',  runname)
@@ -144,8 +163,10 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in lateral_input_phase_tuning test. Reiterating."
+				wd +=1
+		wd = 0
 
-		while self.runtest.is_active('Cluster_Data'):
+		while self.runtest.is_active('Cluster_Data') and wd < 3:
 			try:
 				r1, r2, r3 = self.test.cluster_data_basic(mode = 'digital', shift = shift[0], shiftL = shift[1], display=False, file = filename, filemode = 'a', runname = runname)
 				self.summary.set('Cluster_Data',         r1, '%', '',  runname)
@@ -155,8 +176,10 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in cluster_data_basic test. Reiterating."
+				wd +=1
+		wd = 0
 
-		while self.runtest.is_active('Pulse_Injection'):
+		while self.runtest.is_active('Pulse_Injection') and wd < 3:
 			try:
 			 	r1, r2, r3 = self.test.cluster_data_basic(mode = 'analog',  shift = shift[2], shiftL = shift[3], display=False, file = filename, filemode = 'a', runname = runname)
 				self.summary.set('Pulse_Injection', r1, '%', '',  runname)
@@ -164,17 +187,21 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in Pulse_Injection test. Reiterating."
+				wd +=1
+		wd = 0
 
-		while self.runtest.is_active('Cluster_Data2'):
-			#try:
-			r1 = self.test.cluster_data(mode = 'digital', nstrips = 5, shift = shift[0], display=False, file = filename, filemode = 'a', runname = runname)
-			self.summary.set('Cluster_Data2',  r1, '%', '',  runname)
-			print "->  \tcluster_data_basic test Time = %7.2f" % (time.time() - time_init); time_init = time.time();
-			break
-			#except:
-			#	print "X>  \tError in Cluster_Data2 test. Reiterating."
+		while self.runtest.is_active('Cluster_Data2') and wd < 3:
+			try:
+				r1 = self.test.cluster_data(mode = 'digital', nstrips = 3, shift = shift[0], display=False, file = filename, filemode = 'a', runname = runname)
+				self.summary.set('Cluster_Data2',  r1, '%', '',  runname)
+				print "->  \tcluster_data_basic test Time = %7.2f" % (time.time() - time_init); time_init = time.time();
+				break
+			except:
+				print "X>  \tError in Cluster_Data2 test. Reiterating."
+				wd +=1
+		wd = 0
 
-		while self.runtest.is_active('Memory_1'):
+		while self.runtest.is_active('Memory_1') and wd < 3:
 			try:
 				r1 = self.test.memory(memory = 1, shift = shift[4], display= 0,  file = filename, filemode = 'a', runname = runname)
 				self.summary.set('Memory_1', r1, '%', '',  runname)
@@ -182,8 +209,10 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in Memory_1 test. Reiterating."
+				wd +=1
+		wd = 0
 
-		while self.runtest.is_active('Memory_2'):
+		while self.runtest.is_active('Memory_2') and wd < 3:
 			try:
 				r1 = self.test.memory(memory = 2, shift = shift[4], display= 0,  file = filename, filemode = 'a', runname = runname)
 				self.summary.set('Memory_2', r1, '%', '',  runname)
@@ -191,8 +220,10 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in Memory_2 test. Reiterating."
+				wd +=1
+		wd = 0
 
-		while self.runtest.is_active('L1_data'):
+		while self.runtest.is_active('L1_data') and wd < 3:
 			try:
 				r1, r2 = self.test.l1_data_basic(mode = 'digital', shift = shift[5], file = filename, filemode = 'a', runname = runname)
 				self.summary.set('L1_data',    r1, '%', '',  runname)
@@ -201,8 +232,10 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in l1_data_basic test. Reiterating."
+				wd +=1
+		wd = 0
 
-		while self.runtest.is_active('memory_vs_voltage'):
+		while self.runtest.is_active('memory_vs_voltage') and wd < 3:
 			try:
 				time.sleep(0.1)
 				self.test.memory_vs_voltage(memory = 2, step = 0.005, start = 1.2, stop = 0.90, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
@@ -211,17 +244,21 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in memory_vs_voltage test. Reiterating."
+				wd +=1
+		wd = 0
 
 
-		while self.runtest.is_active('memory_vs_voltage'):
+		while self.runtest.is_active('memory_vs_voltage') and wd < 3:
 			try:
 				time.sleep(0.1)
-				self.test.memory_vs_voltage(memory = 1, step = 0.005, start = 1.2, stop = 0.90, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
+				self.test.memory_vs_voltage(memory = 1, step = 0.010, start = 1.1, stop = 0.90, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
 				print "->  \t memory_vs_voltage Time = %7.2f" % (time.time() - time_init); time_init = time.time();
 				self.pwr.set_dvdd(self.dvdd)
 				break
 			except:
 				print "X>  \tError in memory_vs_voltage test. Reiterating."
+				wd +=1
+		wd = 0
 
 		self.pwr.set_dvdd(self.dvdd)
 		#self.summary.display(runname)
@@ -232,11 +269,12 @@ class SSA_test_top():
 
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
+		wd = 0
 
 		#self.ssa.init(reset_board = True, reset_chip = True)
 		#self.ssa.load_configuration(self.config_file, display = False)
 
-		while self.runtest.is_active('noise_baseline'):
+		while self.runtest.is_active('noise_baseline') and wd < 3:
 			try:
 				#self.ssa.load_configuration(self.config_file, display = False)
 				r1, r2 = self.measure.baseline_noise(ret_average = True, plot = False, mode = 'all', filename = filename, runname = runname, filemode = 'a')
@@ -246,8 +284,10 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in baseline_noise test. Reiterating."
+				wd +=1
+		wd = 0
 
-		while self.runtest.is_active('gain_offset_noise'):
+		while self.runtest.is_active('gain_offset_noise') and wd < 3 and wd < 3:
 			try:
 				self.ssa.load_configuration(self.config_file, display = False)
 				r1, r2, r3, r4 = self.measure.gain_offset_noise(calpulse = 50, ret_average = True, plot = False, use_stored_data = False, file = filename, filemode = 'a', runname = runname)
@@ -259,8 +299,10 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in gain_offset_noise test. Reiterating."
+				wd +=1
+		wd = 0
 
-		while self.runtest.is_active('threshold_spread'):
+		while self.runtest.is_active('threshold_spread') and wd < 3:
 			try:
 				r1 = self.measure.threshold_spread(calpulse = 50, use_stored_data = True, plot = False, file = filename, filemode = 'a', runname = runname)
 				self.summary.set('threshold std' , r1, 'ThDAC', '',  runname)
@@ -268,15 +310,18 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in threshold_spread test. Reiterating."
+				wd +=1
+		wd = 0
 
 
 	def test_routine_dacs(self, filename = 'default', runname = '  0Mrad'):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
+		wd = 0
 		#self.ssa.init(reset_board = True, reset_chip = True)
 		#self.ssa.load_configuration(self.config_file, display = False)
 
-		while self.runtest.is_active('Bias_THDAC'):
+		while self.runtest.is_active('Bias_THDAC') and wd < 3:
 			try:
 				r1, r2, r3, r4 = self.measure.dac_linearity(name = 'Bias_THDAC', nbits = 8, filename = filename, plot = False, filemode = 'a', runname = runname)
 				self.summary.set('Bias_THDAC_DNL'     , r1, '', '',  runname)
@@ -286,8 +331,10 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in Bias_THDAC test. Reiterating."
+				wd +=1
+		wd = 0
 
-		while self.runtest.is_active('Bias_CALDAC'):
+		while self.runtest.is_active('Bias_CALDAC') and wd < 3:
 			try:
 				r1, r2, r3, r4 = self.measure.dac_linearity(name = 'Bias_CALDAC', nbits = 8, filename = filename, plot = False, filemode = 'a', runname = runname)
 				self.summary.set('Bias_CALDAC_DNL'   , r1, '', '',  runname)
@@ -297,18 +344,23 @@ class SSA_test_top():
 				break
 			except:
 				print "X>  \tError in Bias_CALDAC test. Reiterating."
+				wd +=1
+		wd = 0
 
 
 	def idle_routine(self, filename = 'default', runname = ''):
+		print '========================================================'
+		print '     IDLE ROUTINE   ' + str(runname)
 		r1, r2, r3 = [0]*3
 		filename = self.summary.get_file_name('../SSA_Results/' + filename + '_IDLE')
 		print filename
 		try:
 			time.sleep(0.1); r4, r5 = self.test.lateral_input_phase_tuning(display=False, file = '../SSA_Results/' + filename + '_lateral.csv', filemode = 'a', runname = runname + '_idle', shift = 0)
-			time.sleep(0.1); r1 = self.test.cluster_data(mode = 'digital', nstrips = 5, shift = 0,  display=False, file = '../SSA_Results/' + filename + '_CL.csv', filemode = 'a', runname = runname + '_idle')
+			time.sleep(0.1); r1 = self.test.cluster_data(mode = 'digital', nstrips = 3, shift = 0,  display=False, file = '../SSA_Results/' + filename + '_CL.csv', filemode = 'a', runname = runname + '_idle')
 			time.sleep(0.1); r2, r3 = self.test.l1_data_basic(mode = 'digital', shift = 0, file = '../SSA_Results/' + filename + '_L1.csv', filemode = 'a', runname = runname + '_idle')
 		except:
 			print "X>  \tError in Idle Routine."
 		fo = open(filename+'.csv', 'a')
 		fo.write('\n%16s,   %10.3f,   %10.3f,   %10.3f,' % (runname, r1, r2, r3))
 		fo.close()
+		print '========================================================'

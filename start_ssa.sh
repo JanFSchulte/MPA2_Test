@@ -9,7 +9,7 @@ printf '             Starting SSA Test System                 \n'
 printf '                                                      \n'
 
 if ! ifconfig | grep ${eth}:'1'; then
-	printf '\n->  Ethernet interface =' ${eth}':1' 'not found\n'
+	printf '\n->  Ethernet interface = not found \n'
 	sudo /usr/sbin/rarpd -a
 	sudo ifconfig ${eth}:1 192.168.1.4
 	sudo udevadm control --reload-rules	
