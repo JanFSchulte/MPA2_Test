@@ -36,7 +36,7 @@ class SSA_readout():
 				Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
 				sleep(0.001)
 			#status_init = self.status()
-			SendCommand_CTRL("start_trigger")
+			self.fc7.SendCommand_CTRL("start_trigger")
 		while (status[1] != 1 and counter<timeout):
 			sleep(0.001)
 			status = self.status()
@@ -96,7 +96,7 @@ class SSA_readout():
 		return delay
 
 	def send_trigger(duration = 0):
-		compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
+		self.fc7.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
 	def l1_data(self, latency = 50, display = False, shift = 0, initialise = True, mipadapterdisable = False, trigger = True):
 		if(initialise == True):
@@ -111,7 +111,7 @@ class SSA_readout():
 			sleep(0.001)
 
 		if trigger:
-			SendCommand_CTRL("start_trigger")
+			self.fc7.SendCommand_CTRL("start_trigger")
 		#send_trigger(1)
 		sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
@@ -175,8 +175,8 @@ class SSA_readout():
 		if(initialize == True):
 			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
 			sleep(0.001)
-		SendCommand_CTRL("start_trigger")
-		SendCommand_CTRL("start_trigger")
+		self.fc7.SendCommand_CTRL("start_trigger")
+		self.fc7.SendCommand_CTRL("start_trigger")
 		sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
 		while ((status & 0x00000002) >> 1) != 1:
@@ -222,7 +222,7 @@ class SSA_readout():
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8 + shift) )
 		self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
-		start_counters_read(1)
+		self.fc7.start_counters_read(1)
 		timeout = 0
 		failed = False
 		while ((mpa_counters_ready == 0) & (timeout < 50)):
@@ -262,8 +262,8 @@ class SSA_readout():
 
 
 	def all_lines(self):
-		SendCommand_CTRL("fast_test_pulse")
-		SendCommand_CTRL("fast_trigger")
+		self.fc7.SendCommand_CTRL("fast_test_pulse")
+		self.fc7.SendCommand_CTRL("fast_trigger")
 
 		self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 		self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
@@ -271,7 +271,7 @@ class SSA_readout():
 
 		Configure_TestPulse(199, 50, 400, 1)
 		sleep(0.001)
-		SendCommand_CTRL("start_trigger")
+		self.fc7.SendCommand_CTRL("start_trigger")
 		sleep(0.1)
 		status = self.fc7.read("stat_slvs_debug_general")
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
@@ -379,7 +379,7 @@ class SSA_inject():
 				sleep(0.001)
 		if(trigger == True):
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-			SendCommand_CTRL("start_trigger")
+			self.fc7.SendCommand_CTRL("start_trigger")
 			sleep(0.01)
 		sleep(0.001)
 
