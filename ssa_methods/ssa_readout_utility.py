@@ -98,7 +98,8 @@ class SSA_readout():
 	def send_trigger(duration = 0):
 		compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
-	def l1_data(self, latency = 50, display = False, shift = 0, initialise = True, mipadapterdisable = False, trigger = True):
+
+	def l1_data(self, latency = 50, shift = 0, initialise = True, mipadapterdisable = False, trigger = True, multi = True, display = False, display_raw = False):
 		if(initialise == True):
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
@@ -109,7 +110,6 @@ class SSA_readout():
 			self.I2C.peri_write('L1-Latency_LSB', latency)
 			self.ctrl.activate_readout_normal(mipadapterdisable = mipadapterdisable)
 			sleep(0.001)
-
 		if trigger:
 			SendCommand_CTRL("start_trigger")
 		#send_trigger(1)
@@ -117,58 +117,66 @@ class SSA_readout():
 		status = self.fc7.read("stat_slvs_debug_general")
 		sleep(0.001)
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
-		if(display is True):
-			print "\n--> L1 Data: "
+		if(display_raw):
+			print "\n->  \tL1 Data: "
 			for word in ssa_l1_data:
-			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+			    print "    \t->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
 		data = 0
-		for i in range(4,10):
+		for i in range(0,50):
 			word = ssa_l1_data[i]
 			tmp = (   int(bin(to_number(word,8,0)).lstrip('-0b').zfill(8),2)   <<24
 			        | int(bin(to_number(word,16,8)).lstrip('-0b').zfill(8),2)  <<16
 			        | int(bin(to_number(word,24,16)).lstrip('-0b').zfill(8),2) << 8
 			        | int(bin(to_number(word,32,24)).lstrip('-0b').zfill(8), 2)
 			      )
-			data = data | (tmp << (32*(9-i)))
-		timeoutcnt = 1000
-		while ((data & 0b1) != 0b1 ):
-			data =  data >> 1
-			if(timeoutcnt > 0):
-				timeoutcnt -= 1
+			data = data | (tmp << (32*(49-i)))
+		end = False; rt = [];
+		timeoutcnt = 50*32
+		while (not end):
+			while ((data & 0b1) != 0b1 ):
+				data =  data >> 1
+				if(timeoutcnt > 0):
+					timeoutcnt -= 1
+				else:
+					end = True;	break;
+			if(end): break
+			L1_counter = (data >> 154) & 0xf
+			BX_counter = (data >> 145) & 0x1ff
+			l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
+			hidata = (data >> 121) & 0xffffff
+			l1datavect = [0]*120
+			hipflagvect = [0]*24
+			for i in range(0,120):
+				l1datavect[i] = l1data & 0b1
+				l1data = l1data >> 1
+
+			for i in range(0,24):
+				hipflagvect[i] = hidata & 0b1
+				hidata = hidata >> 1
+			#return l1datavect, hipflagvect
+			l1hitlist = []
+			for i in range(0,120):
+				if(l1datavect[i] > 0):
+					l1hitlist.append(i+1)
+			hiplist = []
+			for i in range(0,24):
+				if(hipflagvect[i] > 0):
+					hiplist.append(i+1)
+			if(display):
+				print "->  \tL1 =%3d  |  BX =%4d  |  HIT = [%3s]  |  HIP = [%3s]" % (L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
+			#print data
+			data =  data >> 160
+			if(not multi):
+				end = True
+				rt = [L1_counter, BX_counter, l1hitlist, hiplist]
 			else:
-				print "->  \tL1 data packet missing"
-				return -1, -1, -1, -1
-		L1_counter = (data >> 154) & 0b1111
-		BX_counter = (data >> 145) & 0b1111
-		l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
-		hidata = (data >> 121) & 0xffffff
+				rt.append([L1_counter, BX_counter, l1hitlist, hiplist])
+		if len(rt) == 0:
+			if multi: rt = [[-1,-1,[],[]]]
+			else: rt = [-1,-1,[],[]]
 
-		if(display is True):
-			print "L1 counter: " , str(L1_counter), "  (" ,  bin(L1_counter), ")"
-			print "BX counter: " , str(BX_counter), "  (" ,  bin(BX_counter), ")"
-
-		l1datavect = [0]*120
-		hipflagvect = [0]*24
-
-		for i in range(0,120):
-			l1datavect[i] = l1data & 0b1
-			l1data = l1data >> 1
-
-		for i in range(0,24):
-			hipflagvect[i] = hidata & 0b1
-			hidata = hidata >> 1
-
-		#return l1datavect, hipflagvect
-		l1hitlist = []
-		for i in range(0,120):
-			if(l1datavect[i] > 0):
-				l1hitlist.append(i+1)
-		hiplist = []
-		for i in range(0,24):
-			if(hipflagvect[i] > 0):
-				hiplist.append(i+1)
-
-		return L1_counter, BX_counter, l1hitlist, hiplist
+		return rt
+#		ssa.readout.l1_data(display = True, trigger = False, display_raw = 1)
 
 
 	def lateral_data(self, display = False, shift = 0, initialize = True):
@@ -334,7 +342,7 @@ class SSA_inject():
 		self.data_r = 0
 
 
-	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, initialise = True):
+	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, sequence = 0xff, initialise = True):
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
 			self.I2C.peri_write("CalPulse_duration", times)
@@ -355,7 +363,7 @@ class SSA_inject():
 		self.ctrl.set_lateral_data(left = leftdata, right = rightdata)
 		self.data_l = leftdata; self.data_r = rightdata;
 		for cl in hip_list:
-			self.I2C.strip_write("DigCalibPattern_H", cl, 0xff)
+			self.I2C.strip_write("DigCalibPattern_H", cl, sequence)
 		sleep(0.001)
 
 

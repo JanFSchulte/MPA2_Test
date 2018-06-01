@@ -737,7 +737,7 @@ class SSA_cal_utility():
 			self.ssa.ctrl.set_threshold(th)
 			for i in range(0, nevents):
 				utils.ShowPercent(th*nevents + i, (upto+1)*nevents , "Calculating")
-				lcnt, bcnt, hit, hip = self.ssa.readout.l1_data(initialise = False)
+				lcnt, bcnt, hit, hip = self.ssa.readout.l1_data(initialise = False, multi = False)
 				for s in range(0,120):
 					if s in hit:
 						count[s] += 1

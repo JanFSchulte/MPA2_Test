@@ -18,6 +18,7 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from datetime import datetime
 
+
 class curstate():
 	def __init__(self, **kwds):
 		self.__dict__.update(kwds)
@@ -120,6 +121,40 @@ def print_method(name):
 	print("".join(lines[0]))
 
 utils = Utilities()
+
+class fc7_com():
+	def __init__(self, fc7_if):
+		self.fc7 = fc7_if
+
+	def write(self, p1, p2, p3 = 0):
+		cnt = 0
+		while cnt < 4:
+			try:
+				return self.fc7.write(p1, p2, p3)
+				break
+			except:
+				time.sleep(0.1)
+				cnt += 1
+
+	def read(self, p1, p2 = 0):
+		cnt = 0
+		while cnt < 4:
+			try:
+				return self.fc7.read(p1, p2)
+				break
+			except:
+				time.sleep(0.1)
+				cnt += 1
+
+	def blockRead(self, p1, p2, p3 = 0):
+		cnt = 0
+		while cnt < 4:
+			try:
+				return self.fc7.blockRead(p1, p2, p3)
+				break
+			except:
+				time.sleep(0.1)
+				cnt += 1
 
 def f_errorf(x, *p):
 	a, mu, sigma = p

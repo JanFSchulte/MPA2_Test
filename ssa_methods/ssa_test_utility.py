@@ -240,7 +240,7 @@ class SSA_test_utility():
 		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
 		if(mode == "analog"): shift += 2
-		L1_counter_init, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = True, shift = shift, latency = latency)
+		L1_counter_init, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = True, shift = shift, latency = latency, multi = False)
 		if(L1_counter_init < 0): return 'error'
 		l1hitlistprev = []
 		hiplistprev = []
@@ -258,11 +258,11 @@ class SSA_test_utility():
 				counter[H][0] += 1
 				#self.ssa.inject.digital_pulse(hit_list = [i], initialise = False)
 				time.sleep(0.001)
-				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = False, shift = shift, latency = latency)
+				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = False, shift = shift, latency = latency, multi = False)
 				if (hfi):
 					while(l1hitlist == l1hitlistprev):
 						print 'HFI'
-						sleep(0.001); L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(shift = shift, latency = latency, initialise = False)
+						sleep(0.001); L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(shift = shift, latency = latency, initialise = False, multi = False)
 						if(wd>5): break
 						wd += 1
 				if(L1_counter < 0): return 'error'
@@ -305,7 +305,7 @@ class SSA_test_utility():
 		#self.ssa.init(reset_board = False, reset_chip = False, display = False)
 		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
-		self.ssa.readout.l1_data(initialise = True, shift = shift, latency = latency)
+		self.ssa.readout.l1_data(initialise = True, shift = shift, latency = latency, multi = False)
 		self.ssa.inject.digital_pulse(initialise = True)
 		self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 1)
 		self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
@@ -321,15 +321,15 @@ class SSA_test_utility():
 			for strip in range(1,121):
 				if HIP: self.ssa.inject.digital_pulse(hit_list = [strip], hip_list = [strip], initialise = False)
 				else:   self.ssa.inject.digital_pulse(hit_list = [strip], hip_list = [], initialise = False)
-				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(latency = latency, initialise = False)
+				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(latency = latency, initialise = False, multi = False)
 				while(l1hitlist == [strip-1]):
-					L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(latency = latency, initialise = False)
+					L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(latency = latency, initialise = False, multi = False)
 					if cnt[2] > 3: break;
 					cnt[2] += 1
 				dstr = "expected: [L1 =  1][BX =%3d][HIT =%3s][HIP =%3d]\t  |  found: [L1 =%3d][BX =%3d][HIT =%3s][HIP =%3s]" % (
 						(d+1)%16, strip, HIP,     L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
-				if(((L1_counter != 1) or (BX_counter != (d+1)%16)) ):
-					print "\tCounter Error -> " + dstr + "                                  "
+				#if(((L1_counter != 1) or (BX_counter != (d+1)%16)) ):
+				#	print "\tCounter Error -> " + dstr + "                                  "
 				error = False
 				if not HIP:
 					if(len(l1hitlist) != 1): error = True
@@ -366,64 +366,87 @@ class SSA_test_utility():
 				break
 		fo.close()
 
-	def mem_test2(self, delay = 10, shift = 0, latency = 200, pattern = [50, 51,52,53,54,55]):
-		utils.activate_I2C_chip()
-		self.ssa.init(reset_board = False, reset_chip = False, display = False)
-		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
-		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
-		self.ssa.readout.l1_data(initialise = True, shift = shift, latency = latency)
-		self.ssa.inject.digital_pulse(initialise = True, times = 15)
-		self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 1)
-		self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-		self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-		Configure_TestPulse(
-			delay_after_fast_reset = 512 + delay,
-			delay_after_test_pulse = (latency+3+shift),
-			delay_before_next_pulse = 0,
-			number_of_test_pulses = 1)
-		self.ssa.inject.digital_pulse(hit_list = pattern, hip_list = [], initialise = False)
-		L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(latency = latency, initialise = False)
-		dstr = "[%3d][%3d][%3s][%3s]" % (L1_counter, BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
-		print dstr
 
-	def mem_test_gen(self, pattern, npulses = 1, shift = 0, delay = 10, l1_duration = 2, latency = 100):
-		self.fc7.write("cnfg_fast_source", 6)
-		self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 1)
-		self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-		self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-		self.fc7.write("cnfg_fast_initial_fast_reset_enable", 0) # initial fast reset which is sent once after start_trigger command
-		self.fc7.write("cnfg_fast_delay_after_fast_reset", delay)
-		self.fc7.write("cnfg_fast_delay_after_test_pulse", (latency+3+shift))
-		self.fc7.write("cnfg_fast_delay_before_next_pulse", 1)
-		self.fc7.write("cnfg_fast_delay_between_consecutive_trigeers", 1)
-		self.fc7.write("cnfg_fast_triggers_to_accept", 5)
+	def mem_test_gen(self, init = True, patternL = range(10,90,10), patternH = [30,40,50], sequence = 0xff, npulses = 1, shift = 0, delay = 10, l1_duration = 2, calpulse_duration = 1, latency = 0, fc_resync = 1, fc_test = 1, fc_l1 = 1, clean = True, display = False, display_raw = False, delay_before_next_pulse = 1, delay_between_consecutive_trigeers = 1):
+		latency = latency + 2
+		if clean:
+			self.ssa.init(reset_board = True, reset_chip = False, display = False)
+		if init:
+			self.ssa.ctrl.activate_readout_normal()
+			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
+			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
+			self.I2C.peri_write('L1-Latency_MSB', 0)
+			self.I2C.peri_write('L1-Latency_LSB', latency)
+			self.I2C.peri_write("CalPulse_duration", calpulse_duration)
+			self.I2C.strip_write("ENFLAGS", 0, 0b01001)
+			self.fc7.write("cnfg_fast_source", 6)
+			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
+			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", fc_test)
+			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", fc_l1)
+			self.fc7.write("cnfg_fast_initial_fast_reset_enable", fc_resync) # initial fast reset which is sent once after start_trigger command
+			self.fc7.write("cnfg_fast_delay_after_fast_reset", delay)
+			self.fc7.write("cnfg_fast_delay_after_test_pulse", (latency+3+shift))
+			self.fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
+			self.fc7.write("cnfg_fast_delay_between_consecutive_trigeers", delay_between_consecutive_trigeers)
+			self.fc7.write("cnfg_fast_triggers_to_accept", npulses)
+			self.fc7.write("ctrl_fast_signal_duration", l1_duration) ### doesn't work
+			#sleep(0.1); self.fc7.write("ctrl_fast", fc7AddrTable.getItem("ctrl_fast_signal_duration").shiftDataToMask(l1_duration) ); sleep(0.1);
+			sleep(0.1);	SendCommand_CTRL("load_trigger_config"); sleep(0.1);
+		self.ssa.inject.digital_pulse(hit_list = patternL, hip_list = patternH, initialise = False, sequence = sequence)
+		sleep(0.001)
 
-		#self.fc7.write("ctrl_fast_signal_duration", l1_duration)
-		sleep(0.1);	SendCommand_CTRL("load_trigger_config"); sleep(0.1);
-		#self.fc7.write("ctrl_fast", fc7AddrTable.getItem("ctrl_fast_signal_duration").shiftDataToMask(l1_duration) )
-
-
-		self.ssa.ctrl.activate_readout_normal()
-		self.I2C.peri_write('L1-Latency_MSB', 0)
-		self.I2C.peri_write('L1-Latency_LSB', latency)
-		self.I2C.peri_write("CalPulse_duration", npulses)
-		self.I2C.strip_write("ENFLAGS", 0, 0b01001)
-		self.ssa.inject.digital_pulse(hit_list = pattern, hip_list = pattern, initialise = False)
-		#send_trigger(2)
+		#send_trigger(0)
 		SendCommand_CTRL("start_trigger")
-		L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(display = True, initialise = False, mipadapterdisable = False, trigger = 0)
-		dstr = "[%3d][%3d][%3s][%3s]" % (L1_counter, BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
-		return dstr
+		rt = self.ssa.readout.l1_data(display = display, initialise = False, mipadapterdisable = False, trigger = 0, multi = True, display_raw = display_raw)
+		dstr = '';
+		for res in rt:
+			L1_counter, BX_counter, l1hitlist, hiplist = res;
+			if(L1_counter != -1 and BX_counter != -1):
+				dstr += "->      [%3d][%3d][%3s][%3s]\n" % (L1_counter, BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
+			else:
+				dstr = "->      [---][---][---][---]\n"
+		print dstr
+		#return dstr
 
 
-	def mem_test_inputs(self, fix_adr = False, fix_data = False, fix_ren = False, pattern = range(30,90,5)):
-		if fix_adr:  latency = 2
-		else:        latency = 100
-		if fix_data: npulses = 5;  shift = 3;
-		else:        npulses = 1;  shift = 0;
-		rt = self.mem_test_gen(pattern = pattern, npulses = 4, shift = 2, delay = 10, latency = 2)
-		return rt
+	def mem_test_inputs(self, fix_adr = 0, fix_data_before = 0, fix_data_after = 0, fix_ren = 0, npulses = 5,  pattern = range(30,90,5), display = False, latency = 10, sequence = 0xff):
+		self.ssa.init(reset_board = True, reset_chip = False, display = False)
+		if fix_adr:  latency = 0
+		else:        latency = latency
+		if fix_ren:  l1_duration = 3; ## doesn't change the trigger duration...
+		else:        l1_duration = 1;
+		if fix_data_before:
+			if fix_data_after: calpulse_duration = 15;  shift = 7-latency;
+			else:              calpulse_duration =  4;  shift = 1;
+		else:
+			if fix_data_after: calpulse_duration = 15;  shift = 0;
+			else:              calpulse_duration =  1;  shift = 0;
+		self.mem_test_gen(
+			pattern = pattern, l1_duration = l1_duration,
+			calpulse_duration = calpulse_duration,
+			shift = shift, npulses = npulses,
+			delay = 10, latency = latency, sequence = sequence,
+			display = display, clean = False)
 
+#	def mem_test2(self, delay = 10, shift = 0, latency = 200, pattern = [50, 51,52,53,54,55]):
+#		utils.activate_I2C_chip()
+#		self.ssa.init(reset_board = False, reset_chip = False, display = False)
+#		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
+#		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True, multi = False)
+#		self.ssa.readout.l1_data(initialise = True, shift = shift, latency = latency)
+#		self.ssa.inject.digital_pulse(initialise = True, times = 15)
+#		self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 1)
+#		self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
+#		self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
+#		Configure_TestPulse(
+#			delay_after_fast_reset = 512 + delay,
+#			delay_after_test_pulse = (latency+3+shift),
+#			delay_before_next_pulse = 0,
+#			number_of_test_pulses = 1)
+#		self.ssa.inject.digital_pulse(hit_list = pattern, hip_list = [], initialise = False)
+#		L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(latency = latency, initialise = False, multi = False)
+#		dstr = "[%3d][%3d][%3s][%3s]" % (L1_counter, BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
+#		print dstr
 
 	def _generate_clusters(self, nclusters, radius):
 		hit = []; c = []; exc = []; r = radius;
