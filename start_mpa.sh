@@ -1,8 +1,8 @@
 #!/usr/bin/bash
 
-if ! ifconfig | grep 'em1:1'; then
+if ! ifconfig | grep 'enp0s25:1'; then
 	sudo /usr/sbin/rarpd -a
-	sudo ifconfig em1:1 192.168.01.81
+	sudo ifconfig enp0s25:1 192.168.1.94
 fi
 
 ping 192.168.1.79 -c 1
@@ -18,7 +18,7 @@ echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('MPA') "  >> LaunchPy.py
 #echo "from mpa_methods.cal_utility import * "  >> LaunchPy.py
 echo "from mpa_methods.mpa_i2c_conf import *"  >> LaunchPy.py
 echo "from mpa_methods.fast_readout_utility import *"  >> LaunchPy.py
-echo "from mpa_methods.bias_calibration import *"  >> LaunchPy.py
+#echo "from mpa_methods.bias_calibration import *"  >> LaunchPy.py
 echo "from mpa_methods.power_utility import *"  >> LaunchPy.py
 cp ./myScripts/ipaddr_mpa.dat  d19cScripts/ipaddr.dat
 python -i LaunchPy.py

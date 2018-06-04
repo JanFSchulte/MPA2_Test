@@ -63,6 +63,7 @@ def SetSlaveMap():
 	print "---> Updating the Slave ID Map"
 	for slave_id in range(16):
 		fc7.write("cnfg_mpa_ssa_board_slave_" + str(slave_id) + "_config", EncodeSlaveMapItem(i2c_slave_map[slave_id]))
+		print "Writing","cnfg_mpa_ssa_board_slave_" + str(slave_id) + "_config", hex(EncodeSlaveMapItem(i2c_slave_map[slave_id]))
 
 # i2c masters configuration
 def Configure_MPA_SSA_I2C_Master(enabled, frequency=4):
@@ -111,8 +112,9 @@ def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data):
 	#print bin(shifted_command_type)
 	#print bin(shifted_word_id_0)
 	#print bin(shifted_slave_id)
-	#print bin(word_0)
-	#print bin(word_1)
+	print "ctrl_command_i2c_command_fifo"
+	print hex(word_0)
+	print hex(word_1)
 
 	# writing the command
 	fc7.write("ctrl_command_i2c_command_fifo", word_0)
