@@ -66,8 +66,8 @@ class SSA_cal_utility():
 
 		for cal_val in  cal_ampl:
 			# close shutter and clear counters
-			close_shutter(1)
-			clear_counters(1)
+			self.fc7.close_shutter(1)
+			self.fc7.clear_counters(1)
 			# init chip cal pulse
 			self.ssa.strip.set_cal_strips(mode = 'counter', strip = 'all')
 			self.ssa.ctrl.set_cal_pulse(amplitude = cal_val, duration = 15, delay = 'keep')
@@ -86,42 +86,42 @@ class SSA_cal_utility():
 				self.ssa.ctrl.set_threshold(threshold); sleep(0.05); # set the threshold
 
 				if (not baseline and (mode == 'all')):	# provide cal pulse to all strips together
-					clear_counters(2)
-					open_shutter(2)
-					SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
+					self.fc7.clear_counters(2)
+					self.fc7.open_shutter(2)
+					self.fc7.SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
 					sleep(0.02)
 					while(self.fc7.read("stat_fast_fsm_state") != 0): sleep(0.01)
-					close_shutter(2)
+					self.fc7.close_shutter(2)
 
 				elif(not baseline and (mode == 'sbs')): # provide cal pulse strip by strip
-					clear_counters(1)
+					self.fc7.clear_counters(1)
 					for s in striplist:
 						self.ssa.strip.set_cal_strips(mode = 'counter', strip = s )
 						sleep(0.01);
-						open_shutter(2); sleep(0.01);
-						SendCommand_CTRL("start_trigger"); sleep(0.01); # send sequence of NEVENTS pulses
+						self.fc7.open_shutter(2); sleep(0.01);
+						self.fc7.SendCommand_CTRL("start_trigger"); sleep(0.01); # send sequence of NEVENTS pulses
 						while(self.fc7.read("stat_fast_fsm_state") != 0):
 							sleep(0.01)
-						close_shutter(2); sleep(0.01);
+						self.fc7.close_shutter(2); sleep(0.01);
 
 				elif(baseline and (mode == 'all')):
-					clear_counters(2); sleep(0.01);
-					open_shutter(2);   sleep(0.01);
-					close_shutter(2);  sleep(0.01);
+					self.fc7.clear_counters(2); sleep(0.01);
+					self.fc7.open_shutter(2);   sleep(0.01);
+					self.fc7.close_shutter(2);  sleep(0.01);
 
 				elif(baseline and (mode == 'sbs')):
 					# with this method, the time between open and close shutter
 					# change from strip to strip due to the communication time
 					# so do not use to compare the counters value,
 					# from the point of view of the atandard deviation is not influent
-					clear_counters(2); sleep(0.01);
+					self.fc7.clear_counters(2); sleep(0.01);
 					for s in striplist:
 						# all trims at 0 and one at 31 to remove the crosstalks effect
 						self.ssa.strip.set_trimming('all', 0)
 						self.ssa.strip.set_trimming(s, 31)
 						sleep(0.01);
-						open_shutter(2);  sleep(0.01);
-						close_shutter(2); sleep(0.01);
+						self.fc7.open_shutter(2);  sleep(0.01);
+						self.fc7.close_shutter(2); sleep(0.01);
 				if(rdmode == 'fast'):
 					failed, scurves[threshold] = self.ssa.readout.read_counters_fast(striplist, shift = countershift)
 				elif(rdmode == 'i2c'):

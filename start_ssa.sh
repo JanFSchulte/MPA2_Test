@@ -1,5 +1,3 @@
-#!/usr/bin/bash
-
 source ~/FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
@@ -51,6 +49,4 @@ else
 	printf '\n->  SSA Testbench correctly found on %s\n' "$IP"
 	python -i LaunchPy.py
 fi
-
-
 

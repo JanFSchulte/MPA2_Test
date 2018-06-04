@@ -34,6 +34,7 @@ class ssa_calibration():
 		self.ssa_strip_reg_map = ssa_strip_reg_map
 		self.analog_mux_map = analog_mux_map
 		self.initialised = False
+		self.set_gpib_address(16)
 		self.par_list = [
 			self.Parameter("Analog Ground Interal ", "GND",                   0.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Bandgap Voltage       ", "VBG",                   0.3, -1, -1, 'set_dont_calibrate'),
@@ -48,9 +49,11 @@ class ssa_calibration():
 			self.Parameter("Threshold High DAC    ", "Bias_THDACHIGH",      622.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Calibration DAC       ", "Bias_CALDAC",         100.0, -1, -1, 'set_dont_calibrate')]
 
+	def set_gpib_address(self, address):
+		self.gpib_address = address
 
 	def __initialise(self):
-		self.multimeterinst = self.multimeter.init_keithley()
+		self.multimeterinst = self.multimeter.init_keithley(address = self.gpib_address)
 		self.initialised = True
 		return self.multimeterinst
 

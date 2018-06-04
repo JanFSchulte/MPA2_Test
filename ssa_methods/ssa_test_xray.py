@@ -16,10 +16,10 @@ import matplotlib.pyplot as plt
 class SSA_test_xray():
 
 	def __init__(self, toptest, ssa, I2C, fc7, cal, biascal, pwr, test, measure):
-		self.toptest = toptest
 		self.ssa = ssa;	  self.I2C = I2C;	self.fc7 = fc7;
 		self.cal = cal;   self.pwr = pwr;   self.biascal = biascal;
-		self.test = test; self.measure = measure;
+		self.test = test; self.measure = measure; self.toptest = toptest
+		self.biascal.set_gpib_address(12)
 
 
 	def configure_tests(self):
@@ -45,7 +45,7 @@ class SSA_test_xray():
 	def initialise(self, filename):
 		self.toptest.initialise(file = filename, plot = True)
 
-	def xray_loop(self, filename, runtime = (60*60*100), rate = (30*60), init_wait = 0 ):
+	def xray_loop(self, filename, runtime = (60*60*100), rate = (30*60), init_wait = 1 ):
 		self.configure_tests()
 		self.pwr.set_dvdd(self.toptest.dvdd)
 		self.ssa.init(reset_board = True, reset_chip = False, read_current = True)

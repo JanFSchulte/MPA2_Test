@@ -405,7 +405,7 @@ class SSA_measurements():
 		data['max-pad'] = self.pwr.get_power(display = False)
 		self._display_power_value(data.items()[-1], display)
 		self.ssa.ctrl.activate_readout_async(ssa_first_counter_delay = 0xffff, correction = 0)
-		start_counters_read(1)
+		self.fc7.start_counters_read(1)
 		data['async'] = self.pwr.get_power(display = False)
 		self._display_power_value(data.items()[-1], display)
 		self.bias.calibrate_to_nominals()

@@ -357,7 +357,9 @@ class SSA_test_utility():
 		fo.write("\n    RUN ; DVDD;       EFFICIENCY;    ERROR LIST; \n")
 		for dvdd in np.arange(start, stop, -step):
 			self.pwr.set_dvdd( dvdd )
-			self.ssa.init(reset_board = True, reset_chip = False, display = False) #alignement
+			rt = self.ssa.init(reset_board = True, reset_chip = False, display = False) #alignement
+			if not rt:
+				eff = 0; erlist = [];
 			eff = self.memory(memory = memory, display = 0, latency = latency, shift = shift)
 			erlist = self.memerrlist
 			fo.write("%8s ; %4.3fV ;     %7.2f%% ;       %s ; \n" % (runname, dvdd, eff, erlist))

@@ -7,9 +7,11 @@ from ssa_methods.ssa_measurements import *
 from ssa_methods.ssa_test_top import *
 from ssa_methods.ssa_test_xray import *
 from ssa_methods.ssa_analise_utility import *
-from myScripts.Utilities import *
+from ssa_methods.ssa_fc7_com import *
 
-FC7   = fc7_com(fc7)
+
+
+FC7   = ssa_fc7_com(fc7)
 I2C   = ssa_i2c_conf()
 pwr   = ssa_power_utility(I2C, FC7)
 ssa   = SSA_ASIC(I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
