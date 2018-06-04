@@ -14,12 +14,9 @@ import matplotlib.pyplot as plt
 class SSA_readout():
 
 	def __init__(self, I2C, FC7, ssactrl, ssastrip):
-		self.I2C = I2C
-		self.fc7 = FC7
-		self.ctrl = ssactrl
-		self.strip = ssastrip
-		self.ofs_initialised = False
-		self.ofs = [0]*6
+		self.I2C = I2C;	self.fc7 = FC7;self.ctrl = ssactrl;
+		self.strip = ssastrip; self.utils = utils;
+		self.ofs_initialised = False;  self.ofs = [0]*6;
 
 
 	def status(self):
@@ -30,42 +27,41 @@ class SSA_readout():
 		return [l1_data_ready, stub_data_ready, counters_ready]
 
 
-	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False, getstatus = False, display_pattern = False):
-	 	data = []
-	 	tmp = []
-	 	counter = 0
-	 	data_loc = 21 + shift
-	 	status = [0]*3
-	 	#status_init = [0]*3
-	 	timeout = 10
-	 	if(initialize == True):
-			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
-			sleep(0.001)
-		#status_init = self.status()
-		SendCommand_CTRL("start_trigger")
+	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False):
+	 	data = []; tmp = [];
+	 	counter = 0; data_loc = 21 + shift;
+	 	status = [0]*3; timeout = 10;
+		if(send_test_pulse):
+		 	if(initialize):
+				Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
+				sleep(0.001)
+			#status_init = self.status()
+			self.fc7.SendCommand_CTRL("start_trigger")
 		while (status[1] != 1 and counter<timeout):
 			sleep(0.001)
 			status = self.status()
 			counter += 1
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
 		counter = 0
-	 	for word in ssa_stub_data:
-	 		counter += 1
- 			tmp.append( to_number(word, 8, 0)/2.0 )
- 			tmp.append( to_number(word,16, 8)/2.0 )
- 			tmp.append( to_number(word,24,16)/2.0 )
- 			tmp.append( to_number(word,32,24)/2.0 )
- 			if (counter % 10 == 0):
- 				data.append(tmp)
- 				tmp = []
+		for word in ssa_stub_data:
+			counter += 1
+			tmp.append( to_number(word, 8, 0)/2.0 )
+			tmp.append( to_number(word,16, 8)/2.0 )
+			tmp.append( to_number(word,24,16)/2.0 )
+			tmp.append( to_number(word,32,24)/2.0 )
+			if (counter % 10 == 0):
+				data.append(tmp)
+				tmp = []
+		if raw:
+			return data
 		if(display):
- 			for i in data:
- 				print "-->  ", i
- 		if (not lookaround):
- 			coordinates = []
-	 		for block in data:
-	 			if block[ data_loc ] != 0:
-	 				val = self.__apply_offset_correction(block[ data_loc ], apply_offset_correction)
+			for i in data:
+				print "-->  ", i
+		if (not lookaround):
+			coordinates = []
+			for block in data:
+				if block[ data_loc ] != 0:
+					val = self.__apply_offset_correction(block[ data_loc ], apply_offset_correction)
 					coordinates.append( val )
 		else:
 			coordinates = np.zeros([8,40], dtype = np.float16)
@@ -100,9 +96,10 @@ class SSA_readout():
 		return delay
 
 	def send_trigger(duration = 0):
-		compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
+		self.fc7.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
-	def l1_data(self, latency = 50, display = False, shift = 0, initialise = True, mipadapterdisable = False):
+
+	def l1_data(self, latency = 50, shift = 0, initialise = True, mipadapterdisable = False, trigger = True, multi = True, display = False, display_raw = False):
 		if(initialise == True):
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
@@ -113,73 +110,81 @@ class SSA_readout():
 			self.I2C.peri_write('L1-Latency_LSB', latency)
 			self.ctrl.activate_readout_normal(mipadapterdisable = mipadapterdisable)
 			sleep(0.001)
-
-		SendCommand_CTRL("start_trigger")
+		if trigger:
+			self.fc7.SendCommand_CTRL("start_trigger")
 		#send_trigger(1)
 		sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
 		sleep(0.001)
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
-		if(display is True):
-			print "\n--> L1 Data: "
+		if(display_raw):
+			print "\n->  \tL1 Data: "
 			for word in ssa_l1_data:
-			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+			    print "    \t->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
 		data = 0
-		for i in range(4,10):
+		for i in range(0,50):
 			word = ssa_l1_data[i]
 			tmp = (   int(bin(to_number(word,8,0)).lstrip('-0b').zfill(8),2)   <<24
 			        | int(bin(to_number(word,16,8)).lstrip('-0b').zfill(8),2)  <<16
 			        | int(bin(to_number(word,24,16)).lstrip('-0b').zfill(8),2) << 8
 			        | int(bin(to_number(word,32,24)).lstrip('-0b').zfill(8), 2)
 			      )
-			data = data | (tmp << (32*(9-i)))
-		timeoutcnt = 1000
-		while ((data & 0b1) != 0b1 ):
-			data =  data >> 1
-			if(timeoutcnt > 0):
-				timeoutcnt -= 1
+			data = data | (tmp << (32*(49-i)))
+		end = False; rt = [];
+		timeoutcnt = 50*32
+		while (not end):
+			while ((data & 0b1) != 0b1 ):
+				data =  data >> 1
+				if(timeoutcnt > 0):
+					timeoutcnt -= 1
+				else:
+					end = True;	break;
+			if(end): break
+			L1_counter = (data >> 154) & 0xf
+			BX_counter = (data >> 145) & 0x1ff
+			l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
+			hidata = (data >> 121) & 0xffffff
+			l1datavect = [0]*120
+			hipflagvect = [0]*24
+			for i in range(0,120):
+				l1datavect[i] = l1data & 0b1
+				l1data = l1data >> 1
+
+			for i in range(0,24):
+				hipflagvect[i] = hidata & 0b1
+				hidata = hidata >> 1
+			#return l1datavect, hipflagvect
+			l1hitlist = []
+			for i in range(0,120):
+				if(l1datavect[i] > 0):
+					l1hitlist.append(i+1)
+			hiplist = []
+			for i in range(0,24):
+				if(hipflagvect[i] > 0):
+					hiplist.append(i+1)
+			if(display):
+				print "->  \tL1 =%3d  |  BX =%4d  |  HIT = [%3s]  |  HIP = [%3s]" % (L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
+			#print data
+			data =  data >> 160
+			if(not multi):
+				end = True
+				rt = [L1_counter, BX_counter, l1hitlist, hiplist]
 			else:
-				print "->  \tL1 data packet missing"
-				return -1, -1, -1, -1
-		L1_counter = (data >> 154) & 0b1111
-		BX_counter = (data >> 145) & 0b1111
-		l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
-		hidata = (data >> 121) & 0xffffff
+				rt.append([L1_counter, BX_counter, l1hitlist, hiplist])
+		if len(rt) == 0:
+			if multi: rt = [[-1,-1,[],[]]]
+			else: rt = [-1,-1,[],[]]
 
-		if(display is True):
-			print "L1 counter: " , str(L1_counter), "  (" ,  bin(L1_counter), ")"
-			print "BX counter: " , str(BX_counter), "  (" ,  bin(BX_counter), ")"
-
-		l1datavect = [0]*120
-		hipflagvect = [0]*24
-
-		for i in range(0,120):
-			l1datavect[i] = l1data & 0b1
-			l1data = l1data >> 1
-
-		for i in range(0,24):
-			hipflagvect[i] = hidata & 0b1
-			hidata = hidata >> 1
-
-		#return l1datavect, hipflagvect
-		l1hitlist = []
-		for i in range(0,120):
-			if(l1datavect[i] > 0):
-				l1hitlist.append(i+1)
-		hiplist = []
-		for i in range(0,24):
-			if(hipflagvect[i] > 0):
-				hiplist.append(i+1)
-
-		return L1_counter, BX_counter, l1hitlist, hiplist
+		return rt
+#		ssa.readout.l1_data(display = True, trigger = False, display_raw = 1)
 
 
 	def lateral_data(self, display = False, shift = 0, initialize = True):
 		if(initialize == True):
 			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
 			sleep(0.001)
-		SendCommand_CTRL("start_trigger")
-		SendCommand_CTRL("start_trigger")
+		self.fc7.SendCommand_CTRL("start_trigger")
+		self.fc7.SendCommand_CTRL("start_trigger")
 		sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
 		while ((status & 0x00000002) >> 1) != 1:
@@ -220,10 +225,12 @@ class SSA_readout():
 		return coordinates
 
 
-	def read_counters_fast(self, striplist = range(1,121), raw_mode_en = 0):
+	def read_counters_fast(self, striplist = range(1,121), raw_mode_en = 0, shift = 0):
 		self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
-		start_counters_read(1)
+		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8 + shift) )
+		self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
+		self.fc7.start_counters_read(1)
 		timeout = 0
 		failed = False
 		while ((mpa_counters_ready == 0) & (timeout < 50)):
@@ -232,10 +239,12 @@ class SSA_readout():
 			mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		if(timeout >= 50):
 			failed = True;
-			return failed, 0
+			return failed, -1
 		if raw_mode_en == 0:
 			count = self.fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 120)
 			count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
+			count[117] = (self.I2C.strip_read("ReadCounter_MSB",118) << 8) | self.I2C.strip_read("ReadCounter_LSB",118)
+
 		else:
 			count = np.zeros((20000, ), dtype = np.uint16)
 			for i in range(0,20000):
@@ -261,8 +270,8 @@ class SSA_readout():
 
 
 	def all_lines(self):
-		SendCommand_CTRL("fast_test_pulse")
-		SendCommand_CTRL("fast_trigger")
+		self.fc7.SendCommand_CTRL("fast_test_pulse")
+		self.fc7.SendCommand_CTRL("fast_trigger")
 
 		self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 		self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
@@ -270,7 +279,7 @@ class SSA_readout():
 
 		Configure_TestPulse(199, 50, 400, 1)
 		sleep(0.001)
-		SendCommand_CTRL("start_trigger")
+		self.fc7.SendCommand_CTRL("start_trigger")
 		sleep(0.1)
 		status = self.fc7.read("stat_slvs_debug_general")
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
@@ -329,9 +338,11 @@ class SSA_inject():
 		self.ctrl = ssactrl
 		self.strip = ssastrip
 		self.hitmode = 'none'
+		self.data_l = 0
+		self.data_r = 0
 
 
-	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, initialise = True):
+	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, sequence = 0xff, initialise = True):
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
 			self.I2C.peri_write("CalPulse_duration", times)
@@ -348,13 +359,15 @@ class SSA_inject():
 				leftdata = leftdata | (0b1 << (cl-121))
 			else:
 				self.I2C.strip_write("DigCalibPattern_L", cl, 0xff)
+		#if(self.data_l != 0 or self.data_r != 0):
 		self.ctrl.set_lateral_data(left = leftdata, right = rightdata)
+		self.data_l = leftdata; self.data_r = rightdata;
 		for cl in hip_list:
-			self.I2C.strip_write("DigCalibPattern_H", cl, 0xff)
+			self.I2C.strip_write("DigCalibPattern_H", cl, sequence)
 		sleep(0.001)
 
 
-	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [20, 100], cal_pulse_amplitude = 200, initialise = True, trigger = False):
+	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [50, 100], cal_pulse_amplitude = 255, initialise = True, trigger = False):
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
 			self.ctrl.set_cal_pulse(amplitude = cal_pulse_amplitude, duration = 15, delay = 'keep')
@@ -374,6 +387,41 @@ class SSA_inject():
 				sleep(0.001)
 		if(trigger == True):
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-			SendCommand_CTRL("start_trigger")
+			self.fc7.SendCommand_CTRL("start_trigger")
 			sleep(0.01)
 		sleep(0.001)
+
+
+
+
+
+#	def alignment_slvs(align_word = 128, step = 10):
+#	    t0 = time.time()
+#	    activate_I2C_chip()
+#	    I2C.peri_write('LFSR_data', align_word)
+#	    activate_shift()
+#	    phase = 0
+#	    fc7.write("ctrl_phy_fast_cmd_phase",phase)
+#	    aligned = 0
+#	    count = 0
+#	    while ((not aligned) or (count <= (168/step))):
+#	        send_test()
+#	        send_trigger()
+#	        array_stubs = read_stubs(1)
+#	        array_l1 = read_L1()
+#	        aligned = 1
+#	        for word in array_stubs[:,0]: # CHheck stub lines alignment
+#	            if (word != align_word):
+#	                aligned = 0
+#	        if (array_l1[0,0] != align_word): # CHheck L1 lines alignment
+#	            aligned = 0
+#	        if (not aligned): # if not alignment change phase with T1
+#	            phase += step
+#	            fc7.write("ctrl_phy_fast_cmd_phase",phase)
+#	        count += 1
+#	    if (not aligned):
+#	        print "Try with finer step"
+#	    else:
+#	        print "All stubs line aligned!"
+#	    t1 = time.time()
+#	    print "Elapsed Time: " + str(t1 - t0)

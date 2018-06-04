@@ -21,7 +21,7 @@ class ssa_ctrl_strip:
 		self.dll_chargepump    = 0b00
 
 	def set_enable(self, strip, enable, polarity = 0, hitcounter = 0, digitalpulse = 0, analogpulse = 0):
-		if(strip == 'all'): 
+		if(strip == 'all'):
 			strip = 0
 		value =((0b1 & analogpulse  ) << 4 |
 			(0b1 & digitalpulse ) << 3 |
@@ -37,8 +37,13 @@ class ssa_ctrl_strip:
 
 	def get_trimming(self, strip):
 		r = self.I2C.strip_read("THTRIMMING", strip)
-		return r 
-	
+		return r
+
+	def set_gain_trimming(self, strip, value):
+		value = value & 0b11111
+		if(strip == 'all'): strip = 0
+		self.I2C.strip_write("GAINTRIMMING", strip, value)
+
 	def set_sampling_mode(self, strip, mode):
 		if(strip == 'all'): strip = 0
 		done = True
@@ -55,9 +60,9 @@ class ssa_ctrl_strip:
 		return done
 
 	def set_cal_strips(self, mode = 'counter', strip = 'all'):
-		if  (mode == 'counter'): 
+		if  (mode == 'counter'):
 			activeval = 0b10101
-		elif(mode == 'analog'):  
+		elif(mode == 'analog'):
 			activeval = 0b10001
 		elif(mode == 'digital'):
 		 activeval = 0b01001
@@ -77,7 +82,7 @@ class ssa_ctrl_strip:
 			exit(1)
 
 	def set_polarity(self, pol, strip = 'all'):
-		if (strip == 'all'): 
+		if (strip == 'all'):
 			strip = range(1,121)
 		elif(isinstance(strip, int)):
 			strip = [strip]
@@ -106,7 +111,3 @@ class ssa_ctrl_strip:
 		else:
 			return False
 		return True
-
-
-
-

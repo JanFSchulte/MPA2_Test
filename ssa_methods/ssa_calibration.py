@@ -16,11 +16,12 @@ import matplotlib.pyplot as plt
 class ssa_calibration():
 
 	class Parameter():
-		def __init__(self, full_name, par_name, nominal = -1, best_dac = -1, docalibrate = 'set_dont_calibrate'):
+		def __init__(self, full_name, par_name, nominal = -1, best_dac = -1, curr_value = -1, docalibrate = 'set_dont_calibrate'):
 			self.full_name = full_name
 			self.par_name = par_name
 			self.nominal = nominal
 			self.best_dac = best_dac
+			self.curr_value = curr_value
 			self.docalibrate = docalibrate
 
 
@@ -33,20 +34,26 @@ class ssa_calibration():
 		self.ssa_strip_reg_map = ssa_strip_reg_map
 		self.analog_mux_map = analog_mux_map
 		self.initialised = False
+		self.set_gpib_address(16)
 		self.par_list = [
-			self.Parameter("Booster Feedback Bias ", "Bias_D5BFEED",  82.0,  -1, 'set_calibrate'),
-			self.Parameter("Preamplifier Bias     ", "Bias_D5PREAMP", 82.0,  -1, 'set_calibrate'),
-			self.Parameter("TRIM DAC range        ", "Bias_D5TDR",    115.0, -1, 'set_calibrate'),
-			self.Parameter("DAC for voltage biases", "Bias_D5ALLV",   82.0,  -1, 'set_calibrate'),
-			self.Parameter("DAC for current biases", "Bias_D5ALLI",   82.0,  -1, 'set_calibrate'),
-			self.Parameter("DAC for th and cal    ", "Bias_D5DAC8",   86.0,  -1, 'set_calibrate'),
-			self.Parameter("Threshold Low DAC     ", "Bias_THDAC",    622.0, -1, 'set_dont_calibrate'),
-			self.Parameter("Threshold High DAC    ", "Bias_THDACHIGH",622.0, -1, 'set_dont_calibrate'),
-			self.Parameter("Calibration DAC       ", "Bias_CALDAC",   100.0, -1, 'set_dont_calibrate')]
+			self.Parameter("Analog Ground Interal ", "GND",                   0.0, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("Bandgap Voltage       ", "VBG",                   0.3, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("Bandgap Voltage       ", "Bias_BOOSTERBASELINE",  0.6, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("Booster Feedback Bias ", "Bias_D5BFEED",         82.0, -1, -1, 'set_calibrate'),
+			self.Parameter("Preamplifier Bias     ", "Bias_D5PREAMP",        82.0, -1, -1, 'set_calibrate'),
+			self.Parameter("TRIM DAC range        ", "Bias_D5TDR",          115.0, -1, -1, 'set_calibrate'),
+			self.Parameter("DAC for voltage biases", "Bias_D5ALLV",          82.0, -1, -1, 'set_calibrate'),
+			self.Parameter("DAC for current biases", "Bias_D5ALLI",          82.0, -1, -1, 'set_calibrate'),
+			self.Parameter("DAC for th and cal    ", "Bias_D5DAC8",          86.0, -1, -1, 'set_calibrate'),
+			self.Parameter("Threshold Low DAC     ", "Bias_THDAC",          622.0, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("Threshold High DAC    ", "Bias_THDACHIGH",      622.0, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("Calibration DAC       ", "Bias_CALDAC",         100.0, -1, -1, 'set_dont_calibrate')]
 
+	def set_gpib_address(self, address):
+		self.gpib_address = address
 
 	def __initialise(self):
-		self.multimeterinst = self.multimeter.init_keithley()
+		self.multimeterinst = self.multimeter.init_keithley(address = self.gpib_address)
 		self.initialised = True
 		return self.multimeterinst
 
@@ -69,17 +76,23 @@ class ssa_calibration():
 		self.ssa.ctrl.set_output_mux('highimpedence')
 
 
-	def measure_bias(self):
+	def measure_bias(self, return_data = False):
 		if(not self.initialised):
 			self.__initialise()
 		for par in self.par_list:
 			value, voltage = self.get_value_and_voltage(par.par_name, self.multimeterinst)
 			voltage = voltage*1E3
-			print par.full_name, ": ", (" [%3d] %7.3f mV") % (value, voltage)
+			print "->  \t" + par.full_name + ": " + (" [%3d] %7.3f mV") % (value, voltage)
+			par.curr_value = voltage
 		self.ssa.ctrl.set_output_mux('highimpedence')
+		if return_data:
+			data = []
+			for par in self.par_list:
+				data.append( [par.par_name,  par.curr_value] )
+			return data
 
 
-	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot = True, average = 5):
+	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot = True, average = 5, runname = '', filemode = 'w'):
 		# ['Bias_D5BFEED'] ['Bias_D5PREAMP']['Bias_D5TDR']['Bias_D5ALLV']['Bias_D5ALLI']
 		# ['Bias_CALDAC']['Bias_BOOSTERBASELINE']['Bias_THDAC']['Bias_THDACHIGH']['Bias_D5DAC8']
 		if(not name in self.analog_mux_map):
@@ -96,9 +109,9 @@ class ssa_calibration():
 			data[i] = self.multimeter.measure(self.multimeterinst)
 			utils.ShowPercent(i, fullscale-1, "Measuring "+name+" linearity                         ")
 		if( isinstance(filename, str) ):
-			fo = "../SSA_Results/" + filename + "_Linearity_" + name + filename2
+			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_Caracteristics_" + name + filename2
 			CSV.ArrayToCSV (array = data, filename = fo + ".csv", transpose = True)
-		dnl, inl = self.__dac_dnl_inl(data = data, nbits = nbits, plot = False)
+		dnl, inl = self._dac_dnl_inl(data = data, nbits = nbits, plot = False)
 		inl_max = np.max(np.abs(inl))
 		dnl_max = np.max(np.abs(dnl))
 		g, ofs, sigma = utils.linear_fit(range(0,2**nbits), data)
@@ -120,18 +133,24 @@ class ssa_calibration():
 			plt.plot(range(0,fullscale),[-1]*fullscale, 'r')
 			plt.subplot(212)
 			plt.plot(range(0,fullscale), data, '-x')
-			if( isinstance(filename, str) ):
-				plt.savefig(fo+".pdf")
-			else:
-				plt.show()
+			#if( isinstance(filename, str) ):
+			#	plt.savefig(fo+".pdf")
+			#else:
+			#	plt.show()
 		fit_params = [g, ofs, sigma/g]
 		raw = [range(0,fullscale), data]
 		nlin_data = [dnl, inl]
 		nlin_params = dnl_max, inl_max
+		if( isinstance(filename, str) ):
+			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_DNL_INL_" + name + filename2 + '.csv'
+			CSV.ArrayToCSV (array = np.array([data, dnl, inl]), filename = fo + ".csv", transpose = True)
+			fo = open("../SSA_Results/" + filename + "_Parameters_" + name + filename2 + '.csv', filemode)
+			fo.write( "\n%s ; %s10.3f ; %s10.3f ; %s10.3f ;" % (runname, g, ofs, sigma) )
+			fo.close()
 		return  nlin_params, nlin_data, fit_params, raw
 
 
-	def __dac_dnl_inl(self, data, nbits, plot = True):
+	def _dac_dnl_inl(self, data, nbits, plot = True):
 		fullscale = 2**nbits
 		INL = np.zeros(fullscale, dtype=np.float)
 		DNL = np.zeros(fullscale, dtype=np.float)
@@ -160,8 +179,9 @@ class ssa_calibration():
 		if (inst0 == -1):
 			if(not self.initialised):
 				self.__initialise()
-				inst = self.multimeterinst
-		else: inst = inst0
+			inst = self.multimeterinst
+		else:
+			inst = inst0
 		self.ssa.ctrl.set_output_mux(name)
 		measurement = self.multimeter.measure(inst)
 		self.ssa.ctrl.set_output_mux('highimpedence')
@@ -174,7 +194,10 @@ class ssa_calibration():
 			exit(1)
 		if (mode == 'w'):# write now
 			self.I2C.peri_write(name, value)
-		read_value = self.I2C.peri_read(name)# read back
+		if(name in self.ssa_peri_reg_map):
+			read_value = self.I2C.peri_read(name) # read back
+		else:
+			return -1
 		if (mode == 'w'):# if it was write - check the result
 			if (value != read_value):
 				print "Error! The write was not succesfull"

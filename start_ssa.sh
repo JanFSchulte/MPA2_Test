@@ -1,23 +1,52 @@
-#!/usr/bin/bash
+source ~/FC7/sw/fc7/setup.sh
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
-if ! ifconfig | grep 'eno1:1'; then
+file="./myScripts/ipaddr_ssa.dat"
+while IFS= read -r line
+do
+        IP=$line
+	printf 'IP=%s\n' "$line"
+done <"$file"
+
+eth=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
+
+printf '______________________________________________________\n'
+printf '             Starting SSA Test System                 \n'
+printf '                                                      \n'
+
+if ! ifconfig | grep ${eth}:'1'; then
+	printf '\n->  Ethernet interface =' ${eth}':1' 'not found\n'
 	sudo /usr/sbin/rarpd -a
-	sudo ifconfig eno1:1 192.168.01.03
+	sudo ifconfig ${eth}:1 192.168.1.4
+	sudo udevadm control --reload-rules	
+	sudo modprobe ni_usb_gpib
+else
+	printf '\n->  Ethernet interface found  ' 
+	echo ${eth}
+	printf '\n'
 fi
 
-ping 192.168.1.33 -c 1
-source ~/FC7/sw/fc7/setup.sh
 echo ""
-echo "from d19cScripts import *"                                              >  LaunchPy.py
-echo "from myScripts import *"                                                >> LaunchPy.py
-echo "from ssa_methods import *"                                              >> LaunchPy.py
-#echo "  "                                                                     >> LaunchPy.py
-#echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('SSA') "                        >> LaunchPy.py
-#echo "from ssa_methods.cal_utility import * "                                 >> LaunchPy.py
-#echo "from ssa_methods.readout_utility import * "                             >> LaunchPy.py
-#echo "  "                                                                     >> LaunchPy.py
-#echo "ssa = SSA_handle(I2C, fc7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map) " >> LaunchPy.py
-#echo "init_all() "                                      >> LaunchPy.py
+echo "from d19cScripts import *"    >  LaunchPy.py
+echo "from myScripts import *"      >> LaunchPy.py
+echo "from ssa_methods import *"    >> LaunchPy.py
 cp ./myScripts/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
+
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-python -i LaunchPy.py
+
+ping -c 1 -W 1 $IP; rep=$?
+
+if ! (( $rep == 0 )); then
+	printf   '\n->  SSA Testbench unrichable\n'
+	read -r -p "    Do you want to proceed anyways? [y/N] " response
+	if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+		python -i LaunchPy.py
+	else
+		printf '\nExiting.\n\n'
+		printf '______________________________________________________\n'
+	fi
+else
+	printf '\n->  SSA Testbench correctly found on %s\n' "$IP"
+	python -i LaunchPy.py
+fi
+

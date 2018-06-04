@@ -39,9 +39,9 @@ def align_MPA():
 		send_test()
 		test = read_regs(0)
 		if ((test[0] == 2147516416) or (test[0] == 8388736)):
-			print "Output successfully aligned"
+			return True
 		else:
-			print "alignment failed"
+			return False
 
 # Pixel-Pixel Test section
 #############################
@@ -54,6 +54,8 @@ def test_pp_digital(row, pixel):
 	return read_stubs()
 
 def digital_pixel_test(row = range(1,17), pixel = range(1,121), print_log = 1, filename =  "../cernbox/MPA_Results/digital_pixel_test.log"):
+	# I am adding something, I'm really sorry. - Marc
+	OutputBadPix = []
 	t0 = time.time()
 	if print_log:
 		f = open(filename, 'w')
@@ -85,6 +87,7 @@ def digital_pixel_test(row = range(1,17), pixel = range(1,121), print_log = 1, f
 					err =+ 1
 			if ((check_pix != 1) or (check_row != 1) or (err != 0)):
 				error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(check_pix) + " " +  str(check_row) + " " + str(err) + "\n"
+				OutputBadPix.append([p,r])
 				print error_message
 				if print_log:
 					f.write(error_message)
@@ -94,6 +97,7 @@ def digital_pixel_test(row = range(1,17), pixel = range(1,121), print_log = 1, f
 	t1 = time.time()
 	print "END"
 	print "Elapsed Time: " + str(t1 - t0)
+	return OutputBadPix
 # Analog Calibration test #
 def test_pp_analog(row, pixel):
 	enable_pix_EdgeBRcal(row, pixel)
@@ -104,6 +108,8 @@ def test_pp_analog(row, pixel):
 
 def analog_pixel_test(row = range(1,17), pixel = range(2,120), print_log = 1, filename =  "../cernbox/MPA_Results/analog_pixel_test.log"):
 	t0 = time.time()
+	# I am adding something, I'm really sorry. - Marc
+	OutputBadPix = []
 	if print_log:
 		f = open(filename, 'w')
 		f.write("Starting Test:\n")
@@ -135,6 +141,7 @@ def analog_pixel_test(row = range(1,17), pixel = range(2,120), print_log = 1, fi
 					err =+ 1
 			if ((check_pix != 1) or (check_row != 1) or (err != 0)):
 				error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(check_pix) + " " +  str(check_row) + " " + str(err) + "\n"
+				OutputBadPix.append([p,r])
 				print error_message
 				if print_log:
 					f.write(error_message)
@@ -144,6 +151,7 @@ def analog_pixel_test(row = range(1,17), pixel = range(2,120), print_log = 1, fi
 	t1 = time.time()
 	print "END"
 	print "Elapsed Time: " + str(t1 - t0)
+	return OutputBadPix
 
 ###############################
 def check_calpulse(row, pixel, pattern = 0b00000001, n_pulse = 1000):
@@ -220,11 +228,22 @@ def strip_in_test(n_pulse = 10, line = range(0,8),  value = [128, 64, 32, 16, 8,
 
 	return line_check
 
-def strip_in_scan(n_pulse = 10, print_file = 1, filename =  "../cernbox/MPA_Results/strip_in_scan"):
+def strip_in_scan(n_pulse = 10, probe = 0, print_file = 1, filename =  "../cernbox/MPA_Results/strip_in_scan"):
 	t0 = time.time()
 	activate_I2C_chip()
 	activate_ss()
 	data_array = np.zeros((16, 8 ), dtype = np.float16 )
+	if probe:
+		I2C.peri_write("InSetting_0",0)
+		I2C.peri_write("InSetting_1",1)
+		I2C.peri_write("InSetting_2",2)
+		I2C.peri_write("InSetting_3",3)
+		I2C.peri_write("InSetting_4",4)
+		I2C.peri_write("InSetting_5",5)
+		I2C.peri_write("InSetting_6",6)
+		I2C.peri_write("InSetting_7",7)
+		I2C.peri_write("InSetting_8",8)
+	sleep(1)
 	for i in range(0,8):
 		latency = (i  << 3)
 		edge = 255
@@ -293,7 +312,7 @@ def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121
 	fc7.write("cnfg_fast_backpressure_enable", 0)
 	disable_pixel(0,0)
 	for d in delay:
-		Configure_TestPulse_MPA(delay_after_fast_reset = d + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 200, number_of_test_pulses = 1)
+		Configure_TestPulse_MPA(delay_after_fast_reset = d + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 200, number_of_test_pulses = 1, enable_rst_L1 = 1)
 		for r in row:
 			sleep(0.01)
 			for p in pixel:
