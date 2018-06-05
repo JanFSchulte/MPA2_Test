@@ -30,7 +30,7 @@ else
 	printf '\n->  SSA Testbench correctly found on IP 192.168.1.33\n'
 	printf '\n->  Starting loading the firmware\n'
 	cd ~/FC7/sw/fc7/tests
-	./bin/fc7-d19c.exe  -i 192.168.1.33 -n FreqTest2.bit
+	./bin/fc7-d19c.exe  -i 192.168.1.33 -n D19C_SSA_V-2018-04-13
 fi
 
 

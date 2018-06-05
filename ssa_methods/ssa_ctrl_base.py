@@ -113,11 +113,11 @@ class ssa_ctrl_base:
 
 	def __do_phase_tuning(self):
 		cnt = 0; done = True
-		print self.fc7.read("stat_phy_phase_tuning_done")
+		#print self.fc7.read("stat_phy_phase_tuning_done")
 		self.fc7.write("ctrl_phy_phase_tune_again", 1)
 		#print self.fc7.read("stat_phy_phase_tuning_done")
 		send_test(15)
-		print self.fc7.read("stat_phy_phase_tuning_done")
+		#print self.fc7.read("stat_phy_phase_tuning_done")
 		while(self.fc7.read("stat_phy_phase_tuning_done") == 0 and cnt < 5):
 			sleep(0.1)
 			print "Waiting for the phase tuning"
@@ -305,3 +305,67 @@ class ssa_ctrl_base:
 	def set_lateral_data(self, left, right):
 		self.fc7.write("cnfg_phy_SSA_gen_right_lateral_data_format", right)
 		self.fc7.write("cnfg_phy_SSA_gen_left_lateral_data_format", left)
+
+	def read_fuses(self, pulse = True, display = True):
+		if(pulse):
+			self.I2C.peri_write('Fuse_Mode', 0b00001111)
+			self.I2C.peri_write('Fuse_Mode', 0b00000000)
+		r0 = self.I2C.peri_read('Fuse_Value_b0')
+		r1 = self.I2C.peri_read('Fuse_Value_b1')
+		r2 = self.I2C.peri_read('Fuse_Value_b2')
+		r3 = self.I2C.peri_read('Fuse_Value_b3')
+		if display:
+			print( "{0:02x}-{1:02x}-{2:02x}-{3:02x}".format(r3, r2, r1, r0) )
+		else:
+			r = (r3<<24) | (r2<<16) | (r1<<8) | (r0<<0)
+			return r
+
+	def write_fuses(self, val = 0, pulse = True, display = False, confirm = False):
+		d0 = (val >>  0) & 0xFF
+		d1 = (val >>  8) & 0xFF
+		d2 = (val >> 16) & 0xFF
+		d3 = (val >> 24) & 0xFF
+		self.I2C.peri_write('Fuse_Prog_b0', d0)
+		self.I2C.peri_write('Fuse_Prog_b1', d1)
+		self.I2C.peri_write('Fuse_Prog_b2', d2)
+		self.I2C.peri_write('Fuse_Prog_b3', d3)
+		r0 = self.I2C.peri_read('Fuse_Prog_b0')
+		r1 = self.I2C.peri_read('Fuse_Prog_b1')
+		r2 = self.I2C.peri_read('Fuse_Prog_b2')
+		r3 = self.I2C.peri_read('Fuse_Prog_b3')
+		if (((r3<<24) | (r2<<16) | (r1<<8) | (r0<<0) ) != val):
+			print("\n->  \tError in setting the e-fuses write buffer")
+			return -1
+		if(pulse):
+			if confirm:  rp = 'Y'
+			else:  rp = raw_input("\n->  \tAre you sure you want to write the e-fuses? [Y|n] : ")
+			if (rp == 'Y'):
+				time.sleep(0.1); self.I2C.peri_write('Fuse_Mode', 0b11110000)
+				time.sleep(0.1); self.fc7.send_test(15)
+				time.sleep(0.1); self.I2C.peri_write('Fuse_Mode', 0b00000000)
+		r = self.read_fuses(pulse = True, display = display)
+		if(r != val):
+			print('->  \tE-Fuses write error: ')
+			print('    \t    Written:...{0:032b}'.format(val))
+			print('    \t    Read:......{0:032b}'.format(r))
+			return False
+		else:
+			return True
+
+
+
+
+
+
+
+
+
+# ssa_peri_reg_map['Fuse_Mode']              = 43
+# ssa_peri_reg_map['Fuse_Prog_b0']           = 44
+# ssa_peri_reg_map['Fuse_Prog_b1']           = 45
+# ssa_peri_reg_map['Fuse_Prog_b2']           = 46
+# ssa_peri_reg_map['Fuse_Prog_b3']           = 47
+# ssa_peri_reg_map['Fuse_Value_b0']          = 48
+# ssa_peri_reg_map['Fuse_Value_b1']          = 49
+# ssa_peri_reg_map['Fuse_Value_b2']          = 50
+# ssa_peri_reg_map['Fuse_Value_b3']          = 51
