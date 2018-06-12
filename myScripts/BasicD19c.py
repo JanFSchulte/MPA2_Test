@@ -388,6 +388,7 @@ def SetMainSlaveMap():
 	print "---> Updating the Slave ID Map"
 	for slave_id in range(2):
 		fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
+		print "Writing","cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", hex(EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 
 def activate_I2C_chip(frequency = 0):
 	i2cmux = 0
