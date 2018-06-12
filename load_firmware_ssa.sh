@@ -3,6 +3,14 @@
 source ~/FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
+file="./myScripts/ipaddr_ssa.dat"
+while IFS= read -r line
+do
+        IP=$line
+	printf 'IP=%s\n' "$line"
+done <"$file"
+
+
 eth=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
 
 printf '______________________________________________________\n'
@@ -21,16 +29,18 @@ else
 	printf '\n'
 fi
 
-ping -c 1 -W 1 192.168.1.33; rep=$?
+ping -c 1 -W 1 $IP; rep=$?
 
 if ! (( $rep == 0 )); then
 	printf   '\n->  SSA Testbench unrichable. Verify connectivity\n'
 
 else
-	printf '\n->  SSA Testbench correctly found on IP 192.168.1.33\n'
+	printf '\n->  SSA Testbench correctly found on %s\n' "$IP"
 	printf '\n->  Starting loading the firmware\n'
 	cd ~/FC7/sw/fc7/tests
-	./bin/fc7-d19c.exe  -i 192.168.1.33 -n D19C_SSA_V-2018-04-13
+	./bin/fc7-d19c.exe  -i $IP -n  D19C_SSA_V-2018-06-12.bin -f ~/D19C/MPA_Test/fw_bitfiles/D19C_SSA_V-2018-06-12.bit
+#	./bin/fc7-d19c.exe  -i $IP -n  D19C_SSA_V-2018-04-13
+
 fi
 
 

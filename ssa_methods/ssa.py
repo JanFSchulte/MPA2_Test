@@ -54,9 +54,6 @@ class SSA_ASIC:
 		utils.activate_I2C_chip()
 		if(display): sleep(0.2)
 		else: sleep(0.1)
-		utils.print_enable(False)
-		activate_I2C_chip()
-		utils.print_enable(True)
 		if(display):
 			sys.stdout.write("->  \tTuning sampling phases..\r")
 			sys.stdout.flush()
