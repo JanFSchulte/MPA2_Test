@@ -340,6 +340,8 @@ class SSA_inject():
 		self.hitmode = 'none'
 		self.data_l = 0
 		self.data_r = 0
+		self.hit_list = []
+		self.hip_list = []
 
 
 	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, sequence = 0xff, initialise = True):
@@ -348,23 +350,27 @@ class SSA_inject():
 			self.I2C.peri_write("CalPulse_duration", times)
 			self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 			#fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
-		self.I2C.strip_write("DigCalibPattern_L", 0, 0)
-		self.I2C.strip_write("DigCalibPattern_H", 0, 0)
-		leftdata  = 0b00000000
-		rightdata = 0b00000000
-		for cl in hit_list:
-			if (cl < 1):
-				rightdata = rightdata | (0b1 << (7+cl))
-			elif (cl > 120):
-				leftdata = leftdata | (0b1 << (cl-121))
-			else:
-				self.I2C.strip_write("DigCalibPattern_L", cl, 0xff)
-		#if(self.data_l != 0 or self.data_r != 0):
-		self.ctrl.set_lateral_data(left = leftdata, right = rightdata)
-		self.data_l = leftdata; self.data_r = rightdata;
-		for cl in hip_list:
-			self.I2C.strip_write("DigCalibPattern_H", cl, sequence)
-		sleep(0.001)
+		leftdata  = 0; rightdata = 0;
+		if(hit_list != self.hit_list):
+			self.hit_list = hit_list
+			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
+			for cl in hit_list:
+				if (cl < 1):
+					rightdata = rightdata | (0b1 << (7+cl))
+				elif (cl > 120):
+					leftdata = leftdata | (0b1 << (cl-121))
+				else:
+					self.I2C.strip_write("DigCalibPattern_L", cl, 0x1)
+		if(self.data_l != leftdata or self.data_r != rightdata):
+			self.ctrl.set_lateral_data(left = leftdata, right = rightdata)
+			self.data_l = leftdata;
+			self.data_r = rightdata;
+		if(hip_list != self.hip_list):
+			self.hip_list = hip_list
+			for cl in hip_list:
+				self.I2C.strip_write("DigCalibPattern_H", 0, 0)
+				self.I2C.strip_write("DigCalibPattern_H", cl, sequence)
+		sleep(0.002)
 
 
 	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [50, 100], cal_pulse_amplitude = 255, initialise = True, trigger = False):

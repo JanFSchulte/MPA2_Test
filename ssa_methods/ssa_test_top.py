@@ -25,6 +25,11 @@ class SSA_test_top():
 		self.config_file = ''; self.dvdd = 1.05; self.pvdd = 1.20; #for the offset of the board
 
 
+	def run_caracterization(self):
+		self.initialise(filename)
+		self.test_routine_main(filename, "")
+
+
 	def configure_tests(self, runtest = 'default'):
 		if(runtest == 'default'):
 			self.runtest.enable('Lateral_In')

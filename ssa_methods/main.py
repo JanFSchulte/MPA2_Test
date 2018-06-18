@@ -31,11 +31,13 @@ xray        = SSA_test_xray(toptest, ssa, I2C, FC7, cal, biascal, pwr, test, mea
 anl         = SSA_Analise_Test_results(toptest, test, measure, biascal)
 
 def on():
+	utils.activate_I2C_chip()
 	sleep(0.1);  pwr.set_supply('on', display=False)
 	sleep(0.1);  pwr.set_clock_source('internal')
 	sleep(0.1);  ssa.init(reset_board = True, reset_chip = True, display = True)
 
 def off():
+	utils.activate_I2C_chip()
 	pwr.set_supply('off')
 
 def init():
