@@ -38,7 +38,7 @@ def EncodeSlaveMapItem(slave_item):
 	return final_command
 
 # setting the i2c slave map
-def SetSlaveMap():
+def SetSlaveMap(verbose = 1):
 	# define the map itself
 	i2c_slave_map = [I2C_SlaveMapItem() for i in range(16)]
 
@@ -60,20 +60,20 @@ def SetSlaveMap():
 	i2c_slave_map[15].SetValues(0b1011111, 1, 1, 1, 1, 0, "CBC3")
 
 	# updating the slave id table
-	print "---> Updating the Slave ID Map"
+	if verbose: print "---> Updating the Slave ID Map"
 	for slave_id in range(16):
 		fc7.write("cnfg_mpa_ssa_board_slave_" + str(slave_id) + "_config", EncodeSlaveMapItem(i2c_slave_map[slave_id]))
-		print "Writing","cnfg_mpa_ssa_board_slave_" + str(slave_id) + "_config", hex(EncodeSlaveMapItem(i2c_slave_map[slave_id]))
+		if verbose: print "Writing","cnfg_mpa_ssa_board_slave_" + str(slave_id) + "_config", hex(EncodeSlaveMapItem(i2c_slave_map[slave_id]))
 
 # i2c masters configuration
-def Configure_MPA_SSA_I2C_Master(enabled, frequency=4):
+def Configure_MPA_SSA_I2C_Master(enabled, frequency=4, verbose = 1):
 	## ------ if enabled=1, enables the mpa ssa i2c master and disables the main one
 	## ------ frequency: 0 - 0.1MHz, 1 - 0.2MHz, 2 - 0.4MHz, 3 - 0.8MHz, 4 - 1MHz, 5 - 2 MHz, 6 - 4MHz, 7 - 5MHz, 8 - 8MHz, 9 - 10MHz
 
 	if enabled > 0:
-		print "---> Enabling the MPA SSA Board I2C master"
+		if verbose: print "---> Enabling the MPA SSA Board I2C master"
 	else:
-		print "---> Disabling the MPA SSA Board I2C master"
+		if verbose: print "---> Disabling the MPA SSA Board I2C master"
 
 	# sets the main CBC, MPA, SSA i2c master
 	fc7.write("cnfg_phy_i2c_master_en", int(not enabled))
@@ -92,7 +92,7 @@ def Configure_MPA_SSA_I2C_Master(enabled, frequency=4):
 	fc7.write("ctrl_mpa_ssa_board_reset", 1)
 	sleep(0.1)
 
-def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data):
+def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data, verbose = 1):
 
 	# this peace of code just shifts the data, also checks if it fits the field
 	# general
@@ -112,9 +112,10 @@ def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data):
 	#print bin(shifted_command_type)
 	#print bin(shifted_word_id_0)
 	#print bin(shifted_slave_id)
-	print "ctrl_command_i2c_command_fifo"
-	print hex(word_0)
-	print hex(word_1)
+	if verbose:
+		print "ctrl_command_i2c_command_fifo"
+		print hex(word_0)
+		print hex(word_1)
 
 	# writing the command
 	fc7.write("ctrl_command_i2c_command_fifo", word_0)
@@ -122,8 +123,9 @@ def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data):
 
 	# wait for the reply to come back
 	while fc7.read("stat_command_i2c_fifo_replies_empty") > 0:
-		ReadStatus()
-		sleep(0.1)
+		if verbose:
+			ReadStatus()
+			sleep(0.1)
 
 	# get the reply
 	reply = fc7.read("ctrl_command_i2c_reply_fifo")
@@ -147,10 +149,10 @@ def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data):
 
 	else:
 		if read == 1:
-			print "Data that was read is: ", hex(reply_data)
+			if verbose: print "Data that was read is: ", hex(reply_data)
 			return reply_data
 		else:
-			print "Successful write transaction"
+			if verbose: print "Successful write transaction"
 
 ##----- end methods definition
 

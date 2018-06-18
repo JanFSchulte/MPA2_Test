@@ -5,6 +5,7 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from mpa_methods.mpa_i2c_conf import *
+from myScripts.Utilities import *
 #from mpa_methods.fast_readout_utility import *
 import numpy as np
 import time
@@ -19,7 +20,6 @@ import matplotlib.cm as cm
 
 def errorf(x, *p):
 	a, mu, sigma = p
-#    print x
 	return 0.5*a*(1.0+erf((x-mu)/sigma))
 
 def line(x, *p):
@@ -68,14 +68,14 @@ def inject():
 		close_shutter()
 
 def enable_test(block, point):
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	disable_test()
 	test = "TEST" + str(block)
 	I2C.peri_write('TESTMUX',0b00000001 << block)
 	I2C.peri_write(test, 0b00000001 << point)
 
 def set_DAC(block, point, value):
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	test = "TEST" + str(block)
 	I2C.peri_write('TESTMUX',0b00000001 << block)
 	I2C.peri_write(test, 0b00000001 << point)
@@ -118,7 +118,8 @@ def enable_pix_LevelBRcal(r,p, polarity = "rise"):
 	else:
 		print "Polarity not recognized"
 		return
-	return bin(I2C.pixel_read('ENFLAGS', r, p))
+
+	#return bin(I2C.pixel_read('ENFLAGS', r, p))
 
 def disable_pixel(r,p):
 	I2C.pixel_write('ENFLAGS', r, p, 0x00)
@@ -139,7 +140,42 @@ def activate_ps():
 def enable_dig_cal(r,p, pattern = 0b00000001):
 	I2C.pixel_write('ENFLAGS', r, p, 0x20)
 	I2C.pixel_write('DigPattern', r, p, pattern)
-
+##### plot_extract_scurve function take scurve data and extract threhsold and noise data. If plot = 1, it also plot scurves and histograms
+def plot_extract_scurve(s_type, scurve, n_pulse, nominal_DAC, stop, extract, plot):
+	th_array = np.zeros(2040, dtype = np.int )
+	noise_array = np.zeros(2040, dtype = np.float )
+	for r in range(1,17):
+		for p in range(1,120):
+			if plot:
+				plt.plot(range(0,stop), scurve[(r-1)*120+p,0:stop],'-')
+			# Noise and Spread study
+			if extract:
+				try:
+					if s_type == "THR":
+						start_DAC = np.argmax(scurve[(r-1)*120+p,:]) + 10
+						par, cov = curve_fit(errorfc, range(start_DAC, stop), scurve[(r-1)*120+p,start_DAC + 1 :stop + 1], p0= [n_pulse, nominal_DAC, 2])
+					elif s_type == "CAL":
+						start_DAC = 0
+						par, cov = curve_fit(errorf, range(start_DAC, stop), scurve[(r-1)*120+p,start_DAC + 1 :stop + 1], p0= [n_pulse, nominal_DAC, 2])
+					th_array[(r-1)*120+p] = int(round(par[1]))
+					noise_array[(r-1)*120+p] = par[2]
+				except RuntimeError or TypeError:
+					print "Fitting failed on pixel ", p , " row: " ,r
+	if plot:
+		if s_type == "THR":	plt.xlabel('Threshold DAC value')
+		if s_type == "CAL":	plt.xlabel('Calibration DAC value')
+		plt.ylabel('Counter Value')
+		if extract:
+			plt.figure(2)
+			plt.hist(th_array[1:1920], bins=range(min(th_array[1:1920]), max(th_array[1:1920]) + 1, 1))
+			plt.figure(3)
+			plt.hist(noise_array[1:1920], bins=np.arange(0.0, 4.0, 0.1))
+			print
+			print "Threshold Average: ", np.mean(th_array[1:1920]), " Spread SD: ", np.std(th_array[1:1920])
+			print "Noise Average: ", np.mean(noise_array[1:1920]), " Spread SD: ", np.std(noise_array[1:1920])
+	if extract:
+		return 	th_array, noise_array
+##### send_pulses
 def send_pulses(n_pulse):
 	open_shutter()
 	sleep(0.01)
@@ -147,31 +183,22 @@ def send_pulses(n_pulse):
 		send_test()
 	sleep(0.001)
 	close_shutter()
-def send_pulses_fast(number_of_test_pulses = 100, delay_after_fast_reset = 200, delay_after_test_pulse = 200, delay_before_next_pulse = 200):
-	## now we can set the desired parameters for the test pulse
-	# in 40MHz clock cycles
 
-	# 0 - infinite number of sequencies, otherwise as specified
+def send_pulses_fast(n_pulse, row, pixel, cal):
+	disable_pixel(0, 0)
+	enable_pix_counter(row, pixel)
+	sleep(0.0025)
+	open_shutter(8)
+	if (cal != 0):
+		SendCommand_CTRL("start_trigger")
+		test = 1
+		while (test):
+			test = fc7.read("stat_fast_fsm_state")
+			sleep(0.001)
+	else:
+		sleep(0.000001*n_pulse)
+	close_shutter(8)
 
-	fc7.write("cnfg_fast_backpressure_enable", 0)
-	## now configure the test pulse machine
-	Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst_L1 = 0)
-	open_shutter()
-	sleep(0.01)
-	SendCommand_CTRL("start_trigger")
-	sleep(0.01)
-	close_shutter()
-
-def send_pulse_trigger(number_of_test_pulses = 1, delay_after_fast_reset = 200, delay_after_test_pulse = 200, delay_before_next_pulse = 200):
-	## now we can set the desired parameters for the test pulse
-	# in 40MHz clock cycles
-
-	# 0 - infinite number of sequencies, otherwise as specified
-
-	fc7.write("cnfg_fast_backpressure_enable", 0)
-	## now configure the test pulse machine
-	Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst_L1 = 1)
-	SendCommand_CTRL("start_trigger")
 
 def read_pixel_counter(row, pixel):
 	data1 = I2C.pixel_read('ReadCounter_LSB',row, pixel)
@@ -181,7 +208,7 @@ def read_pixel_counter(row, pixel):
 		data2 = I2C.pixel_read('ReadCounter_MSB',row, pixel, 0.01) # Repeat with higher timeout time
 	if ((data1 == None) or (data2 == None)):
 		sleep(1)
-		activate_I2C_chip()
+		activate_I2C_chip(verbose = 0)
 		sleep(1)
 		data1 = I2C.pixel_read('ReadCounter_LSB',row, pixel, 0.01) # Repeat with higher timeout time
 		data2 = I2C.pixel_read('ReadCounter_MSB',row, pixel, 0.01) # Repeat with higher timeout time
@@ -198,7 +225,7 @@ def ReadoutCounters(raw_mode_en = 0):
 	fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)
 	t0 = time.time()
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
-	sleep(0.1)
+	#sleep(0.1)
 	#print "---> Sending Start and Waiting for Data"
 	#StartCountersRead()
 	start_counters_read()
@@ -243,7 +270,7 @@ def ReadoutCounters(raw_mode_en = 0):
 def s_curve(n_pulse, cal, row, pixel, step = 1, start = 0, stop = 256, print_file =1, filename = "../cernbox/MPA_Results/scurve"):
 	clear_counters()
 	clear_counters()
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	t0 = time.time()
 	pixel = np.array(pixel)
 	row = np.array(row)
@@ -285,7 +312,7 @@ def s_curve(n_pulse, cal, row, pixel, step = 1, start = 0, stop = 256, print_fil
 	return data_array
 
 #hit_map(100, 250, 200)
-def hit_map(n_pulse, cal, th, row = range(1,17), pixel = range (2,120) , print_file =1, filename = "../cernbox/MPA_Results/hitmap"):
+def hit_map(n_pulse, cal, th, row = range(1,17), pixel = range (2,120) , print_file =0, filename = "../cernbox/MPA_Results/hitmap"):
 	t0 = time.time()
 	pixel = np.array(pixel)
 	row = np.array(row)
@@ -322,7 +349,7 @@ def s_curve_rbr(n_pulse, cal, row, step = 1, start = 0, stop = 256, plot = 1, pr
 	t0 = time.time()
 	clear_counters()
 	clear_counters()
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	row = np.array(row)
 	nrow = int(row.shape[0])
 	nstep = (stop-start)/step+1
@@ -368,143 +395,82 @@ def s_curve_rbr(n_pulse, cal, row, step = 1, start = 0, stop = 256, plot = 1, pr
 
 # s_curve_rbr_fr(n_pulse = 300, cal = 0, row = range(1,17), step = 1, start = 0, stop = 256, plot = 1, print_file =0)
 
-def s_curve_rbr_fr(n_pulse = 1000, cal = 50, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 50, plot = 1, print_file =1, filename = "../cernbox/MPA_Results/scurve_fr_"):
+def s_curve_rbr_fr(n_pulse = 1000, s_type = "THR", ref_val = 50, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 200, extract_val = 0, extract = 1, plot = 1, print_file =1, filename = "../cernbox/MPA_Results/scurve_fr_"):
 	t0 = time.time()
 	clear_counters(8)
 	row = np.array(row)
 	nrow = int(row.shape[0])
 	nstep = (stop-start)/step+1
 	data_array = np.zeros((2040, nstep), dtype = np.int16 )
-	#data_array[0,0] = n_pulse
-	#data_array = np.zeros(((stop-start)/step+1, nrow*118), dtype = np.int )
 	activate_async()
-	set_calibration(cal)
-	count_th = 0
-	sys.stdout.write("Progress Scurve: ")
-	sys.stdout.flush()
+	if s_type == "THR":	set_calibration(ref_val)
+	elif s_type == "CAL":	set_threshold(ref_val)
+	else: return "S-Curve type not recognized"
+	count = 0
 	fc7.write("cnfg_fast_backpressure_enable", 0)
 	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
-	count_th = 0
-	th = start
-	while (th < stop): # Temoporary: need to add clear counter fast command
-		set_threshold(th)
-		sys.stdout.write(str(count_th*100/((stop-start)/step+2)) + "% | ")
-		sys.stdout.flush()
+	count = 0
+	cur_val = start
+	while (cur_val < stop): # Temoporary: need to add clear counter fast command
+		if s_type == "CAL":	set_calibration(cur_val)
+		elif s_type == "THR":	set_threshold(cur_val)
+		utils.ShowPercent(count, (stop-start)/step, "")
 		for r in row:
-			disable_pixel(0, 0)
-			enable_pix_counter(r, 0)
-
-			sleep(0.0025)
-			open_shutter(8)
-			if (cal != 0):
-				#sleep(0.005)
-				SendCommand_CTRL("start_trigger")
-				test = 1
-				while (test):
-					test = fc7.read("stat_fast_fsm_state")
-					sleep(0.001)
-			else:
-				sleep(0.000001*n_pulse)
-			close_shutter(8)
-		tB = time.time()
+			send_pulses_fast(n_pulse, r, 0, cur_val)
 		sleep(0.005)
 		fail, temp = ReadoutCounters()
-		tC = time.time()
-		#print "Elapsed Time: " + str(tC - tB) + " " + str(tB - tA)
 		sleep(0.005)
 		if fail:
 			print "FailedPoint, repeat!"
 		else:
-			data_array [:, count_th]= temp
-			count_th += 1
-			th += step
+			data_array [:, count]= temp
+			count += 1
+			cur_val += step
 		clear_counters(8)
 		clear_counters(8)
-	t1 = time.time()
-	print "END"
-	print "Elapsed Time: " + str(t1 - t0)
-	if print_file:
-		CSV.ArrayToCSV (data_array, str(filename) + "_cal_" + str(cal) + ".csv")
-	if plot:
-		for r in row:
-			for p in range(1,120):
-				plt.plot(range(0,nstep), data_array[(r-1)*120+p,:],'-')
-		plt.xlabel('Threshold DAC value')
-		plt.ylabel('Counter Value')
-		plt.show()
 
+	if print_file:
+		CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + str(ref_val) + ".csv")
+	if extract:
+		if extract_val == 0:
+			if s_type == "THR":	extract_val = ref_val*1.66+70
+			elif s_type == "CAL":	extract_val = ref_val/1.66-40
+		th_array, noise_array = plot_extract_scurve(s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, stop = stop, plot = plot, extract = extract)
+		t1 = time.time()
+		print "END"
+		print "Elapsed Time: " + str(t1 - t0)
+		plt.show()
+		return data_array, th_array, noise_array
+	elif plot:
+		plot_extract_scurve(s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, stop = stop, extract = 0, plot = plot)
 	return data_array
 
-def check_clear_counters(change = 1, points = 168, iterations = 10, duration = 8):
-	count = 0
-	for i in range(0,points):
-		for j in range(0,iterations):
-			hit_map(10, 250, 200, [1], [7])
-			sleep(0.001)
-			value = read_pixel_counter(1,7)
-			if (value != 10):
-				print str(i) + " " + str(j) + " " + str(value)
-				count += 1
-			clear_counters(duration)
-			sleep(0.001)
-			value = read_pixel_counter(1,7)
-			if (value != 0):
-				print str(i) + " " + str(j) + " " + str(value)
-				count += 1
-		if change: fc7.write("ctrl_phy_fast_cmd_phase",1)
-	return count
+# s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1,120), step = 1, start = 0, stop = 256, pulse_delay = 200,  plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/scurve_fr_"):
 
-# s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1,120), step = 1, start = 0, stop = 256, pulse_delay = 50,  plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/scurve_fr_"):
-
-def s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1,120), step = 1, start = 0, stop = 256, pulse_delay = 50,  plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/scurve_fr_"):
+def s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", cal = 100, row = range(1,17), pixel = range(1,120), step = 1, start = 0, stop = 256, pulse_delay = 200,  plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/scurve_fr_"):
 	t0 = time.time()
-	clear_counters()
-	clear_counters()
-	activate_I2C_chip()
+	clear_counters(8)
+	clear_counters(8)
+	activate_I2C_chip(verbose = 0)
 	row = np.array(row)
 	nrow = int(row.shape[0])
 	nstep = (stop-start)/step+1
 	data_array = np.zeros((2040, nstep), dtype = np.int16 )
-	#data_array[0,0] = n_pulse
-	#data_array = np.zeros(((stop-start)/step+1, nrow*118), dtype = np.int )
 	activate_async()
 	set_calibration(cal)
 	sleep(1)
-	sys.stdout.write("Progress Scurve: ")
-	sys.stdout.flush()
 	fc7.write("cnfg_fast_backpressure_enable", 0)
-	## now configure the test pulse machine
 	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
 	count_th = 0
 	th = start
 	while (th < stop): # Temoporary: need to add clear counter fast command
 		set_threshold(th)
-		sys.stdout.write(str(count_th*100/((stop-start)/step+2)) + "% | ")
-		sys.stdout.flush()
+		utils.ShowPercent(count_th, (stop-start)/step, "")
 		for r in row:
 			for p in pixel:
-				disable_pixel(0, 0)
-				enable_pix_counter(r, p)
-				testI2C = I2C.pixel_read('ENFLAGS', r, p)
-				if (testI2C != 83):
-					print "Failed I2C"
-				sleep(0.0025)
-				open_shutter(8)
-				if (cal != 0):
-					#sleep(0.005)
-					SendCommand_CTRL("start_trigger")
-					test = 1
-					while (test):
-						test = fc7.read("stat_fast_fsm_state")
-						sleep(0.001)
-					else:
-						sleep(0.000001*n_pulse)
-				close_shutter(8)
-		tB = time.time()
+				send_pulses_fast(r, p, cal)
 		sleep(0.005)
 		fail, temp = ReadoutCounters()
-		tC = time.time()
-		#print "Elapsed Time: " + str(tC - tB) + " " + str(tB - tA)
 		if fail:
 			print "FailedPoint, repeat!"
 		else:
@@ -519,13 +485,12 @@ def s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1
 	if print_file:
 		CSV.ArrayToCSV (data_array, str(filename) + "_cal_" + str(cal) + ".csv")
 	if plot:
-		for r in row:
-			for p in pixel:
-				plt.plot(range(0,nstep), data_array[(r-1)*120+p,:],'-', label = str(r) + " " + str(p))
-		plt.xlabel('Threshold DAC value')
-		plt.ylabel('Counter Value')
-		plt.legend()
+		th_array, noise_array = plot_extract_scurve(s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = 1.66*cal, stop = stop, plot = 1, extract = 1)
+		t1 = time.time()
+		print "END"
+		print "Elapsed Time: " + str(t1 - t0)
 		plt.show()
+		return data_array, th_array, noise_array
 	return data_array
 
 def reset_trim(value = 15):
@@ -535,7 +500,7 @@ def trimming_noise(iteration = 1, nominal_DAC = 41, data_array = np.zeros(2040, 
 	t0 = time.time()
 	for r in row:
 		I2C.pixel_write("TrimDAC",r,0,15)
-	scurve_init = s_curve_rbr_fr(n_pulse = 300, cal = 0, row = row, step = 1, start = start, stop = stop, pulse_delay = 50, plot = 0, print_file =0)
+	scurve_init = s_curve_rbr_fr(n_pulse = 300, cal = 0, row = row, step = 1, start = start, stop = stop, pulse_delay = 200, extract =0, plot = 0, print_file =0)
 	scurve = scurve_init
 	for i in range(0,iteration):
 		for r in row:
@@ -557,7 +522,7 @@ def trimming_noise(iteration = 1, nominal_DAC = 41, data_array = np.zeros(2040, 
 				data_array[(r-1)*120+p] = new_DAC
 				if (check != new_DAC): print "Trim not written at: ", p, " Row: ", r
 		if (i != iteration - 1):
-			scurve = s_curve_rbr_fr(n_pulse = 300, cal = 0, row = row , step = 1, start = start, stop = stop, pulse_delay = 50, plot = 0, print_file =0)
+			scurve = s_curve_rbr_fr(n_pulse = 300, cal = 0, row = row , step = 1, start = start, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
 	t1 = time.time()
 	print "END"
 	print "Trimming Elapsed Time: " + str(t1 - t0)
@@ -566,7 +531,7 @@ def trimming_noise(iteration = 1, nominal_DAC = 41, data_array = np.zeros(2040, 
 		for r in row:
 			for p in pixel:
 				I2C.pixel_write("TrimDAC",r,p,data_array[(r-1)*120+p])
-		scurve_final = s_curve_rbr_fr(n_pulse = 300, cal = 0, row = row , step = 1, start = start, stop = stop, pulse_delay = 50, plot = 0, print_file =0)
+		scurve_final = s_curve_rbr_fr(n_pulse = 300, cal = 0, row = row , step = 1, start = start, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
 		plt.figure(1)
 		for r in row:
 			for p in pixel:
@@ -583,7 +548,7 @@ def trimming_noise(iteration = 1, nominal_DAC = 41, data_array = np.zeros(2040, 
 	return data_array
 
 def trimming_chip_noise(nominal_DAC = 75, nstep = 4, data_array = np.zeros(2040, dtype = np.int ), plot = 1, start = 0, stop = 150, ratio = 3.68, print_file = 0, filename = "../cernbox/MPA_Results/Test"):
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	for i in range(1,nstep+1):
 		I2C.pixel_write("TrimDAC",0,0,0)
 		row = range(i, 17, nstep)
@@ -594,7 +559,7 @@ def trimming_chip_noise(nominal_DAC = 75, nstep = 4, data_array = np.zeros(2040,
 			I2C.pixel_write("TrimDAC",r,p,data_array[(r-1)*120+p])
 
 	if plot:
-		scurve = s_curve_rbr_fr(n_pulse = 300, cal = 0, row = row , step = 1, start = start, stop = stop, pulse_delay = 50, plot = 0, print_file =0)
+		scurve = s_curve_rbr_fr(n_pulse = 300, cal = 0, row = row , step = 1, start = start, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
 		plt.figure(1)
 		for r in range(0,17):
 			for p in range(0,120):
@@ -606,98 +571,97 @@ def trimming_chip_noise(nominal_DAC = 75, nstep = 4, data_array = np.zeros(2040,
 		CSV.ArrayToCSV (data_array, str(filename) + "_noiseTrimming" + str(nominal_DAC) + ".csv")
 	return data_array
 
-def trimming_cal(n_pulse = 300, cal = 10, iteration = 1, nominal_DAC = 110, data_array = np.zeros(2040, dtype = np.int ), plot = 1,  stop = 150, ratio = 3.90, row = range(1,17), pixel = range(1,120)):
+def trimming_step(pix_out = [["Row", "Pixel", "DAC"]], n_pulse = 1000, s_type = "THR", ref_val = 10, iteration = 1, nominal_DAC = 110, data_array = np.zeros(2040, dtype = np.int ), plot = 1,  stop = 150, ratio = 3.90, row = range(1,17), pixel = range(1,120)):
 	t0 = time.time()
 	for r in row:
 		for p in pixel:
 			I2C.pixel_write("TrimDAC",r,p,data_array[(r-1)*120+p])
-	scurve_init = s_curve_rbr_fr(n_pulse = n_pulse, cal = cal, row = row, step = 1, start = 0, stop = stop, pulse_delay = 50, plot = 0, print_file =0)
+	scurve_init = s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
 	scurve = scurve_init
 	for i in range(0,iteration):
+		print ""
+		print "Parameter Extraction ", i+1, ":"
 		for r in row:
 			for p in pixel:
-				start_DAC = np.argmax(scurve[(r-1)*120+p,:]) + 10
 				try:
-					par, cov = curve_fit(errorfc, range(start_DAC, stop), scurve[(r-1)*120+p,start_DAC + 1 :stop + 1], p0= [n_pulse, nominal_DAC, 2])
+					if s_type == "THR":
+						start_DAC = np.argmax(scurve[(r-1)*120+p,:]) + 10
+						par, cov = curve_fit(errorfc, range(start_DAC, stop), scurve[(r-1)*120+p,start_DAC + 1 :stop + 1], p0= [n_pulse, nominal_DAC, 2])
+					elif s_type == "CAL":
+						start_DAC = 0
+						par, cov = curve_fit(errorf, range(start_DAC, stop), scurve[(r-1)*120+p,start_DAC + 1 :stop + 1], p0= [n_pulse, nominal_DAC, 2])
 					init_DAC = int(round(par[1]))
 					trim_DAC = int(round((nominal_DAC - init_DAC)/ratio))
 					curr_dac = I2C.pixel_read("TrimDAC",r,p)
-					new_DAC = curr_dac + trim_DAC
+					if s_type == "THR": new_DAC = curr_dac + trim_DAC
+					elif s_type == "CAL": new_DAC = curr_dac - trim_DAC
 					if (new_DAC > 31):
+						if (i == iteration - 1): pix_out.append([r, p , new_DAC])
 						new_DAC = 31
 						print "High TrimDAC limit for pixel: ", p, " Row: ", r
 					if (new_DAC < 0):
+						if (i == iteration - 1): pix_out.append([r, p , new_DAC])
 						new_DAC = 0
 						print "Low TrimDAC limit for pixel: ", p, " Row: ", r
 					I2C.pixel_write("TrimDAC", r, p, new_DAC)
-					#sleep(0.01)
-					check = I2C.pixel_read("TrimDAC", r, p)
-					#sleep(0.01)
 					data_array[(r-1)*120+p] = new_DAC
-					if (check != new_DAC): print "Trim not written at: ", p, " Row: ", r
 				except RuntimeError or TypeError:
 					print "Fitting failed on pixel ", p , " row: " ,r
-
-		if (i != iteration - 1):
-			scurve = s_curve_rbr_fr(n_pulse = n_pulse, cal = cal, row = row , step = 1, start = 0, stop = stop, pulse_delay = 50, plot = 0, print_file =0)
-	t1 = time.time()
-	print "END"
-	print "Trimming Elapsed Time: " + str(t1 - t0)
-
+		if (i != iteration - 1): scurve = s_curve_rbr_fr(n_pulse = n_pulse, s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
 	if plot:
 		for r in row:
 			for p in pixel:
 				I2C.pixel_write("TrimDAC",r,p,data_array[(r-1)*120+p])
-		scurve_final = s_curve_rbr_fr(n_pulse = n_pulse, cal = cal, row = row , step = 1, start = 0, stop = stop, pulse_delay = 50, plot = 0, print_file =0)
-		plt.figure(1)
-		for r in row:
-			for p in pixel:
-				plt.plot(range(0,stop+1), scurve_init[(r-1)*120+p,:],'-')
-		plt.xlabel('Threshold DAC value')
-		plt.ylabel('Counter Value')
-		plt.figure(2)
-		for r in row:
-			for p in pixel:
-				plt.plot(range(0,stop+1), scurve_final[(r-1)*120+p,:],'-')
-		plt.xlabel('Threshold DAC value')
-		plt.ylabel('Counter Value')
-		plt.show()
-	return data_array
 
-def trimming_chip_cal(nominal_DAC = 110, nstep = 4, data_array = np.zeros(2040, dtype = np.int ), n_pulse = 300, cal = 20, iteration = 2, plot = 1, stop = 256, ratio = 3.68, print_file = 0, filename = "../cernbox/MPA_Results/Test"):
-	activate_I2C_chip()
+		scurve_final = s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
+		plt.figure(1)
+		th_array, noise_array = plot_extract_scurve(s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, stop = stop, plot = 1, extract = 1)
+		t1 = time.time()
+		print "END"
+		print "Trimming Elapsed Time: " + str(t1 - t0)
+		plt.show()
+		return data_array, th_array, noise_array, pix_out
+	return data_array, pix_out
+
+def trimming_chip(s_type = "THR", ref_val = 10, nominal_DAC = 110, nstep = 4, data_array = np.zeros(2040, dtype = np.int ), n_pulse = 300, iteration = 2, extract = 1, plot = 1, stop = 256, ratio = 3.68, print_file = 0, filename = "../cernbox/MPA_Results/Test"):
+	t0 = time.time()
+	activate_I2C_chip(verbose = 0)
+	pix_out = [["Row", "Pixel", "DAC"]]
 	for i in range(1,nstep+1):
 		I2C.pixel_write("TrimDAC",0,0,0)
 		row = range(i, 17, nstep)
 		print "Doing Rows: ", row
-		data_array = trimming_cal(n_pulse = n_pulse, cal = cal, iteration = iteration, nominal_DAC = nominal_DAC, data_array = data_array, plot = 0, stop = stop, ratio = ratio, row = row)
+		data_array, pix_out = trimming_step(pix_out = pix_out, n_pulse = n_pulse, s_type = s_type, ref_val = ref_val, iteration = iteration, nominal_DAC = nominal_DAC, data_array = data_array, plot = 0, stop = stop, ratio = ratio, row = row)
 	for r in range(1,17):
 		for p in range(1,120):
 			I2C.pixel_write("TrimDAC",r,p,data_array[(r-1)*120+p])
-
-	if plot:
-		scurve = s_curve_rbr_fr(n_pulse = 100, cal = cal, row = row , step = 1, start = 0, stop = stop, pulse_delay = 100, plot = 0, print_file =0)
-		plt.figure(1)
-		for r in range(0,17):
-			for p in range(0,120):
-				plt.plot(range(0,stop+1), scurve[(r-1)*120+p,:],'-')
-		plt.xlabel('Threshold DAC value')
-		plt.ylabel('Counter Value')
-		plt.show()
 	if print_file:
-		CSV.ArrayToCSV (data_array, str(filename) + "_noiseCal" + str(nominal_DAC) + ".csv")
-	return data_array
+		CSV.ArrayToCSV (data_array, str(filename) + "_ScCal" + str(nominal_DAC) + ".csv")
+	if extract:
+		scurve = s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = range(1,17), step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
+		th_array, noise_array = plot_extract_scurve(s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, stop = stop, plot = plot, extract = 1)
+		print "Pixel not trimmerable: " ,np.size(pix_out)/3-1
+		t1 = time.time()
+		print "END"
+		print "Trimming Elapsed Time: " + str(t1 - t0)
+		plt.show()
+		return data_array, th_array, noise_array, pix_out
+
+	t1 = time.time()
+	print "END"
+	print "Trimming Elapsed Time: " + str(t1 - t0)
+	return data_array, pix_out
 
 def trimDAC_linearity_rbr(row, pixel = range(1,120), plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/TrimDAC"):
 	t0 = time.time()
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	data = np.zeros((2040, 32), dtype = np.int16 )
 	I2C.pixel_write("TrimDAC",0,0,31)
 	for i in range(0,32):
 		for r in row:
 			for p in pixel:
 				I2C.pixel_write("TrimDAC",r,p,i)
-		scurve = s_curve_rbr_fr(n_pulse = 300, cal = 0, row = row,  step = 1, start = 0, stop = 150, pulse_delay = 50, plot = 0, print_file =0)
+		scurve = s_curve_rbr_fr(n_pulse = 300, cal = 0, row = row,  step = 1, start = 0, stop = 150, pulse_delay = 200, plot = 0, extract = 0, print_file =0)
 		for r in row:
 			for p in pixel:
 				data[(r-1)*120+p,i] = np.argmax(scurve[(r-1)*120+p,:])
@@ -719,14 +683,14 @@ def trimDAC_linearity_rbr(row, pixel = range(1,120), plot = 1, print_file = 0, f
 
 def trimDAC_linearity_pbp(row, pixel, plot = 1,  print_file = 0, filename = "../cernbox/MPA_Results/TrimDAC"):
 	t0 = time.time()
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	data = np.zeros((2040, 32), dtype = np.int16 )
 	I2C.pixel_write("TrimDAC",0,0,31)
 	for i in range(0,32):
 		for r in row:
 			for p in pixel:
 				I2C.pixel_write("TrimDAC",r,p,i)
-		scurve = s_curve_pbp_fr(n_pulse = 300, cal = 0, row = row, pixel = pixel, step = 1, start = 0, stop = 150, pulse_delay = 50, plot = 0, print_file =0)
+		scurve = s_curve_pbp_fr(n_pulse = 300, cal = 0, row = row, pixel = pixel, step = 1, start = 0, stop = 150, pulse_delay = 200, plot = 0, print_file =0)
 		for r in row:
 			for p in pixel:
 				data[(r-1)*120+p,i] = np.argmax(scurve[(r-1)*120+p,:] )
@@ -808,7 +772,7 @@ def char_DLL(row, pixel, delay_reset, curr = range(0,32), plot = 1, print_file =
 	return latency
 
 def shaper_rise(row, pixel, delay_reset, BX, th = range(90,170,10), cal = 50, iteration = 10, plot = 1, print_file = 1, filename = "../cernbox/MPA_Results/shaper_rise", sampling = "edge"):
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	activate_pp()
 	activate_sync()
 	disable_pixel(0,0)
@@ -882,7 +846,7 @@ def shaper_rise(row, pixel, delay_reset, BX, th = range(90,170,10), cal = 50, it
 	return latency_r, latency_f, data_array
 
 def shaper_fall(row, pixel, delay_reset, BX, th = range(160,90,-10), cal = 50, iteration = 10, plot = 1, print_file = 1, filename = "../cernbox/MPA_Results/shaper_fall", sampling = "edge"):
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	activate_pp()
 	activate_sync()
 	disable_pixel(0,0)
@@ -942,7 +906,7 @@ def shaper_fall(row, pixel, delay_reset, BX, th = range(160,90,-10), cal = 50, i
 	return latency, data_array
 
 def timewalk(row, pixel, delay_reset, BX, cal = range(15,255,10), th = 100, iteration = 10, plot = 1, print_file = 1, filename = "../cernbox/MPA_Results/timewalk"):
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	activate_pp()
 	activate_sync()
 	disable_pixel(0,0)
