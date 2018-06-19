@@ -86,14 +86,30 @@ def calibrate_bias(point, block, DAC_val, exp_val, inst, gnd_corr):
 		print "Calibration bias point ", point, "of test point", block, "--> Failed (", new_val, "V for ", DAC_new_val, " DAC)"
 	return DAC_new_val
 
+#def measure_gnd():
+#	inst = multimeter.init_keithley(3)
+#	disable_test()
+#	data = np.zeros((7, ), dtype=np.float)
+#	for block in range(0,7):
+#		test = "TEST" + str(block)
+#		I2C.peri_write('TESTMUX',0b00000001 << block)
+#		I2C.peri_write(test, 0b10000000)
+#		data[block] = multimeter.measure(inst)
+#	disable_test()
+#	print data
+#	return np.mean(data)
+
 def measure_gnd():
 	inst = multimeter.init_keithley(3)
+	activate_I2C_chip()
+	sleep(1)
 	disable_test()
 	data = np.zeros((7, ), dtype=np.float)
 	for block in range(0,7):
 		test = "TEST" + str(block)
 		I2C.peri_write('TESTMUX',0b00000001 << block)
 		I2C.peri_write(test, 0b10000000)
+		sleep(1)
 		data[block] = multimeter.measure(inst)
 	disable_test()
 	print data

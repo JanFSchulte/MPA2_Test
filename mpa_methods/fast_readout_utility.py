@@ -60,11 +60,17 @@ def digital_pixel_test(row = range(1,17), pixel = range(1,121), print_log = 1, f
 	if print_log:
 		f = open(filename, 'w')
 		f.write("Starting Test:\n")
+	sleep(0.1)	
 	activate_I2C_chip()
+	sleep(0.1)
 	activate_sync()
+	sleep(0.1)
 	activate_pp()
+	sleep(0.1)
 	I2C.pixel_write('DigPattern', 0, 0,  0b10000000)
+	sleep(0.1)
 	I2C.peri_write('RetimePix', 1)
+	sleep(0.1)
 	for r in row:
 		for p in pixel:
 			disable_pixel(0,0)

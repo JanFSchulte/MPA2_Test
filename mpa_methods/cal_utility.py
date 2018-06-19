@@ -198,7 +198,6 @@ def ReadoutCounters(raw_mode_en = 0):
 	fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)
 	t0 = time.time()
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
-	sleep(0.1)
 	#print "---> Sending Start and Waiting for Data"
 	#StartCountersRead()
 	start_counters_read()
@@ -411,7 +410,7 @@ def s_curve_rbr_fr(n_pulse = 1000, cal = 50, row = range(1,17), step = 1, start 
 		fail, temp = ReadoutCounters()
 		tC = time.time()
 		#print "Elapsed Time: " + str(tC - tB) + " " + str(tB - tA)
-		sleep(0.005)
+		#sleep(0.005)
 		if fail:
 			print "FailedPoint, repeat!"
 		else:
