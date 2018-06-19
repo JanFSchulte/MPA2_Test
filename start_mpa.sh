@@ -1,7 +1,5 @@
 #!/usr/bin/bash
 
-# 08:00:30:00:22:58
-
 if ! ifconfig | grep 'enp0s25:1'; then
 	sudo /usr/sbin/rarpd -a
 	sudo ifconfig enp0s25:1 192.168.1.82

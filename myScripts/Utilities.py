@@ -16,7 +16,12 @@ from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
+from datetime import datetime
 
+
+class curstate():
+	def __init__(self, **kwds):
+		self.__dict__.update(kwds)
 
 class Utilities:
 
@@ -24,12 +29,16 @@ class Utilities:
 		p = []
 
 	class cl_clustdispl(float):
-	    def __repr__(self):
-	        return "{:6.1f}".format(self)
+		def __repr__(self):
+			return "{:6.1f}".format(self)
+
+	def reverse_bit_order(self, n, width = 32):
+		b = '{:0{width}b}'.format(n, width=width)
+		r = int(b[::-1], 2)
+		return r
 
 	def ShowPercent(self, val , max = 100, message = ""):
 		i = int( (float(val)/max) * 100.0) - 1
-		#row = ""*i + message
 		row = "\t" + message
 		sys.stdout.write("%s\r%d%%" %(row, i + 1))
 		sys.stdout.flush()
@@ -103,6 +112,9 @@ class Utilities:
 		if(pr == 'print'):
 			print '->  \tEnabled I2C master for chips control'
 
+	def date_time(self):
+		st = datetime.now().strftime("%Y-%m-%d_%H:%M")
+		return st
 
 def print_method(name):
 	lines = inspect.getsourcelines(name)
@@ -110,19 +122,24 @@ def print_method(name):
 
 utils = Utilities()
 
+
 def f_errorf(x, *p):
-    a, mu, sigma = p
-#    print x
-    return 0.5*a*(1.0+erf((x-mu)/sigma))
+	a, mu, sigma = p
+	#    print x
+	return 0.5*a*(1.0+erf((x-mu)/sigma))
 
 def f_line(x, *p):
-    g, offset = p
-    return  np.array(x) *g + offset
+	g, offset = p
+	return  np.array(x) *g + offset
 
 def f_gauss(x, *p):
-    A, mu, sigma = p
-    return A*np.exp(-(x-mu)**2/(2.*sigma**2))
+	A, mu, sigma = p
+	return A*np.exp(-(x-mu)**2/(2.*sigma**2))
+
+def f_gauss1(x, A, mu, sigma):
+	'''1-d gaussian: gaussian(x, A, mu, sigma)'''
+	return A * np.exp(-(x-mu)**2 / (2.*sigma**2))
 
 def f_errorfc(x, *p):
-    a, mu, sigma = p
-    return a*0.5*erfc((x-mu)/sigma)
+	a, mu, sigma = p
+	return a*0.5*erfc((x-mu)/(sigma*np.sqrt(2)))

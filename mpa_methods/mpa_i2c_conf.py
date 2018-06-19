@@ -106,7 +106,7 @@ class mpa_i2c_conf:
 			rep  = read_I2C('MPA', adr, timeout)
 			if rep == None:
 				sleep(1)
-				activate_I2C_chip()
+				activate_I2C_chip(verbose = 0)
 				sleep(1)
 				rep  = read_I2C('MPA', adr, timeout)
 
@@ -114,7 +114,7 @@ class mpa_i2c_conf:
 
 	def peri_test(self):
 		t0 = time.time()
-		activate_I2C_chip()
+		activate_I2C_chip(verbose = 0)
 		read_reg = ['SEUcntPeri', 'ErrorL1', 'OFcnt', 'EfuseValue0', 'EfuseValue1','EfuseValue2','EfuseValue3', 'test']
 		cnt = 0
 		for reg in self.mpa_peri_reg_map.keys():
@@ -139,7 +139,7 @@ class mpa_i2c_conf:
 
 	def row_test(self):
 		t0 = time.time()
-		activate_I2C_chip()
+		activate_I2C_chip(verbose = 0)
 		read_reg = ['SEUcntRow', 'test']
 		cnt = 0
 		for row in range(1,17):
@@ -168,7 +168,7 @@ class mpa_i2c_conf:
 
 	def pixel_test(self):
 		t0 = time.time()
-		activate_I2C_chip()
+		activate_I2C_chip(verbose = 0)
 		read_reg = ['ReadCounter_LSB', 'ReadCounter_MSB', 'test']
 		cnt = 0
 		for row in range(1,17):

@@ -35,3 +35,24 @@ def alignment_slvs(align_word = 128, step = 10):
 		print "All stubs line aligned!"
 	t1 = time.time()
 	print "Elapsed Time: " + str(t1 - t0)
+
+
+## Test method. Problem solved in Firmware
+def check_clear_counters(change = 1, points = 168, iterations = 10, duration = 8):
+	count = 0
+	for i in range(0,points):
+		for j in range(0,iterations):
+			hit_map(10, 250, 200, [1], [7])
+			sleep(0.001)
+			value = read_pixel_counter(1,7)
+			if (value != 10):
+				print str(i) + " " + str(j) + " " + str(value)
+				count += 1
+			clear_counters(duration)
+			sleep(0.001)
+			value = read_pixel_counter(1,7)
+			if (value != 0):
+				print str(i) + " " + str(j) + " " + str(value)
+				count += 1
+		if change: fc7.write("ctrl_phy_fast_cmd_phase",1)
+	return count

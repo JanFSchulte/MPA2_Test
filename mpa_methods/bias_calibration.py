@@ -64,7 +64,7 @@ def measure_DAC_chip(chip = "Test", print_file = 1, filename = "../cernbox/MPA_R
 	for i in range(0,7):
 		if (i < 5): bit = 5
 		else: 		bit = 8
-		measure_DAC_testblocks(i, bit, plot = 0,print_file = 1, filename = filename + "_" + chip);
+	d10c-firmware-testSSAin.bin	measure_DAC_testblocks(i, bit, plot = 0,print_file = 1, filename = filename + "_" + chip);
 
 def calibrate_bias(point, block, DAC_val, exp_val, inst, gnd_corr):
 	nameDAC = ["A", "B", "C", "D", "E", "ThDAC", "CalDAC"]

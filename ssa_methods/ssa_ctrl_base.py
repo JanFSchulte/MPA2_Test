@@ -19,6 +19,8 @@ class ssa_ctrl_base:
 		self.I2C = I2C;
 		self.fc7 = FC7;
 		self.pwr = pwr
+		self.dll_chargepump = 0b00;
+		self.bias_dl_enable = False
 
 
 	def resync(self):
@@ -27,10 +29,46 @@ class ssa_ctrl_base:
 		sleep(0.001)
 
 
-	def reset(self):
-		rp = self.pwr.reset()
+	def reset(self, display=True):
+		rp = self.pwr.reset(display=display)
 		self.set_t1_sampling_edge("negative")
 		return rp
+
+	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
+		registers = []
+		for reg in self.ssa_peri_reg_map:
+			tmp = [-1, reg, self.I2C.peri_read(reg)]
+			registers.append(tmp)
+		for strip in range(1,121):
+			for reg in self.ssa_strip_reg_map:
+				tmp = [strip, reg, self.I2C.strip_read(reg, strip)]
+				registers.append(tmp)
+		print "->  \tConfiguration Saved on file:   " + str(file)
+		if display:
+			for i in registers:
+				print i
+		CSV.ArrayToCSV(registers, file)
+
+	def load_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
+		registers = CSV.CsvToArray(file)[:,1:4]
+		for tmp in registers:
+			if(tmp[0] == -1):
+				if display: print 'writing'
+				if (not 'Fuse' in tmp[1]):
+					self.I2C.peri_write(tmp[1], tmp[2])
+					r = self.I2C.peri_read(tmp[1])
+					if(r != tmp[2]):
+						print 'X>  \t Configuration ERROR Periphery  ' + str(tmp[1]) + '  ' + str(tmp[2]) + '  ' + str(r)
+			elif(tmp[0]>=1 and tmp[0]<=120):
+				if display: print 'writing'
+				if ((not 'ReadCounter' in tmp[1]) and ((not 'Fuse' in tmp[1]))):
+					self.I2C.strip_write(tmp[1], tmp[0], tmp[2])
+					r = self.I2C.strip_read(tmp[1], tmp[0])
+					if(r != tmp[2]):
+						print 'X>  \t Configuration ERROR Strip ' + str(tmp[0])
+			if display:
+				print [tmp[0], tmp[1], tmp[2], r]
+		print "->  \tConfiguration Loaded from file"
 
 
 	def set_output_mux(self, testline = 'highimpedence'):
@@ -42,7 +80,7 @@ class ssa_ctrl_base:
 		r = ((self.I2C.peri_read('Bias_TEST_LSB') & 0xff))
 		r = ((self.I2C.peri_read('Bias_TEST_MSB') & 0xff) << 8) | r
 		if(r != ctrl):
-			print "Error. Failed to set the trimming"
+			print "Error. Failed to set the MUX"
 			return False
 		else:
 			return True
@@ -74,11 +112,19 @@ class ssa_ctrl_base:
 
 
 	def __do_phase_tuning(self):
+		cnt = 0; done = True
+		#print self.fc7.read("stat_phy_phase_tuning_done")
 		self.fc7.write("ctrl_phy_phase_tune_again", 1)
+		#print self.fc7.read("stat_phy_phase_tuning_done")
 		send_test(15)
-		while(self.fc7.read("stat_phy_phase_tuning_done") == 0):
-			sleep(0.5)
+		#print self.fc7.read("stat_phy_phase_tuning_done")
+		while(self.fc7.read("stat_phy_phase_tuning_done") == 0 and cnt < 5):
+			sleep(0.1)
 			print "Waiting for the phase tuning"
+			cnt += 1
+		if cnt>4:
+			done = False
+		return  done
 
 
 	def phase_tuning(self):
@@ -87,10 +133,11 @@ class ssa_ctrl_base:
 		time.sleep(0.01)
 		self.set_lateral_lines_alignament()
 		time.sleep(0.01)
-		self.__do_phase_tuning()
+		rt = self.__do_phase_tuning()
 		self.I2C.peri_write('OutPattern7/FIFOconfig', 7)
 		self.reset_pattern_injection()
 		self.activate_readout_normal()
+		return rt
 
 
 	def set_t1_sampling_edge(self, edge):
@@ -113,14 +160,17 @@ class ssa_ctrl_base:
 	def activate_readout_async(self, ssa_first_counter_delay = 8, correction = 0):
 		self.I2C.peri_write('ReadoutMode',0b01)
 		# write to the I2C
-		self.I2C.peri_write("AsyncRead_StartDel_MSB", 0)
-		self.I2C.peri_write("AsyncRead_StartDel_LSB", ssa_first_counter_delay)
+		self.I2C.peri_write("AsyncRead_StartDel_MSB", ((ssa_first_counter_delay >> 8) & 0x01))
+		self.I2C.peri_write("AsyncRead_StartDel_LSB", (ssa_first_counter_delay & 0xff))
 		# check the value
-		if (self.I2C.peri_read("AsyncRead_StartDel_LSB") != ssa_first_counter_delay):
+		if (self.I2C.peri_read("AsyncRead_StartDel_LSB") != ssa_first_counter_delay & 0xff):
 			print "Error! I2C did not work properly"
-			exit(1)
+			error(1)
 		# ssa set delay of the counters
-		self.fc7.write("cnfg_phy_slvs_ssa_first_counter_del", ssa_first_counter_delay+24+correction)
+		fwdel = ssa_first_counter_delay + 24 + correction
+		if(fwdel >= 255):
+			print '->  \tThe counters delay value selected is not supposrted by the firmware [> 255]'
+		self.fc7.write("cnfg_phy_slvs_ssa_first_counter_del", fwdel & 0xff)
 
 
 	def activate_readout_shift(self):
@@ -255,3 +305,67 @@ class ssa_ctrl_base:
 	def set_lateral_data(self, left, right):
 		self.fc7.write("cnfg_phy_SSA_gen_right_lateral_data_format", right)
 		self.fc7.write("cnfg_phy_SSA_gen_left_lateral_data_format", left)
+
+	def read_fuses(self, pulse = True, display = True):
+		if(pulse):
+			self.I2C.peri_write('Fuse_Mode', 0b00001111)
+			self.I2C.peri_write('Fuse_Mode', 0b00000000)
+		r0 = self.I2C.peri_read('Fuse_Value_b0')
+		r1 = self.I2C.peri_read('Fuse_Value_b1')
+		r2 = self.I2C.peri_read('Fuse_Value_b2')
+		r3 = self.I2C.peri_read('Fuse_Value_b3')
+		if display:
+			print( "{0:02x}-{1:02x}-{2:02x}-{3:02x}".format(r3, r2, r1, r0) )
+		else:
+			r = (r3<<24) | (r2<<16) | (r1<<8) | (r0<<0)
+			return r
+
+	def write_fuses(self, val = 0, pulse = True, display = False, confirm = False):
+		d0 = (val >>  0) & 0xFF
+		d1 = (val >>  8) & 0xFF
+		d2 = (val >> 16) & 0xFF
+		d3 = (val >> 24) & 0xFF
+		self.I2C.peri_write('Fuse_Prog_b0', d0)
+		self.I2C.peri_write('Fuse_Prog_b1', d1)
+		self.I2C.peri_write('Fuse_Prog_b2', d2)
+		self.I2C.peri_write('Fuse_Prog_b3', d3)
+		r0 = self.I2C.peri_read('Fuse_Prog_b0')
+		r1 = self.I2C.peri_read('Fuse_Prog_b1')
+		r2 = self.I2C.peri_read('Fuse_Prog_b2')
+		r3 = self.I2C.peri_read('Fuse_Prog_b3')
+		if (((r3<<24) | (r2<<16) | (r1<<8) | (r0<<0) ) != val):
+			print("\n->  \tError in setting the e-fuses write buffer")
+			return -1
+		if(pulse):
+			if confirm:  rp = 'Y'
+			else:  rp = raw_input("\n->  \tAre you sure you want to write the e-fuses? [Y|n] : ")
+			if (rp == 'Y'):
+				time.sleep(0.1); self.I2C.peri_write('Fuse_Mode', 0b11110000)
+				time.sleep(0.1); self.fc7.send_test(15)
+				time.sleep(0.1); self.I2C.peri_write('Fuse_Mode', 0b00000000)
+		r = self.read_fuses(pulse = True, display = display)
+		if(r != val):
+			print('->  \tE-Fuses write error: ')
+			print('    \t    Written:...{0:032b}'.format(val))
+			print('    \t    Read:......{0:032b}'.format(r))
+			return False
+		else:
+			return True
+
+
+
+
+
+
+
+
+
+# ssa_peri_reg_map['Fuse_Mode']              = 43
+# ssa_peri_reg_map['Fuse_Prog_b0']           = 44
+# ssa_peri_reg_map['Fuse_Prog_b1']           = 45
+# ssa_peri_reg_map['Fuse_Prog_b2']           = 46
+# ssa_peri_reg_map['Fuse_Prog_b3']           = 47
+# ssa_peri_reg_map['Fuse_Value_b0']          = 48
+# ssa_peri_reg_map['Fuse_Value_b1']          = 49
+# ssa_peri_reg_map['Fuse_Value_b2']          = 50
+# ssa_peri_reg_map['Fuse_Value_b3']          = 51

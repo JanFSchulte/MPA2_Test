@@ -11,7 +11,7 @@ import numpy as np
 import time
 import sys
 import matplotlib.pyplot as plt
-from mpa_methods.bias_calibration import *
+#from mpa_methods.bias_calibration import *
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from scipy.special import erfc
@@ -45,7 +45,7 @@ def power_occupancy(th = range(77,100), plot = 1, print_file =1, filename = "../
 	nth = int(th.shape[0])
 	data_array = np.zeros((nth, 2), dtype = np.float16 )
 	for i in range(0, nth):
-		activate_I2C_chip()
+		activate_I2C_chip(verbose = 0)
 		set_threshold(th[i])
 		send_test()
 		nst, pos, bend, Z = read_stubs()
@@ -93,7 +93,7 @@ def power_memory(row = range(1,17), plot = 1, print_file =1, filename = "../cern
 	row = np.array(row)
 	nrow = int(row.shape[0])
 	data_array = np.zeros((nrow+1, ), dtype = np.float16 )
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	I2C.row_write('MemGatEn', 0 , 0b1)
 	sleep(5)
 	SetSlaveMap()
@@ -104,7 +104,7 @@ def power_memory(row = range(1,17), plot = 1, print_file =1, filename = "../cern
 	print ret
 	data_array[0] = (Vcshunt * ret)/Rshunt
 	for i in row:
-		activate_I2C_chip()
+		activate_I2C_chip(verbose = 0)
 		I2C.row_write('MemGatEn', i , 0b0)
 		sleep(5)
 		SetSlaveMap()
@@ -124,7 +124,7 @@ def power_memory(row = range(1,17), plot = 1, print_file =1, filename = "../cern
 		plt.ylabel('Power consumption [mW]')
 		plt.show()
 
-def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
+def mpa_reset():
 	read = 1
 	write = 0
 	cbc3 = 15
@@ -147,47 +147,93 @@ def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
 	#Vcshunt = 5.0/4000
 	Vcshunt = 0.00250
 	Rshunt = 0.1
+	SetSlaveMap(verbose = 0)
+	print "MPA reset"
+	val = (mpaid << 5) + (ssaid << 1)
+	val2 = (mpaid << 5) + (ssaid << 1) + 16 # reset bit for MPA
+	Configure_MPA_SSA_I2C_Master(1, SLOW)
+	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02, verbose = 0)  # route to 2nd PCF8574
+	Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val, verbose = 0)  # drop reset bit
+	Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2, verbose = 0)  # set reset bit
 
-	SetSlaveMap()
-# mpavddwrite():
+def set_power(address, V):
+	read = 1
+	write = 0
+	FAST = 4
+	SLOW = 2
+	mpaid = 0 # default MPa address (0-7)
+	ssaid = 0 # default SSa address (0-7)
+	i2cmux = 0
+	pcf8574 = 1 # MPA and SSA address and reset 8 bit port
+	powerenable = 2    # i2c ID 0x44
+	dac7678 = 4
+	ina226_5 = 5
+	ina226_6 = 6
+	ina226_7 = 7
+	ina226_8 = 8
+	ina226_9 = 9
+	ina226_10 = 10
+	ltc2487 = 3
+	Vc = 0.0003632813 # V/Dac step
+	#Vcshunt = 5.0/4000
+	Vcshunt = 0.00250
+	Rshunt = 0.1
+	SetSlaveMap(verbose = 0)
 	Vlimit = 1.32
-	if (VDDPST > Vlimit):
-		VDDPST = Vlimit
-	diffvoltage = 1.5 - VDDPST
+	if (V > Vlimit):
+		V = Vlimit
+	diffvoltage = 1.5 - V
 	setvoltage = int(round(diffvoltage / Vc))
 	if (setvoltage > 4095):
 		setvoltage = 4095
 	setvoltage = setvoltage << 4
-	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
-	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x34, setvoltage)  # tx to DAC C
-	sleep(2)
+	Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01, verbose = 0)  # to SCO on PCA9646
+	Send_MPA_SSA_I2C_Command(dac7678, 0, write, address, setvoltage, verbose = 0)  # tx to DAC C
+
 # mpavddDwrite():
-	Vlimit = 1.32
-	if (DVDD > Vlimit):
-		DVDD = Vlimit
-	diffvoltage = 1.5 - DVDD
-	setvoltage = int(round(diffvoltage / Vc))
-	if (setvoltage > 4095):
-		setvoltage = 4095
-	setvoltage = setvoltage << 4
-	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
-	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x30, setvoltage)  # tx to DAC C
+def set_DVDD(V = 1.0):
+	set_power( address = 0x30, V = V)
+	print "DVDD --> ", V	, " V"
+
+def set_AVDD(V = 1.25):
+	set_power( address = 0x32, V = V)
+	print "AVDD --> ", V	, " V"
+
+def set_VDDPST(V = 1.25):
+	set_power( address = 0x34, V = V)
+	print "VDDPST --> ", V	, " V"
+
+def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
+	read = 1
+	write = 0
+	FAST = 4
+	SLOW = 2
+	mpaid = 0 # default MPa address (0-7)
+	ssaid = 0 # default SSa address (0-7)
+	i2cmux = 0
+	pcf8574 = 1 # MPA and SSA address and reset 8 bit port
+	powerenable = 2    # i2c ID 0x44
+	dac7678 = 4
+	ina226_5 = 5
+	ina226_6 = 6
+	ina226_7 = 7
+	ina226_8 = 8
+	ina226_9 = 9
+	ina226_10 = 10
+	ltc2487 = 3
+	Vc = 0.0003632813 # V/Dac step
+	#Vcshunt = 5.0/4000
+	Vcshunt = 0.00250
+	Rshunt = 0.1
+
+	SetSlaveMap(verbose = 0)
+# mpavddwrite():
+	set_VDDPST(V = VDDPST)
 	sleep(2)
-#mpavddAwrite():
-	Vlimit = 1.32
-	if (AVDD > Vlimit):
-		AVDD = Vlimit
-	diffvoltage = 1.5 - AVDD
-	setvoltage = int(round(diffvoltage / Vc))
-	if (setvoltage > 4095):
-		setvoltage = 4095
-	setvoltage = setvoltage << 4
-	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
-	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x32, setvoltage)  # tx to DAC C
+	set_DVDD(V = DVDD)
 	sleep(2)
+	set_AVDD(V = AVDD)
 
 # bgtestwrite():
 	Vlimit = 0.5
@@ -197,14 +243,14 @@ def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
 	setvoltage = int(round(VBG * Vc2))
 	setvoltage = setvoltage << 4
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
-	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x36, setvoltage)  # tx to DAC C
+	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01, verbose = 0)  # to SCO on PCA9646
+	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x36, setvoltage, verbose = 0)  # tx to DAC C
 	sleep(2)
 # mpaenable():
 	val2 = (mpaid << 5) + 16 # reset bit for MPA
 	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
-	Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2)  # set reset bit
+	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02, verbose = 0)  # route to 2nd PCF8574
+	Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2, verbose = 0)  # set reset bit
 
 
 
@@ -237,26 +283,26 @@ def measure_current(print_file = 1, filename =  "../cernbox/MPA_Results/digital_
 
 	SetSlaveMap()
 # readVDDPST
-	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
+	Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
 	sleep(1)
-	ret=Send_MPA_SSA_I2C_Command(ina226_10, 0, read, 0x01, 0)  #read VR on shunt
+	ret=Send_MPA_SSA_I2C_Command(ina226_10, 0, read, 0x01, 0, verbose = 0)  #read VR on shunt
 	message = "VDDPST current: " + str((Vcshunt * ret)/Rshunt) + " mA"
 	print message
 	f.write(message)
 # readDVDD
-	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
+	Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
 	sleep(1)
-	ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0)  # read V on shunt
+	ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
 	message = "DVDD current: " + str((Vcshunt * ret)/Rshunt) + " mA"
 	print message
 	f.write(message)
 # readAVDD
-	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
+	Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
 	sleep(1)
-	ret=Send_MPA_SSA_I2C_Command(ina226_8, 0, read, 0x01, 0)  # read V on shunt
+	ret=Send_MPA_SSA_I2C_Command(ina226_8, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
 	message = "AVDD current: " + str((Vcshunt * ret)/Rshunt) + " mA"
 	print message
 	f.write(message)
@@ -286,60 +332,40 @@ def power_off():
 	Vcshunt = 0.00250
 	Rshunt = 0.1
 
-	SetSlaveMap()
+	SetSlaveMap(verbose = 0)
 
 # mpadisable():
 	val = (mpaid << 5) + (ssaid << 1) # reset bit for MPA
-	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
-	Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val)  # set reset bit
+	Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02, verbose = 0)  # route to 2nd PCF8574
+	Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val, verbose = 0)  # set reset bit
 	sleep(2)
 
 # bgtestwrite():
 	setvoltage = 0
 	setvoltage = setvoltage << 4
-	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
-	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x36, setvoltage)  # tx to DAC C
+	Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01, verbose = 0)  # to SCO on PCA9646
+	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x36, setvoltage, verbose = 0)  # tx to DAC C
 	sleep(2)
-
-#mpavddAwrite():
-	diffvoltage = 1.5
-	setvoltage = int(round(diffvoltage / Vc))
-	if (setvoltage > 4095):
-		setvoltage = 4095
-	setvoltage = setvoltage << 4
-	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
-	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x32, setvoltage)  # tx to DAC C
+	set_AVDD(V = 0)
 	sleep(2)
-
-# mpavddDwrite():
-	diffvoltage = 1.5
-	setvoltage = int(round(diffvoltage / Vc))
-	if (setvoltage > 4095):
-		setvoltage = 4095
-	setvoltage = setvoltage << 4
-	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
-	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x30, setvoltage)  # tx to DAC C
+	set_DVDD(V = 0)
 	sleep(2)
-
-# mpavddwrite():
-	diffvoltage = 1.5
-	setvoltage = int(round(diffvoltage / Vc))
-	if (setvoltage > 4095):
-		setvoltage = 4095
-	setvoltage = setvoltage << 4
-	Configure_MPA_SSA_I2C_Master(1, SLOW)
-	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
-	Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x34, setvoltage)  # tx to DAC C
+	set_VDDPST(V = 0)
 
 
 def set_nominal():
-	activate_I2C_chip()
+	set_VDDPST(V = 1.25)
+	sleep(1)
+	set_DVDD(V = 1.25)
+	sleep(1)
+	set_AVDD(V = 1.25)
+	mpa_reset()
+	activate_I2C_chip(verbose = 0)
 	activate_sync()
 	activate_ps()
 	I2C.row_write('MemGatEn',0,0)
 	I2C.peri_write('ConfSLVS', 0b00111111)
 	set_threshold(110)
+	set_calibration(0)
