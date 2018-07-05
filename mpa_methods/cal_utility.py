@@ -411,6 +411,8 @@ def s_curve_rbr_fr(n_pulse = 1000, s_type = "THR", ref_val = 50, row = range(1,1
 	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
 	count = 0
 	cur_val = start
+	count_err = 0
+	failed = 0
 	while (cur_val < stop): # Temoporary: need to add clear counter fast command
 		if s_type == "CAL":	set_calibration(cur_val)
 		elif s_type == "THR":	set_threshold(cur_val)
@@ -420,15 +422,23 @@ def s_curve_rbr_fr(n_pulse = 1000, s_type = "THR", ref_val = 50, row = range(1,1
 		sleep(0.005)
 		fail, temp = ReadoutCounters()
 		sleep(0.005)
-		if fail:
+
+		if fail and (count_err < 10): # LOOK HERE (exit condition)
 			print "FailedPoint, repeat!"
+			activate_I2C_chip(verbose = 0)
+			count_err += 1
 		else:
 			data_array [:, count]= temp
 			count += 1
 			cur_val += step
+		if (count_err == 10):
+			cur_val = stop
+			failed = 1
 		clear_counters(8)
 		clear_counters(8)
-
+	if failed == 1:
+		print ("S-Curve extraction failed")
+		return "exit at scurve"
 	if print_file:
 		CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + str(ref_val) + ".csv")
 	if extract:
@@ -579,7 +589,8 @@ def trimming_step(pix_out = [["Row", "Pixel", "DAC"]], n_pulse = 1000, s_type = 
 	for r in row:
 		for p in pixel:
 			I2C.pixel_write("TrimDAC",r,p,data_array[(r-1)*120+p])
-	scurve_init = s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
+	try: scurve_init = s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
+	except TypeError: return
 	scurve = scurve_init
 	for i in range(0,iteration):
 		print ""
@@ -610,13 +621,16 @@ def trimming_step(pix_out = [["Row", "Pixel", "DAC"]], n_pulse = 1000, s_type = 
 					data_array[(r-1)*120+p] = new_DAC
 				except RuntimeError or TypeError:
 					print "Fitting failed on pixel ", p , " row: " ,r
-		if (i != iteration - 1): scurve = s_curve_rbr_fr(n_pulse = n_pulse, s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
+		if (i != iteration - 1):
+			try: scurve = s_curve_rbr_fr(n_pulse = n_pulse, s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
+			except TypeError: return
 	if plot:
 		for r in row:
 			for p in pixel:
 				I2C.pixel_write("TrimDAC",r,p,data_array[(r-1)*120+p])
 
-		scurve_final = s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
+		try: scurve_final = s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
+		except TypeError: return
 		plt.figure(1)
 		th_array, noise_array = plot_extract_scurve(s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, stop = stop, plot = 1, extract = 1)
 		t1 = time.time()
@@ -634,7 +648,10 @@ def trimming_chip(s_type = "THR", ref_val = 10, nominal_DAC = 110, nstep = 4, da
 		I2C.pixel_write("TrimDAC",0,0,0)
 		row = range(i, 17, nstep)
 		print "Doing Rows: ", row
-		data_array, pix_out = trimming_step(pix_out = pix_out, n_pulse = n_pulse, s_type = s_type, ref_val = ref_val, iteration = iteration, nominal_DAC = nominal_DAC, data_array = data_array, plot = 0, stop = stop, ratio = ratio, row = row)
+		try:
+			data_array, pix_out = trimming_step(pix_out = pix_out, n_pulse = n_pulse, s_type = s_type, ref_val = ref_val, iteration = iteration, nominal_DAC = nominal_DAC, data_array = data_array, plot = 0, stop = stop, ratio = ratio, row = row)
+		except:
+			return
 	for r in range(1,17):
 		for p in range(1,120):
 			I2C.pixel_write("TrimDAC",r,p,data_array[(r-1)*120+p])
@@ -648,6 +665,12 @@ def trimming_chip(s_type = "THR", ref_val = 10, nominal_DAC = 110, nstep = 4, da
 		print "END"
 		print "Trimming Elapsed Time: " + str(t1 - t0)
 		plt.show()
+		if print_file:
+			CSV.ArrayToCSV (data_array, str(filename) + "_trimVal" + str(nominal_DAC) + ".csv")
+			CSV.ArrayToCSV (scurve, str(filename) + "_scurve" + str(nominal_DAC) + ".csv")
+			CSV.ArrayToCSV (th_array, str(filename) + "_th_array" + str(nominal_DAC) + ".csv")
+			CSV.ArrayToCSV (noise_array, str(filename) + "_noise_array" + str(nominal_DAC) + ".csv")
+			CSV.ArrayToCSV (pix_out, str(filename) + "_pix_out" + str(nominal_DAC) + ".csv")
 		return data_array, th_array, noise_array, pix_out
 
 	t1 = time.time()

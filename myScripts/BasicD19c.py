@@ -154,10 +154,8 @@ def read_L1(verbose = 1):
 				MIP[i] 				= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000000001)
 			except ValueError:
 				print "Parsing problem"
-			if verbose:
-				print "Position: " + str(pos_strip[i]) + " Width: " + str(width_strip[i]) + " MIP: " + str(MIP[i])
-		if verbose:
-			print "Pixel Cluster:"
+			if verbose: print "Position: " + str(pos_strip[i]) + " Width: " + str(width_strip[i]) + " MIP: " + str(MIP[i])
+		if verbose: print "Pixel Cluster:"
 		pos_pixel = np.zeros((pixel_counter,), dtype = np.int)
 		width_pixel = np.zeros((pixel_counter,), dtype = np.int)
 		Z = np.zeros((pixel_counter,), dtype = np.int)
@@ -169,11 +167,10 @@ def read_L1(verbose = 1):
 				Z[i] 			= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000000001111) + 1
 			except ValueError:
 				print "Parsing problem"
-			if verbose:
-				print "Position: " + str(pos_pixel[i]) + " Width: " + str(width_pixel[i]) + " Row Number: " + str(Z[i])
+			if verbose: print "Position: " + str(pos_pixel[i]) + " Width: " + str(width_pixel[i]) + " Row Number: " + str(Z[i])
 		return strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z
 	else:
-		print "Header not found!"
+		if verbose: print "Header not found!"
 
 
 
@@ -429,6 +426,8 @@ def read_I2C (chip, address, timeout = 0.001):
 
 def align_out():
 	fc7.write("ctrl_phy_phase_tune_again", 1)
-	while(fc7.read("stat_phy_phase_tuning_done") == 0):
+	count = 0
+	while((fc7.read("stat_phy_phase_tuning_done") == 0) and (count < 10)):
 		sleep(0.5)
+		count += 1
 		print "Waiting for the phase tuning"
