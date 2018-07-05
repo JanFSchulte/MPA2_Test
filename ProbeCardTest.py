@@ -1,6 +1,7 @@
 #
 import csv
 import numpy
+import time
 import sys
 from d19cScripts import *
 from myScripts import *
@@ -12,27 +13,23 @@ from mpa_methods.bias_calibration import *
 from mpa_methods.power_utility import *
 
 class ProbeMeasurement:
-    def __init__(self, tag):
+    def __init__(self, DIR):
         self.start = time.time()
-        self.tag = tag # UNIQUE ID
-        self.DIR = "../ProbeStationResults/"+self.tag
-        exists = False
-        version = 0
-        while not exists:
-            if not os.path.exists(self.DIR+"_v"+str(version)):
-                self.DIR = self.DIR+"_v"+str(version)
-                os.makedirs(self.DIR)
-                exists = True
-            version += 1
+        self.DIR = DIR
         self.LogFile = open(self.DIR+"/LogFile.txt", "w")
-        sys.stdout = open(self.DIR+"/VerboseLogFile.txt", "w")
-        self.colprint("Creating new chip measurement: "+self.tag)
+        self.GeneralLogFile = open(self.DIR+"/../LogFile.txt", "a")
+        self.colprint("Creating new chip measurement: "+self.DIR)
+        self.Flag = 1
+    def Run(self, chipinfo):
+        self.colprint(chipinfo)
+        self.colprint_general(chipinfo)
         try:
             PowerStatus = self.PowerOnCheck()
             self.colprint("Enabling MPA")
             MPAEnableCheck = self.MPAEnable()
             if self.CheckTotalPower(True):
                 self.colprint("Power is OK!")
+                self.colprint_general("Power is OK!")
             DP2 = self.GetDigiPower()
             self.AlignTests()
             DP3 = self.GetDigiPower()
@@ -48,59 +45,146 @@ class ProbeMeasurement:
                     break
                 else:
                     n += 1
+            if ShiftM == "Shift Test Failed!":
+                self.Flag = 0
             self.colprint(ShiftM)
             self.PixTests()
-            self.Curves()
+            self.Flag = self.Curves()
             self.colprint("DONE!")
             sleep(3)
-        except: self.colprint("WE MESSED UP!!!")
+        except:
+            self.colprint("WE MESSED UP!!!")
+            self.Flag = 0
         power_off()
         self.end = time.time()
         self.colprint("TOTAL TIME:")
         self.colprint(str((self.end - self.start)/60.))
+        self.colprint_general("TOTAL TIME:")
+        self.colprint_general(str((self.end - self.start)/60.))
+        return self.Flag
 
     def colprint(self, text):
     	sys.stdout.write("\033[1;31m")
     	print(str(text))
     	sys.stdout.write("\033[0;0m")
         self.LogFile.write(str(text)+"\n")
+
+    def colprint_general(self, text):
+        self.GeneralLogFile.write(str(text)+"\n")
+
     def Curves(self):
         self.colprint("Getting Curves")
-        activate_I2C_chip()
+        activate_I2C_chip(verbose = 0)
+        activate_sync()
+        reset()
+        align_out()
         trimDAC_amplitude(20)
-        self.colprint("Trimmed")
-        data_array = trimming_chip_noise(nominal_DAC = 70, nstep = 2, plot = 0, start = 0, stop = 150, ratio = 3.92)
-        self.colprint("Noised")
-        data_array = trimming_chip_cal(nominal_DAC = 100, cal = 15, nstep = 2, plot = 0, data_array = data_array, ratio = 3.92)
-        self.colprint("Caled")
-        download_trimming(self.DIR+"/Trimming")
-        s_curve_rbr_fr(n_pulse = 200, cal = 10, row = range(1,17), step = 1, start = 50, stop = 200, pulse_delay = 50, plot = 0, print_file =1, filename = self.DIR+"/Strobe10")
-        self.colprint("CAL10")
-        s_curve_rbr_fr(n_pulse = 200, cal = 20, row = range(1,17), step = 1, start = 50, stop = 200, pulse_delay = 50, plot = 0, print_file =1, filename = self.DIR+"/Strobe20")
-        self.colprint("CAL20")
-        s_curve_rbr_fr(n_pulse = 200, cal = 30, row = range(1,17), step = 1, start = 50, stop = 200, pulse_delay = 50, plot = 1, print_file =1, filename = self.DIR+"/Strobe30")
-        self.colprint("CAL30")
+        self.colprint("DAC measurement")
+        thDAC = measure_DAC_testblocks(point = 5, bit = 8, step = 32, plot = 0, print_file = 0, filename = self.DIR+"/Th_DAC")
+        calDAC = measure_DAC_testblocks(point = 6, bit = 8, step = 32, plot = 0, print_file = 0, filename = self.DIR+"/Cal_DAC")
+        thLSB = np.mean((thDAC[:,160] - thDAC[:,0])/160)*1000 #LSB Threshold DAC in mV
+        calLSB = np.mean((calDAC[:,160] - calDAC[:,0])/160)*0.035/1.768*1000 #LSB Calibration DAC in fC
+        self.colprint("S curve measurement")
+        th_H = int(round(130*thLSB/1.456))
+        th_L = int(round(100*thLSB/1.456))
+        cal_H = 30#int(round(30*0.035/calLSB))
+        cal_L = 15#int(round(15*0.035/calLSB))
+        sleep(1)
+        try:
+            sleep(1)
+            data_array,th_B, noise_B, pix_out = trimming_chip(s_type = "CAL", ref_val = th_L, nominal_DAC = cal_L, nstep = 1,      n_pulse = 200, iteration = 1, extract = 1, plot = 0, stop = 100, ratio = 2.36, print_file = 1, filename = self.DIR+ "/Trim15")
+        #scurve, th_B, noise_B = s_curve_rbr_fr(n_pulse = 200,  s_type = "CAL", ref_val = th_L, row = range(1,17), step = 1, start = 0, stop = 50, pulse_delay = 200, extract = 1, extract_val = cal_L, plot = 0, print_file =0)
+
+            gain = (th_H-th_L)/(np.mean(th_A[1:1920]) - np.mean(th_B[1:1920])) * thLSB / calLSB # Average
+            self.colprint("The average gain is: " + str(gain))
+            self.colprint("The thLSB is: " + str(thLSB))
+            self.colprint("The calLSB is: " + str(calLSB))
+            self.colprint_general("SCURVE EXTRACTION SUCCESSFUL")
+            return 1
+        except TypeError:
+            self.colprint("SCURVE EXTRACTION FAILED")
+            self.colprint_general("SCURVE EXTRACTION FAILED")
+            return 0
+        #self.colprint("Trimmed")
+        #data_array = trimming_chip_noise(nominal_DAC = 70, nstep = 2, plot = 0, start = 0, stop = 150, ratio = 3.92)
+        #self.colprint("Noised")
+        #data_array = trimming_chip_cal(nominal_DAC = 100, cal = 15, nstep = 2, plot = 0, data_array = data_array, ratio = 3.92)
+        #self.colprint("Caled")
+        #download_trimming(self.DIR+"/Trimming")
+        #s_curve_rbr_fr(n_pulse = 200, cal = 10, row = range(1,17), step = 1, start = 50, stop = 200, pulse_delay = 50, plot = 0, print_file =1, filename = self.DIR+"/Strobe10")
+        #self.colprint("CAL10")
+        #s_curve_rbr_fr(n_pulse = 200, cal = 20, row = range(1,17), step = 1, start = 50, stop = 200, pulse_delay = 50, plot = 0, print_file =1, filename = self.DIR+"/Strobe20")
+        #self.colprint("CAL20")
+        #s_curve_rbr_fr(n_pulse = 200, cal = 30, row = range(1,17), step = 1, start = 50, stop = 200, pulse_delay = 50, plot = 1, print_file =1, filename = self.DIR+"/Strobe30")
+        #self.colprint("CAL30")
+
     def PixTests(self):
         self.colprint("Doing Pixel Tests")
-        activate_I2C_chip()
-        digipix = []
+        activate_I2C_chip(verbose = 0)
+        #digipix = []
         anapix = []
-        digipix.append(digital_pixel_test(print_log=0))
+        #digipix.append(digital_pixel_test(print_log=0))
         anapix.append(analog_pixel_test(print_log=0))
-        if len(digipix[0]) > 0: digipix.append(digital_pixel_test(print_log=0))
-        if len(anapix[0]) > 0: digipix.append(analog_pixel_test(print_log=0))
-        BadPixD = self.GetActualBadPixels(digipix)
-        self.colprint(str(BadPixD) + " << Bad Pixels (Digi)")
+        #if len(digipix[0]) > 0: digipix.append(digital_pixel_test(print_log=0))
+        if len(anapix[0]) > 0:
+            reset()
+            align_out()
+            anapix.append(analog_pixel_test(print_log=0))
+        #BadPixD = self.GetActualBadPixels(digipix)
+        #self.colprint(str(BadPixD) + " << Bad Pixels (Digi)")
         BadPixA = self.GetActualBadPixels(anapix)
         self.colprint(str(BadPixA) + " << Bad Pixels (Ana)")
+        self.colprint_general(str(BadPixA) + " << Bad Pixels (Ana)")
         with open(self.DIR+'/BadPixelsA.csv', 'wb') as csvfile:
             CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
             for i in BadPixA: CVwriter.writerow(i)
-        with open(self.DIR+'/BadPixelsD.csv', 'wb') as csvfile:
+        #with open(self.DIR+'/BadPixelsD.csv', 'wb') as csvfile:
+        #    CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        #    for i in BadPixD: CVwriter.writerow(i)
+        strip_in = strip_in_scan(n_pulse = 5, filename = self.DIR + "/striptest", probe=1)
+        good_si = 0
+        for i in range(0,16):
+            if (np.mean(strip_in[i,:] > 0.9) == 1):
+                good_si = 1
+        if good_si:
+            self.colprint("Strip Input scan passed")
+            self.colprint_general("Strip Input scan passed")
+        else:
+            self.colprint("Strip Input scan failed")
+            self.colprint_general("Strip Input scan failed")
+        set_DVDD(1.2)
+        sleep(1)
+        reset()
+        sleep(1)
+        align_out()
+        mempix = []
+        mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_12", gate = 0, verbose = 0))
+        if len(mempix[0]) > 0: mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_12", gate = 0, verbose = 0))
+        BadPixM = self.GetActualBadPixels(mempix)
+        self.colprint(str(BadPixM) + " << Bad Pixels (Mem)")
+        with open(self.DIR+'/BadPixelsM_12.csv', 'wb') as csvfile:
             CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            for i in BadPixD: CVwriter.writerow(i)
-        strip_in_scan(n_pulse = 5, filename = self.DIR + "/striptest", probe=1)
-        mem_test(filename = self.DIR + "/memtest.csv")
+            for i in BadPixM: CVwriter.writerow(i)
+
+        if len(BadPixM) > 100 or len(BadPixA) > 100:
+            self.Flag = 0
+
+        set_DVDD(1.0)
+        sleep(1)
+        reset()
+        sleep(1)
+        align_out()
+        mempix = []
+        mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_10", gate = 0, verbose = 0))
+        if len(mempix[0]) > 0: mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_10", gate = 0, verbose = 0))
+        BadPixM = self.GetActualBadPixels(mempix)
+        self.colprint(str(BadPixM) + " << Bad Pixels (Mem)")
+        with open(self.DIR+'/BadPixelsM_10.csv', 'wb') as csvfile:
+            CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            for i in BadPixM: CVwriter.writerow(i)
+        set_DVDD(1.2)
+        sleep(1)
+        #mem_test(filename = self.DIR + "/memtest.csv")
     def GetActualBadPixels(self, BPA):
         print BPA
         badpix = BPA[0]
@@ -114,7 +198,7 @@ class ProbeMeasurement:
         return badpix
     def Shift(self):
         self.colprint("Doing Shift/Mem Tests")
-        activate_I2C_chip()
+        activate_I2C_chip(verbose = 0)
         I2C.peri_write("LFSR_data", 0b10101010)
         Check1 = I2C.peri_read("LFSR_data")
         self.colprint("Writing: "+str(bin(Check1)))
@@ -133,7 +217,7 @@ class ProbeMeasurement:
                 OK = False
         return OK
     def AlignTests(self):
-        activate_I2C_chip()
+        activate_I2C_chip(verbose = 0)
         activate_sync()
         self.colprint("Trying to Align...")
         align_out()
@@ -141,7 +225,10 @@ class ProbeMeasurement:
         self.ground = measure_gnd()
         self.colprint("GROUND IS " + str(self.ground))
         self.CV = calibrate_chip(self.ground, filename = self.DIR+"/Bias_DAC")
+        print self.CV
+        #self.bg = measure_bg()
         set_nominal()
+        self.colprint("nominal set after calibrate_chip")
         n = 0
         Sum = 0
         Min = 99999
@@ -207,69 +294,36 @@ class ProbeMeasurement:
     	Vcshunt = 0.00250
     	Rshunt = 0.1
 
-        SetSlaveMap()
+        SetSlaveMap(verbose = 0)
         if which == "PST":
             self.colprint("Turning on PST")
-            Vlimit = 1.32
-            if (VDDPST > Vlimit):
-                VDDPST = Vlimit
-            diffvoltage = 1.5 - VDDPST
-            setvoltage = int(round(diffvoltage / Vc))
-            if (setvoltage > 4095):
-                setvoltage = 4095
-            setvoltage = setvoltage << 4
-            Configure_MPA_SSA_I2C_Master(1, SLOW)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
-            Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x34, setvoltage)  # tx to DAC C
-            sleep(2)
+            set_VDDPST()
 
-            Configure_MPA_SSA_I2C_Master(1, SLOW)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
+            Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
             sleep(1)
-            ret=Send_MPA_SSA_I2C_Command(ina226_10, 0, read, 0x01, 0)  #read VR on shunt
+            ret=Send_MPA_SSA_I2C_Command(ina226_10, 0, read, 0x01, 0, verbose = 0)  #read VR on shunt
             VAL = (Vcshunt * ret)/Rshunt
             self.PVALS[0] = VAL
             if VAL > 30: return 0
         if which == "DIG":
-            Vlimit = 1.32
-            if (DVDD > Vlimit):
-                DVDD = Vlimit
-            diffvoltage = 1.5 - DVDD
-            setvoltage = int(round(diffvoltage / Vc))
-            if (setvoltage > 4095):
-                setvoltage = 4095
-            setvoltage = setvoltage << 4
-            Configure_MPA_SSA_I2C_Master(1, SLOW)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
-            Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x30, setvoltage)  # tx to DAC C
-            sleep(2)
+            set_DVDD(V = 1.0)
 
-            Configure_MPA_SSA_I2C_Master(1, SLOW)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
+            Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
             sleep(1)
-            ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0)  # read V on shunt
+            ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
             VAL = (Vcshunt * ret)/Rshunt
             self.PVALS[1] = VAL
             if VAL > 200:
                 return 0
         if which == "ANA":
-            Vlimit = 1.32
-            if (AVDD > Vlimit):
-                AVDD = Vlimit
-            diffvoltage = 1.5 - AVDD
-            setvoltage = int(round(diffvoltage / Vc))
-            if (setvoltage > 4095):
-                setvoltage = 4095
-            setvoltage = setvoltage << 4
-            Configure_MPA_SSA_I2C_Master(1, SLOW)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
-            Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x32, setvoltage)  # tx to DAC C
-            sleep(2)
+            set_AVDD()
 
-            Configure_MPA_SSA_I2C_Master(1, SLOW)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
+            Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
             sleep(1)
-            ret=Send_MPA_SSA_I2C_Command(ina226_8, 0, read, 0x01, 0)  # read V on shunt
+            ret=Send_MPA_SSA_I2C_Command(ina226_8, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
             VAL = (Vcshunt * ret)/Rshunt
             self.PVALS[2] = VAL
             if VAL > 100:
@@ -281,14 +335,14 @@ class ProbeMeasurement:
             Vc2 = 4095/1.5
             setvoltage = int(round(VBG * Vc2))
             setvoltage = setvoltage << 4
-            Configure_MPA_SSA_I2C_Master(1, SLOW)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01)  # to SCO on PCA9646
-            Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x36, setvoltage)  # tx to DAC C
+            Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01, verbose = 0)  # to SCO on PCA9646
+            Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x36, setvoltage, verbose = 0)  # tx to DAC C
             sleep(2)
             val2 = (mpaid << 5) + 16 # reset bit for MPA
-            Configure_MPA_SSA_I2C_Master(1, SLOW)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
-            Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2)  # set reset bit
+            Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02, verbose = 0)  # route to 2nd PCF8574
+            Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2, verbose = 0)  # set reset bit
             if not self.CheckTotalPower(True):
                 return 0
         return 1
@@ -315,12 +369,12 @@ class ProbeMeasurement:
         #Vcshunt = 5.0/4000
         Vcshunt = 0.00250
         Rshunt = 0.1
-        SetSlaveMap()
+        SetSlaveMap(verbose = 0)
         # readDVDD
-        Configure_MPA_SSA_I2C_Master(1, SLOW)
-        Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
+        Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+        Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
         sleep(1)
-        ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0)  # read V on shunt
+        ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
         VDIG = (Vcshunt * ret)/Rshunt
         return VDIG
     def CheckTotalPower(self, enabled):
@@ -346,28 +400,28 @@ class ProbeMeasurement:
         #Vcshunt = 5.0/4000
         Vcshunt = 0.00250
         Rshunt = 0.1
-        SetSlaveMap()
+        SetSlaveMap(verbose = 0)
         # readVDDPST
-        Configure_MPA_SSA_I2C_Master(1, SLOW)
-        Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
+        Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+        Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
         sleep(1)
-        ret=Send_MPA_SSA_I2C_Command(ina226_10, 0, read, 0x01, 0)  #read VR on shunt
+        ret=Send_MPA_SSA_I2C_Command(ina226_10, 0, read, 0x01, 0, verbose = 0)  #read VR on shunt
         VPST = (Vcshunt * ret)/Rshunt
         message = "VDDPST current: " + str(VPST) + " mA"
         self.colprint(message)
         # readDVDD
-        Configure_MPA_SSA_I2C_Master(1, SLOW)
-        Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
+        Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+        Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
         sleep(1)
-        ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0)  # read V on shunt
+        ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
         VDIG = (Vcshunt * ret)/Rshunt
         message = "DVDD current: " + str(VDIG) + " mA"
         self.colprint(message)
         # readAVDD
-        Configure_MPA_SSA_I2C_Master(1, SLOW)
-        Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
+        Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
+        Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
         sleep(1)
-        ret=Send_MPA_SSA_I2C_Command(ina226_8, 0, read, 0x01, 0)  # read V on shunt
+        ret=Send_MPA_SSA_I2C_Command(ina226_8, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
         VANA = (Vcshunt * ret)/Rshunt
         message = "AVDD current: " + str(VANA) + " mA"
         self.colprint(message)
@@ -376,4 +430,5 @@ class ProbeMeasurement:
         return 1
 
 if __name__ == '__main__': # TEST
-	TEST = ProbeMeasurement(sys.argv[1])
+    TEST = ProbeMeasurement(sys.argv[1])
+    TEST.Run("words")

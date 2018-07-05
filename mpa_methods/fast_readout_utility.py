@@ -304,7 +304,7 @@ def memory_test(latency, row, pixel, diff, dig_inj = 1, verbose = 1): # Diff = 2
 	sleep(0.001)
 	return read_L1(verbose)
 
-def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121), diff = 2, print_log = 1, filename =  "../cernbox/MPA_Results/digital_mem_test.log", dig_inj =1, gate = 0):
+def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121), diff = 2, print_log = 1, filename =  "../cernbox/MPA_Results/digital_mem_test.log", dig_inj =1, gate = 0, verbose = 1):
 	t0 = time.time()
 	bad_pix = []
 	print "Running Test:"
@@ -323,6 +323,7 @@ def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121
 	stuck = 0
 	i2c_issue = 0
 	error = 0
+	missing = 0
 	for d in delay:
 		Configure_TestPulse_MPA(delay_after_fast_reset = d + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 200, number_of_test_pulses = 1, enable_rst_L1 = 1)
 		for r in row:
@@ -341,21 +342,33 @@ def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121
 						bad_pix.append([p,r])
 						error += 1
 						error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(d) + " " + str(pixel_counter) + " " +  str(pos_pixel) + " " + str(Z) + "\n"
-						#print error_message
-						if print_log:
-							f.write(error_message)
+						if verbose: print error_message
+						if print_log: f.write(error_message)
 				except TypeError:
+					missing += 1
 					error_message = "Header not Found in Pixel: " + str(p) + " of Row: " + str(r) + "\n"
-					print error_message
-					if print_log:
-						f.write(error_message)
+					if verbose: print error_message
+					if print_log: f.write(error_message)
 	print "-------------------------------------"
 	print "-------------------------------------"
 	print " Number of error: ", error
 	print " Number of stucks: ", stuck
 	print " Number of I2C issues: ", i2c_issue
+	print " Number of missing: ", missing
 	if print_log:
-		f.write("Test Completed")
+		f.write("Test Completed:\n")
+		f.write("-------------------------------------\n")
+		f.write("-------------------------------------\n")
+		line = " Number of error: " + str(error) + "\n"
+		f.write(line)
+		line = " Number of stucks: " + str(stuck) + "\n"
+		f.write(line)
+		line = " Number of I2C issues: " + str(i2c_issue) + "\n"
+		f.write(line)
+		line = " Number of missing: " + str(missing) + "\n"
+		f.write(line)
+		f.write("-------------------------------------\n")
+		f.write("-------------------------------------\n")
 		f.close()
 	t1 = time.time()
 	print " Elapsed Time: " + str(t1 - t0)

@@ -4,7 +4,7 @@ t0 = time.time()
 power_on()
 sleep(1)
 mpa_reset()
-activate_I2C_chip(verbose = 0)
+activate_I2C_chip()
 align_out()
 gnd_val = measure_gnd() # Measure the analog ground level
 bias_val = calibrate_chip(gnd_val) # Calibrate the chip

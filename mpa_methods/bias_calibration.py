@@ -12,7 +12,7 @@ from myScripts.BasicMultimeter import *
 import Gpib
 
 def disable_test():
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	I2C.peri_write('TESTMUX',0b00000000)
 	I2C.peri_write('TEST0',0b00000000)
 	I2C.peri_write('TEST1',0b00000000)
@@ -60,11 +60,11 @@ def measure_DAC_testblocks(point, bit, step = 1, plot = 1,print_file = 0, filena
 	return data
 
 def measure_DAC_chip(chip = "Test", print_file = 1, filename = "../cernbox/MPA_Results/ChipDAC_"):
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	for i in range(0,7):
 		if (i < 5): bit = 5
 		else: 		bit = 8
-	d10c-firmware-testSSAin.bin	measure_DAC_testblocks(i, bit, plot = 0,print_file = 1, filename = filename + "_" + chip);
+		measure_DAC_testblocks(i, bit, plot = 0,print_file = 1, filename = filename + "_" + chip);
 
 def calibrate_bias(point, block, DAC_val, exp_val, inst, gnd_corr):
 	nameDAC = ["A", "B", "C", "D", "E", "ThDAC", "CalDAC"]
@@ -80,7 +80,7 @@ def calibrate_bias(point, block, DAC_val, exp_val, inst, gnd_corr):
 	DAC_new_val = DAC_val- int(round((act_val - exp_val - gnd_corr)/LSB))
 	I2C.peri_write(DAC, DAC_new_val)
 	new_val = multimeter.measure(inst)
-	if (new_val - gnd_corr < exp_val + exp_val*0.02 )&(new_val - gnd_corr > exp_val - exp_val*0.02):
+	if (new_val - gnd_corr < exp_val + exp_val*0.05 )&(new_val - gnd_corr > exp_val - exp_val*0.05):
 		print "Calibration bias point ", point, "of test point", block, "--> Done (", new_val, "V for ", DAC_new_val, " DAC)"
 	else:
 		print "Calibration bias point ", point, "of test point", block, "--> Failed (", new_val, "V for ", DAC_new_val, " DAC)"
@@ -101,7 +101,7 @@ def calibrate_bias(point, block, DAC_val, exp_val, inst, gnd_corr):
 
 def measure_gnd():
 	inst = multimeter.init_keithley(3)
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	sleep(1)
 	disable_test()
 	data = np.zeros((7, ), dtype=np.float)
@@ -116,7 +116,7 @@ def measure_gnd():
 	return np.mean(data)
 
 def calibrate_chip(gnd_corr, print_file = 1, filename = "test"):
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	inst = multimeter.init_keithley(3)
 	DAC_val = [15, 15, 15, 15, 15]
 	exp_val = [0.082, 0.082, 0.108, 0.082, 0.082]
@@ -126,12 +126,14 @@ def calibrate_chip(gnd_corr, print_file = 1, filename = "test"):
 		for block in range(0,7):
 			data[point, block] = calibrate_bias(point, block, DAC_val[point], exp_val[point], inst, gnd_corr)
 	disable_test()
+	print "Got all Calib B. Points"
 	if print_file:
 		CSV.ArrayToCSV (data, str(filename) + ".csv")
+	print "Saved!"
 	return data
 
 def trimDAC_amplitude(value):
-	activate_I2C_chip()
+	activate_I2C_chip(verbose = 0)
 	for block in range(0,7):
 		#curr = I2C.peri_read("C"+str(block))
 		#new_value = curr + value
