@@ -84,7 +84,8 @@ def calibrate_bias(point, block, DAC_val, exp_val, inst, gnd_corr):
 	I2C.peri_write(DAC, DAC_new_val)
 	new_val = multimeter.measure(inst)
 	if (new_val - gnd_corr < exp_val + exp_val*0.02 )&(new_val - gnd_corr > exp_val - exp_val*0.02):
-		i = 1	#print "Calibration bias point ", point, "of test point", block, "--> Done (", new_val, "V for ", DAC_new_val, " DAC)"
+		i = 1
+		print "Calibration bias point ", point, "of test point", block, "--> Done (", new_val, "V for ", DAC_new_val, " DAC)"
 	else:
 		print "Calibration bias point ", point, "of test point", block, "--> Failed (", new_val, "V for ", DAC_new_val, " DAC)"
 	return DAC_new_val

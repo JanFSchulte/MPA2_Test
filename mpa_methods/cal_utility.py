@@ -461,24 +461,27 @@ def s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", cal = 100, row = range(1,17),
 	sleep(1)
 	fc7.write("cnfg_fast_backpressure_enable", 0)
 	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
-	count_th = 0
-	th = start
-	while (th < stop): # Temoporary: need to add clear counter fast command
-		set_threshold(th)
-		utils.ShowPercent(count_th, (stop-start)/step, "")
+	count = 0
+	cur_val = start
+	while (cur_val < stop): # Temoporary: need to add clear counter fast command
+		if s_type == "CAL":	set_calibration(cur_val)
+		elif s_type == "THR":	set_threshold(cur_val)
+		utils.ShowPercent(count, (stop-start)/step, "")
 		for r in row:
 			for p in pixel:
-				send_pulses_fast(r, p, cal)
+				send_pulses_fast(n_pulse, r, p, cur_val)
 		sleep(0.005)
 		fail, temp = ReadoutCounters()
+		sleep(0.005)
 		if fail:
 			print "FailedPoint, repeat!"
 		else:
-			data_array [:, count_th]= temp
-			count_th += 1
-			th += step
+			data_array [:, count]= temp
+			count += 1
+			cur_val += step
 		clear_counters(8)
 		clear_counters(8)
+
 	t1 = time.time()
 	print "END"
 	print "Elapsed Time: " + str(t1 - t0)
