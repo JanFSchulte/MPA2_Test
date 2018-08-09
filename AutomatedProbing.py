@@ -13,7 +13,7 @@ class ChipMeasurement:
         self.start = time.time()
         self.tag = tag # UNIQUE ID
         #self.DIR = "../AutoProbeResults/"+self.tag # Commented by DC to run test in different folder
-        self.DIR = "../cernbox/AutoProbeResults/Wafer_11A3_NoB_Run1/"+self.tag
+        self.DIR = "../cernbox/AutoProbeResults/Wafer_N6T903-05C7_Digital/"+self.tag
         exists = False
         version = 0
         while not exists:
@@ -46,6 +46,7 @@ class AUTOPROBER:
         self.colprint(self.ProbeStation.read(100))
         time.sleep(0.25)
         self.ProbeStation.write("StepFirstDie")
+        #self.ProbeStation.write("StepNextDie 8 1")
         self.colprint("Stepped to first die: " + self.ProbeStation.read(100))
         time.sleep(0.25)
         self.ProbeStation.write("ReadChuckPosition")
@@ -68,14 +69,14 @@ class AUTOPROBER:
         print self.BadChips
         print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
         # set overtravel a little higher for second pass
-        self.ProbeStation.write("SetChuckHeight O V Y 115")
+        self.ProbeStation.write("SetChuckHeight O V Y 110")
         self.colprint("Increasing overtravel: " + self.ProbeStation.read(100))
         time.sleep(0.25)
         # go over bad chips
         for C in self.BadChips:
             ChipStatus = self.PROBESPECIFIC(C[0],C[1])
             print ChipStatus
-        self.ProbeStation.write("SetChuckHeight O V Y 110")
+        self.ProbeStation.write("SetChuckHeight O V Y 100")
         self.colprint("Resetting overtravel: " + self.ProbeStation.read(100))
         time.sleep(0.25)
     def NEWCHIPMSR(self, inf):
@@ -90,8 +91,8 @@ class AUTOPROBER:
         self.DieR = Dparse[2]
         self.DieC = Dparse[3]
         self.colprint("ON DIE #" + self.DieNumber)
-        self.ProbeStation.write("MoveChuck 0 -40 R Y") #Change position of probing respect first Run
-        self.ProbeStation.read(100)
+        #self.ProbeStation.write("MoveChuck 0 -40 R Y") #Change position of probing respect first Run
+        #self.ProbeStation.read(100)
         self.ProbeStation.write("MoveChuckContact")
         self.colprint("going into contact: " + self.ProbeStation.read(100))
         time.sleep(0.5)
@@ -132,5 +133,5 @@ class AUTOPROBER:
         return GoodNess
 
 if __name__ == '__main__': # TEST
-    AutoProbe = AUTOPROBER("ChipN_")
+    AutoProbe = AUTOPROBER("ChipN")
     AutoProbe.MSR_ALL(N=88)
