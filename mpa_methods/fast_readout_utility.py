@@ -324,8 +324,17 @@ def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121
 	i2c_issue = 0
 	error = 0
 	missing = 0
+
+
 	for d in delay:
 		Configure_TestPulse_MPA(delay_after_fast_reset = d + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 200, number_of_test_pulses = 1, enable_rst_L1 = 1)
+		sleep(1)
+		try:
+			strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = memory_test(latency = latency, row = 10, pixel = 5, diff = diff, dig_inj = dig_inj, verbose = 0)
+		except TypeError:
+			print "Header not Found! Changing sampling phase of T1"
+			I2C.peri_write('EdgeSelT1Raw', 0)
+		sleep(1)
 		for r in row:
 			for p in pixel:
 				try:
@@ -374,6 +383,7 @@ def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121
 	print " Elapsed Time: " + str(t1 - t0)
 	print "-------------------------------------"
 	print "-------------------------------------"
+	I2C.peri_write('EdgeSelT1Raw', 3)
 	return bad_pix
 
 def mem_test_REN (latency = 255, delay = [10], delay_pulse_cal = 200,  delay_pulse_next = 200, row = range(1,17), pixel = range(1,121), diff = 2, print_log = 1, filename =  "../cernbox/MPA_Results/digital_mem_test.log", gate = 0):
