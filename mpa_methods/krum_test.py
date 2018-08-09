@@ -45,8 +45,8 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
     mpa_reset()
     gnd = measure_gnd()
     calibrate_chip(gnd)
-    trimDAC_amplitude(20)
-    trimming_chip(s_type = "CAL", ref_val = 150, nominal_DAC = 45, nstep = 1,      n_pulse = 200, iteration = 1, extract = 1, plot = 0, stop = 100, ratio = 2.36, print_file = 0)
+    ratio = trimDAC_amplitude(20)
+    trimming_chip(s_type = "CAL", ref_val = 150, nominal_DAC = 45, nstep = 1, n_pulse = 200, iteration = 1, extract = 1, plot = 0, stop = 100, ratio = ratio, print_file = 0)
 # Reset Krummenacher and Pre Amp DAC values
     print "Resetting DAC"
     while block < 7:
@@ -163,10 +163,6 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         Q1 = calLSB * 15
         Q2 = calLSB * 30
         delta_Q = Q2 - Q1
-
-        #gain1 = (ref30k6 - ref15k6) / delta_Q
-        #gain2 = (ref30k24 - ref15k24) / delta_Q
-
         p = 0
         gain3 = 0
         gain4 = 0
