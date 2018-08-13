@@ -152,11 +152,7 @@ def plot_extract_scurve(row, pixel, s_type, scurve, n_pulse, nominal_DAC, start,
 	for r in row:
 		for p in pixel:
 			if plot:
-<<<<<<< HEAD
 				plt.plot(range(start,stop), scurve[(r-1)*120+p,0:(stop-start)],'-')
-=======
-				plt.plot(range(start,stop), scurve[(r-1)*120+p, 0:(stop-start)],'-')
->>>>>>> f210a6056fe0327a832d704bdbd1cb2a4a293fd3
 			# Noise and Spread study
 			if extract:
 				try:
@@ -165,12 +161,7 @@ def plot_extract_scurve(row, pixel, s_type, scurve, n_pulse, nominal_DAC, start,
 						par, cov = curve_fit(errorfc, range(start_DAC, (stop-start)), scurve[(r-1)*120+p,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
 					elif s_type == "CAL":
 						start_DAC = 0
-<<<<<<< HEAD
-						par, cov = curve_fit(errorf, range(start_DAC, (stop-start)), scurve[(r-1)*120+
-					p,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
-=======
 						par, cov = curve_fit(errorf, range(start_DAC, (stop-start)), scurve[(r-1)*120+p,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
->>>>>>> f210a6056fe0327a832d704bdbd1cb2a4a293fd3
 					th_array[(r-1)*120+p] = int(round(par[1]))
 					noise_array[(r-1)*120+p] = par[2]
 				except RuntimeError or TypeError:
@@ -212,12 +203,8 @@ def send_pulses(n_pulse):
 
 def send_pulses_fast(n_pulse, row, pixel, cal):
 	disable_pixel(0, 0)
-<<<<<<< HEAD
 	enable_pix_counter(row, pixel)
 	#enable_pix_disable_ancal(row, pixel)
-=======
-	enable_pix_disable_ancal(row, pixel)
->>>>>>> f210a6056fe0327a832d704bdbd1cb2a4a293fd3
 	sleep(0.0025)
 	try:
 		open_shutter(8)
@@ -429,7 +416,6 @@ def hit_map_plot(n_pulse = 1000, cal = 40, th = 100, row = range(1,17), pixel = 
 	repeat = 0
 	#while repeat < 15:
 	count_r = 0
-<<<<<<< HEAD
 	fcount_r = 0
 	disable_pixel(0,0)
 	clear_counters(8)
@@ -443,19 +429,6 @@ def hit_map_plot(n_pulse = 1000, cal = 40, th = 100, row = range(1,17), pixel = 
 	#disable_pixel(3,11)
 	#disable_pixel(10,76)
 	send_pulses_(n_pulse)
-=======
-	disable_pixel(0, 0)
-	clear_counters(8)
-	clear_counters(8)
-	for r in row:
-		enable_pix_disable_ancal(r, 0)
-	sleep(0.1)
-	activate_I2C_chip()
-	disable_pixel(2,16)
-	disable_pixel(3,11)
-	disable_pixel(10,76)
-	send_pulses(n_pulse)
->>>>>>> f210a6056fe0327a832d704bdbd1cb2a4a293fd3
 	count_r = 0
 	for r in row:
 		count_p = 0
@@ -464,11 +437,7 @@ def hit_map_plot(n_pulse = 1000, cal = 40, th = 100, row = range(1,17), pixel = 
 			data_array[count_r, count_p] =  data
 			count_p += 1
 		count_r += 1
-<<<<<<< HEAD
 	#data_array[9,75]=0
-=======
-	data_array[9,75] = 0
->>>>>>> f210a6056fe0327a832d704bdbd1cb2a4a293fd3
 	t1 = time.time()
 		#return data_array
 	#plt.imshow(data_array, cmap='hot', interpolation='nearest')
@@ -601,11 +570,7 @@ def s_curve_rbr_fr(n_pulse = 1000, s_type = "THR", ref_val = 50, row = range(1,1
 		if extract_val == 0:
 			if s_type == "THR":	extract_val = ref_val*1.66+70
 			elif s_type == "CAL":	extract_val = ref_val/1.66-40
-<<<<<<< HEAD
 		th_array, noise_array = plot_extract_scurve(row = row, pixel = range(1,120), s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, plot = plot, extract = extract)
-=======
-		th_array, noise_array = plot_extract_scurve(row = row, pixel = range(1,120), s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start,  stop = stop, plot = plot, extract = extract)
->>>>>>> f210a6056fe0327a832d704bdbd1cb2a4a293fd3
 		t1 = time.time()
 		print "END"
 		print "Elapsed Time: " + str(t1 - t0)
@@ -692,30 +657,18 @@ def s_curve_pbp_all(n_pulse = 1000, s_type = "CAL", ref_val = 100, row = range(1
 		utils.ShowPercent(count, (stop-start)/step, "")
 		#for r in row:
 		#	for p in pixel:
-<<<<<<< HEAD
 		if s_type == "CAL": send_pulses_fast_all(n_pulse, row, pixel, ref_val)
 		elif s_type == "THR": #send_pulses_fast_all(n_pulse, row, pixel, cur_val)
 			for r in row:
 				for p in pixel:
 					enable_pix_counter(r,p)
-=======
-		if s_type == "CAL":	send_pulses_fast_all(n_pulse, row, pixel, cur_val)
-		elif s_type == "THR":	#send_pulses_fast_all(n_pulse, row, pixel, ref_val)
-			for r in row:
-				for p in pixel:
-					enable_pix_disable_ancal(r, p)
->>>>>>> f210a6056fe0327a832d704bdbd1cb2a4a293fd3
+					#enable_pix_disable_ancal(r, p)
 			open_shutter()
 			sleep(0.01)
 			for i in range(0, n_pulse):
 				sleep(1)
 			sleep(0.001)
 			close_shutter()
-<<<<<<< HEAD
-=======
-		sleep(0.005)
-		fail, temp = ReadoutCounters()
->>>>>>> f210a6056fe0327a832d704bdbd1cb2a4a293fd3
 		sleep(0.005)
 		try:
 			fail, temp = ReadoutCounters()
@@ -737,16 +690,11 @@ def s_curve_pbp_all(n_pulse = 1000, s_type = "CAL", ref_val = 100, row = range(1
 	if print_file:
 		CSV.ArrayToCSV (data_array, str(filename) + "_cal_" + str(ref_val) + ".csv")
 	if plot:
-<<<<<<< HEAD
 		th_array, noise_array = plot_extract_scurve(row = row, pixel = pixel, s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, plot = 1, extract = 1)
-=======
-		for r in row:
-			for p in pixel:
-				plt.plot(range(start,stop), data_array[(r-1)*120+p, 0:(stop-start)],'-')
-		plt.show()
-	#if plot:
-	#	th_array, noise_array = plot_extract_scurve(row = row, pixel = pixel, s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, plot = 1, extract = 0)
->>>>>>> f210a6056fe0327a832d704bdbd1cb2a4a293fd3
+		#for r in row:
+		#	for p in pixel:
+		#		plt.plot(range(start,stop), data_array[(r-1)*120+p, 0:(stop-start)],'-')
+		#plt.show()
 		t1 = time.time()
 		print "END"
 		print "Elapsed Time: " + str(t1 - t0)
@@ -873,14 +821,9 @@ def noise_occupancy(row, pixel, th, time):
 		data[n] = read_pixel_counter(row, pixel)
 		n += 1
 		clear_counters(8)
-<<<<<<< HEAD
 	print data
 	ax = sns.heatmap(data, vmin = 0, xticklabels = 5, yticklabels = row)
 	plt.show()
-	return data
-=======
-	#print data
->>>>>>> f210a6056fe0327a832d704bdbd1cb2a4a293fd3
 	clear_counters(8)
 	return data
 
@@ -1038,11 +981,7 @@ def trimming_chip(s_type = "THR", ref_val = 10, nominal_DAC = 110, nstep = 4, da
 		CSV.ArrayToCSV (data_array, str(filename) + "_ScCal" + ".csv")
 	if extract:
 		scurve = s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = range(1,17), step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
-<<<<<<< HEAD
 		th_array, noise_array = plot_extract_scurve(row = range(1,17), pixel = range(1,120), s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, start = 0, stop = stop, plot = plot, extract = 1)
-=======
-		th_array, noise_array = plot_extract_scurve(row = range(1,17), pixel = range(1,120), s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, start = start, stop = stop, plot = plot, extract = 1)
->>>>>>> f210a6056fe0327a832d704bdbd1cb2a4a293fd3
 		print "Pixel not trimmerable: " ,np.size(pix_out)/3-1
 		t1 = time.time()
 		print "END"
