@@ -116,6 +116,18 @@ def measure_gnd():
 	print data
 	return np.mean(data)
 
+def measure_bg():
+	inst = multimeter.init_keithley(3)
+	activate_I2C_chip(verbose = 0)
+	sleep(1)
+	disable_test()
+	I2C.peri_write('TESTMUX',0b10000000)
+	sleep(1)
+	data = multimeter.measure(inst)
+	disable_test()
+	print data
+	return data
+
 def calibrate_chip(gnd_corr, print_file = 1, filename = "test"):
 	activate_I2C_chip(verbose = 0)
 	inst = multimeter.init_keithley(3)
