@@ -27,8 +27,8 @@ def RadTest(total_time = 100, rest_time = 30, filename = "Test/Run_"):
 
 
     def ontest(e):
-        print "Testing"
-        start_time = time.time()
+        print "Starting Test"
+        start_time = int(time.time())
         print "Time is", start_time
         DIR = str(filename) + str(start_time)
         os.makedirs(DIR)
