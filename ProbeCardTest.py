@@ -59,7 +59,7 @@ class ProbeMeasurement:
             if ShiftM == "Shift Test Failed!":
                 self.Flag = 0
             self.colprint(ShiftM)
-            #self.Flag = self.Curves()
+            self.Flag = self.Curves()
             mpa_reset()
             self.PixTests()
             self.colprint("DONE!")
@@ -89,8 +89,8 @@ class ProbeMeasurement:
         activate_I2C_chip(verbose = 0)
         trimDAC_amplitude(20)
         self.colprint("DAC measurement")
-        thDAC = measure_DAC_testblocks(point = 5, bit = 8, step = 31, plot = 0, print_file = 0, filename = self.DIR+"/Th_DAC")
-        calDAC = measure_DAC_testblocks(point = 6, bit = 8, step = 31, plot = 0, print_file = 0, filename = self.DIR+"/Cal_DAC")
+        thDAC = measure_DAC_testblocks(point = 5, bit = 8, step = 31, plot = 0, print_file = 1, filename = self.DIR+"/Th_DAC")
+        calDAC = measure_DAC_testblocks(point = 6, bit = 8, step = 31, plot = 0, print_file = 1, filename = self.DIR+"/Cal_DAC")
         disable_test()
         thLSB = np.mean((thDAC[:,160] - thDAC[:,0])/160)*1000 #LSB Threshold DAC in mV
         calLSB = np.mean((calDAC[:,160] - calDAC[:,0])/160)*0.035/1.768*1000 #LSB Calibration DAC in fC
@@ -251,21 +251,21 @@ class ProbeMeasurement:
         self.bg = measure_bg()
         self.BandGapFile = open(self.DIR+"/BandGap.txt", "a")
         self.BandGapFile.write(str(self.bg)+"\n")
-        ##set_nominal()
-        ##self.colprint("nominal set after calibrate_chip")
-        #n = 0
-        #Sum = 0
-        #Min = 99999
-        #Max = 0
-        #for j in self.CV:
-        #    for i in j:
-        #        n += 1
-        #        Sum = Sum + i
-        #        if i < Min: Min = i
-        #        if i > Max: Max = i
-        #avg = Sum/n
-        #self.colprint("Alignment DAC Values (avg, min, max)")
-        #self.colprint(str(avg) +", "+ str(Min) +", "+ str(Max))
+        #set_nominal()
+        #self.colprint("nominal set after calibrate_chip")
+        n = 0
+        Sum = 0
+        Min = 99999
+        Max = 0
+        for j in self.CV:
+            for i in j:
+                n += 1
+                Sum = Sum + i
+                if i < Min: Min = i
+                if i > Max: Max = i
+        avg = Sum/n
+        self.colprint("Alignment DAC Values (avg, min, max)")
+        self.colprint(str(avg) +", "+ str(Min) +", "+ str(Max))
     def PowerOnCheck(self):
         self.DeltaDIG = 0.
         self.PVALS = ["0","0","0"]
