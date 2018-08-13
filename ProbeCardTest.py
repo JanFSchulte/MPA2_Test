@@ -89,8 +89,13 @@ class ProbeMeasurement:
         activate_I2C_chip(verbose = 0)
         trimDAC_amplitude(20)
         self.colprint("DAC measurement")
-        thDAC = measure_DAC_testblocks(point = 5, bit = 8, step = 31, plot = 0, print_file = 1, filename = self.DIR+"/Th_DAC")
-        calDAC = measure_DAC_testblocks(point = 6, bit = 8, step = 31, plot = 0, print_file = 1, filename = self.DIR+"/Cal_DAC")
+        measure_DAC_testblocks(point = 0, bit = 5, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/DAC0")
+        measure_DAC_testblocks(point = 1, bit = 5, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/DAC1")
+        measure_DAC_testblocks(point = 2, bit = 5, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/DAC2")
+        measure_DAC_testblocks(point = 3, bit = 5, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/DAC3")
+        measure_DAC_testblocks(point = 4, bit = 5, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/DAC4")
+        thDAC = measure_DAC_testblocks(point = 5, bit = 8, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/Th_DAC")
+        calDAC = measure_DAC_testblocks(point = 6, bit = 8, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/Cal_DAC")
         disable_test()
         thLSB = np.mean((thDAC[:,248] - thDAC[:,0])/248)*1000 #LSB Threshold DAC in mV
         calLSB = np.mean((calDAC[:,248] - calDAC[:,0])/248)*0.035/1.768*1000 #LSB Calibration DAC in fC
