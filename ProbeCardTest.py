@@ -67,7 +67,7 @@ class ProbeMeasurement:
         except:
             self.colprint("WE MESSED UP!!!")
             self.Flag = 0
-        power_off()
+        #power_off()
         self.end = time.time()
         self.colprint("TOTAL TIME:")
         self.colprint(str((self.end - self.start)/60.))
@@ -89,8 +89,8 @@ class ProbeMeasurement:
         activate_I2C_chip(verbose = 0)
         trimDAC_amplitude(20)
         self.colprint("DAC measurement")
-        thDAC = measure_DAC_testblocks(point = 5, bit = 8, step = 32, plot = 0, print_file = 0, filename = self.DIR+"/Th_DAC")
-        calDAC = measure_DAC_testblocks(point = 6, bit = 8, step = 32, plot = 0, print_file = 0, filename = self.DIR+"/Cal_DAC")
+        thDAC = measure_DAC_testblocks(point = 5, bit = 8, step = 31, plot = 0, print_file = 0, filename = self.DIR+"/Th_DAC")
+        calDAC = measure_DAC_testblocks(point = 6, bit = 8, step = 31, plot = 0, print_file = 0, filename = self.DIR+"/Cal_DAC")
         disable_test()
         thLSB = np.mean((thDAC[:,160] - thDAC[:,0])/160)*1000 #LSB Threshold DAC in mV
         calLSB = np.mean((calDAC[:,160] - calDAC[:,0])/160)*0.035/1.768*1000 #LSB Calibration DAC in fC
@@ -245,10 +245,12 @@ class ProbeMeasurement:
         align_MPA()
         self.ground = measure_gnd()
         self.colprint("GROUND IS " + str(self.ground))
-        #self.CV = calibrate_chip(self.ground, filename = self.DIR+"/Bias_DAC")
-        #print self.CV
+        self.CV = calibrate_chip(self.ground, filename = self.DIR+"/Bias_DAC")
+        print self.CV
 
-        ##self.bg = measure_bg()
+        self.bg = measure_bg()
+        self.BandGapFile = open(self.DIR+"/BandGap.txt", "a")
+        self.BandGapFile.write(str(self.bg)+"\n")
         ##set_nominal()
         ##self.colprint("nominal set after calibrate_chip")
         #n = 0
