@@ -92,8 +92,8 @@ class ProbeMeasurement:
         thDAC = measure_DAC_testblocks(point = 5, bit = 8, step = 31, plot = 0, print_file = 1, filename = self.DIR+"/Th_DAC")
         calDAC = measure_DAC_testblocks(point = 6, bit = 8, step = 31, plot = 0, print_file = 1, filename = self.DIR+"/Cal_DAC")
         disable_test()
-        thLSB = np.mean((thDAC[:,160] - thDAC[:,0])/160)*1000 #LSB Threshold DAC in mV
-        calLSB = np.mean((calDAC[:,160] - calDAC[:,0])/160)*0.035/1.768*1000 #LSB Calibration DAC in fC
+        thLSB = np.mean((thDAC[:,248] - thDAC[:,0])/248)*1000 #LSB Threshold DAC in mV
+        calLSB = np.mean((calDAC[:,248] - calDAC[:,0])/248)*0.035/1.768*1000 #LSB Calibration DAC in fC
         self.colprint("S curve measurement")
         th_H = int(round(130*thLSB/1.456))
         th_L = int(round(100*thLSB/1.456))
