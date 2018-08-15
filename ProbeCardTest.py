@@ -87,7 +87,7 @@ class ProbeMeasurement:
     def Curves(self):
         self.colprint("Getting Curves")
         activate_I2C_chip(verbose = 0)
-        trimDAC_amplitude(20)
+
         self.colprint("DAC measurement")
         measure_DAC_testblocks(point = 0, bit = 5, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/DAC0")
         measure_DAC_testblocks(point = 1, bit = 5, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/DAC1")
@@ -97,13 +97,15 @@ class ProbeMeasurement:
         thDAC = measure_DAC_testblocks(point = 5, bit = 8, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/Th_DAC")
         calDAC = measure_DAC_testblocks(point = 6, bit = 8, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/Cal_DAC")
         disable_test()
+        mpa_reset()
+        trimDAC_amplitude(20)
         thLSB = np.mean((thDAC[:,248] - thDAC[:,0])/248)*1000 #LSB Threshold DAC in mV
         calLSB = np.mean((calDAC[:,248] - calDAC[:,0])/248)*0.035/1.768*1000 #LSB Calibration DAC in fC
         self.colprint("S curve measurement")
-        th_H = int(round(130*thLSB/1.456))
-        th_L = int(round(100*thLSB/1.456))
+        th_H = int(round(150*thLSB/1.456))
+        th_L = int(round(110*thLSB/1.456))
         cal_H = int(round(40*0.035/calLSB))
-        cal_L = int(round(18*0.035/calLSB))
+        cal_L = int(round(22*0.035/calLSB))
         sleep(1)
         try:
             sleep(1)
@@ -210,6 +212,14 @@ class ProbeMeasurement:
         with open(self.DIR+'/BadPixelsM_10.csv', 'wb') as csvfile:
             CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
             for i in BadPixM: CVwriter.writerow(i)
+        set_DVDD(1.2)
+        sleep(0.2)
+        mpa_reset()
+        sleep(0.2)
+        reset()
+        sleep(0.2)
+        align_out()
+        sleep(0.2)
         #mem_test(filename = self.DIR + "/memtest.csv")
     def GetActualBadPixels(self, BPA):
         print BPA
@@ -335,7 +345,7 @@ class ProbeMeasurement:
             self.PVALS[0] = VAL
             if VAL > 30: return 0
         if which == "DIG":
-            set_DVDD(V = 1.0)
+            set_DVDD(V = 1.2)
 
             Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
             Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
