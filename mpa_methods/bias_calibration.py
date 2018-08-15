@@ -73,14 +73,17 @@ def calibrate_bias(point, block, DAC_val, exp_val, inst, gnd_corr):
 	I2C.peri_write('TESTMUX',0b00000001 << block)
 	I2C.peri_write(test, 0b00000001 << point)
 	I2C.peri_write(DAC, 0)
+	sleep(0.1)
 	off_val = multimeter.measure(inst)
+	sleep(0.1)
 	I2C.peri_write(DAC, DAC_val)
+	sleep(0.1)
 	act_val = multimeter.measure(inst)
 	LSB = (act_val - off_val) / DAC_val
 	DAC_new_val = DAC_val- int(round((act_val - exp_val - gnd_corr)/LSB))
 	I2C.peri_write(DAC, DAC_new_val)
 	new_val = multimeter.measure(inst)
-	if (new_val - gnd_corr < exp_val + exp_val*0.02 )&(new_val - gnd_corr > exp_val - exp_val*0.02):
+	if (new_val - gnd_corr < exp_val + exp_val*0.05 )&(new_val - gnd_corr > exp_val - exp_val*0.05):
 		i = 1
 		print "Calibration bias point ", point, "of test point", block, "--> Done (", new_val, "V for ", DAC_new_val, " DAC)"
 	else:
