@@ -255,7 +255,7 @@ class ProbeMeasurement:
 
         self.bg = measure_bg()
         self.BandGapFile = open(self.DIR+"/BandGap.txt", "a")
-        self.BandGapFile.write(str(self.bg)+"\n")
+        self.BandGapFile.write(str(self.bg))
         #set_nominal()
         #self.colprint("nominal set after calibrate_chip")
         n = 0
