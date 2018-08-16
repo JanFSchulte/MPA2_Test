@@ -98,7 +98,7 @@ def PowerParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
     plt.ylabel("Power")
     plt.legend()
     plt.show()
-    return power
+    #return power
 
 
 def ScurveParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
@@ -267,9 +267,4 @@ def DACParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
     plt.figure(7)
     plt.title("Cal_DAC")
     plt.legend()
-
-
-
-
-
     plt.show()
