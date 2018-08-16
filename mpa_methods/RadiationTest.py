@@ -11,7 +11,7 @@ from power_utility import *
 from fysom import Fysom
 
 
-def RadTest(total_time = 225000, rest_time = 6300, filename = "../cernbox/Irrad1_1/Run_"):
+def RadTest(total_time = 225000, rest_time = 12000, filename = "../cernbox/Irrad1_1/Run_"):
 
     i = 1
     test_fin = 1
@@ -33,7 +33,7 @@ def RadTest(total_time = 225000, rest_time = 6300, filename = "../cernbox/Irrad1
         DIR = str(filename) + str(start_time)
         os.makedirs(DIR)
         TEST = ProbeCardTest.ProbeMeasurement(DIR)
-        TEST.Run("MPA 13 Run" + str(i))
+        TEST.Run("MPA 31 Run" + str(i))
 
     def oninject(e):
         print "Sleeping"
