@@ -90,10 +90,20 @@ class ProbeMeasurement:
 
         self.colprint("DAC measurement")
         measure_DAC_testblocks(point = 0, bit = 5, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/DAC0")
+        for block in range(0,7):
+            set_DAC(block, 0, 15)
         measure_DAC_testblocks(point = 1, bit = 5, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/DAC1")
+        for block in range(0,7):
+            set_DAC(block, 1, 15)
         measure_DAC_testblocks(point = 2, bit = 5, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/DAC2")
+        for block in range(0,7):
+            set_DAC(block, 2, 15)
         measure_DAC_testblocks(point = 3, bit = 5, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/DAC3")
+        for block in range(0,7):
+            set_DAC(block, 3, 15)
         measure_DAC_testblocks(point = 4, bit = 5, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/DAC4")
+        for block in range(0,7):
+            set_DAC(block, 4, 15)
         thDAC = measure_DAC_testblocks(point = 5, bit = 8, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/Th_DAC")
         calDAC = measure_DAC_testblocks(point = 6, bit = 8, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/Cal_DAC")
         disable_test()
@@ -164,17 +174,17 @@ class ProbeMeasurement:
         #    CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
         #    for i in BadPixD: CVwriter.writerow(i)
 
-        #strip_in = strip_in_scan(n_pulse = 5, filename = self.DIR + "/striptest", probe=1)
-        #good_si = 0
-        #for i in range(0,16):
-        #    if (np.mean(strip_in[i,:] > 0.9) == 1):
-        #        good_si = 1
-        #if good_si:
-        #    self.colprint("Strip Input scan passed")
-        #    self.colprint_general("Strip Input scan passed")
-        #else:
-        #    self.colprint("Strip Input scan failed")
-        #    self.colprint_general("Strip Input scan failed")
+        strip_in = strip_in_scan(n_pulse = 5, filename = self.DIR + "/striptest", probe=1)
+        good_si = 0
+        for i in range(0,16):
+            if (np.mean(strip_in[i,:] > 0.9) == 1):
+                good_si = 1
+        if good_si:
+            self.colprint("Strip Input scan passed")
+            self.colprint_general("Strip Input scan passed")
+        else:
+            self.colprint("Strip Input scan failed")
+            self.colprint_general("Strip Input scan failed")
 
         set_DVDD(1.2)
         sleep(0.2)
