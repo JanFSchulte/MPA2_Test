@@ -33,7 +33,7 @@ def DAC_linearity(block, point, bit, inst, step = 1, plot = 1):
 	print "DAC: ", DAC
 	for i in range(0, 1 << bit, step):
 		I2C.peri_write(DAC, i)
-		sleep(0.1)
+		#sleep(0.1)
 		data[i] = multimeter.measure(inst)
 		if (i % 10 == 0):
 			print "Done point ", i, " of ", 1 << bit
