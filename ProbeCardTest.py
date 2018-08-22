@@ -61,6 +61,10 @@ class ProbeMeasurement:
             self.colprint(ShiftM)
             self.Flag = self.Curves()
             mpa_reset()
+            activate_I2C_chip()
+            I2C.peri_write("ConfSLVS", 0b00111111)
+            disable_pixel(0,0)
+            align_out()
             self.PixTests()
             self.colprint("DONE!")
             sleep(3)
@@ -108,6 +112,10 @@ class ProbeMeasurement:
         calDAC = measure_DAC_testblocks(point = 6, bit = 8, step = 1, plot = 0, print_file = 1, filename = self.DIR+"/Cal_DAC")
         disable_test()
         mpa_reset()
+        activate_I2C_chip()
+        I2C.peri_write("ConfSLVS", 0b00111111)
+        disable_pixel(0,0)
+        align_out()
         trimDAC_amplitude(20)
         thLSB = np.mean((thDAC[:,248] - thDAC[:,0])/248)*1000 #LSB Threshold DAC in mV
         calLSB = np.mean((calDAC[:,248] - calDAC[:,0])/248)*0.035/1.768*1000 #LSB Calibration DAC in fC
@@ -115,7 +123,7 @@ class ProbeMeasurement:
         th_H = int(round(150*thLSB/1.456))
         th_L = int(round(110*thLSB/1.456))
         cal_H = int(round(40*0.035/calLSB))
-        cal_L = int(round(22*0.035/calLSB))
+        cal_L = int(round(24*0.035/calLSB))
         sleep(1)
         try:
             sleep(1)
@@ -126,7 +134,7 @@ class ProbeMeasurement:
             self.colprint("The thLSB is: " + str(thLSB))
             self.colprint("The calLSB is: " + str(calLSB))
             self.colprint("The noise is: " + str(np.mean(noise_B)))
-            self.colprint("The threshold spread is: " + str(np.std(th_A)))
+            self.colprint("The threshold spread is: " + str(np.std(th_B)))
             self.colprint_general("SCURVE EXTRACTION SUCCESSFUL")
             with open(self.DIR+'/AnalogMeasurement.csv', 'wb') as csvfile:
                 CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -174,7 +182,7 @@ class ProbeMeasurement:
         #    CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
         #    for i in BadPixD: CVwriter.writerow(i)
 
-        strip_in = strip_in_scan(n_pulse = 5, filename = self.DIR + "/striptest", probe=1)
+        strip_in = strip_in_scan(n_pulse = 5, filename = self.DIR + "/striptest", probe=0)
         good_si = 0
         for i in range(0,16):
             if (np.mean(strip_in[i,:] > 0.9) == 1):
@@ -186,34 +194,35 @@ class ProbeMeasurement:
             self.colprint("Strip Input scan failed")
             self.colprint_general("Strip Input scan failed")
 
-        set_DVDD(1.2)
-        sleep(0.2)
-        mpa_reset()
-        sleep(0.2)
-        reset()
-        sleep(0.2)
-        align_out()
-        sleep(0.2)
-        mempix = []
-        mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_12", gate = 0, verbose = 0))
-        if len(mempix[0]) > 0: mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_12", gate = 0, verbose = 0))
-        BadPixM = self.GetActualBadPixels(mempix)
-        self.colprint(str(BadPixM) + " << Bad Pixels (Mem)")
-        with open(self.DIR+'/BadPixelsM_12.csv', 'wb') as csvfile:
-            CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            for i in BadPixM: CVwriter.writerow(i)
+        ## Test 31 ##
+        #set_DVDD(1.2)
+        #sleep(0.2)
+        #mpa_reset()
+        #sleep(0.2)
+        #reset()
+        #sleep(0.2)
+        #align_out()
+        #sleep(0.2)
+        #mempix = []
+        #mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_12", gate = 0, verbose = 0))
+        #if len(mempix[0]) > 0: mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_12", gate = 0, verbose = 0))
+        #BadPixM = self.GetActualBadPixels(mempix)
+        #self.colprint(str(BadPixM) + " << Bad Pixels (Mem)")
+        #with open(self.DIR+'/BadPixelsM_12.csv', 'wb') as csvfile:
+        #    CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        #    for i in BadPixM: CVwriter.writerow(i)
 
-        #if len(BadPixM) > 100 or len(BadPixA) > 100:
-        #    self.Flag = 0
+        ##if len(BadPixM) > 100 or len(BadPixA) > 100:
+        ##    self.Flag = 0
 
-        set_DVDD(1.0)
-        sleep(0.2)
-        mpa_reset()
-        sleep(0.2)
-        reset()
-        sleep(0.2)
-        align_out()
-        sleep(0.2)
+        #set_DVDD(1.0)
+        #sleep(0.2)
+        #mpa_reset()
+        #sleep(0.2)
+        #reset()
+        #sleep(0.2)
+        #align_out()
+        #sleep(0.2)
         mempix = []
         mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_10", gate = 0, verbose = 0))
         if len(mempix[0]) > 0: mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_10", gate = 0, verbose = 0))
@@ -222,14 +231,18 @@ class ProbeMeasurement:
         with open(self.DIR+'/BadPixelsM_10.csv', 'wb') as csvfile:
             CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
             for i in BadPixM: CVwriter.writerow(i)
-        set_DVDD(1.2)
-        sleep(0.2)
+        #set_DVDD(1.2)
+        #sleep(0.2)
         mpa_reset()
-        sleep(0.2)
-        reset()
-        sleep(0.2)
+        activate_I2C_chip()
+        I2C.peri_write("ConfSLVS", 0b00111111)
+        disable_pixel(0,0)
         align_out()
-        sleep(0.2)
+        #sleep(0.2)
+        #reset()
+        #sleep(0.2)
+        #align_out()
+        #sleep(0.2)
         #mem_test(filename = self.DIR + "/memtest.csv")
     def GetActualBadPixels(self, BPA):
         print BPA
@@ -263,19 +276,20 @@ class ProbeMeasurement:
                 OK = False
         return OK
     def AlignTests(self):
-        activate_I2C_chip(verbose = 0)
-        activate_sync()
+        mpa_reset()
+        activate_I2C_chip()
+        I2C.peri_write("ConfSLVS", 0b00111111)
+        disable_pixel(0,0)
         self.colprint("Trying to Align...")
         align_out()
-        align_MPA()
         self.ground = measure_gnd()
         self.colprint("GROUND IS " + str(self.ground))
         self.CV = calibrate_chip(self.ground, filename = self.DIR+"/Bias_DAC")
         print self.CV
 
-        self.bg = measure_bg()
-        self.BandGapFile = open(self.DIR+"/BandGap.txt", "a")
-        self.BandGapFile.write(str(self.bg))
+        #self.bg = measure_bg()
+        #self.BandGapFile = open(self.DIR+"/BandGap.txt", "a")
+        #self.BandGapFile.write(str(self.bg))
         #set_nominal()
         #self.colprint("nominal set after calibrate_chip")
         n = 0
@@ -355,7 +369,8 @@ class ProbeMeasurement:
             self.PVALS[0] = VAL
             if VAL > 30: return 0
         if which == "DIG":
-            set_DVDD(V = 1.2)
+            ## test 31 ## set_DVDD(V = 1.2)
+            set_DVDD()
 
             Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
             Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
