@@ -6,6 +6,7 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from mpa_methods.mpa_i2c_conf import *
 from myScripts.Utilities import *
+from mpa_methods.bias_calibration import *
 #from mpa_methods.fast_readout_utility import *
 import numpy as np
 import time
@@ -17,6 +18,7 @@ import matplotlib.pyplot as plt
 from scipy.special import erfc
 from scipy.special import erf
 import matplotlib.cm as cm
+import seaborn as sns
 
 def errorf(x, *p):
 	a, mu, sigma = p
@@ -28,7 +30,7 @@ def line(x, *p):
 
 def gauss(x, *p):
 	A, mu, sigma = p
-	return A*numpy.exp(-(x-mu)**2/(2.*sigma**2))
+	return A*np.exp(-(x-mu)**2/(2.*sigma**2))
 
 
 def errorfc(x, *p):
@@ -93,6 +95,9 @@ def activate_sync():
 def enable_pix_counter(r,p):
 	I2C.pixel_write('ENFLAGS', r, p, 0x53)
 
+def enable_pix_disable_ancal(r,p):
+	I2C.pixel_write('ENFLAGS', r, p, 0x13)
+
 def enable_pix_sync(r,p):
 	I2C.pixel_write('ENFLAGS', r, p, 0x53)
 
@@ -141,22 +146,22 @@ def enable_dig_cal(r,p, pattern = 0b00000001):
 	I2C.pixel_write('ENFLAGS', r, p, 0x20)
 	I2C.pixel_write('DigPattern', r, p, pattern)
 ##### plot_extract_scurve function take scurve data and extract threhsold and noise data. If plot = 1, it also plot scurves and histograms
-def plot_extract_scurve(s_type, scurve, n_pulse, nominal_DAC, stop, extract, plot):
+def plot_extract_scurve(row, pixel, s_type, scurve, n_pulse, nominal_DAC, start, stop, extract, plot):
 	th_array = np.zeros(2040, dtype = np.int )
 	noise_array = np.zeros(2040, dtype = np.float )
-	for r in range(1,17):
-		for p in range(1,120):
+	for r in row:
+		for p in pixel:
 			if plot:
-				plt.plot(range(0,stop), scurve[(r-1)*120+p,0:stop],'-')
+				plt.plot(range(start,stop), scurve[(r-1)*120+p,0:(stop-start)],'-')
 			# Noise and Spread study
 			if extract:
 				try:
 					if s_type == "THR":
 						start_DAC = np.argmax(scurve[(r-1)*120+p,:]) + 10
-						par, cov = curve_fit(errorfc, range(start_DAC, stop), scurve[(r-1)*120+p,start_DAC + 1 :stop + 1], p0= [n_pulse, nominal_DAC, 2])
+						par, cov = curve_fit(errorfc, range(start_DAC, (stop-start)), scurve[(r-1)*120+p,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
 					elif s_type == "CAL":
 						start_DAC = 0
-						par, cov = curve_fit(errorf, range(start_DAC, stop), scurve[(r-1)*120+p,start_DAC + 1 :stop + 1], p0= [n_pulse, nominal_DAC, 2])
+						par, cov = curve_fit(errorf, range(start_DAC, (stop-start)), scurve[(r-1)*120+p,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
 					th_array[(r-1)*120+p] = int(round(par[1]))
 					noise_array[(r-1)*120+p] = par[2]
 				except RuntimeError or TypeError:
@@ -166,29 +171,47 @@ def plot_extract_scurve(s_type, scurve, n_pulse, nominal_DAC, stop, extract, plo
 		if s_type == "CAL":	plt.xlabel('Calibration DAC value')
 		plt.ylabel('Counter Value')
 		if extract:
+			th_array = [a for a in th_array if a != 0]
+			noise_array = [b for b in noise_array if b != 0]
 			plt.figure(2)
-			plt.hist(th_array[1:1920], bins=range(min(th_array[1:1920]), max(th_array[1:1920]) + 1, 1))
+			if len(th_array) == 1:
+				plt.title("Threshold")
+				plt.plot(pixel, th_array, 'o')
+			else:
+				plt.hist(th_array[1:1920], bins=range(min(th_array), max(th_array) + 1, 1))
 			plt.figure(3)
-			plt.hist(noise_array[1:1920], bins=np.arange(0.0, 4.0, 0.1))
-			print
+			if len(noise_array) == 1:
+				plt.title("Noise")
+				plt.plot(pixel, noise_array, 'o')
+			else:
+				plt.hist(noise_array, bins=np.arange(min(noise_array), max(noise_array) + 1 , 0.1))
+
 			print "Threshold Average: ", np.mean(th_array[1:1920]), " Spread SD: ", np.std(th_array[1:1920])
 			print "Noise Average: ", np.mean(noise_array[1:1920]), " Spread SD: ", np.std(noise_array[1:1920])
 	if extract:
 		return 	th_array, noise_array
+
 ##### send_pulses
 def send_pulses(n_pulse):
 	open_shutter()
 	sleep(0.01)
 	for i in range(0, n_pulse):
 		send_test()
+		sleep(0.1)
 	sleep(0.001)
 	close_shutter()
 
 def send_pulses_fast(n_pulse, row, pixel, cal):
 	disable_pixel(0, 0)
 	enable_pix_counter(row, pixel)
+	#enable_pix_disable_ancal(row, pixel)
 	sleep(0.0025)
-	open_shutter(8)
+	try:
+		open_shutter(8)
+	except ChipsException:
+		print "Error ChipsException, repeat ccommand"
+		sleep (0.001)
+		open_shutter(8)
 	if (cal != 0):
 		SendCommand_CTRL("start_trigger")
 		test = 1
@@ -197,7 +220,40 @@ def send_pulses_fast(n_pulse, row, pixel, cal):
 			sleep(0.001)
 	else:
 		sleep(0.000001*n_pulse)
-	close_shutter(8)
+	try:
+		close_shutter(8)
+	except ChipsException:
+		print "Error ChipsException, repeat ccommand"
+		sleep (0.001)
+		close_shutter(8)
+
+def send_pulses_fast_all(n_pulse, row, pixel, cal):
+	disable_pixel(0, 0)
+	for r in row:
+		for p in pixel:
+			enable_pix_disable_ancal(r, p)
+			#enable_pix_counter(r,p)
+	sleep(0.0025)
+	try:
+		open_shutter(8)
+	except ChipsException:
+		print "Error ChipsException, repeat ccommand"
+		sleep (0.001)
+		open_shutter(8)
+	if (cal != 0):
+		SendCommand_CTRL("start_trigger")
+		test = 1
+		while (test):
+			test = fc7.read("stat_fast_fsm_state")
+			sleep(0.001)
+	else:
+		sleep(1*n_pulse)
+	try:
+		close_shutter(8)
+	except ChipsException:
+		print "Error ChipsException, repeat ccommand"
+		sleep (0.001)
+		close_shutter(8)
 
 
 def read_pixel_counter(row, pixel):
@@ -345,6 +401,62 @@ def hit_map(n_pulse, cal, th, row = range(1,17), pixel = range (2,120) , print_f
 	return data_array
 #a = s_curve_rbr(100, 50, [1], 1)
 
+def hit_map_plot(n_pulse = 1000, cal = 40, th = 100, row = range(1,17), pixel = range (1,120)):
+	clear_counters()
+	t0 = time.time()
+	pixel = np.array(pixel)
+	row = np.array(row)
+	nrow = int(row.shape[0])
+	npix = int(pixel.shape[0])
+	data_array = np.zeros((nrow,npix), dtype = np.int )
+	activate_async()
+	set_calibration(cal)
+	set_threshold(th)
+	#count_r = 0
+	repeat = 0
+	#while repeat < 15:
+	count_r = 0
+	fcount_r = 0
+	disable_pixel(0,0)
+	clear_counters(8)
+	clear_counters(8)
+	for r in row:
+		enable_pix_disable_ancal(r,0)
+	sleep(0.1)
+	activate_I2C_chip()
+	# Disable Noisy Pixels
+	#disable_pixel(2,16)
+	#disable_pixel(3,11)
+	#disable_pixel(10,76)
+	send_pulses_(n_pulse)
+	count_r = 0
+	for r in row:
+		count_p = 0
+		for p in pixel:
+			data = read_pixel_counter(r, p)
+			data_array[count_r, count_p] =  data
+			count_p += 1
+		count_r += 1
+	#data_array[9,75]=0
+	t1 = time.time()
+		#return data_array
+	#plt.imshow(data_array, cmap='hot', interpolation='nearest')
+	#plt.show()
+	ax = sns.heatmap(data_array, vmin = 0, xticklabels = 5, yticklabels = row)
+	plt.show()
+	return data_array
+
+def heat_map(row = range(1,17), start_data = 150, start_th = 160, end_th = 180, file_name = "Am-241_tin_long_cal_0.csv"):
+	data = CSV.csv_to_array(file_name)
+	data_array = np.zeros((16, 119), dtype = np.int)
+	for r in row:
+		for p in range(1,120):
+			data_array[(r - 1), (p - 1)] = np.sum(data[(r-1)*120 + p, (start_th - start_data):(end_th - start_data)])
+	ax = sns.heatmap(data_array, vmin = 0, xticklabels = 5, yticklabels = row)
+	plt.show()
+	return data_array
+
+
 def s_curve_rbr(n_pulse, cal, row, step = 1, start = 0, stop = 256, plot = 1, print_file =1, filename = "../cernbox/MPA_Results/scurve"):
 	t0 = time.time()
 	clear_counters()
@@ -397,7 +509,13 @@ def s_curve_rbr(n_pulse, cal, row, step = 1, start = 0, stop = 256, plot = 1, pr
 
 def s_curve_rbr_fr(n_pulse = 1000, s_type = "THR", ref_val = 50, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 200, extract_val = 0, extract = 1, plot = 1, print_file =1, filename = "../cernbox/MPA_Results/scurve_fr_"):
 	t0 = time.time()
-	clear_counters(8)
+	try:
+		clear_counters(8)
+	except ChipsException:
+		print "Error ChipsException, repeat ccommand"
+		sleep (0.001)
+		clear_counters(8)
+
 	row = np.array(row)
 	nrow = int(row.shape[0])
 	nstep = (stop-start)/step+1
@@ -434,30 +552,37 @@ def s_curve_rbr_fr(n_pulse = 1000, s_type = "THR", ref_val = 50, row = range(1,1
 		if (count_err == 10):
 			cur_val = stop
 			failed = 1
-		clear_counters(8)
-		clear_counters(8)
+		try:
+			clear_counters(8)
+			clear_counters(8)
+		except ChipsException:
+			print "Error ChipsException, repeat ccommand"
+			sleep (0.001)
+			clear_counters(8)
+
 	if failed == 1:
 		print ("S-Curve extraction failed")
 		return "exit at scurve"
 	if print_file:
-		CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + str(ref_val) + ".csv")
+		#CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + str(ref_val) + ".csv")
+		CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + ".csv")
 	if extract:
 		if extract_val == 0:
 			if s_type == "THR":	extract_val = ref_val*1.66+70
 			elif s_type == "CAL":	extract_val = ref_val/1.66-40
-		th_array, noise_array = plot_extract_scurve(s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, stop = stop, plot = plot, extract = extract)
+		th_array, noise_array = plot_extract_scurve(row = row, pixel = range(1,120), s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, plot = plot, extract = extract)
 		t1 = time.time()
 		print "END"
 		print "Elapsed Time: " + str(t1 - t0)
 		plt.show()
 		return data_array, th_array, noise_array
 	elif plot:
-		plot_extract_scurve(s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, stop = stop, extract = 0, plot = plot)
+		plot_extract_scurve(row = row, pixel = range(1,120), s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, extract = 0, plot = plot)
 	return data_array
 
 # s_curve_pbp_fr(n_pulse = 1000, cal = 100, row = range(1,17), pixel = range(1,120), step = 1, start = 0, stop = 256, pulse_delay = 200,  plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/scurve_fr_"):
 
-def s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", cal = 100, row = range(1,17), pixel = range(1,120), step = 1, start = 0, stop = 256, pulse_delay = 200,  plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/scurve_fr_"):
+def s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", ref_val = 100, row = range(1,17), pixel = range(1,120), step = 1, start = 0, stop = 256, pulse_delay = 200,  extract_val = 110, extract = 0, plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/scurve_fr_"):
 	t0 = time.time()
 	clear_counters(8)
 	clear_counters(8)
@@ -467,7 +592,9 @@ def s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", cal = 100, row = range(1,17),
 	nstep = (stop-start)/step+1
 	data_array = np.zeros((2040, nstep), dtype = np.int16 )
 	activate_async()
-	set_calibration(cal)
+	if s_type == "THR":	set_calibration(ref_val)
+	elif s_type == "CAL":	set_threshold(ref_val)
+	else: return "S-Curve type not recognized"
 	sleep(1)
 	fc7.write("cnfg_fast_backpressure_enable", 0)
 	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
@@ -496,15 +623,209 @@ def s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", cal = 100, row = range(1,17),
 	print "END"
 	print "Elapsed Time: " + str(t1 - t0)
 	if print_file:
-		CSV.ArrayToCSV (data_array, str(filename) + "_cal_" + str(cal) + ".csv")
+		CSV.ArrayToCSV (data_array, str(filename) + "_cal_" + str(ref_val) + ".csv")
 	if plot:
-		th_array, noise_array = plot_extract_scurve(s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = 1.66*cal, stop = stop, plot = 1, extract = 1)
+		th_array, noise_array = plot_extract_scurve(row = row, pixel = pixel, s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, plot = plot, extract = extract)
 		t1 = time.time()
 		print "END"
 		print "Elapsed Time: " + str(t1 - t0)
 		plt.show()
 		return data_array, th_array, noise_array
 	return data_array
+
+def s_curve_pbp_all(n_pulse = 1000, s_type = "CAL", ref_val = 100, row = range(1,17), pixel = range(1,120), step = 1, start = 0, stop = 256, pulse_delay = 200,  extract_val = 50, plot = 1, print_file = 0, filename = "../cernbox/MPA_Results/scurve_fr_"):
+	t0 = time.time()
+	clear_counters(8)
+	clear_counters(8)
+	activate_I2C_chip(verbose = 0)
+	row = np.array(row)
+	nrow = int(row.shape[0])
+	nstep = (stop-start)/step+1
+	data_array = np.zeros((2040, nstep), dtype = np.float16 )
+	activate_async()
+	if s_type == "THR":	set_calibration(ref_val)
+	elif s_type == "CAL":	set_threshold(ref_val)
+	else: return "S-Curve type not recognized"
+	sleep(1)
+	fc7.write("cnfg_fast_backpressure_enable", 0)
+	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
+	count = 0
+	cur_val = start
+	while (cur_val < stop): # Temoporary: need to add clear counter fast command
+		if s_type == "CAL":	set_calibration(cur_val)
+		elif s_type == "THR":	set_threshold(cur_val)
+		utils.ShowPercent(count, (stop-start)/step, "")
+		#for r in row:
+		#	for p in pixel:
+		if s_type == "CAL": send_pulses_fast_all(n_pulse, row, pixel, ref_val)
+		elif s_type == "THR": #send_pulses_fast_all(n_pulse, row, pixel, cur_val)
+			for r in row:
+				for p in pixel:
+					enable_pix_counter(r,p)
+					#enable_pix_disable_ancal(r, p)
+			open_shutter()
+			sleep(0.01)
+			for i in range(0, n_pulse):
+				sleep(1)
+			sleep(0.001)
+			close_shutter()
+		sleep(0.005)
+		try:
+			fail, temp = ReadoutCounters()
+			sleep(0.005)
+			if fail:
+				print "FailedPoint, repeat!"
+			else:
+				data_array [:, count]= temp
+				count += 1
+				cur_val += step
+		except ChipsException:
+			print "Error: Chips Exception"
+			sleep(0.01)
+		clear_counters(8)
+		clear_counters(8)
+	t1 = time.time()
+	print "END"
+	print "Elapsed Time: " + str(t1 - t0)
+	if print_file:
+		CSV.ArrayToCSV (data_array, str(filename) + "_cal_" + str(ref_val) + ".csv")
+	if plot:
+		th_array, noise_array = plot_extract_scurve(row = row, pixel = pixel, s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, plot = 1, extract = 1)
+		#for r in row:
+		#	for p in pixel:
+		#		plt.plot(range(start,stop), data_array[(r-1)*120+p, 0:(stop-start)],'-')
+		#plt.show()
+		t1 = time.time()
+		print "END"
+		print "Elapsed Time: " + str(t1 - t0)
+	#	plt.show()
+	#	return data_array, th_array, noise_array
+	return data_array
+
+def s_curve_pbp_test(n_pulse = 1000, s_type = "CAL", ref_val = 100, primary_row = range(1,17), secondary_row = range(1,17), primary_pixel = range(1,120), secondary_pixel = range(1,120), step = 1, start = 0, stop = 256, pulse_delay = 200,  extract_val = 50, plot = 1):
+	t0 = time.time()
+	clear_counters(8)
+	clear_counters(8)
+	activate_I2C_chip(verbose = 0)
+	primary_row = np.array(primary_row)
+	nrow = int(primary_row.shape[0])
+	nstep = (stop-start)/step+1
+	data_array = np.zeros((2040, nstep), dtype = np.int16 )
+	th_array = np.zeros(2040, dtype = np.int )
+	activate_async()
+	if s_type == "THR":	set_calibration(ref_val)
+	elif s_type == "CAL":	set_threshold(ref_val)
+	else: return "S-Curve type not recognized"
+	sleep(1)
+	fc7.write("cnfg_fast_backpressure_enable", 0)
+	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
+
+	# Find Gain
+	thDAC = measure_DAC_testblocks(point = 5, bit = 8, step = 32, plot = 0, print_file = 0)
+	calDAC = measure_DAC_testblocks(point = 6, bit = 8, step = 32, plot = 0, print_file = 0)
+	thLSB = np.mean((thDAC[:,160] - thDAC[:,0])/160)*1000 #LSB Threshold DAC in mV
+	calLSB = np.mean((calDAC[:,160] - calDAC[:,0])/160)*0.035/1.768*1000 #LSB Calibration DAC in fC
+	th1 = np.zeros(2040, dtype = np.int)
+	th2 = np.zeros(2040, dtype = np.int)
+	gain = 0
+	d1, th1, noise1 = s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", ref_val = 15, row = secondary_row, pixel = secondary_pixel, step = 1, start = 0, stop = 256, pulse_delay = 200,  extract_val = 60, plot = 1, print_file = 0)
+	d2, th2, noise2 = s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", ref_val = 25, row = secondary_row, pixel = secondary_pixel, step = 1, start = 0, stop = 256, pulse_delay = 200,  extract_val = 70, plot = 1, print_file = 0)
+	Q1 = calLSB * 15
+	Q2 = calLSB * 25
+	delta_Q = Q2 - Q1
+	th1 = [a for a in th1 if a != 0]
+	th2 = [a for a in th2 if a != 0]
+	gain = thLSB * ((th2[0] - th1[0])/delta_Q)
+	print "Gain is ", gain
+	count = 0
+	cur_val = start
+	disable_pixel(0,0)
+	for r in primary_row:
+		for p in primary_pixel:
+			enable_pix_counter(r, p)
+	for r in secondary_row:
+		for p in secondary_pixel:
+			enable_pix_disable_ancal(r,p)
+	while (cur_val < stop): # Temoporary: need to add clear counter fast command
+		if s_type == "CAL":	set_calibration(cur_val)
+		elif s_type == "THR":	set_threshold(cur_val)
+		utils.ShowPercent(count, (stop-start)/step, "")
+		sleep(0.0025)
+		try:
+			open_shutter(8)
+		except ChipsException:
+			print "Error ChipsException, repeat ccommand"
+			sleep (0.001)
+			open_shutter(8)
+		SendCommand_CTRL("start_trigger")
+		test = 1
+		while (test):
+			test = fc7.read("stat_fast_fsm_state")
+			sleep(0.001)
+		try:
+			close_shutter(8)
+		except ChipsException:
+			print "Error ChipsException, repeat ccommand"
+			sleep (0.001)
+			close_shutter(8)
+		sleep(0.005)
+		fail, temp = ReadoutCounters()
+		sleep(0.005)
+		if fail:
+			print "FailedPoint, repeat!"
+		else:
+			data_array [:, count]= temp
+			count += 1
+			cur_val += step
+		clear_counters(8)
+		clear_counters(8)
+
+	t1 = time.time()
+	if len(primary_row) == len(secondary_row):
+		if primary_row == secondary_row:
+			row = primary_row
+	else:
+		row = np.append(primary_row, secondary_row)
+	if len(primary_pixel) == len(secondary_pixel):
+		if primary_pixel == secondary_pixel:
+			pixel == primary_pixel
+	else:
+		pixel = np.append(primary_pixel, secondary_pixel)
+	print "END"
+	print "Elapsed Time: " + str(t1 - t0)
+	if plot:
+		for r in secondary_row:
+			for p in secondary_pixel:
+				start_DAC = np.argmax(data_array[(r-1)*120+p,:]) + 10
+				th_zero = np.argmax(data_array[(r-1)*120+p,:])
+				par, cov = curve_fit(errorfc, range(start_DAC, stop), data_array[(r-1)*120+p,start_DAC + 1 :stop + 1], p0= [n_pulse, extract_val, 2])
+				th_array[(r-1)*120+p] = int(round(par[1]))
+				th_array = [a for a in th_array if a != 0]
+				plt.plot(range(0,stop), data_array[(r-1)*120+p,0:stop],'-')
+				plt.show()
+	charge = (th_array[0] - th_zero)/gain
+	print "Injected Charge:", charge, "fC"
+	return data_array, th_array
+
+def noise_occupancy(row, pixel, th, time):
+	clear_counters(8)
+	disable_pixel(0,0)
+	enable_pix_disable_ancal(row, pixel)
+	n = 0
+	data = np.zeros(len(th)+1, dtype = np.int)
+	for t in th:
+		set_threshold(t)
+		open_shutter()
+		sleep(time)
+		close_shutter()
+		data[n] = read_pixel_counter(row, pixel)
+		n += 1
+		clear_counters(8)
+	print data
+	ax = sns.heatmap(data, vmin = 0, xticklabels = 5, yticklabels = row)
+	plt.show()
+	clear_counters(8)
+	return data
 
 def reset_trim(value = 15):
 	I2C.pixel_write("TrimDAC",0,0,value)
@@ -632,7 +953,7 @@ def trimming_step(pix_out = [["Row", "Pixel", "DAC"]], n_pulse = 1000, s_type = 
 		try: scurve_final = s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
 		except TypeError: return
 		plt.figure(1)
-		th_array, noise_array = plot_extract_scurve(s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, stop = stop, plot = 1, extract = 1)
+		th_array, noise_array = plot_extract_scurve(s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, start = start, stop = stop, plot = 1, extract = 1)
 		t1 = time.time()
 		print "END"
 		print "Trimming Elapsed Time: " + str(t1 - t0)
@@ -656,21 +977,27 @@ def trimming_chip(s_type = "THR", ref_val = 10, nominal_DAC = 110, nstep = 4, da
 		for p in range(1,120):
 			I2C.pixel_write("TrimDAC",r,p,data_array[(r-1)*120+p])
 	if print_file:
-		CSV.ArrayToCSV (data_array, str(filename) + "_ScCal" + str(nominal_DAC) + ".csv")
+		#CSV.ArrayToCSV (data_array, str(filename) + "_ScCal" + str(nominal_DAC) + ".csv")
+		CSV.ArrayToCSV (data_array, str(filename) + "_ScCal" + ".csv")
 	if extract:
 		scurve = s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = range(1,17), step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
-		th_array, noise_array = plot_extract_scurve(s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, stop = stop, plot = plot, extract = 1)
+		th_array, noise_array = plot_extract_scurve(row = range(1,17), pixel = range(1,120), s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, start = 0, stop = stop, plot = plot, extract = 1)
 		print "Pixel not trimmerable: " ,np.size(pix_out)/3-1
 		t1 = time.time()
 		print "END"
 		print "Trimming Elapsed Time: " + str(t1 - t0)
 		plt.show()
 		if print_file:
-			CSV.ArrayToCSV (data_array, str(filename) + "_trimVal" + str(nominal_DAC) + ".csv")
-			CSV.ArrayToCSV (scurve, str(filename) + "_scurve" + str(nominal_DAC) + ".csv")
-			CSV.ArrayToCSV (th_array, str(filename) + "_th_array" + str(nominal_DAC) + ".csv")
-			CSV.ArrayToCSV (noise_array, str(filename) + "_noise_array" + str(nominal_DAC) + ".csv")
-			CSV.ArrayToCSV (pix_out, str(filename) + "_pix_out" + str(nominal_DAC) + ".csv")
+			#CSV.ArrayToCSV (data_array, str(filename) + "_trimVal" + str(nominal_DAC) + ".csv")
+			#CSV.ArrayToCSV (scurve, str(filename) + "_scurve" + str(nominal_DAC) + ".csv")
+			#CSV.ArrayToCSV (th_array, str(filename) + "_th_array" + str(nominal_DAC) + ".csv")
+			#CSV.ArrayToCSV (noise_array, str(filename) + "_noise_array" + str(nominal_DAC) + ".csv")
+			#CSV.ArrayToCSV (pix_out, str(filename) + "_pix_out" + str(nominal_DAC) + ".csv")
+			CSV.ArrayToCSV (data_array, str(filename) + "_trimVal" + ".csv")
+			CSV.ArrayToCSV (scurve, str(filename) + "_scurve" + ".csv")
+			CSV.ArrayToCSV (th_array, str(filename) + "_th_array" + ".csv")
+			CSV.ArrayToCSV (noise_array, str(filename) + "_noise_array" + ".csv")
+			CSV.ArrayToCSV (pix_out, str(filename) + "_pix_out" + ".csv")
 		return data_array, th_array, noise_array, pix_out
 
 	t1 = time.time()
@@ -974,3 +1301,143 @@ def upload_trimming(filename = "trimming_value.csv"):
 			for p in range(0,118):
 				I2C.pixel_write("TrimDAC",r+1,p+2,array[p, r+1])
 				sleep(0.001)
+
+def analyze_scurve(start = 0, stop = 50, plot = 1, filename = "Am-241_tin_long_cal_0.csv"):
+	data_array = np.array(CSV.csv_to_array(filename), dtype = np.uint64)
+	data_array2 = np.delete(data_array, 0, 0)
+	data_array2 = np.delete(data_array2, 0, 1)
+	sum_array = np.sum(data_array2, axis = 0)
+	if plot:
+		#plt.figure(1)
+		#plt.plot(range(start,stop), sum_array[0:stop],'-')
+		#plt.figure(2)
+		for r in range(1,17):
+			for p in range(1,120):
+				plt.plot(range(0,50),data_array[(r-1)*120+p,start + 1:stop + 1],'-')
+		plt.show()
+	#return sum_array
+
+def sensor_extract(row = range(1,17), pixel = range(1,120), filter = 1, s_type = "CAL", n_pulse = 200, data_start = 0, extract_start = 0, stop = 50, nominal_DAC = 25, filename = "../cernbox/AutoProbeResults/Wafer_N6T903-05C7/ChipN_2_v0/Scurve15_CAL.csv", bad_file = "../cernbox/AutoProbeResults/Wafer_N6T903-05C7/ChipN_2_v0/Trim15_pix_out.csv"):
+	th_array = np.zeros(2160, dtype = np.int)
+	noise_array = np.zeros(2160, dtype = np.float)
+	badpix = np.zeros(shape=(0,2))
+	n = 0
+	data = CSV.csv_to_array(filename)
+	badpixels = CSV.csv_to_array(bad_file)
+	badpixels = np.delete(badpixels, 0, 0)
+	badpixels = badpixels.astype('int')
+	data = data.astype('int')
+	for r in row:
+		for p in pixel:
+			flag = 0
+				#if filter == 1:
+				#	for a in badpixels[0:badpixlength, 0]:
+				#		if r == badpixels[(a-1), 1]:
+				#			if p == badpixels[(a-1), 2]:
+				#				flag = 1
+				#if flag != 1:
+			try:
+				if s_type == "THR":
+					par, cov = curve_fit(errorfc, range(extract_start - data_start, stop - data_start), data[(r-1)*120+p, (extract_start - data_start) + 1 :(stop - data_start) + 1], p0= [n_pulse, (nominal_DAC - data_start), 2])
+				elif s_type == "CAL":
+					par, cov = curve_fit(errorf, range(extract_start - data_start, stop - data_start), data[(r-1)*120+p, (extract_start - data_start) + 1 :(stop - data_start) + 1], p0= [n_pulse, (nominal_DAC - data_start), 2])
+			except RuntimeError or TypeError:
+				badpix = np.append(badpix, [[r, p]], axis = 0)
+				flag = 1
+			try:
+				plt.figure(1)
+				plt.plot(range(0,50),data[(r-1)*120+p,data_start + 1:stop + 1],'-')
+				if cov[0,2] > 1.0 or cov[0,2] < 0 or np.max(data[(r-1)*120+p, 1 : stop]) > n_pulse:
+					badpix = np.append(badpix, [[r, p]], axis = 0)
+				elif flag != 1:
+					th_array[(r-1)*120+p] = int(round(par[1])) + data_start
+					noise_array[(r-1)*120+p] = par[2]
+					plt.figure(1)
+					plt.plot(range(0,50),data[(r-1)*120+p,data_start + 1:stop + 1],'-')
+			except TypeError:
+				if np.isinf(cov):
+					badpix = np.append(badpix, [[r, p]], axis = 0)
+				else:
+					print "Check pixel ", p, "in row ", r, ". Something bad happened. Error: TypeError"
+				#if r == 10 and p == 50:
+					#print data[(r-1)*120+p]
+				#	plt.figure(3)
+				#	plt.plot(range(data_start, stop), (data[((r-1)*120+p), 1:(stop - data_start + 1)]), 'o', label = "Data")
+				#	plt.plot(range(extract_start, stop), errorfc(range(extract_start - data_start, stop - data_start), *par), 'o', label ='Fit')
+				#	plt.legend()
+	#sumarray = analyze_scurve(start = 0, stop = (stop - extract_start), plot = 0, filename = filename)
+	#print sumarray
+	#print len(sumarray)
+	#print len(range(extract_start - data_start, stop - data_start))
+	#par, cov = curve_fit(errorfc, range(extract_start - data_start, stop - data_start), sumarray[(extract_start - data_start):(stop - data_start)], p0= [900000 , (nominal_DAC - data_start), 2])
+	#print "par = ", par
+	#print "cov = ", cov
+	th_sum = int(round(par[1])) + data_start
+	th_array = [a for a in th_array if a != 0]
+	noise_array = [b for b in noise_array if b != 0]
+	badpix.astype('int')
+	#print "Threshold Average: ", np.mean(th_array)
+	#print "Threshold Spread: ", np.std(th_array)
+	#print "Noise Average: ", np.mean(noise_array)
+	#print "Noise Spread: ", np.std(noise_array)
+	#print "Sum Threshold: ", th_sum
+	#plt.figure(2)
+	#plt.title("Threshold")
+	#plt.hist(th_array[1:1920], bins=range(min(th_array), max(th_array) + 1, 1))
+	#plt.figure(3)
+	#plt.title("Noise")
+	#plt.hist(noise_array, bins=np.arange(min(noise_array), max(noise_array) + 1 , 0.1))
+	#plt.figure(4)
+	#plt.title("Sum")
+	#plt.plot(range(data_start, stop), sumarray[0: (stop - data_start)])
+	#plt.plot(range(extract_start, stop), errorfc(range(extract_start - data_start, stop - data_start), *par))
+	#plt.show()
+	return np.std(th_array), np.mean(noise_array), badpix
+
+def analyze_chip(wafer_name = "Wafer_N6T903-05C7"):
+	thsd = np.zeros(90)
+	noise_avg = np.zeros(90)
+	#bad_pixels = np.zeros(shape = (1,2))
+	bad_array = ['Bad Pixels']
+	for n in range(1,89):
+		try:
+			thsd[n], noise_avg[n], bad_pixels = sensor_extract(row = range(1,17), pixel = range(1,120), s_type = "CAL", n_pulse = 200, data_start = 0, extract_start = 0, stop = 50, nominal_DAC = 25, filename = "../cernbox/AutoProbeResults/"+wafer_name+"/ChipN_"+str(n)+"_v0/Scurve15_CAL.csv")
+			bad_array.append(bad_pixels)
+		except IOError:
+			print "Chip", n, "had an accident"
+			bad_array.append([['Chip Failure'], [n]])
+	thsd = [a for a in thsd if a != 0]
+	noise_avg = [b for b in noise_avg if b != 0]
+	plt.figure(1)
+	plt.title("Threshold Spread")
+	plt.hist(thsd, bins=np.arange(min(thsd), max(thsd) + 1, 0.1))
+	plt.figure(2)
+	plt.title("Noise Average")
+	plt.hist(noise_avg, bins=np.arange(min(noise_avg), max(noise_avg) + 0.2 , 0.01))
+	plt.show()
+	return bad_array
+
+def trim_DAC_noise(row = range(1,17), pixel = range(1,120)):
+	par_array = np.zeros(shape=(2040, 3))
+	data_array = np.zeros(shape = (2040, 251), dtype = np.int)
+	n = 0
+	for r in row:
+		print "\nStarting row ", r, "\n"
+		for p in pixel:
+			I2C.pixel_write("TrimDAC", 0, 0, 0)
+			sleep(0.1)
+			I2C.pixel_write("TrimDAC", r, p, 31)
+			sleep(0.1)
+			data = s_curve_pbp_all(n_pulse = 200, s_type = "THR", ref_val = 0, row = [r], pixel = [p], step = 1, start = 0, stop = 250, pulse_delay = 200,  extract_val = 200, plot = 0, print_file = 0)
+			sleep(0.1)
+			try:
+				par, cov = curve_fit(gauss, range(0, 200), data[(r-1)*120 + p, 1: 201], p0= [np.max(data[(r-1)*120 + p]), np.argmax(data[(r-1)*120 + p]), 2])
+				par_array[n] = par
+				data_array[n] = data[(r-1)*120 + p]
+			except RuntimeError or TypeError:
+				print "Fitting failed on pixel ", p , " row: " ,r
+				par_array[n] = [0,0,0]
+			n += 1
+	CSV.ArrayToCSV(par_array, filename = "NoisePeak_Par.csv")
+	CSV.ArrayToCSV(data_array, filename = "NoisePeak_Data.csv")
+	return par_array, data_array

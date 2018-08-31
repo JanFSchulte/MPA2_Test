@@ -204,6 +204,38 @@ def set_VDDPST(V = 1.25):
 	set_power( address = 0x34, V = V)
 	print "VDDPST --> ", V	, " V"
 
+def main_power_on():
+	read = 1
+	write = 0
+	FAST = 4
+	SLOW = 2
+	mpaid = 0 # default MPa address (0-7)
+	ssaid = 0 # default SSa address (0-7)
+	i2cmux = 0
+	pcf8574 = 1 # MPA and SSA address and reset 8 bit port
+	powerenable = 2    # i2c ID 0x44
+	dac7678 = 4
+	ina226_5 = 5
+	ina226_6 = 6
+	ina226_7 = 7
+	ina226_8 = 8
+	ina226_9 = 9
+	ina226_10 = 10
+	ltc2487 = 3
+	Vc = 0.0003632813 # V/Dac step
+	#Vcshunt = 5.0/4000
+	Vcshunt = 0.00250
+	Rshunt = 0.1
+	power_off()
+	SetSlaveMap(verbose = 0)
+	# Main Power On
+	# send command to turn power on.  First set speed and route i2cmux then send
+	Configure_MPA_SSA_I2C_Master(1, SLOW)
+	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
+	# On powerup port defaults to on, so inverter is needed.
+	# send on bit (12-2017).  Inverter must be manually soldered to board
+	Send_MPA_SSA_I2C_Command(powerenable, 0, write, 0, 0x00)  # send on bit
+
 def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
 	read = 1
 	write = 0
@@ -228,7 +260,7 @@ def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
 	Rshunt = 0.1
 
 	SetSlaveMap(verbose = 0)
-# mpavddwrite():
+	# mpavddwrite():
 	set_VDDPST(V = VDDPST)
 	sleep(2)
 	set_DVDD(V = DVDD)
@@ -289,7 +321,7 @@ def measure_current(print_file = 1, filename =  "../cernbox/MPA_Results/digital_
 	ret=Send_MPA_SSA_I2C_Command(ina226_10, 0, read, 0x01, 0, verbose = 0)  #read VR on shunt
 	message = "VDDPST current: " + str((Vcshunt * ret)/Rshunt) + " mA"
 	print message
-	f.write(message)
+	if print_file: f.write(message)
 # readDVDD
 	Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
@@ -297,7 +329,7 @@ def measure_current(print_file = 1, filename =  "../cernbox/MPA_Results/digital_
 	ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
 	message = "DVDD current: " + str((Vcshunt * ret)/Rshunt) + " mA"
 	print message
-	f.write(message)
+	if print_file: f.write(message)
 # readAVDD
 	Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
@@ -305,8 +337,10 @@ def measure_current(print_file = 1, filename =  "../cernbox/MPA_Results/digital_
 	ret=Send_MPA_SSA_I2C_Command(ina226_8, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
 	message = "AVDD current: " + str((Vcshunt * ret)/Rshunt) + " mA"
 	print message
-	f.write(message)
-	f.close()
+	if print_file:
+		f.write(message)
+		f.close()
+	return (Vcshunt * ret)/Rshunt
 
 def power_off():
 	read = 1

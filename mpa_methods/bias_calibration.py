@@ -3,7 +3,7 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from mpa_methods.mpa_i2c_conf import *
-from mpa_methods.fast_readout_utility import *
+#from mpa_methods.fast_readout_utility import *
 import numpy as np
 import time
 import sys
@@ -33,6 +33,7 @@ def DAC_linearity(block, point, bit, inst, step = 1, plot = 1):
 	print "DAC: ", DAC
 	for i in range(0, 1 << bit, step):
 		I2C.peri_write(DAC, i)
+		#sleep(0.1)
 		data[i] = multimeter.measure(inst)
 		if (i % 10 == 0):
 			print "Done point ", i, " of ", 1 << bit
@@ -73,14 +74,22 @@ def calibrate_bias(point, block, DAC_val, exp_val, inst, gnd_corr):
 	I2C.peri_write('TESTMUX',0b00000001 << block)
 	I2C.peri_write(test, 0b00000001 << point)
 	I2C.peri_write(DAC, 0)
+	#sleep(0.1)
 	off_val = multimeter.measure(inst)
+	#sleep(0.1)
 	I2C.peri_write(DAC, DAC_val)
+	#sleep(0.1)
 	act_val = multimeter.measure(inst)
 	LSB = (act_val - off_val) / DAC_val
 	DAC_new_val = DAC_val- int(round((act_val - exp_val - gnd_corr)/LSB))
+	if DAC_new_val < 0:
+		DAC_new_val = 0
+	elif DAC_new_val > 31:
+		DAC_new_val = 31
 	I2C.peri_write(DAC, DAC_new_val)
 	new_val = multimeter.measure(inst)
-	if (new_val - gnd_corr < exp_val + exp_val*0.02 )&(new_val - gnd_corr > exp_val - exp_val*0.02):
+	#if (new_val - gnd_corr < exp_val + exp_val*0.05 )&(new_val - gnd_corr > exp_val - exp_val*0.05):
+	if (new_val - gnd_corr < exp_val + exp_val*0.02 )&(new_val - gnd_corr > exp_val - exp_val*0.052):
 		i = 1
 		print "Calibration bias point ", point, "of test point", block, "--> Done (", new_val, "V for ", DAC_new_val, " DAC)"
 	else:
@@ -115,6 +124,18 @@ def measure_gnd():
 	disable_test()
 	print data
 	return np.mean(data)
+
+def measure_bg():
+	inst = multimeter.init_keithley(3)
+	activate_I2C_chip(verbose = 0)
+	sleep(1)
+	disable_test()
+	I2C.peri_write('TESTMUX',0b10000000)
+	sleep(1)
+	data = multimeter.measure(inst)
+	disable_test()
+	print data
+	return data
 
 def calibrate_chip(gnd_corr, print_file = 1, filename = "test"):
 	activate_I2C_chip(verbose = 0)
