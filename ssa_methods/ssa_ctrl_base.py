@@ -247,6 +247,11 @@ class ssa_ctrl_base:
 		self.I2C.peri_write("CalPulse_duration", duration) # set cal pulse duration
 		self.set_cal_pulse_delay(delay) # init the cal pulse digital delay line
 
+	def set_cal_pulse_amplitude(self, amplitude = 255):
+		self.I2C.peri_write("Bias_CALDAC", amplitude)
+
+	def set_cal_pulse_duration(self, duration = 5):
+		self.I2C.peri_write("CalPulse_duration", duration)
 
 	def set_cal_pulse_delay(self, delay):
 		if(isinstance(delay, str)):

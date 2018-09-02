@@ -44,7 +44,7 @@ class SSA_measurements():
 
 
 
-	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', ret_average = True, filename = False, runname= '', plot = True, filemode = 'w'):
+	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', ret_average = True, filename = False, runname= '', plot = True, filemode = 'w', set_trim = False):
 		print "->  \tBaseline Noise Measurement"
 		data = np.zeros([120, 256])
 		A = []; sigma = []; mu = []; cnt = 0;
@@ -57,7 +57,7 @@ class SSA_measurements():
 				CSV.ArrayToCSV (array = data, filename = fo, transpose = False)
 				print "->  \tData saved in" + fo
 		elif(mode == 'all'):
-			tmp = self.cal.scurves(cal_ampl='baseline', filename = "../SSA_Results/" + filename + "_" + str(runname), rdmode = 'fast', mode = 'all', striplist = striplist, plot = False, speeduplevel = 2)
+			tmp = self.cal.scurves(cal_ampl='baseline', filename = "../SSA_Results/" + filename + "_" + str(runname), rdmode = 'fast', mode = 'all', striplist = striplist, plot = False, speeduplevel = 2, set_trim = set_trim)
 			data = np.transpose(tmp)
 		plt.clf()
 		plt.figure(1)
@@ -70,6 +70,7 @@ class SSA_measurements():
 			if(plot and par[2] < np.inf):
 				plt.plot(data[s-1], 'og')
 				plt.plot(x, f_gauss(x, par[0], par[1], par[2]), '-r')
+		#min =
 		if( isinstance(filename, str) ):
 			#f1 = "../SSA_Results/" + filename + "/Scurve_NoiseBaseline/" + filename + "_scurve_trim31__cal_0.csv"
 			#fo = "../SSA_Results/" + filename + "_Baseline_scurve_trim31_cal0.csv"
@@ -90,6 +91,7 @@ class SSA_measurements():
 			highnoise = np.where( sigma > 3)[0]
 			sigma_filter = sigma[(np.where(sigma < 100)[0])]
 			average_noise = np.mean(sigma_filter)
+			#maxnoise = np.max( np.where( data[striplist]>0 ) )
 			return [average_noise, highnoise]
 		else:
 			return sigma
@@ -413,6 +415,9 @@ class SSA_measurements():
 		self._display_power_value(data.items()[-1], display)
 
 		return data
+
+	def shaper_pulse(self, charge=40, strip=30, naverages=100):
+		self.cal.shaperpulse_rise(charge = charge, naverages = naverages, plot = True, strip = strip, display = True, hitloc0 = 24, thmin = 10)
 
 
 

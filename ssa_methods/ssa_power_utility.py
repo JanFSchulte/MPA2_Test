@@ -31,19 +31,19 @@ class ssa_power_utility:
 
 	def set_supply(self, mode = 'on', d = 1.00, a = 1.25, p = 1.25, bg = 0.270, display = True):
 		if(mode == 'on' or mode == 1):
-			sleep(0.0); self.mainpoweron()
-			sleep(0.1); self.set_pvdd(p);
-			sleep(2.0); self.set_dvdd(d);
-			sleep(0.1); self.set_avdd(a);
-			sleep(0.1); self.set_vbf(bg)
-			sleep(1.0); self.reset()
+			sleep(0.00); self.mainpoweron()
+			sleep(0.01); self.set_pvdd(p);
+			sleep(0.20); self.set_dvdd(d);
+			sleep(0.00); self.set_avdd(a);
+			sleep(0.10); self.set_vbf(bg)
+			sleep(0.10); self.reset()
 		elif(mode == 'off' or mode == 0):
-			sleep(0.0); self.set_vbf(0)
-			sleep(0.1); self.set_avdd(0);
-			sleep(0.1); self.set_dvdd(0);
-			sleep(3.0); self.set_pvdd(0)
-			sleep(0.5); self.mainpoweroff()
-		sleep(1); self.get_power(display = display)
+			sleep(0.00); self.set_vbf(0)
+			sleep(0.10); self.set_avdd(0);
+			sleep(0.00); self.set_dvdd(0);
+			sleep(0.10); self.set_pvdd(0)
+			sleep(0.10); self.mainpoweroff()
+		sleep(0.1); self.get_power(display = display)
 
 
 	def get_power(self, display = True, return_all = False):
@@ -188,14 +188,14 @@ class ssa_power_utility:
 	def mainpoweron(self):
 		Configure_MPA_SSA_I2C_Master(1, 2)
 		Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x02)  # route to 2nd PCF8574
-		Send_MPA_SSA_I2C_Command(self.powerenable, 0, self.pcbwrite, 0, 0x00)  # send on bit
+		Send_MPA_SSA_I2C_Command(self.powerenable, 0, self.pcbwrite, 0, 0b010)  # send on bit
 		self.state.main = 1
 
 
 	def mainpoweroff(self):
 		Configure_MPA_SSA_I2C_Master(1, 2)
 		Send_MPA_SSA_I2C_Command(self.i2cmux,0, self.pcbwrite, 0, 0x02)  # route to 2nd PCF8574
-		Send_MPA_SSA_I2C_Command(self.powerenable, 0, self.pcbwrite, 0, 0x01)  # send off bit
+		Send_MPA_SSA_I2C_Command(self.powerenable, 0, self.pcbwrite, 0, 0b111)  # send off bit
 		self.state.main = 0
 
 

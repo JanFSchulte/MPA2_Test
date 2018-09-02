@@ -27,7 +27,7 @@ class SSA_readout():
 		return [l1_data_ready, stub_data_ready, counters_ready]
 
 
-	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False):
+	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False, return_as_pattern = False):
 	 	data = []; tmp = [];
 	 	counter = 0; data_loc = 21 + shift;
 	 	status = [0]*3; timeout = 10;
@@ -80,7 +80,12 @@ class SSA_readout():
 		if(display_pattern):
 			ctmp = np.array(data[0]).astype(bool).astype(int)
 			print "[%5s]" % '|'.join(map(str, ctmp))
-		if(getstatus):
+		if return_as_pattern:
+			ctmp = np.zeros([8,40])
+			for i in range(0,8):
+				ctmp[i,:] = data[i]
+			return ctmp
+		elif(getstatus):
 			return coordinates, status
 		else:
 			return coordinates
