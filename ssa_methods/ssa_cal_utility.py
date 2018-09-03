@@ -27,20 +27,10 @@ import numpy as np
 class SSA_cal_utility():
 
 	def __init__(self, ssa, I2C, fc7):
-		self.ssa = ssa
-		self.I2C = I2C
-		self.fc7 = fc7
-		self.scurve_data = False
-		self.scurve_nevents  = 0
-		self.scurve_calpulse = 0
-		self.default_dac_ratio = 4.9 / 2
-		self.fe_ofs = 0.3708
-		self.fe_gain = 1.1165
-		self.calpulse_dll_resolution = 1.2
-		self.tempvalue = np.inf
-		self.baseline = 'nondefined'
-		self.storedscurve = {}
+		self.ssa = ssa; self.I2C = I2C;	self.fc7 = fc7;
+		self.__set_variables()
 
+	###########################################################
 	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2, countershift = 1, set_trim = False):
 		'''	cal_ampl  -> int |'baseline'  -> Calibration pulse charge (in CALDAC LSBs)
 			mode      -> 'all' | 'sbs'   -> All strips together or one by one
@@ -178,7 +168,7 @@ class SSA_cal_utility():
 
 		return scurves
 
-
+	###########################################################
 	def trimming_scurves(self, method = 'expected', cal_ampl = 30, th_nominal = 'default', default_trimming = 'keep', striprange = range(1,121), ratio = 'default', iterations = 5, nevents = 1000, plot = True, display = False, reevaluate = True):
 		utils.activate_I2C_chip()
 		# trimdac/thdac ratio
@@ -216,7 +206,6 @@ class SSA_cal_utility():
 		thlist_init, par_init = self.evaluate_scurve_thresholds(
 			scurve = scurve_init,
 			nevents = nevents)
-
 		# Define the target threshold
 		if(method == 'expected'):
 			if(th_nominal == 'evaluate'):
@@ -286,7 +275,7 @@ class SSA_cal_utility():
 			plt.show()
 		return scurve_init , scurve
 
-
+	###########################################################
 	def set_trimming(self, default_trimming = 'keep', striprange = 'all', display = True):
 		r = True
 		if(isinstance(default_trimming, int)):
@@ -316,7 +305,7 @@ class SSA_cal_utility():
 			readback[i] = self.ssa.strip.get_trimming(i+1)
 		return readback
 
-
+	###########################################################
 	def evaluate_thdac_trimdac_ratio(self, trimdac_pvt_calib = False, cal_ampl = 100, th_nominal = 115,  nevents = 500, plot = False):
 		# set the value of the dac that controls the trimmin dacs currents
 		# to compensate for process variations
@@ -351,11 +340,10 @@ class SSA_cal_utility():
 		ratios = 32.0 / (th[0]-th[1])
 		return ratios
 
-
+	###########################################################
 	def evaluate_scurve_thresholds(self, scurve, nevents = 1000):
 		ths = []
 		pars = []
-
 		for strip in range(1,121):
 			th, par = self._scurve_fit_errorfunction(
 				curve = scurve[: , strip-1],
@@ -365,12 +353,11 @@ class SSA_cal_utility():
 				reiterate = 3)
 			ths.append(th)
 			pars.append(par)
-
 		ths = np.array(ths)
 		pars = np.array(pars)
 		return ths, pars
 
-
+	###########################################################
 	def _scurve_fit_errorfunction(self, curve, nevents, expected = 'autodefine', errmsg="", reiterate = 3):
 		sct = curve;
 		err = True;	itr = 0;
@@ -417,7 +404,7 @@ class SSA_cal_utility():
 			thidx = int(round(par[1]))
 			return thidx, par
 
-
+	###########################################################
 	def _scurve_fit_gaussian(self, curve, errmsg="", reiterate = 10):
 		guess_mean = np.argmax(curve)
 		guess_sigma = np.size( np.where(curve > 10) )/6.0
@@ -443,6 +430,7 @@ class SSA_cal_utility():
 		else:
 			return par
 
+	###########################################################
 	def _scurve_fit_gaussian1(self, curve, x = 'default', errmsg="", reiterate = 10):
 		if(x == 'default'):
 			x = range(np.size(curve))
@@ -470,11 +458,282 @@ class SSA_cal_utility():
 			mu = result.params['mu'].value
 			return  [A, mu, sigma]
 
+	###########################################################
+	def sampling_slack(self, strips = [50], shift = 0, samplingmode='level', display=True, debug = False):
+		delay = []
+		cnt = 0
+		for s in strips:
+			cnt += 1
+			self.ssa.inject.analog_pulse(hit_list = [s], mode = samplingmode, initialise = False)
+			sdel = self.ssa.readout.cluster_data_delay(shift = shift, display = display, debug = debug)
+			delay.append(sdel)
+			if(display): utils.ShowPercent(cnt, len(strips), " Sampling")
+		if(display): utils.ShowPercent(len(strips), len(strips), " Done")
+		return delay
+
+	###########################################################
+	def data_latency(self, strip = 50, shift = 0, samplingmode='level', iterations = 1, display_pattern = False, polarity = 'rising'):
+		lv = np.ones(iterations, dtype = np.float16)*np.inf
+		for i in range(0, iterations):
+			#self.ssa.inject.analog_pulse(hit_list = [strip], mode = samplingmode, initialise = False, trigger = False)
+			cl_array = self.ssa.readout.cluster_data(shift = shift, lookaround = True, display_pattern = display_pattern, initialize = False)
+			tmp = (np.where( cl_array[0,:] == strip )[0])
+			if (np.size(tmp) > 0):
+				if (polarity == 'rising'):
+					val = float(tmp[0])
+					if( cl_array[0, int(val)-1] == 0):
+						lv[i] = float(tmp[0])
+				elif (polarity == 'falling'):
+					val = float(tmp[-1])
+					print cl_array[0,:]
+					if( cl_array[0, int(val)+1] == 0):
+						 lv[i] = float(tmp[-1])
+				else:
+					exit(1)
+			else:
+				lv[i] = np.inf
+		lvtmp = lv[ np.where(lv<256) ]
+		###lvtmp = lv; lvtmp[lvtmp>256] = 0;
+		if(np.size(np.where(lv>256)) < 1):
+		#if (np.size(lvtmp) > 0):
+			latency=np.mean(lvtmp)
+		else:
+			latency=np.inf
+		return latency
+
+	###########################################################
+	def shaperpulse(self,charge = 40, naverages = 5, plot = True, strip = 30, display = False, hitloc0 = False, thmin = 15, raw = False):
+		self.ssa.ctrl.activate_readout_normal()
+		self.ssa.ctrl.set_cal_pulse_amplitude(charge)
+		self.ssa.ctrl.set_cal_pulse_duration(1)
+		self.ssa.ctrl.set_threshold_H(200)
+		self.ssa.strip.set_sampling_mode('all', 'edge')
+		self.I2C.strip_write("ENFLAGS", 0, 0)
+		self.I2C.peri_write("Bias_D5DLLB", 31)
+		self.ssa.strip.set_trimming( 'all', 0)
+		self.ssa.readout.cluster_data(initialize = True)
+		self.ssa.readout.cluster_data(initialize = True)
+		self.ssa.readout.cluster_data(initialize = False)
+		curve = np.array([np.ones(255, dtype=float)*np.float(-np.inf)]*2)
+		for edge in [0,1]:
+			if(edge):
+				self.I2C.strip_write("ENFLAGS", strip, 0b10011)
+			else:
+				self.I2C.strip_write("ENFLAGS", strip, 0b10001)
+			for threshold in range(thmin, 255, 1):
+				self.ssa.ctrl.set_threshold(threshold)
+				time.sleep(0.01)
+				self.ssa.ctrl.set_cal_pulse_delay(0)
+				self.ssa.readout.cluster_data(initialize = False)
+				tm = np.float(-np.inf)
+				for delay in range(0,64):
+					hitlocarray = np.zeros(naverages, dtype = float)
+					self.ssa.ctrl.set_cal_pulse_delay(delay)
+					time.sleep(0.01)
+					for i in range(0, naverages):
+						hits = self.ssa.readout.cluster_data(return_as_pattern = True, initialize = False, display_pattern = display)[0]
+						hitlocarray[i] = np.mean( np.where( hits ==  (strip+3) )[0] )
+					hitlocarray = hitlocarray[hitlocarray > 0]
+					if(np.size(hitlocarray) == 0):
+						break
+					hitloc = np.mean(hitlocarray)
+					if((delay == 0) and (hitloc0 == False)):
+					    hitloc0 = hitloc
+					#print hitloc0, "   ", hitloc
+					if(hitloc > hitloc0+0.5):
+					    if(display):
+							print("{:4} -> {:4}".format(delay, hitloc))
+					    tm = delay
+					    break
+				curve[edge][threshold] = tm
+				utils.ShowPercent(threshold, 255, "Shaper pulse reconstruction running.. [{:3}].".format(tm))
+				if(tm < 0):
+					utils.ShowPercent(100,100, "Shaper pulse reconstruction complete.             ")
+					break
+		curve = 50.0 - curve
+		pmean = np.array(np.ones(128, dtype = float)*(-np.inf))
+		pstd = np.zeros(128, dtype = float)
+		for i in range(0,128):
+			tmp = np.where(curve[0] == i)[0]
+			if(np.size(tmp)>0):
+				pmean[i] = np.mean(tmp)
+				pstd[i] = np.std(tmp)
+			tmp = np.where(curve[1] == i)[0]
+			if(np.size(tmp)>0):
+				pmean[i] = np.mean(tmp)
+				pstd[i] = np.std(tmp)
+		if(plot):
+			plt.clf()
+			plt.plot(range(128), pmean, '-or')
+			plt.plot(curve[0], range(255), '-ob')
+			plt.plot(curve[1], range(255), '-ob')
+			plt.show()
+		if raw: return pmean, pstd, curve
+		else:   return pmean
+
+	###########################################################
+	#def peaking_time(self,charge = 40, naverages = 5, plot = True, strip = 30, display = False, hitloc0 = False, thmin = 15, raw = False):
+	#	self.ssa.ctrl.activate_readout_normal()
+	#	self.ssa.ctrl.set_cal_pulse_amplitude(charge)
+	#	self.ssa.ctrl.set_cal_pulse_duration(1)
+	#	self.ssa.ctrl.set_threshold_H(200)
+	#	self.ssa.strip.set_sampling_mode('all', 'edge')
+	#	self.I2C.strip_write("ENFLAGS", 0, 0)
+	#	self.I2C.peri_write("Bias_D5DLLB", 31)
+	#	self.ssa.strip.set_trimming( 'all', 0)
+	#	self.ssa.readout.cluster_data(initialize = True)
+	#	self.ssa.readout.cluster_data(initialize = True)
+	#	self.ssa.readout.cluster_data(initialize = False)
+	
+	###########################################################
+	def delayline_resolution(self, naverages = 100, charge = 40, threshold = 20, strip = 30):
+		self.ssa.ctrl.activate_readout_normal()
+		self.ssa.ctrl.set_cal_pulse_amplitude(charge)
+		self.ssa.ctrl.set_cal_pulse_duration(1)
+		self.ssa.ctrl.set_threshold_H(200)
+		self.ssa.strip.set_sampling_mode('all', 'level')
+		self.I2C.strip_write("ENFLAGS", 0, 0)
+		self.I2C.strip_write("ENFLAGS", strip, 0b10001)
+		self.I2C.peri_write("Bias_D5DLLB", 31)
+		self.ssa.strip.set_trimming( 'all', 0)
+		self.ssa.readout.cluster_data(initialize = True)
+		self.ssa.readout.cluster_data(initialize = False)
+		self.ssa.ctrl.set_threshold(threshold)
+		time.sleep(0.01)
+		hitloc = np.zeros([64], dtype=float)
+		for delay in range(0,64):
+			utils.ShowPercent(delay, 63, "Evaluating Delay-Line resolution..")
+			self.ssa.ctrl.set_cal_pulse_delay(delay)
+			time.sleep(0.001)
+			tmp = np.zeros(naverages, dtype=float)
+			for i in range(0,naverages):
+				hits = self.ssa.readout.cluster_data(return_as_pattern = True, initialize = False, display_pattern = False)[0]
+				tmp[i] = np.mean( np.where( hits ==  (strip+3) )[0] )
+			hitloc[delay] = np.mean( tmp )
+		nedges = np.size( hitloc[hitloc == (hitloc[1]+1)] )
+		resolution = 25.0 / np.float(nedges)
+		utils.ShowPercent(100, 100, "Delay-Line resolution = {:1.3} ns.".format(resolution))
+		return resolution
+
+	###########################################################
+	def deskew_samplingedge(self, strip, mode = 'clkdll', targetbx = 1 , step = 1, samplingmode='level', start = 1, shift = 2, display = False, displaypercent = True, raw = False, msg='', iterations = 10, display_pattern = False, polarity = 'rising'):
+		if(mode == 'clkdll'):
+			latency, edge = self._deskew_samplingedge_clk_dll(strip=strip, target = targetbx, step=step, start=start, shift=shift+4, display=display, displaypercent=displaypercent, msg=msg, samplingmode=samplingmode, iterations = iterations, display_pattern = display_pattern)
+		elif(mode == 'caldll'):
+			latency, edge = self._deskew_samplingedge_cal_dl( strip=strip, target = targetbx, step=step, start=start, shift=shift+7, display=display, displaypercent=displaypercent, msg=msg, samplingmode=samplingmode, iterations = iterations, display_pattern = display_pattern, polarity = polarity)
+		else:
+			error(1)
+		return latency, [edge[0], edge[1]]
+
+	###########################################################
+	def _deskew_samplingedge_clk_dll(self, strip, target, shift = 2, samplingmode='level', display = False, displaypercent = True, msg='', step = 1, start = 0,  iterations = 1, display_pattern = False):
+		edge = [False, False]
+		for i, j in itertools_product(range(start,7), range(0, 16, step)):
+			if(displaypercent):
+				utils.ShowPercent(i*16+j, 16*8, msg + " Sampling..")
+			self.ssa.ctrl.set_sampling_deskewing_coarse(value = i)
+			self.ssa.ctrl.set_sampling_deskewing_fine(value = j, enable = True, bypass = True)
+			sleep(0.01)
+			delay = self.data_latency(strip = strip, shift = shift, samplingmode=samplingmode, iterations = iterations, display_pattern = display_pattern)
+			if(display):
+				print "deskewing = [%d][%d] \t->  delay = %s)" % (i, j, delay)
+			if (delay == target):
+				break
+		latency = float(i*3.125 + j*0.1953125)
+		if(displaypercent):
+			utils.ShowPercent(100, 100, msg + " Delay = %3.4f [%d-%d]" % (latency, edge[0], edge[1]) )
+		return latency, [i, j]
+
+	###########################################################
+	def _deskew_samplingedge_cal_dl(self, strip, target, shift = 2, samplingmode='level', display = False, displaypercent = True, msg='', step = 1, start = 0, iterations = 1, display_pattern = False, polarity = 'rising'):
+		edge = 0
+		delay = np.inf
+		temp = np.zeros(3)
+		#if (polarity == 'rising'):
+		#	rangelist = range(self.tempvalue+3, -1, -1)
+		#elif (polarity == 'falling'):
+		#	rangelist = range(self.tempvalue+3, -1, -1)
+		rangelist = range(63, -1, -1)
+		for i in rangelist:	#range(63, -1, -1):
+			if(displaypercent):
+				utils.ShowPercent(i, 64, msg + " Sampling..")
+			self.ssa.ctrl.set_cal_pulse_delay(i)
+			sleep(0.01)
+			latency = self.data_latency(strip = strip, shift = shift, samplingmode=samplingmode, iterations = iterations, display_pattern = display_pattern, polarity=polarity)
+			if(display):
+				print "->  \tdeskewing = [%d] \t->  latency = %s)" % (i, latency)
+			temp = np.insert(temp[:-1], 0, latency)
+			if(temp[0]>256 and temp[1]>256 and temp[2]>256):
+				delay = np.inf
+				#break
+			elif (latency == target):
+				delay = i
+				#break
+		self.tempvalue = delay
+		latency = float(delay)* self.calpulse_dll_resolution
+		return latency , [delay, 0]
+
+	###########################################################
+	def noise_occupancy(self, nevents = 100, upto = 20, plot = True):
+		integ = []
+		self.ssa.readout.l1_data(initialise = True)
+		for th in range(0, upto+1):
+			count = [0]*120
+			self.ssa.ctrl.set_threshold(th)
+			for i in range(0, nevents):
+				utils.ShowPercent(th*nevents + i, (upto+1)*nevents , "Calculating")
+				lcnt, bcnt, hit, hip = self.ssa.readout.l1_data(initialise = False, multi = False)
+				for s in range(0,120):
+					if s in hit:
+						count[s] += 1
+			integ.append(count)
+		utils.ShowPercent(100, 100, "Done")
+		noise_occupancy = (np.array(integ) / float(nevents)) * 100.0
+		plt.clf()
+		plt.plot(noise_occupancy)
+		plt.show()
+		return noise_occupancy
 
 
+	###########################################################
+	def delayline_resolution_old(self, set_bias = False, shift = 3, display = False, debug = False):
+		prev = 0xff
+		if(isinstance(set_bias, int)):
+			if(set_bias > 0 and set_bias < 64):
+				self.I2C.peri_write('Bias_D5DLLB', set_bias) # to change the resolution
+		self.ssa.strip.set_enable(strip='all', enable=0, polarity=0, hitcounter=0, digitalpulse=0, analogpulse=0)
+		self.ssa.inject.analog_pulse(initialise = True, hit_list = [], mode = 'edge', threshold = [50,200], cal_pulse_amplitude = 1)
+		self.ssa.ctrl.set_cal_pulse_delay('on')
+		r = []
+		for i in range(0,64):
+			self.ssa.ctrl.set_cal_pulse_delay(i)
+			tmp = self.sampling_slack(strips = [50], display=False, debug = debug, shift = shift, samplingmode='edge')
+			if(np.size(tmp[0]) > 0):
+				r.append(tmp[0][0])
+				if(tmp[0][0] == 1 and prev == 1):
+					break # to speedup
+				if(i == 0 and tmp[0][0] > -1):
+					break
+				prev = tmp[0][0]
+			else: # delay out of considered range (< -2 or > +2)
+				r.append(0xff)
+			utils.ShowPercent(i, 63, "Calculating")
+		if(display): print r
+		tmp = np.size( np.where(  np.array(r) == 0 ) )
+		if(tmp > 0):
+			resolution = 25.0 / tmp
+			rtval = '%5.3fns' % resolution
+			self.calpulse_dll_resolution = resolution
+		else:
+			rtval = 'error'
+			self.calpulse_dll_resolution = -1
+		return rtval
+			#  ssa.ctrl.set_cal_pulse_delay(11)
+			#  measure.deskew_samplingedge(step = 1)
+			#  I2C.peri_write('Bias_D5DLLB', 20)
 
-
-	def shaper_pulse_rising(self, calpulse = 60, mode = 'caldll', targetbx = 25, resolution = 1, strip = 5, display = False, display_pattern = False, plot = True, thmin = 20, thmax = 255, iterations = 1, basedelay = 'auto', samplingmode = 'level'):
+	###########################################################
+	def shaper_pulse_rising_old(self, calpulse = 60, mode = 'caldll', targetbx = 25, resolution = 1, strip = 5, display = False, display_pattern = False, plot = True, thmin = 20, thmax = 255, iterations = 1, basedelay = 'auto', samplingmode = 'level'):
 		# mode = [clkdll][caldll]
 		utils.print_enable(False)
 		activate_I2C_chip()
@@ -534,7 +793,8 @@ class SSA_cal_utility():
 			plt.show()
 		return latency, thlist
 
-	def shaper_pulse_falling(self, calpulse = 60, mode = 'caldll', targetbx = 25, resolution = 1, strip = 5, display = False, display_pattern = False, plot = True, thmin = 20, thmax = 255, iterations = 1, basedelay = 'auto', samplingmode = 'level'):
+	###########################################################
+	def shaper_pulse_falling_old(self, calpulse = 60, mode = 'caldll', targetbx = 25, resolution = 1, strip = 5, display = False, display_pattern = False, plot = True, thmin = 20, thmax = 255, iterations = 1, basedelay = 'auto', samplingmode = 'level'):
 		# mode = [clkdll][caldll]
 		utils.print_enable(False)
 		activate_I2C_chip()
@@ -596,223 +856,15 @@ class SSA_cal_utility():
 			plt.show()
 		return latency, thlist
 
-
-	def sampling_slack(self, strips = [50], shift = 0, samplingmode='level', display=True, debug = False):
-		delay = []
-		cnt = 0
-		for s in strips:
-			cnt += 1
-			self.ssa.inject.analog_pulse(hit_list = [s], mode = samplingmode, initialise = False)
-			sdel = self.ssa.readout.cluster_data_delay(shift = shift, display = display, debug = debug)
-			delay.append(sdel)
-			if(display): utils.ShowPercent(cnt, len(strips), " Sampling")
-		if(display): utils.ShowPercent(len(strips), len(strips), " Done")
-		return delay
-
-
-	def data_latency(self, strip = 50, shift = 0, samplingmode='level', iterations = 1, display_pattern = False, polarity = 'rising'):
-		lv = np.ones(iterations, dtype = np.float16)*np.inf
-		for i in range(0, iterations):
-			#self.ssa.inject.analog_pulse(hit_list = [strip], mode = samplingmode, initialise = False, trigger = False)
-			cl_array = self.ssa.readout.cluster_data(shift = shift, lookaround = True, display_pattern = display_pattern, initialize = False)
-			tmp = (np.where( cl_array[0,:] == strip )[0])
-			if (np.size(tmp) > 0):
-				if (polarity == 'rising'):
-					val = float(tmp[0])
-					if( cl_array[0, int(val)-1] == 0):
-						lv[i] = float(tmp[0])
-				elif (polarity == 'falling'):
-					val = float(tmp[-1])
-					print cl_array[0,:]
-					if( cl_array[0, int(val)+1] == 0):
-						 lv[i] = float(tmp[-1])
-				else:
-					exit(1)
-			else:
-				lv[i] = np.inf
-		lvtmp = lv[ np.where(lv<256) ]
-		###lvtmp = lv; lvtmp[lvtmp>256] = 0;
-		if(np.size(np.where(lv>256)) < 1):
-		#if (np.size(lvtmp) > 0):
-			latency=np.mean(lvtmp)
-		else:
-			latency=np.inf
-		return latency
-
-
-	def deskew_samplingedge(self, strip, mode = 'clkdll', targetbx = 1 , step = 1, samplingmode='level', start = 1, shift = 2, display = False, displaypercent = True, raw = False, msg='', iterations = 10, display_pattern = False, polarity = 'rising'):
-		if(mode == 'clkdll'):
-			latency, edge = self._deskew_samplingedge_clk_dll(strip=strip, target = targetbx, step=step, start=start, shift=shift+4, display=display, displaypercent=displaypercent, msg=msg, samplingmode=samplingmode, iterations = iterations, display_pattern = display_pattern)
-		elif(mode == 'caldll'):
-			latency, edge = self._deskew_samplingedge_cal_dl( strip=strip, target = targetbx, step=step, start=start, shift=shift+7, display=display, displaypercent=displaypercent, msg=msg, samplingmode=samplingmode, iterations = iterations, display_pattern = display_pattern, polarity = polarity)
-		else:
-			error(1)
-		return latency, [edge[0], edge[1]]
-
-
-	def _deskew_samplingedge_clk_dll(self, strip, target, shift = 2, samplingmode='level', display = False, displaypercent = True, msg='', step = 1, start = 0,  iterations = 1, display_pattern = False):
-		edge = [False, False]
-		for i, j in itertools_product(range(start,7), range(0, 16, step)):
-			if(displaypercent):
-				utils.ShowPercent(i*16+j, 16*8, msg + " Sampling..")
-			self.ssa.ctrl.set_sampling_deskewing_coarse(value = i)
-			self.ssa.ctrl.set_sampling_deskewing_fine(value = j, enable = True, bypass = True)
-			sleep(0.01)
-			delay = self.data_latency(strip = strip, shift = shift, samplingmode=samplingmode, iterations = iterations, display_pattern = display_pattern)
-			if(display):
-				print "deskewing = [%d][%d] \t->  delay = %s)" % (i, j, delay)
-			if (delay == target):
-				break
-		latency = float(i*3.125 + j*0.1953125)
-		if(displaypercent):
-			utils.ShowPercent(100, 100, msg + " Delay = %3.4f [%d-%d]" % (latency, edge[0], edge[1]) )
-		return latency, [i, j]
-
-
-	def _deskew_samplingedge_cal_dl(self, strip, target, shift = 2, samplingmode='level', display = False, displaypercent = True, msg='', step = 1, start = 0, iterations = 1, display_pattern = False, polarity = 'rising'):
-		edge = 0
-		delay = np.inf
-		temp = np.zeros(3)
-		#if (polarity == 'rising'):
-		#	rangelist = range(self.tempvalue+3, -1, -1)
-		#elif (polarity == 'falling'):
-		#	rangelist = range(self.tempvalue+3, -1, -1)
-		rangelist = range(63, -1, -1)
-		for i in rangelist:	#range(63, -1, -1):
-			if(displaypercent):
-				utils.ShowPercent(i, 64, msg + " Sampling..")
-			self.ssa.ctrl.set_cal_pulse_delay(i)
-			sleep(0.01)
-			latency = self.data_latency(strip = strip, shift = shift, samplingmode=samplingmode, iterations = iterations, display_pattern = display_pattern, polarity=polarity)
-			if(display):
-				print "->  \tdeskewing = [%d] \t->  latency = %s)" % (i, latency)
-			temp = np.insert(temp[:-1], 0, latency)
-			if(temp[0]>256 and temp[1]>256 and temp[2]>256):
-				delay = np.inf
-				#break
-			elif (latency == target):
-				delay = i
-				#break
-		self.tempvalue = delay
-		latency = float(delay)* self.calpulse_dll_resolution
-		return latency , [delay, 0]
-
-
-
-	def noise_occupancy(self, nevents = 100, upto = 20, plot = True):
-		integ = []
-		self.ssa.readout.l1_data(initialise = True)
-		for th in range(0, upto+1):
-			count = [0]*120
-			self.ssa.ctrl.set_threshold(th)
-			for i in range(0, nevents):
-				utils.ShowPercent(th*nevents + i, (upto+1)*nevents , "Calculating")
-				lcnt, bcnt, hit, hip = self.ssa.readout.l1_data(initialise = False, multi = False)
-				for s in range(0,120):
-					if s in hit:
-						count[s] += 1
-			integ.append(count)
-		utils.ShowPercent(100, 100, "Done")
-		noise_occupancy = (np.array(integ) / float(nevents)) * 100.0
-		plt.clf()
-		plt.plot(noise_occupancy)
-		plt.show()
-		return noise_occupancy
-
-
-
-	def shaperpulse(self,charge = 40, naverages = 5, plot = True, strip = 30, display = False, hitloc0 = False, thmin = 7):
-		self.ssa.ctrl.activate_readout_normal()
-		self.ssa.ctrl.set_cal_pulse_amplitude(charge)
-		self.ssa.ctrl.set_cal_pulse_duration(1)
-		self.ssa.ctrl.set_threshold_H(200)
-		self.ssa.strip.set_sampling_mode('all', 'edge')
-		self.I2C.strip_write("ENFLAGS", 0, 0)
-		self.I2C.peri_write("Bias_D5DLLB", 31)
-		self.ssa.strip.set_trimming( 'all', 0)
-		self.ssa.readout.cluster_data(initialize = True)
-		self.ssa.readout.cluster_data(initialize = True)
-		self.ssa.readout.cluster_data(initialize = False)
-		curve = np.array([np.ones(255, dtype=float)*np.float(-np.inf)]*2)
-		for edge in [0,1]:
-			if(edge):
-				self.I2C.strip_write("ENFLAGS", strip, 0b10011)
-			else:
-				self.I2C.strip_write("ENFLAGS", strip, 0b10001)
-			for threshold in range(thmin, 255, 1):
-				self.ssa.ctrl.set_threshold(threshold)
-				time.sleep(0.01)
-				self.ssa.ctrl.set_cal_pulse_delay(0)
-				self.ssa.readout.cluster_data(initialize = False)
-				tm = np.float(-np.inf)
-				for delay in range(0,64):
-					hitlocarray = np.zeros(naverages, dtype = float)
-					self.ssa.ctrl.set_cal_pulse_delay(delay)
-					time.sleep(0.01)
-					for i in range(0, naverages):
-						hits = self.ssa.readout.cluster_data(return_as_pattern = True, initialize = False, display_pattern = display)[0]
-						hitlocarray[i] = np.mean( np.where( hits ==  (strip+3) )[0] )
-					hitlocarray = hitlocarray[hitlocarray > 0]
-					#print hitlocarray
-					if(np.size(hitlocarray) == 0):
-						break
-					#hitloc = int(np.round(np.mean(hitlocarray)))
-					hitloc = np.mean(hitlocarray)
-					if((delay == 0) and (hitloc0 == False)):
-					    hitloc0 = hitloc
-					#print("{:4} -> {:4}".format(delay, hitloc))
-					#if(list(hitloc) != list(hitloc0)):
-					#if((hitloc0+1) in hitloc):
-					if(hitloc > hitloc0):
-					    #print("{:4} -> {:4}".format(delay, hitloc))
-					    tm = delay
-					    break
-				curve[edge][threshold] = tm
-				print tm
-				if(tm < 0):
-					break
-			print curve
-
-		if(plot):
-			plt.clf()
-			plt.plot(curve[0], range(255), '-or')
-			plt.plot(curve[1], range(255), '-ob')
-			plt.show()
-		return curve
-
-
-		def delayline_resolution_old(self, set_bias = False, shift = 3, display = False, debug = False):
-			prev = 0xff
-			if(isinstance(set_bias, int)):
-				if(set_bias > 0 and set_bias < 64):
-					self.I2C.peri_write('Bias_D5DLLB', set_bias) # to change the resolution
-			self.ssa.strip.set_enable(strip='all', enable=0, polarity=0, hitcounter=0, digitalpulse=0, analogpulse=0)
-			self.ssa.inject.analog_pulse(initialise = True, hit_list = [], mode = 'edge', threshold = [50,200], cal_pulse_amplitude = 1)
-			self.ssa.ctrl.set_cal_pulse_delay('on')
-			r = []
-			for i in range(0,64):
-				self.ssa.ctrl.set_cal_pulse_delay(i)
-				tmp = self.sampling_slack(strips = [50], display=False, debug = debug, shift = shift, samplingmode='edge')
-				if(np.size(tmp[0]) > 0):
-					r.append(tmp[0][0])
-					if(tmp[0][0] == 1 and prev == 1):
-						break # to speedup
-					if(i == 0 and tmp[0][0] > -1):
-						break
-					prev = tmp[0][0]
-				else: # delay out of considered range (< -2 or > +2)
-					r.append(0xff)
-				utils.ShowPercent(i, 63, "Calculating")
-			if(display): print r
-			tmp = np.size( np.where(  np.array(r) == 0 ) )
-			if(tmp > 0):
-				resolution = 25.0 / tmp
-				rtval = '%5.3fns' % resolution
-				self.calpulse_dll_resolution = resolution
-			else:
-				rtval = 'error'
-				self.calpulse_dll_resolution = -1
-			return rtval
-			#  ssa.ctrl.set_cal_pulse_delay(11)
-			#  measure.deskew_samplingedge(step = 1)
-			#  I2C.peri_write('Bias_D5DLLB', 20)
+	###########################################################
+	def __set_variables(self):
+		self.scurve_data = False
+		self.scurve_nevents  = 0
+		self.scurve_calpulse = 0
+		self.default_dac_ratio = 4.9 / 2
+		self.fe_ofs = 0.3708
+		self.fe_gain = 1.1165
+		self.calpulse_dll_resolution = 1.2
+		self.tempvalue = np.inf
+		self.baseline = 'nondefined'
+		self.storedscurve = {}

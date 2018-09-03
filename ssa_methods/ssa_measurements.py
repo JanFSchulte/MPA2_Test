@@ -4,6 +4,7 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from itertools import product as itertools_product
+import seaborn as sns
 from collections import OrderedDict
 import time
 import sys
@@ -18,7 +19,9 @@ class SSA_measurements():
 	def __init__(self, ssa, I2C, fc7, cal, analog_mux_map, pwr, biascal = False):
 		self.ssa = ssa; self.I2C = I2C; self.fc7 = fc7; self.utils = utils;
 		self.cal = cal; self.bias = biascal; self.muxmap = analog_mux_map; self.pwr = pwr;
+		self.__set_variables()
 
+	###########################################################
 	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2):
 		plt.clf()
 		data = []
@@ -42,8 +45,7 @@ class SSA_measurements():
 			plt.show()
 		return data
 
-
-
+	###########################################################
 	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', ret_average = True, filename = False, runname= '', plot = True, filemode = 'w', set_trim = False):
 		print "->  \tBaseline Noise Measurement"
 		data = np.zeros([120, 256])
@@ -70,7 +72,6 @@ class SSA_measurements():
 			if(plot and par[2] < np.inf):
 				plt.plot(data[s-1], 'og')
 				plt.plot(x, f_gauss(x, par[0], par[1], par[2]), '-r')
-		#min =
 		if( isinstance(filename, str) ):
 			#f1 = "../SSA_Results/" + filename + "/Scurve_NoiseBaseline/" + filename + "_scurve_trim31__cal_0.csv"
 			#fo = "../SSA_Results/" + filename + "_Baseline_scurve_trim31_cal0.csv"
@@ -85,7 +86,6 @@ class SSA_measurements():
 			plt.figure(2)
 			plt.plot(striplist, sigma, 'go-')
 			plt.show()
-
 		sigma = np.array(sigma)
 		if(ret_average):
 			highnoise = np.where( sigma > 3)[0]
@@ -97,26 +97,23 @@ class SSA_measurements():
 			return sigma
 
 
-
+	###########################################################
 	def scurve_trim(self, filename = '../SSA_results/Chip0', calpulse = 50, plot = True, iterations = 5):
 		print "->  \tS-Curve Trimming"
 		if plot:
 			data = self.scurves(mode = 'all', rdmode = 'fast', cal_list = [calpulse], trim_list = [0, 31], filename = filename, plot = False)
 			scurve_0 = data[0]; scurve_31 = data[1];
-
 		scurve_init, scurve_trim = self.cal.trimming_scurves(
 			method = 'center',
 			default_trimming = 15,
 			cal_ampl = calpulse,
 			iterations = iterations,
 			plot = False)
-
 		if( isinstance(filename, str) ):
 			fo = "../SSA_Results/" + filename + "_scurve_" + "trim15" + "__cal_" + str(calpulse) + ".csv"
 			CSV.ArrayToCSV (array = scurve_init, filename = fo, transpose = True)
 			fo = "../SSA_Results/" + filename + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
 			CSV.ArrayToCSV (array = scurve_trim, filename = fo, transpose = True)
-
 		if plot:
 			plt.clf()
 			plt.figure(1)
@@ -136,10 +133,9 @@ class SSA_measurements():
 			plt.plot(scurve_31,   'r', alpha = 0.5)
 			plt.plot(scurve_trim, 'y', alpha = 0.5)
 			plt.show()
-
 		return scurve_trim, scurve_init
 
-
+	###########################################################
 	def threshold_spread(self, calpulse = 50, file = '../SSA_results/Chip0', runname = '', use_stored_data = False, plot = True, nevents=1000, speeduplevel = 2, filemode = 'w'):
 		print "->  \tthreshold Spread Measurement"
 		fi = "../SSA_Results/" + file + "_" + str(runname) + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
@@ -173,8 +169,7 @@ class SSA_measurements():
 			plt.show()
 		return std
 
-
-
+	###########################################################
 	def gain_offset_noise(self, calpulse = 50, ret_average = True, plot = True, use_stored_data = False, file = 'TestLogs/Chip0', filemode = 'w', runname = '', nevents=1000, speeduplevel = 2):
 		print "->  \tSCurve Gain, Offset and Noise Measurement"
 		utils.activate_I2C_chip()
@@ -242,59 +237,110 @@ class SSA_measurements():
 		else:
 			return gain, offset, noise
 
-
-
-	def shaper_pulse(self, calrange = [46, 58, 69, 81], strip = 5, baseline = 'auto', iterations = 10, pattern = False):
-		shaper_rise = []; shaper_fall = [];
-		thresholds_list = []; shapervalues_list = [];
-		self.cal.set_trimming(0, 'all')
-		self.cal.set_trimming(31, [strip])
-		if(isinstance(baseline, int)):
-			self.cal.baseline = baseline
+	###########################################################
+	def shaper_pulse_measure(self, charge=[30, 40, 50, 60], filename = False, strip=30, naverages=100, dll_resolution = 'default', runname = '', plot = True):
+		if(dll_resolution == 'evaluate'):
+			timeresolution = self.self.cal.delayline_resolution(naverages = 100)
+		elif(isinstance(dll_resolution, float)):
+			timeresolution = dll_resolution
 		else:
-			a, mu, sigma = self.baseline_noise([strip], plot=False)[0]
-			self.cal.baseline = int(np.round(mu))
-			print "->  \tBaseline = %3.2f" % self.cal.baseline
-		thmin = self.cal.baseline+5   # thmin measured = 8.5 THDAC (0.3fC)
-		for cal in calrange:
-			latency, thlist = self.cal.shaper_pulse_rising(
-				calpulse = cal,
-				mode = 'caldll', targetbx = 25,
-				thmin = int(thmin), thmax = 255,
-				resolution = 5, iterations = iterations,
-				basedelay = 10, plot = False, display_pattern = pattern)
-			shaper_rise.append(latency)
-			thlist_rise = np.array(thlist)
+			timeresolution = self.dll_resolution
+		plt.clf()
+		tm = np.arange(0, 128)*timeresolution
+		tm = tm[tm <= 75]
+		if(not isinstance(charge, list)):
+			charge = [charge]
+		pmean = []; pstd = [];
+		for ch in charge:
+			tmp1, tmp2, raw = self.cal.shaperpulse(
+				charge = ch, naverages = naverages, plot = False, raw = True,
+				strip = strip, display = False, hitloc0 = 24, thmin = 15)
+			pmean.append(tmp1)
+			pstd.append(tmp2)
+		if(not isinstance(filename, str)):
+			filename = "temp/ShaperPulseTmp"
+		fo = "../SSA_Results/" + filename + "_" + str(runname) + "_ShaperPulse"
+		data1 = []; data2 = [];
+		data1.append(tm);
+		data2.append(tm);
+		for p in pmean: data1.append(p[range(np.size(tm))])
+		for p in pstd:  data2.append(p[range(np.size(tm))])
+		CSV.ArrayToCSV (array = data1, filename = (fo+'_mean.csv'), transpose = False)
+		CSV.ArrayToCSV (array = data2, filename = (fo+'_std.csv'), transpose = False)
+		CSV.ArrayToCSV (array = raw,   filename = (fo+'_raw.csv'), transpose = False)
+		CSV.ArrayToCSV (array = np.array([timeresolution]),  filename = (fo+'_dllres.csv'), transpose = False)
+		print "->  \tData saved in" + fo
+		if(plot):
+			self.shaper_pulse_plot(filename = filename, runname = runname)
+		#return pmean, tm, charge
 
-			latency, thlist = self.cal.shaper_pulse_falling(
-				calpulse = cal,
-				mode = 'caldll', targetbx = 25,
-				thmin = int(thmin), thmax = 255,
-				resolution = 5, iterations = iterations,
-				basedelay = 10, plot = False, display_pattern = pattern)
-			shaper_fall.append(latency)
-			thlist_fall = np.array(thlist)
-
-
-			#for i in np.unique(shaper_rise[-1]):
-			#	tmp = np.where(shaper_rise[-1] == i)
-			#	mean = np.mean( thlist_rise[tmp])
-			#	thlist_rise[tmp] = mean
-			#for i in np.unique(shaper_fall[-1]):
-			#	tmp = np.where(shaper_fall[-1] == i)
-			#	mean = np.mean( thlist_fall[tmp])
-			#	thlist_fall[tmp] = mean
-
-			thresholds = np.concatenate( [ np.array(thlist_rise)-self.cal.baseline , np.array(thlist_fall)-self.cal.baseline ] )
-			shapervalu = np.concatenate( [ shaper_rise[-1], shaper_fall[-1] ] )
-			plt.axis([0, np.max(shaper_rise[-1])*2.5, 0, thresholds[ np.where(shaper_rise[-1]>-256)[0] ][-1] + 20 ])
-			plt.plot(shapervalu, thresholds, 'o')
-			thresholds_list.append(thresholds); shapervalues_list.append(shapervalu)
+	def shaper_pulse_plot(self, filename = False, runname = '', rawdata = False, invert = False, interpolate = True):  #filename = Chip-B6_Shaper/Chip-B6
+		if(not isinstance(filename, str)):
+			filename = "temp/ShaperPulseTmp"
+		fig = plt.figure(figsize=(8,12))
+		plt.style.use('seaborn-deep')
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(False)
+		ax.spines["right"].set_visible(False)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.xticks(fontsize=16)
+		plt.yticks(fontsize=16)
+		plt.ylabel("Threshold Voltage [mV]", fontsize=16)
+		plt.xlabel('Time [ns]', fontsize=16)
+		fo = "../SSA_Results/" + filename + "_" + str(runname) + "_ShaperPulse"
+		dmean = CSV.CsvToArray(filename = (fo+'_mean.csv'))[:,1:]
+		dstd  = CSV.CsvToArray(filename = (fo+'_std.csv'))[:,1:]
+		raw   = CSV.CsvToArray(filename = (fo+'_raw.csv'))[:,1:]
+		res   = CSV.CsvToArray(filename = (fo+'_dllres.csv'))[0,1]
+		tm    = dmean[0]
+		dmean = dmean[1:,:]
+		dstd  = dstd[1:,:]
+		cnt   = 0; pol = []; data = [];
+		inv   = -1 if invert else 1
+		if(rawdata):
+			plt.plot(raw[0]*res, range(np.shape(raw)[1]*inv), 'ob-', mew = 0)
+			plt.plot(raw[1]*res, range(np.shape(raw)[1]*inv), 'or-', mew = 0)
+		color=iter(sns.color_palette('deep'))
+		for dset in dmean:
+			tmp = []
+			for i in range(np.size(dset)):
+				if(dset[i]>0 and tm[i]>0):
+					tmp.append( [tm[i] , dset[i], (dstd[cnt][i]) ])
+			cnt += 1
+			tmp = np.array(tmp)
+			c = next(color)
+			pol.append( np.polynomial.Polynomial.fit(tmp[:,0], tmp[:,1], 3) )
+			#z = np.polyfit(tmp[:,0], tmp[:,1], 3)
+			#pol.append(np.poly1d(z))
+			plt.errorbar(
+				tmp[:,0]*self.thdac_gain, tmp[:,1]*inv, fmt='o', yerr=tmp[:,2], color=c,
+				mew = 0, elinewidth = 1, ecolor = c, markersize = 3, capthick=1, capsize = 2)
+			data.append(tmp)
+		#return pol
+		roots = []
+		for p in pol:
+			r = p.roots()
+			roots.append( np.min( r[r > 0] ) )
+		injectPnt = np.mean(roots)
+		color=iter(sns.color_palette('deep'))
+		#return data
+		if(interpolate):
+			for t in data:
+				t = np.insert(t, 0, [[injectPnt, 0, 0 ]], axis = 0)
+				z = np.polyfit(t[:,0], t[:,1], 3)
+				p = np.poly1d(z)
+				c = next(color)
+				plt.plot(tm*self.thdac_gain, p(tm)*inv, '-', color=c, lw=1, alpha = 0.5)
+		if(invert):
+			plt.ylim(-np.max(dmean)-10, 0)
+		else:
+			plt.ylim(-10, np.max(dmean)+10)
+		plt.legend(numpoints=1, loc=('lower right'))
 		plt.show()
-		return thresholds_list, shapervalues_list
+		#return tm, raw, tmp
 
-
-
+	###########################################################
 	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, ideal_gain = 1.840, ideal_offset = 0.8, filename = False, plot = True, filemode = 'w', runname = ''):
 		utils.activate_I2C_chip()
 		if(self.bias == False): return False, False
@@ -334,17 +380,7 @@ class SSA_measurements():
 		#return DNL, INL, x, data
 		return DNLMAX, INLMAX, g, ofs
 
-
-
-	def delayline_resolution(self, debug = False):
-		resolution = []
-		resolution.append( "MAX: " + self.cal.delayline_resolution(set_bias = 31, shift = 3, display = debug, debug = False) )
-		resolution.append( "TYP: " + self.cal.delayline_resolution(set_bias = 15, shift = 3, display = debug, debug = False) )
-		#resolution.append( "MIN: " + self.cal.delayline_resolution(set_bias =  1, shift = 3, display = debug, debug = False) )
-		return resolution
-
-
-
+	###########################################################
 	def power_vs_occupancy(self, th = range(2,13), trim = False, plot = 1, print_file =1, filename = "pwr1", itr = 1000, rp= 1):
 		self.ssa.inject.analog_pulse(initialise = True)
 		if trim:
@@ -392,6 +428,7 @@ class SSA_measurements():
 			plt.show()
 		return data
 
+	###########################################################
 	def power_vs_state(self, display = True):
 		data = OrderedDict()
 		self.ssa.disable(display=False)
@@ -413,19 +450,56 @@ class SSA_measurements():
 		self.bias.calibrate_to_nominals()
 		data['calib'] = self.pwr.get_power(display = False)
 		self._display_power_value(data.items()[-1], display)
-
 		return data
 
-	def shaper_pulse(self, charge=40, strip=30, naverages=100):
-		self.cal.shaperpulse_rise(charge = charge, naverages = naverages, plot = True, strip = strip, display = True, hitloc0 = 24, thmin = 10)
+	###########################################################
+	def __shaper_pulse_OLD(self, calrange = [46, 58, 69, 81], strip = 5, baseline = 'auto', iterations = 10, pattern = False):
+		shaper_rise = []; shaper_fall = [];
+		thresholds_list = []; shapervalues_list = [];
+		self.cal.set_trimming(0, 'all')
+		self.cal.set_trimming(31, [strip])
+		if(isinstance(baseline, int)):
+			self.cal.baseline = baseline
+		else:
+			a, mu, sigma = self.baseline_noise([strip], plot=False)[0]
+			self.cal.baseline = int(np.round(mu))
+			print "->  \tBaseline = %3.2f" % self.cal.baseline
+		thmin = self.cal.baseline+5   # thmin measured = 8.5 THDAC (0.3fC)
+		for cal in calrange:
+			latency, thlist = self.cal.shaper_pulse_rising(
+				calpulse = cal,
+				mode = 'caldll', targetbx = 25,
+				thmin = int(thmin), thmax = 255,
+				resolution = 5, iterations = iterations,
+				basedelay = 10, plot = False, display_pattern = pattern)
+			shaper_rise.append(latency)
+			thlist_rise = np.array(thlist)
 
+			latency, thlist = self.cal.shaper_pulse_falling(
+				calpulse = cal,
+				mode = 'caldll', targetbx = 25,
+				thmin = int(thmin), thmax = 255,
+				resolution = 5, iterations = iterations,
+				basedelay = 10, plot = False, display_pattern = pattern)
+			shaper_fall.append(latency)
+			thlist_fall = np.array(thlist)
+			thresholds = np.concatenate( [ np.array(thlist_rise)-self.cal.baseline , np.array(thlist_fall)-self.cal.baseline ] )
+			shapervalu = np.concatenate( [ shaper_rise[-1], shaper_fall[-1] ] )
+			plt.axis([0, np.max(shaper_rise[-1])*2.5, 0, thresholds[ np.where(shaper_rise[-1]>-256)[0] ][-1] + 20 ])
+			plt.plot(shapervalu, thresholds, 'o')
+			thresholds_list.append(thresholds); shapervalues_list.append(shapervalu)
+		plt.show()
+		return thresholds_list, shapervalues_list
 
-
+	###########################################################
 	def _display_power_value(self, data, display):
 		if(display):
 			print "->  \t%8s : Digital = %7.3f, Analog = %7.3f, Pads = %7.3f" %(data[0], data[1][0], data[1][1], data[1][2])
 
-
+	###########################################################
+	def __set_variables(self):
+		self.dll_resolution = 1.3157894736842106;
+		self.thdac_gain = 2.01
 
 
 '''
