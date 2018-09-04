@@ -279,7 +279,7 @@ def ReadoutCounters(raw_mode_en = 0):
 	t0 = time.time()
 	mpa_counters_ready = fc7.read("stat_slvs_debug_mpa_counters_ready")
 	#sleep(0.1)
-	print "---> Sending Start and Waiting for Data"
+	#print "---> Sending Start and Waiting for Data"
 	#StartCountersRead()
 	start_counters_read()
 	timeout = 0
@@ -292,7 +292,7 @@ def ReadoutCounters(raw_mode_en = 0):
 		print fc7.read("stat_slvs_debug_mpa_counters_store_fsm_state")
 		failed = True;
 		return failed, 0
-	print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
+	#print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
 	if raw_mode_en == 1:
 		count = np.zeros((2040, ), dtype = np.uint16)
 		cycle = 0
@@ -532,14 +532,11 @@ def s_curve_rbr_fr(n_pulse = 1000, s_type = "THR", ref_val = 50, row = range(1,1
 		if s_type == "CAL":	set_calibration(cur_val)
 		elif s_type == "THR":	set_threshold(cur_val)
 		utils.ShowPercent(count, (stop-start)/step, "")
-		print "pulse", cur_val
 		for r in row:
 			send_pulses_fast(n_pulse, r, 0, cur_val)
 		sleep(0.005)
-		print "read", cur_val
 		fail, temp = ReadoutCounters()
 		sleep(0.005)
-		print "check", cur_val
 		if fail and (count_err < 10): # LOOK HERE (exit condition)
 			print "FailedPoint, repeat!"
 			activate_I2C_chip(verbose = 0)
