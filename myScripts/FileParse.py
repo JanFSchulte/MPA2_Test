@@ -36,42 +36,74 @@ def MemTestParse(wafer = "Wafer_N6T903-05C7_Digital", chips = range(1,89)):
     return mem_log
 
 
-def BandGapParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
+def BandGapParse(test = "rad", max_run = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
     i = 0
     bg = np.array(0)
     dose = np.array(0)
-    while i <= max_dose:
-        try:
-            with open(filename + "Run_" + str(i) + "MRad/BandGap.txt") as file:
-                x = file.read()
-                for token in x.split():
-                    bg = np.append(bg, token)
-                dose = np.append(dose, i)
+    if test == "rad":
+        while i <= max_run:
+            try:
+                with open(filename + "Run_" + str(i) + "MRad/BandGap.txt") as file:
+                    x = file.read()
+                    for token in x.split():
+                        bg = np.append(bg, token)
+                    dose = np.append(dose, i)
+                    i += 1
+            except IOError:
                 i += 1
-        except IOError:
-            i += 1
-    bg = bg.astype('float')
-    plt.plot(dose[1:], bg[1:], 'yo')
-    plt.title("BandGap vs. Dose")
-    plt.xlabel("Dose (MRad)")
-    plt.ylabel("BandGap")
-    plt.show()
+        bg = bg.astype('float')
+        plt.plot(dose[1:], bg[1:], 'yo')
+        plt.title("BandGap vs. Dose")
+        plt.xlabel("Dose (MRad)")
+        plt.ylabel("BandGap")
+        plt.show()
+    elif test == "probe":
+        #filename =  "/home/testMPA/cernbox/AutoProbeResults/Wafer_N6T903-05C7/ChipN_1_v0"
+        while i <= max_run:
+            try:
+                with open(filename + "ChipN_" + str(i) + "_v0/BandGap.txt") as file:
+                    x = file.read()
+                    for token in x.split():
+                        bg = np.append(bg, token)
+                    dose = np.append(dose, i)
+                    i += 1
+            except IOError:
+                i += 1
+        bg = bg.astype('float')
+        plt.plot(dose[1:], bg[1:], 'o')
+        plt.title("BandGap per Chip")
+        plt.xlabel("Chip")
+        plt.ylabel("BandGap")
+        plt.show()
 
-
-def PowerParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
+def PowerParse(test = "rad", max_run = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
     i = 0
     power = np.array(0)
     dose = np.array(0)
-    while i <= max_dose:
-        try:
-            with open(filename + "Run_" + str(i) + "MRad/PowerMeasurement.csv") as file:
-                x = file.read()
-                for token in x.split():
-                    power = np.append(power, token)
-                dose = np.append(dose, i)
-                i +=1
-        except IOError:
-            i += 1
+    if test == "probe":
+        while i <= max_run:
+            try:
+                with open(filename + "ChipN_" + str(i) + "_v0/PowerMeasurement.csv") as file:
+                    x = file.read()
+                    for token in x.split():
+                        power = np.append(power, token)
+                    dose = np.append(dose, i)
+                    i +=1
+            except IOError:
+                i += 1
+        plt.xlabel("Chip")
+    elif test == "rad":
+        while i <= max_run:
+            try:
+                with open(filename + "Run_" + str(i) + "kRad/PowerMeasurement.csv") as file:
+                    x = file.read()
+                    for token in x.split():
+                        power = np.append(power, token)
+                    dose = np.append(dose, i)
+                    i +=1
+            except IOError:
+                i += 1
+        plt.xlabel("Dose (kRad)")
     power = power.astype('float')
     power = np.delete(power, 0, 0)
     dose = np.delete(dose, 0, 0)
@@ -94,14 +126,13 @@ def PowerParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
     #Plot PST3
     plt.plot(dose, power[8::9], 'gs', label = "PST3")
     plt.title("Power Measurements")
-    plt.xlabel("Dose (MRad)")
-    plt.ylabel("Power")
+    plt.ylabel("Current (mA)")
     plt.legend()
     plt.show()
-    #return power
+    return power
 
 
-def ScurveParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
+def ScurveParse(test = "rad", max_run = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
     i = 0
     th_avg = np.array(0)
     th_spread = np.array(0)
@@ -111,9 +142,12 @@ def ScurveParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
     sum_array = np.zeros(51)
     th_array = np.zeros(2160, dtype = np.int)
     noise_array = np.zeros(2160, dtype = np.float)
-    while i <= max_dose:
+    while i <= max_run:
         try:
-            data = CSV.csv_to_array(filename + "Run_" + str(i) + "MRad/Scurve15_CAL.csv")
+            if test == "rad":
+                data = CSV.csv_to_array(filename + "Run_" + str(i) + "MRad/Scurve15_CAL.csv")
+            elif test == "probe":
+                data = CSV.csv_to_array(filename + "ChipN_" + str(i) + "_v0/Scurve15_CAL.csv")
             try:
                 start_DAC = 0
                 for r in range(1,17):
@@ -136,36 +170,50 @@ def ScurveParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
             i += 1
 
     dose = np.delete(dose, 0, 0)
+    #dose = dose.astype(float)
+    #dose = (dose * 3.6 / 1.6)
     th_avg = np.delete(th_avg, 0, 0)
     noise_avg = np.delete(noise_avg, 0, 0)
     sum_avg = sum_avg.astype(int)
     plt.figure(1)
     plt.plot(dose, th_avg, 'co')
     plt.title("Average Threshold")
-    plt.xlabel("Dose (MRad)")
+    if test == "rad":
+        plt.xlabel("Dose (kRad)")
+    elif test == "probe":
+        plt.xlabel("Chip")
     plt.ylabel("Threshold")
     plt.figure(2)
     plt.plot(dose, th_spread[1:], 'mo')
     plt.title("Threshold Spread")
-    plt.xlabel("Dose (MRad)")
+    if test == "rad":
+        plt.xlabel("Dose (kRad)")
+    elif test == "probe":
+        plt.xlabel("Chip")
     plt.ylabel("Spread")
     plt.figure(3)
     plt.plot(dose, noise_avg, 'ko')
     plt.title("Average Noise")
-    plt.xlabel("Dose (MRad)")
+    if test == "rad":
+        plt.xlabel("Dose (kRad)")
+    elif test == "probe":
+        plt.xlabel("Chip")
     plt.ylabel("Noise")
-    plt.figure(4)
-    a = 0
-    while a < len(dose):
-        plt.plot(range(0,50), sum_avg[a, 0:50], label = "Dose = " + str(dose[a]))
-        a += 1
-    plt.title("Average Scurve")
-    plt.legend()
+    #plt.figure(4)
+    #a = 0
+    #while a < len(dose):
+    #    plt.plot(range(0,50), sum_avg[a, 0:50], label = "Dose = " + str(dose[a]))
+    #    a += 1
+    #plt.title("Average Scurve")
+    #plt.legend()
     plt.show()
-    #return sum_avg
+   # return noise_avg
+    #return th_spread
+    #return th_avg
+    print "noise average: ", np.mean(noise_avg)
+    print "th average: ", np.mean(th_avg)
 
-
-def DACParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
+def DACParse(test = "rad", max_run = 100, filename = "/home/testMPA/cernbox/Irrad2_fix/"):
     i = 0
     DAC0 = np.zeros(shape = (0, 33))
     DAC1 = np.zeros(shape = (0, 33))
@@ -175,15 +223,25 @@ def DACParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
     DAC5 = np.zeros(shape = (0, 257))
     DAC6 = np.zeros(shape = (0, 257))
     dose = np.array(0)
-    while i <= max_dose:
+    while i <= max_run:
         try:
-            dac0 = CSV.csv_to_array(filename + "Run_" + str(i) + "MRad/DAC0_TP0.csv")
-            dac1 = CSV.csv_to_array(filename + "Run_" + str(i) + "MRad/DAC1_TP1.csv")
-            dac2 = CSV.csv_to_array(filename + "Run_" + str(i) + "MRad/DAC2_TP2.csv")
-            dac3 = CSV.csv_to_array(filename + "Run_" + str(i) + "MRad/DAC3_TP3.csv")
-            dac4 = CSV.csv_to_array(filename + "Run_" + str(i) + "MRad/DAC4_TP4.csv")
-            dac5 = CSV.csv_to_array(filename + "Run_" + str(i) + "MRad/Th_DAC_TP5.csv")
-            dac6 = CSV.csv_to_array(filename + "Run_" + str(i) + "MRad/Cal_DAC_TP6.csv")
+            #/home/testMPA/cernbox/Irrad3_fix/Run_0kRad
+            if test == "rad":
+                dac0 = CSV.csv_to_array(filename + "Run_" + str(i) + "kRad/DAC0_TP0.csv")
+                dac1 = CSV.csv_to_array(filename + "Run_" + str(i) + "kRad/DAC1_TP1.csv")
+                dac2 = CSV.csv_to_array(filename + "Run_" + str(i) + "kRad/DAC2_TP2.csv")
+                dac3 = CSV.csv_to_array(filename + "Run_" + str(i) + "kRad/DAC3_TP3.csv")
+                dac4 = CSV.csv_to_array(filename + "Run_" + str(i) + "kRad/DAC4_TP4.csv")
+                dac5 = CSV.csv_to_array(filename + "Run_" + str(i) + "kRad/Th_DAC_TP5.csv")
+                dac6 = CSV.csv_to_array(filename + "Run_" + str(i) + "kRad/Cal_DAC_TP6.csv")
+            elif test == "probe":
+                dac0 = CSV.csv_to_array(filename + "ChipN_" + str(i) + "_v0/DAC0_TP0.csv")
+                dac1 = CSV.csv_to_array(filename + "ChipN_" + str(i) + "_v0/DAC1_TP1.csv")
+                dac2 = CSV.csv_to_array(filename + "ChipN_" + str(i) + "_v0/DAC2_TP2.csv")
+                dac3 = CSV.csv_to_array(filename + "ChipN_" + str(i) + "_v0/DAC3_TP3.csv")
+                dac4 = CSV.csv_to_array(filename + "ChipN_" + str(i) + "_v0/DAC4_TP4.csv")
+                dac5 = CSV.csv_to_array(filename + "ChipN_" + str(i) + "_v0/Th_DAC_TP5.csv")
+                dac6 = CSV.csv_to_array(filename + "ChipN_" + str(i) + "_v0/Cal_DAC_TP6.csv")
             DAC0 = np.append(DAC0, dac0, axis = 0)
             DAC1 = np.append(DAC1, dac1, axis = 0)
             DAC2 = np.append(DAC2, dac2, axis = 0)
@@ -198,39 +256,118 @@ def DACParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
     dose = np.delete(dose, 0, 0)
     #for a in range(0,len(dose)):
         #b = 0
-    a = 0
-    for b in range(0,7):
-        plt.figure(1)
-        plt.plot(range(0,32), DAC0[b, 1:33], 'bo', label = "Dose "+str(dose[a]))
-        plt.figure(2)
-        plt.plot(range(0,32), DAC1[b, 1:33], 'bo', label = "Dose "+str(dose[a]))
-        plt.figure(3)
-        plt.plot(range(0,32), DAC2[b, 1:33], 'bo', label = "Dose "+str(dose[a]))
-        plt.figure(4)
-        plt.plot(range(0,32), DAC3[b, 1:33], 'bo', label = "Dose "+str(dose[a]))
-        plt.figure(5)
-        plt.plot(range(0,32), DAC4[b, 1:33], 'bo', label = "Dose "+str(dose[a]))
-        plt.figure(6)
-        plt.plot(range(0,256), DAC5[b, 1:257], 'bo', label = "Dose "+str(dose[a]))
-        plt.figure(7)
-        plt.plot(range(0,256), DAC6[b, 1:257], 'bo', label = "Dose "+str(dose[a]))
-        # Choose Doses after zero
+    ## Plot of pre-rad and maxdose characteristic
     a = len(dose) - 1
-    for b in range(0,7):
+    for b in range(1,7):
         plt.figure(1)
-        plt.plot(range(0,32), DAC0[b + 7*a, 1:33], 'mo', label = "Dose "+str(dose[a]))
+        plt.plot(range(0,32), DAC0[b, 1:33], 'bo')
+        plt.plot(range(0,32), DAC0[b + 7*a, 1:33], 'mo')
         plt.figure(2)
-        plt.plot(range(0,32), DAC1[b + 7*a, 1:33], 'mo', label = "Dose "+str(dose[a]))
+        plt.plot(range(0,32), DAC1[b, 1:33], 'bo')
+        plt.plot(range(0,32), DAC1[b + 7*a, 1:33], 'mo')
         plt.figure(3)
-        plt.plot(range(0,32), DAC2[b + 7*a, 1:33], 'mo', label = "Dose "+str(dose[a]))
+        plt.plot(range(0,32), DAC2[b, 1:33], 'bo')
+        plt.plot(range(0,32), DAC2[b + 7*a, 1:33], 'mo')
         plt.figure(4)
-        plt.plot(range(0,32), DAC3[b + 7*a, 1:33], 'mo', label = "Dose "+str(dose[a]))
+        plt.plot(range(0,32), DAC3[b, 1:33], 'bo')
+        plt.plot(range(0,32), DAC3[b + 7*a, 1:33], 'mo')
         plt.figure(5)
-        plt.plot(range(0,32), DAC4[b + 7*a, 1:33], 'mo', label = "Dose "+str(dose[a]))
+        plt.plot(range(0,32), DAC4[b, 1:33], 'bo')
+        plt.plot(range(0,32), DAC4[b + 7*a, 1:33], 'mo')
         plt.figure(6)
-        plt.plot(range(0,256), DAC5[b + 7*a, 1:257], 'mo', label = "Dose "+str(dose[a]))
+        plt.plot(range(0,256), DAC5[b, 1:257], 'bo')
+        plt.plot(range(0,256), DAC5[b + 7*a, 1:257], 'mo')
         plt.figure(7)
-        plt.plot(range(0,256), DAC6[b + 7*a, 1:257], 'mo', label = "Dose "+str(dose[a]))
+        plt.plot(range(0,256), DAC6[b, 1:257], 'bo')
+        plt.plot(range(0,256), DAC6[b + 7*a, 1:257], 'mo')
+    plt.figure(1)
+    plt.plot(range(0,32), DAC0[0, 1:33], 'bo', label = "Dose 0 DAC" + str(b))
+    plt.plot(range(0,32), DAC0[0 + 7*a, 1:33], 'mo', label = "Dose "+str(dose[a]) + " DAC" + str(b))
+    plt.figure(2)
+    plt.plot(range(0,32), DAC1[0, 1:33], 'bo', label = "Dose 0 DAC" + str(b))
+    plt.plot(range(0,32), DAC1[0 + 7*a, 1:33], 'mo', label = "Dose "+str(dose[a]) + " DAC" + str(b))
+    plt.figure(3)
+    plt.plot(range(0,32), DAC2[0, 1:33], 'bo', label = "Dose 0 DAC"+  str(b))
+    plt.plot(range(0,32), DAC2[0 + 7*a, 1:33], 'mo', label = "Dose "+str(dose[a]) + " DAC" + str(b))
+    plt.figure(4)
+    plt.plot(range(0,32), DAC3[0, 1:33], 'bo', label = "Dose 0 DAC" + str(b))
+    plt.plot(range(0,32), DAC3[0 + 7*a, 1:33], 'mo', label = "Dose "+str(dose[a]) + " DAC" + str(b))
+    plt.figure(5)
+    plt.plot(range(0,32), DAC4[0, 1:33], 'bo', label = "Dose 0 DAC" + str(b))
+    plt.plot(range(0,32), DAC4[0 + 7*a, 1:33], 'mo', label = "Dose "+str(dose[a]) + " DAC" + str(b))
+    plt.figure(6)
+    plt.plot(range(0,256), DAC5[0, 1:257], 'bo', label = "Dose 0 DAC" + str(b))
+    plt.plot(range(0,256), DAC5[0 + 7*a, 1:257], 'mo', label = "Dose "+str(dose[a]) + " DAC" + str(b))
+    plt.figure(7)
+    plt.plot(range(0,256), DAC6[0, 1:257], 'bo', label = "Dose 0 DAC" + str(b))
+    plt.plot(range(0,256), DAC6[0 + 7*a, 1:257], 'mo', label = "Dose "+str(dose[a]) + " DAC" + str(b))
+
+    plt.figure(1)
+    plt.title("DAC0")
+    plt.xlabel("DAC")
+    plt.ylabel("DAC Voltage (V)")
+    plt.legend()
+    plt.figure(2)
+    plt.title("DAC1")
+    plt.xlabel("DAC")
+    plt.ylabel("DAC Voltage (V)")
+    plt.legend()
+    plt.figure(3)
+    plt.title("DAC2")
+    plt.xlabel("DAC")
+    plt.ylabel("DAC Voltage (V)")
+    plt.legend()
+    plt.figure(4)
+    plt.title("DAC3")
+    plt.xlabel("DAC")
+    plt.ylabel("DAC Voltage (V)")
+    plt.legend()
+    plt.figure(5)
+    plt.title("DAC4")
+    plt.xlabel("DAC")
+    plt.ylabel("DAC Voltage (V)")
+    plt.legend()
+    plt.figure(6)
+    plt.title("Th_DAC")
+    plt.xlabel("DAC")
+    plt.ylabel("DAC Voltage (V)")
+    plt.legend()
+    plt.figure(7)
+    plt.title("Cal_DAC")
+    plt.xlabel("DAC")
+    plt.ylabel("DAC Voltage (V)")
+    plt.legend()
+
+    ## Plot of slope evolution
+    slope = np.zeros(shape = (7,7, a+1))
+    offset = np.zeros(shape = (7,7, a+1))
+    for i in range(0, a+1):
+        for j in range(0,7):
+            [slope[0,j,i], offset[0,j,i]], cov = curve_fit(line, range(0, 32), DAC0[j + 7*i, 1:33], p0 = [1,1])
+            [slope[1,j,i], offset[1,j,i]], cov = curve_fit(line, range(0, 32), DAC1[j + 7*i, 1:33], p0 = [1,1])
+            [slope[2,j,i], offset[2,j,i]], cov = curve_fit(line, range(0, 32), DAC2[j + 7*i, 1:33], p0 = [1,1])
+            [slope[3,j,i], offset[3,j,i]], cov = curve_fit(line, range(0, 32), DAC3[j + 7*i, 1:33], p0 = [1,1])
+            [slope[4,j,i], offset[4,j,i]], cov = curve_fit(line, range(0, 32), DAC4[j + 7*i, 1:33], p0 = [1,1])
+            [slope[5,j,i], offset[5,j,i]], cov = curve_fit(line, range(0, 256), DAC5[j + 7*i, 1:257], p0 = [1,1])
+            [slope[6,j,i], offset[6,j,i]], cov = curve_fit(line, range(0, 256), DAC6[j + 7*i, 1:257], p0 = [1,1])
+
+    plt.figure(8)
+    color = ["b", "r", "m", "y", "g", "k","orange"]
+    DAC_names = ["Krummenacher", "Preamplifier", "Trimming", "Voltages", "Currents", "Threshold", "Calibration"]
+    for i in range(0, 7):
+        plt.plot(dose, slope[i,0,:]/slope[i,0,0], color = color[i], marker = 'o', linestyle = 'dashed')
+        plt.plot(dose, slope[i,1,:]/slope[i,1,0], color = color[i], marker = 'o', linestyle = 'dashed')
+        plt.plot(dose, slope[i,2,:]/slope[i,2,0], color = color[i], marker = 'o', linestyle = 'dashed')
+        plt.plot(dose, slope[i,3,:]/slope[i,3,0], color = color[i], marker = 'o', linestyle = 'dashed')
+        plt.plot(dose, slope[i,4,:]/slope[i,4,0], color = color[i], marker = 'o', linestyle = 'dashed')
+        plt.plot(dose, slope[i,5,:]/slope[i,5,0], color = color[i], marker = 'o', linestyle = 'dashed')
+        plt.plot(dose, slope[i,6,:]/slope[i,6,0], label = DAC_names[i], color = color[i], marker = 'o', linestyle = 'dashed')
+    plt.ylabel("'%' of initial DAC")
+    plt.xlabel("Dose (kRad)")
+    plt.title("DAC LSB Percent over Dose")
+    plt.legend()
+    plt.show()
+
     #for b in range(1,7):
             #plt.figure(1)
             #plt.plot(range(0,32), DAC0[b + 7*a, 1:33], 'yo')
@@ -246,25 +383,3 @@ def DACParse(max_dose = 100, filename = "/home/testMPA/cernbox/Irrad1_fix/"):
             #plt.plot(range(0,256), DAC5[b + 7*a, 1:257], 'ko')
             #plt.figure(7)
             #plt.plot(range(0,256), DAC6[b + 7*a, 1:257], 'ro')
-    plt.figure(1)
-    plt.title("DAC0")
-    plt.legend()
-    plt.figure(2)
-    plt.title("DAC1")
-    plt.legend()
-    plt.figure(3)
-    plt.title("DAC2")
-    plt.legend()
-    plt.figure(4)
-    plt.title("DAC3")
-    plt.legend()
-    plt.figure(5)
-    plt.title("DAC4")
-    plt.legend()
-    plt.figure(6)
-    plt.title("Th_DAC")
-    plt.legend()
-    plt.figure(7)
-    plt.title("Cal_DAC")
-    plt.legend()
-    plt.show()
