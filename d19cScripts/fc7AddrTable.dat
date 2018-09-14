@@ -121,11 +121,13 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
    cnfg_fast_tp_fsm_fast_reset_en	40012009    00000010     1     1 *trigger source 6: enable fast reset signal
    cnfg_fast_tp_fsm_test_pulse_en	40012009    00000020     1     1 *trigger source 6: enable cal pulse signal
    cnfg_fast_tp_fsm_l1a_en		40012009    00000040     1     1 *trigger source 6: enable l1a signal
+   cnfg_fast_seu_ntriggers_to_skip	4001200A    ffffffff     1     1 *trigger source 6: number of l1a to skip
 * Physical Interface Abstraction Layer
-   cnfg_phy_slvs_ssa_first_counter_del  40013000    0000ff00	 1     1
    cnfg_phy_slvs_raw_mode_en		40013000    00000001     1     1 *1 - outputs 20000 clock cycles of the raw data from the stub lines, 0 - outputs parsed counters for the MPA/SSA chips
    cnfg_phy_i2c_freq                    40013001    0000000f     1     1 *setting of the i2c frequency clock. (d0, 0.1MHz), (d1,0.5MHz), (d2,0.4MHz), (d3,0.8MHz), (d4,1MHz), (d5,2MHz), (d6,4MHz), (d7,5MHz), (d8,8MHz), (d9,10MHz)
    cnfg_phy_i2c_master_en		40013001    00000100     1     1 *enable I2C master, 1 by default
+   cnfg_phy_EYE_SCAN_CNTVALUEIN_idelay_eye     40013002    0000001f     1     1 *configure the idelay for the eye scan. This will load the delay value.
+   cnfg_phy_manual_delays		40013003    ffffffff     1     1 *setting the manual delays for chips
    cnfg_phy_SSA_gen_delay_trig_data     40013004    00001f00     1     1 *For testing of the single MPA chip. Register controls the delay (25ns units) with which the fake SSA like l1 data is send with respect to the l1 trigger.
    cnfg_phy_SSA_gen_delay_stub_data     40013004    001f0000     1     1 *For testing of the single MPA chip. Register controls the delay (25ns units) with which the fake SSA like stub data is send with respect to the test pulse trigger.
    cnfg_phy_SSA_enable_gen_l1_data      40013004    01000000     1     1 *For testing of the single MPA chip. When 1 the sending of SSA like l1 data is enabled.
@@ -154,6 +156,9 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
    cnfg_phy_SSA_gen_l1_data_format_3		40013019    ffffffff     1     1 *See above. Channel data 31 downto 0.
    cnfg_phy_SSA_gen_HIP_data_format		4001301a    00ffffff     1     1 *See above. Content of the HIP flags.
    cnfg_phy_SSA_gen_offset_SSA_BX_cnt_format	4001301b    000001ff     1     1 *For testing of the single MPA chip. Register to change the offset value of the BX counter of the L1 data send by the SSA data generator. After a resync = fast reset this counter comes to the value defined below. After a reset of the FW the counter starts at 1. So in general this BX counter  starts counting at 1, increments by 1 when it receives a trigger, is set to the value specified below when it receives a resync.
+   cnfg_phy_MPA_SSA_SEU_check_patterns1	4001301c    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA stub/centroid data during SEU tests
+   cnfg_phy_MPA_SSA_SEU_check_patterns2	4001301d    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA stub/centroid data during SEU tests
+   cnfg_phy_MPA_SSA_SEU_check_patterns3	4001301e    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA stub/centroid data during SEU tests
 * Readout Block
    cnfg_readout_packet_nbr		40015000    0000ffff	 1     1 *number of events in one packet, 0 means 1 event
    cnfg_readout_data_handshake_enable	40015001    00000001	 1     1 *enable data handshake - should be enabled
@@ -234,12 +239,20 @@ ipb_daq_system_ctrl			40020000    ffffffff     1     1     *Base for the control
    ctrl_phy_ssa_gen_stub_phase          40023003    00ff0000     1     1 *For testing of the single MPA chip. Change the phase of the fake stub data going to the MPA wrt the 320MHz clock going to the chip. All 8 lines are phase shifted with the same amount. The unit of the phase 1/168th of the 320MHz clock cycle. Whatch out: this is an incremental process.
    ctrl_phy_ssa_gen_lateral_phase_1     40023004    000000ff     1     1 *For testing of the single SSA chip. Change the phase of the fake left lateral data going to the SSA chip. The unit of the phase 1/168th of the 320MHz clock cycle. Whatch out: this is an incremental process.
    ctrl_phy_ssa_gen_lateral_phase_2     40023004    0000ff00     1     1 *For testing of the single SSA chip. Change the phase of the fake right lateral data going to the SSA chip. The unit of the phase 1/168th of the 320MHz clock cycle. Whatch out: this is an incremental process.
+   ctrl_phy_SLVS_compare_start     40023005    00000001     1     1 *start the comparison of stub/centroid data for MPA/SSA SEU tests
+   ctrl_phy_SLVS_compare_stop     40023005    00000002     1     1 *stop the comparison of stub/centroid data for MPA/SSA SEU tests
+   ctrl_phy_SLVS_compare_read_data1_fifo     40023006    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
+   ctrl_phy_SLVS_compare_read_data2_fifo     40023007    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
+   ctrl_phy_SLVS_compare_read_data3_fifo     40023008    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
+   ctrl_phy_SLVS_compare_read_data4_fifo     40023009    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
 * Readout Block
    ctrl_readout_reset			40025000    00000001	 1     1 *reset readout block. WARNING: it is not clearing
    ctrl_readout_done			40025000    00000002	 1     1 *...
    ctrl_readout_run_fifo		40025001    ffffffff	 1     1 *fifo readout
 * DIO5 Block
    ctrl_dio5_load_config		40026000    00000001	 1     1 *set dio5 thresholds
+* DDR3 Block
+   ctrl_ddr3_traffic_str		40028000    00000001	 1     1 *ddr3 self check
 *------------------------------------------------------------------------------------------
 *----------------------------------------------- Stat Registers ---------------------------
 *------------------------------------------------------------------------------------------
@@ -284,6 +297,10 @@ ipb_daq_system_stat			40030000    ffffffff     1     0     *Base for the status 
    stat_phy_phase_fsm_state_chip1	40033002    0f000000	 1     0     *same for chip 1
    stat_phy_phase_fsm_state_chip0_ssa_lateral_l     40033002    0000000f	 1     0 *status of the phase tuning for ssa lateral data l
    stat_phy_phase_fsm_state_chip0_ssa_lateral_r     40033002    000000f0	 1     0 *status of the phase tuning for ssa lateral data r
+   stat_phy_slvs_compare_data_ready     40033003    00000001	 1     0 *data ready flag for the data stored in the FIFO for MPA/SSA SEU testing (goes to 1 when state machine is finished with comparing and back to 0 when FIFO empty)
+   stat_phy_slvs_compare_state_machine 40033003    0000001E	 1     0 *gives you back the number of the state where the state machine to compare stub/centroid data for MPA/SSA SEU testing is located
+   stat_phy_slvs_compare_fifo_almost_full 40033003    00000020	 1     0 *almost full flag for the FIFO storing the mismatches in stub/centroid data for MPA/SSA SEU testing
+   stat_phy_slvs_compare_fifo_bx_indicator 40033003    00000040	 1     0 *status bit saying if the data is arriving in the even or the odd BX
    stat_slvs_debug_general              4003300F    ffffffff     1     0
    stat_slvs_debug_mpa_l1_ready		4003300F    00000001	 1     0     *SLVS debug L1 line buffered
    stat_slvs_debug_mpa_stub_ready	4003300F    00000002	 1     0     *SLVS debug stub data buffered
@@ -305,12 +322,19 @@ ipb_daq_system_stat			40030000    ffffffff     1     0     *Base for the status 
    frame_cnt_chip6			40034006    ffffffff	1     0	     *...
    frame_cnt_chip7			40034007    ffffffff	1     0	     *...
    frame_cnt_chip8			40034008    ffffffff	1     0	     *...
+   rate_measurement_bx_counter		4003400C    ffffffff    1     0      * counter to measure the packing rate
    readout_req				40035000    00000001	1     0	     *Readout Requirement for the handshake mode
    fsm_status				40035000    00000ff0	1     0      *Readout FSM Status
    words_cnt				40035001    ffffffff	1     0      *Number of words in the readout FIFO
 * DIO5 Block
    stat_dio5_not_ready			40036000    00000001	 1     0     *Still configuring the DIO5 thresholds
    stat_dio5_error			40036000    00000002	 1     0     *Error when configuring thresholds via I2C
+* DDR3 Block
+   stat_ddr3_readout			40038000    00000001	 1     0     *DDR3 readout
+   stat_ddr3_initial_calibration_done	40038000    00000002	 1     0     *Initial calibration complete
+   stat_ddr3_self_check_done		40038000    00000004	 1     0     *DDR3 self check complete
+   stat_ddr3_num_errors			40038001    ffffffff	 1     0     *Number of errors obtained during self test
+   stat_ddr3_num_words			40038002    ffffffff	 1     0     *Number of words examined during self test
 *--------------------------------------------------------------------
 *---------------------------- MPA SSA BOARD -------------------------
 *--------------------------------------------------------------------

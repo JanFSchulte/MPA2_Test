@@ -6,13 +6,10 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from mpa_methods.mpa_i2c_conf import *
 from myScripts.Utilities import *
-from mpa_methods.bias_calibration import *
-#from mpa_methods.fast_readout_utility import *
 import numpy as np
 import time
 import sys
 import matplotlib.pyplot as plt
-#from mpa_methods.bias_calibration import *
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from scipy.special import erfc
@@ -26,7 +23,7 @@ def errorf(x, *p):
 
 def line(x, *p):
 	g, offset = p
-	return  numpy.array(x) *g + offset
+	return  np.array(x) *g + offset
 
 def gauss(x, *p):
 	A, mu, sigma = p
@@ -209,7 +206,7 @@ def send_pulses_fast(n_pulse, row, pixel, cal):
 	try:
 		open_shutter(8)
 	except ChipsException:
-		print "Error ChipsException, repeat ccommand"
+		print "Error ChipsException, repeat command"
 		sleep (0.001)
 		open_shutter(8)
 	if (cal != 0):
@@ -540,7 +537,6 @@ def s_curve_rbr_fr(n_pulse = 1000, s_type = "THR", ref_val = 50, row = range(1,1
 		sleep(0.005)
 		fail, temp = ReadoutCounters()
 		sleep(0.005)
-
 		if fail and (count_err < 10): # LOOK HERE (exit condition)
 			print "FailedPoint, repeat!"
 			activate_I2C_chip(verbose = 0)
@@ -729,7 +725,7 @@ def s_curve_pbp_test(n_pulse = 1000, s_type = "CAL", ref_val = 100, primary_row 
 	th2 = np.zeros(2040, dtype = np.int)
 	gain = 0
 	d1, th1, noise1 = s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", ref_val = 15, row = secondary_row, pixel = secondary_pixel, step = 1, start = 0, stop = 256, pulse_delay = 200,  extract_val = 60, plot = 1, print_file = 0)
-	d2, th2, noise2 = s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", ref_val = 25, row = secondary_row, pixel = secondary_pixel, step = 1, start = 0, stop = 256, pulse_delay = 200,  extract_val = 70, plot = 1, print_file = 0)
+	d2, th2, noise2 = s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", ref_val = 40, row = secondary_row, pixel = secondary_pixel, step = 1, start = 0, stop = 256, pulse_delay = 200,  extract_val = 100, plot = 1, print_file = 0)
 	Q1 = calLSB * 15
 	Q2 = calLSB * 25
 	delta_Q = Q2 - Q1

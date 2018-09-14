@@ -139,7 +139,7 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         print "\nFinding average when k=24 for ref=15"
         data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 15, row = range(1, 17), step = 1, start = 0, stop = 175,
         pulse_delay = 500, extract_val = 110, extract = 1, plot = 0, print_file =0)
-        th_array = [a for a in th_array if a != 0]
+        #th_array = [a for a in th_array if a != 0]
         ref15k24 = np.mean(th_array[1:1920])
         p=0
         while p < (len(th_array)):
@@ -151,7 +151,7 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         print "\nFinding average when k=24 for ref=30"
         data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 30, row = range(1, 17), step = 1, start = 0, stop = 250,
         pulse_delay = 500, extract_val = 130, extract = 1, plot = 0, print_file =0)
-        th_array = [a for a in th_array if a != 0]
+        #th_array = [a for a in th_array if a != 0]
         ref30k24 = np.mean(th_array[1:1920])
         p=0
         while p < (len(th_array)):
@@ -170,6 +170,8 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
             gain_array1[p] = (th_array2[p] - th_array1[p])/delta_Q
             gain_array2[p]= (th_array4[p] - th_array3[p])/delta_Q
             p += 1
+        gain_array1 = [a for a in gain_array1 if a != 0]
+        gain_array2 = [a for a in gain_array2 if a != 0]
         gain3 = (np.mean(gain_array1) * thLSB)
         gain4 = (np.mean(gain_array2) * thLSB)
 
@@ -239,7 +241,7 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         print "Finding average threshold when k=6 for ref=15"
         data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 15, row = range(1, 17), step = 1, start = 0, stop = 175,
         pulse_delay = 500, extract_val = 110, extract = 1, plot = 0, print_file =0)
-        th_array = [a for a in th_array if a != 0]
+        #th_array = [a for a in th_array if a != 0]
         ref15k6 = np.mean(th_array[1:1920])
         p=0
         while p < (len(th_array)):
@@ -251,7 +253,7 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         print "\nFinding average threshold when k = 6 and ref = 30"
         data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 30, row = range(1, 17), step = 1, start = 0, stop = 250,
         pulse_delay = 500, extract_val = 130, extract = 1, plot = 0, print_file =0)
-        th_array = [a for a in th_array if a != 0]
+        #th_array = [a for a in th_array if a != 0]
         ref30k6 = np.mean(th_array[1:1920])
         p=0
         while p < (len(th_array)):
@@ -300,6 +302,8 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
             gain_array1[p] = (th_array2[p] - th_array1[p])/delta_Q
             gain_array2[p]= (th_array4[p] - th_array3[p])/delta_Q
             p += 1
+        gain_array1 = [a for a in gain_array1 if a != 0]
+        gain_array2 = [a for a in gain_array2 if a != 0]
         gain5 = (np.mean(gain_array1) * thLSB)
         gain6 = (np.mean(gain_array2) * thLSB)
 
