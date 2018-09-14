@@ -42,4 +42,4 @@ class keithley_multimeter():
 		return value
 
 
-multimeter = keithley_multimeter()
+# multimeter = keithley_multimeter()

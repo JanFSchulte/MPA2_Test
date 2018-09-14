@@ -72,6 +72,7 @@ class ssa_ctrl_base:
 
 
 	def set_output_mux(self, testline = 'highimpedence'):
+		#utils.activate_I2C_chip()
 		ctrl = self.analog_mux_map[testline]
 		self.I2C.peri_write('Bias_TEST_LSB', 0) # to avoid short
 		self.I2C.peri_write('Bias_TEST_MSB', 0) # to avoid short

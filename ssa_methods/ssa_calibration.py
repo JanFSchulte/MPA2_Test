@@ -24,17 +24,12 @@ class ssa_calibration():
 			self.curr_value = curr_value
 			self.docalibrate = docalibrate
 
-
-	def __init__(self, ssa, I2C, fc7, multimeter, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
-		self.ssa = ssa
-		self.I2C = I2C
-		self.fc7 = fc7
-		self.multimeter = multimeter
-		self.ssa_peri_reg_map = ssa_peri_reg_map
-		self.ssa_strip_reg_map = ssa_strip_reg_map
-		self.analog_mux_map = analog_mux_map
-		self.initialised = False
-		self.set_gpib_address(16)
+	def __init__(self, ssa, I2C, fc7, multimeter, pcbadc, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
+		self.ssa = ssa;  self.I2C = I2C;  self.fc7 = fc7;
+		self.pcbadc = pcbadc;  self.multimeter = multimeter;
+		self.ssa_peri_reg_map = ssa_peri_reg_map;  self.ssa_strip_reg_map = ssa_strip_reg_map;
+		self.analog_mux_map = analog_mux_map;  self.initialised = False; self.minst = 0;
+		self.set_gpib_address(16); self.SetMode('ADC');
 		self.par_list = [
 			self.Parameter("Analog Ground Interal ", "GND",                   0.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Bandgap Voltage       ", "VBG",                   0.3, -1, -1, 'set_dont_calibrate'),
@@ -49,27 +44,29 @@ class ssa_calibration():
 			self.Parameter("Threshold High DAC    ", "Bias_THDACHIGH",      622.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Calibration DAC       ", "Bias_CALDAC",         100.0, -1, -1, 'set_dont_calibrate')]
 
+	def SetMode(self, mode = 'ADC'):
+		''' Modes:  'ADC' or 'MULTIMETER' '''
+		self.mode = mode
+
 	def set_gpib_address(self, address):
 		self.gpib_address = address
 
 	def __initialise(self):
-		self.multimeterinst = self.multimeter.init_keithley(address = self.gpib_address)
+		self.minst = self.multimeter.init_keithley(address = self.gpib_address)
 		self.initialised = True
-		return self.multimeterinst
-
 
 	def calibrate_to_nominals(self):
-		if(not self.initialised):
-			self.__initialise()
+		#if(not self.initialised):
+		#	self.__initialise()
 		for par in self.par_list:
 			if(par.docalibrate == 'set_calibrate'):
-				value, voltage = self.get_value_and_voltage(par.par_name, self.multimeterinst)
+				value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
 				voltage = voltage*1E3
 				print par.full_name, ": "
 				print "\tCheck the initial value: "
 				print ("\t\t DAC: %4d\t V: %8.3f mV") % (value, voltage)
 				print "\tTune the value (", par.nominal, "):"
-				best_dac = self.__tune_parameter(self.multimeterinst, par.par_name, par.nominal)
+				best_dac = self.__tune_parameter(self.minst, par.par_name, par.nominal)
 				par.best_dac = best_dac
 		print "\n\nSummary of tuning (tuned values):"
 		self.measure_bias()
@@ -77,10 +74,10 @@ class ssa_calibration():
 
 
 	def measure_bias(self, return_data = False):
-		if(not self.initialised):
-			self.__initialise()
+		#if(not self.initialised):
+		#	self.__initialise()
 		for par in self.par_list:
-			value, voltage = self.get_value_and_voltage(par.par_name, self.multimeterinst)
+			value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
 			voltage = voltage*1E3
 			print "->  \t" + par.full_name + ": " + (" [%3d] %7.3f mV") % (value, voltage)
 			par.curr_value = voltage
@@ -99,14 +96,17 @@ class ssa_calibration():
 			print "->  \tInvalid DAC name"
 			return False
 		fullscale = 2**nbits
-		if(not self.initialised):
-			self.__initialise()
+		#if(not self.initialised):
+		#	self.__initialise()
 		self.ssa.ctrl.set_output_mux(name)
 		data = np.zeros(fullscale, dtype=np.float);
 		for i in range(0, fullscale):
 			self.I2C.peri_write(name, i)
 			sleep(0.1)
-			data[i] = self.multimeter.measure(self.multimeterinst)
+			if(self.mode == 'MULTIMETER'):
+				data[i] = self.multimeter.measure(self.minst)
+			else:
+				data[i] = self.pcbadc.measure('SSA', average)
 			utils.ShowPercent(i, fullscale-1, "Measuring "+name+" linearity                         ")
 		if( isinstance(filename, str) ):
 			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_Caracteristics_" + name + filename2
@@ -162,28 +162,34 @@ class ssa_calibration():
 		return DNL, INL
 
 
-	def get_value_and_voltage(self, name, inst0 = -1):
+	def get_value_and_voltage(self, name, inst0 = -1, average = 1):
 		if (inst0 == -1):
-			if(not self.initialised):
+			if(not self.initialised and (self.mode == 'MULTIMETER')):
 				self.__initialise()
-			inst = self.multimeterinst
+			inst = self.minst
 		else: inst = inst0
 		self.ssa.ctrl.set_output_mux(name)
 		value = self._d5_value(str(name), 'r')
-		measurement = self.multimeter.measure(inst)
-		self.ssa.ctrl.set_output_mux('highimpedence')
+		if(self.mode == 'MULTIMETER'):
+			measurement = self.multimeter.measure(inst)
+		else:
+			measurement = self.pcbadc.measure('SSA', average)
+		#self.ssa.ctrl.set_output_mux('highimpedence')
 		return value, measurement
 
 
-	def get_voltage(self, name, inst0 = -1):
+	def get_voltage(self, name, inst0 = -1, average = 1):
 		if (inst0 == -1):
-			if(not self.initialised):
+			if(not self.initialised and (self.mode == 'MULTIMETER')):
 				self.__initialise()
-			inst = self.multimeterinst
+			inst = self.minst
 		else:
 			inst = inst0
 		self.ssa.ctrl.set_output_mux(name)
-		measurement = self.multimeter.measure(inst)
+		if(self.mode == 'MULTIMETER'):
+			measurement = self.multimeter.measure(inst)
+		else:
+			measurement = self.pcbadc.measure('SSA', average)
 		self.ssa.ctrl.set_output_mux('highimpedence')
 		return measurement
 
@@ -229,7 +235,6 @@ class ssa_calibration():
 			self._d5_value(str(name), 'w', dac_value)
 			dac_value, voltage = self.get_value_and_voltage(name, inst)
 			voltage *= 1E3
-			#voltage = 1E3*self.multimeter.measure(inst)
 			print "\t\t\tdac: ", dac_value, " voltage: ", voltage
 			current_voltage_diff = abs(voltage-nominal)
 			if current_voltage_diff < best_voltage_diff:

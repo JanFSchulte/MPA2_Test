@@ -47,7 +47,7 @@ def SetSlaveMap(verbose = 1):
 	i2c_slave_map[0].SetValues(0b1110000, 0, 1, 1, 0, 1, "PCA9646")
 	i2c_slave_map[1].SetValues(0b0100000, 0, 1, 1, 0, 1, "PCF8574")
 	i2c_slave_map[2].SetValues(0b0100100, 0, 1, 1, 0, 1, "PCF8574")
-	i2c_slave_map[3].SetValues(0b0010100, 0, 2, 3, 0, 1, "LTC2487")
+	i2c_slave_map[3].SetValues(0b0010100, 0, 2, 3, 0, 1, "LTC2487") # ADC
 	i2c_slave_map[4].SetValues(0b1001000, 1, 2, 2, 0, 0, "DAC7678")
 	i2c_slave_map[5].SetValues(0b1000000, 1, 2, 2, 0, 1, "INA226")
 	i2c_slave_map[6].SetValues(0b1000001, 1, 2, 2, 0, 1, "INA226")
@@ -58,6 +58,7 @@ def SetSlaveMap(verbose = 1):
 	i2c_slave_map[11].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA")
 	i2c_slave_map[12].SetValues(0b0100000, 2, 1, 1, 1, 0, "SSA")
 	i2c_slave_map[15].SetValues(0b1011111, 1, 1, 1, 1, 0, "CBC3")
+
 
 	# updating the slave id table
 	if verbose: print "---> Updating the Slave ID Map"

@@ -23,6 +23,12 @@ class SSA_measurements():
 
 	###########################################################
 	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2):
+		data = self.scurves_measure(cal_list = cal_list, trim_list = trim_list, mode = mode, rdmode = rdmode, filename = filename, runname = runname, plot = plot, nevents = nevents, speeduplevel = speeduplevel)
+		if(plot):
+			self.scurves_plot(data)
+		return data
+
+	def scurves_measure(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2):
 		plt.clf()
 		data = []
 		if(isinstance(filename, str)):
@@ -38,12 +44,29 @@ class SSA_measurements():
 					t = self.cal.set_trimming(trim, 'all', False)
 					d = self.cal.scurves(cal_ampl = cal, nevents = nevents,filename = fo, mode = mode, rdmode = rdmode,filename2 = 'trim'+str(trim),speeduplevel = speeduplevel,plot = False, msg = "[CAL=" + str(cal) +"][TRIM="+str(trim)+']')
 					data.append(d)
-		if plot:
-			plt.clf()
-			for i in data:
-				plt.plot(i)
-			plt.show()
 		return data
+
+	def scurves_plot(self, data):
+		plt.clf()
+		fig = plt.figure(figsize=(15,5))
+		plt.style.use('seaborn-deep')
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(False)
+		ax.spines["right"].set_visible(False)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.xticks(fontsize=16)
+		plt.yticks(fontsize=16)
+		plt.ylabel("Counter value", fontsize=16)
+		plt.xlabel('Threshold', fontsize=16)
+		color=iter(sns.color_palette('husl'))
+		plt.ylim(0, 1001)
+		plt.xlim(10, 200)
+		for d in data:
+			c = next(color)
+			plt.plot(d, '-', color=c, lw=1, alpha = 1)
+		plt.show()
+
 
 	###########################################################
 	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', ret_average = True, filename = False, runname= '', plot = True, filemode = 'w', set_trim = False):
@@ -98,7 +121,7 @@ class SSA_measurements():
 
 
 	###########################################################
-	def scurve_trim(self, filename = '../SSA_results/Chip0', calpulse = 50, plot = True, iterations = 5):
+	def scurve_trim(self, filename = 'Chip0/', calpulse = 50, plot = True, iterations = 5):
 		print "->  \tS-Curve Trimming"
 		if plot:
 			data = self.scurves(mode = 'all', rdmode = 'fast', cal_list = [calpulse], trim_list = [0, 31], filename = filename, plot = False)
@@ -274,10 +297,10 @@ class SSA_measurements():
 			self.shaper_pulse_plot(filename = filename, runname = runname)
 		#return pmean, tm, charge
 
-	def shaper_pulse_plot(self, filename = False, runname = '', rawdata = False, invert = False, interpolate = True):  #filename = Chip-B6_Shaper/Chip-B6
+	def shaper_pulse_plot(self, filename = False, runname = '', rawdata = False, invert = True, interpolate = True):  #filename = 'Chip-B6/Shaper/Chip-B6_Cal_all'
 		if(not isinstance(filename, str)):
 			filename = "temp/ShaperPulseTmp"
-		fig = plt.figure(figsize=(8,12))
+		fig = plt.figure(figsize=(8,9))
 		plt.style.use('seaborn-deep')
 		ax = plt.subplot(111)
 		ax.spines["top"].set_visible(False)
@@ -314,8 +337,9 @@ class SSA_measurements():
 			#z = np.polyfit(tmp[:,0], tmp[:,1], 3)
 			#pol.append(np.poly1d(z))
 			plt.errorbar(
-				tmp[:,0]*self.thdac_gain, tmp[:,1]*inv, fmt='o', yerr=tmp[:,2], color=c,
-				mew = 0, elinewidth = 1, ecolor = c, markersize = 3, capthick=1, capsize = 2)
+				tmp[:,0], tmp[:,1]*inv*self.thdac_gain, fmt='o', yerr=tmp[:,2]*3, color=c, label = '               ',
+				mew = 0, elinewidth = 1, ecolor = c, markersize = 3, capthick=2, capsize = 2)
+			plt.legend(numpoints=1, loc=('lower right'), frameon=False)
 			data.append(tmp)
 		#return pol
 		roots = []
@@ -325,23 +349,33 @@ class SSA_measurements():
 		injectPnt = np.mean(roots)
 		color=iter(sns.color_palette('deep'))
 		#return data
+		first = True
+		peakingTime = []
 		if(interpolate):
 			for t in data:
 				t = np.insert(t, 0, [[injectPnt, 0, 0 ]], axis = 0)
 				z = np.polyfit(t[:,0], t[:,1], 3)
 				p = np.poly1d(z)
 				c = next(color)
-				plt.plot(tm*self.thdac_gain, p(tm)*inv, '-', color=c, lw=1, alpha = 0.5)
+				plt.plot(tm, p(tm)*inv*self.thdac_gain, '-', color=c, lw=1, alpha = 0.8)
+				vl = np.argmax( p(tm)*self.thdac_gain ) * self.dll_resolution # - injectPnt
+				peakingTime.append( vl - injectPnt )
+				if(first):
+					vh = np.max( p(tm)*self.thdac_gain )
+					#plt.plot([vl]*2, [-vh, vh], '--r')
+					#plt.plot([injectPnt]*2, [-10, 10], '--r')
+					first = False
 		if(invert):
-			plt.ylim(-np.max(dmean)-10, 0)
+			plt.ylim(-np.max(dmean*self.thdac_gain)-10, 0)
 		else:
-			plt.ylim(-10, np.max(dmean)+10)
-		plt.legend(numpoints=1, loc=('lower right'))
+			plt.ylim(-10, np.max(dmean*self.thdac_gain)+10)
+		plt.savefig("../SSA_Results/" + filename + ".png", bbox_inches="tight");
 		plt.show()
 		#return tm, raw, tmp
+		return peakingTime
 
 	###########################################################
-	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, ideal_gain = 1.840, ideal_offset = 0.8, filename = False, plot = True, filemode = 'w', runname = ''):
+	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, ideal_gain = 1.840, ideal_offset = 0.8, filename = 'temp/temp', plot = True, filemode = 'w', runname = ''):
 		utils.activate_I2C_chip()
 		if(self.bias == False): return False, False
 		if(not (name in self.muxmap)): return False, False
@@ -353,7 +387,7 @@ class SSA_measurements():
 			filename = fo,
 			filename2 = "",
 			plot = False,
-			average = 10,
+			average = 1,
 			runname = runname,
 			filemode = filemode)
 		g, ofs, sigma = fit_params
@@ -499,7 +533,8 @@ class SSA_measurements():
 	###########################################################
 	def __set_variables(self):
 		self.dll_resolution = 1.3157894736842106;
-		self.thdac_gain = 2.01
+		self.thdac_gain = 2.01 # mv/cnt
+		self.caldac_q = 0.04305 #fC/cnts
 
 
 '''
