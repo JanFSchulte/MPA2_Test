@@ -38,9 +38,11 @@ else
 	printf '\n->  SSA Testbench correctly found on %s\n' "$IP"
 	printf '\n->  Starting loading the firmware\n'
 	cd ~/FC7/sw/fc7/tests
-	./bin/fc7-d19c.exe  -i $IP -n  D19C_SSA_V-2018-06-12.bin -f ~/D19C/MPA_Test/fw_bitfiles/D19C_SSA_V-2018-06-12.bit
-#	./bin/fc7-d19c.exe  -i $IP -n  D19C_SSA_V-2018-04-13
-
+	#./bin/fc7-d19c.exe  -i $IP -n  D19C_SSA_V-2018-06-12.bin -f ~/D19C/MPA_Test/fw_bitfiles/D19C_SSA_V-2018-06-12.bit
+	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU.bin -f ~/D19C/bitfiles/SEU/SSA_SEU.bit
+	./bin/fc7-d19c.exe  -i $IP -n  D19C_SSA_V-2018-06-12.bin 
+	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU.bin
+	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU.bin -f ~/D19C/bitfiles/SEU_recompile/SSA_SEU.bit
 fi
 
 

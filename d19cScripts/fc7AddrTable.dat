@@ -301,6 +301,9 @@ ipb_daq_system_stat			40030000    ffffffff     1     0     *Base for the status 
    stat_phy_slvs_compare_state_machine 40033003    0000001E	 1     0 *gives you back the number of the state where the state machine to compare stub/centroid data for MPA/SSA SEU testing is located
    stat_phy_slvs_compare_fifo_almost_full 40033003    00000020	 1     0 *almost full flag for the FIFO storing the mismatches in stub/centroid data for MPA/SSA SEU testing
    stat_phy_slvs_compare_fifo_bx_indicator 40033003    00000040	 1     0 *status bit saying if the data is arriving in the even or the odd BX
+   stat_phy_slvs_compare_fifo_empty 40033003    00000080	 1     0 *empty flag for the FIFO storing the mismatches in stub/centroid data for MPA/SSA SEU testing
+   stat_phy_slvs_compare_numbere_events_written_to_fifo 40033003    003fff00	 1     0 *counter counting the number of events written to the fifo during the running of the compare state machine
+   stat_phy_slvs_compare_number_good_data 40033004    ffffffff	 1     0 *32 bit counter saying how many BXs matched the check pattern (counter stops at it's max, is reset when starting the SEU compare state machine again or on reset)
    stat_slvs_debug_general              4003300F    ffffffff     1     0
    stat_slvs_debug_mpa_l1_ready		4003300F    00000001	 1     0     *SLVS debug L1 line buffered
    stat_slvs_debug_mpa_stub_ready	4003300F    00000002	 1     0     *SLVS debug stub data buffered

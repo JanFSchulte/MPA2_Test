@@ -69,7 +69,8 @@ class SSA_test_utility():
 			stfound = utils.cl2str(r)
 			stprev = utils.cl2str(prev)
 			sthits = utils.cl2str(cl_hits)
-			dstr = stexpected + ';    ' + stfound + '; ' + ';    ' + sthits + ';    ' + "                                            "
+			#dstr = stexpected + ';    ' + stfound + '; ' + ';    ' + sthits + ';    ' + "                                            "
+			dstr = "->       REF:" + stexpected + ';         OUT:' + stfound + '; ' + ";                                            "
 			if (err[0]):
 				erlog = "Cluster-Data-Error;   " + dstr
 				cnt['cl_err'] += 1

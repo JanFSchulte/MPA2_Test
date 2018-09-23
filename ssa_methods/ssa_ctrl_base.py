@@ -134,12 +134,25 @@ class ssa_ctrl_base:
 		time.sleep(0.01)
 		self.set_lateral_lines_alignament()
 		time.sleep(0.01)
-		rt = self.__do_phase_tuning()
+		#rt = self.__do_phase_tuning()
+		rt = self.align_out()
 		self.I2C.peri_write('OutPattern7/FIFOconfig', 7)
 		self.reset_pattern_injection()
 		self.activate_readout_normal()
 		return rt
 
+	def align_out(self):
+		fc7.write("ctrl_phy_phase_tune_again", 1)
+		timeout_max = 2
+		timeout = 0
+		while(fc7.read("stat_phy_phase_tuning_done") == 0):
+			sleep(0.1)
+			if (timeout == timeout_max):
+				timeout = 0
+				print "Waiting for the phase tuning"
+				fc7.write("ctrl_phy_phase_tune_again", 1)
+			else:
+				timeout += 1
 
 	def set_t1_sampling_edge(self, edge):
 		if edge == "rising" or edge == "positive":
