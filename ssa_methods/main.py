@@ -10,6 +10,7 @@ from ssa_methods.ssa_analise_utility import *
 from ssa_methods.ssa_fc7_com import *
 from ssa_methods.ssa_calibration import *
 from ssa_methods.ssa_seu_utility import *
+from ssa_methods.ssa_test_seu import *
 from myScripts.BasicADC import *
 
 
@@ -31,7 +32,9 @@ measure = SSA_measurements(ssa, I2C, FC7, cal, analog_mux_map, pwr, biascal)
 toptest = SSA_test_top(ssa, I2C, FC7, cal, biascal, pwr, test, measure)
 xray    = SSA_test_xray(toptest, ssa, I2C, FC7, cal, biascal, pwr, test, measure)
 anl     = SSA_Analise_Test_results(toptest, test, measure, biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
-seu     = SSA_SEU(ssa, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+seuutil = SSA_SEU_utilities(ssa, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+seu     = SSA_SEU(ssa, seuutil, I2C, FC7, cal, biascal, pwr, test, measure)
+
 
 def on():
 	utils.activate_I2C_chip()

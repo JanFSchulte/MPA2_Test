@@ -162,6 +162,44 @@ def Configure_TestPulse_MPA_SSA(delay_before_next_pulse, number_of_test_pulses):
   # now write
   Configure_TestPulse(50, 50, delay_before_next_pulse, number_of_test_pulses)
 
+'''Fast Command Block
+   cnfg_fast_triggers_to_accept                  *number of triggers to accepted (0 - continuous triggering)
+   cnfg_fast_user_frequency                      *frequency of the trigger\_source=3 (1...1000 kHz range).
+   cnfg_fast_source                              *trigger source: 1 - TTC, 2 - Stubs, 3 - User Trigger, 4 - TLU, 5 - External trigger, 6 - test pulse FSM, 7 - UIB antenna FSM, 8 - Consecutive triggers FSM
+   cnfg_fast_stub_mask                           *mask of the hybrids to trigger stubs (useful for coincidence)
+   cnfg_fast_stub_veto_length                    *on stubs self-triggering: number of 40MHz clock cycles to raise VETO and ignore the coming triggers
+   cnfg_fast_delay_after_fast_reset              *trigger source 6: delay after the fast reset command
+   cnfg_fast_delay_after_test_pulse              *trigger source 6: delay after the test pulse
+   cnfg_fast_delay_before_next_pulse             *trigger source 6: delay after the l1a before the next fast reset (if enabled)
+   cnfg_fast_stub_trigger_delay                  *setting the delay of the stub trigger (trigger source 2)
+   cnfg_fast_ext_trigger_delay_value             *delay of the external trigger (trigger source 4,5)
+   cnfg_fast_delay_after_antenna_trigger         *antenna FSM: delay after antenna trigger
+   cnfg_fast_delay_between_consecutive_trigeers  *consecutive FSM: delay between two consecutive L1A signals
+   cnfg_fast_backpressure_enable                 *enable internal backpressure handling. should be enabled by default, and disabled only if triggering system knows howto handle d19c backpressure
+   cnfg_fast_stubor_enable                       *trigger source 2: 1 - trigger on StubOR, 0 - trigger on HitOR
+   cnfg_fast_initial_fast_reset_enable           *enable initial fast reset after sending start\_trigger command
+   cnfg_fast_tp_fsm_fast_reset_en                *trigger source 6: enable fast reset signal
+   cnfg_fast_tp_fsm_test_pulse_en                *trigger source 6: enable cal pulse signal
+   cnfg_fast_tp_fsm_l1a_en                       *trigger source 6: enable l1a signal
+   cnfg_fast_seu_ntriggers_to_skip               *trigger source 6: number of l1a to skip
+'''
+
+def Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 0, delay_before_next_pulse = 0, number_of_test_pulses = 0, enable_rst_L1 = 0, enable_initial_reset = 0):
+	fc7.write("cnfg_fast_initial_fast_reset_enable", (enable_rst_L1 or enable_initial_reset))
+	fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
+	fc7.write("cnfg_fast_delay_after_test_pulse", delay_after_test_pulse)
+	fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
+	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", (enable_rst_L1))
+	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
+	fc7.write("cnfg_fast_tp_fsm_l1a_en", enable_rst_L1)
+	fc7.write("cnfg_fast_triggers_to_accept", number_of_test_pulses)
+	fc7.write("cnfg_fast_source", 6)
+	fc7.write("cnfg_fast_initial_fast_reset_enable", (enable_rst_L1 or enable_initial_reset))
+	sleep(0.1)
+	SendCommand_CTRL("load_trigger_config")
+	sleep(0.1)
+
+
 def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses):
   # initial fast reset which is sent once after start_trigger command
   fc7.write("cnfg_fast_initial_fast_reset_enable", 0)

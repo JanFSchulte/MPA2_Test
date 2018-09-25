@@ -33,8 +33,9 @@ class SSA_readout():
 	 	status = [0]*3; timeout = 10;
 		if(send_test_pulse):
 		 	if(initialize):
-				Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
-				sleep(0.001)
+				#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
+				#sleep(0.001)
+				Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 0, delay_before_next_pulse = 0, number_of_test_pulses = 1, enable_rst_L1 = 0)
 			#status_init = self.status()
 			self.fc7.SendCommand_CTRL("start_trigger")
 		while (status[1] != 1 and counter<timeout):

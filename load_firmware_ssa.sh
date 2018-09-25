@@ -40,9 +40,11 @@ else
 	cd ~/FC7/sw/fc7/tests
 	#./bin/fc7-d19c.exe  -i $IP -n  D19C_SSA_V-2018-06-12.bin -f ~/D19C/MPA_Test/fw_bitfiles/D19C_SSA_V-2018-06-12.bit
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU.bin -f ~/D19C/bitfiles/SEU/SSA_SEU.bit
-	./bin/fc7-d19c.exe  -i $IP -n  D19C_SSA_V-2018-06-12.bin 
+	#./bin/fc7-d19c.exe  -i $IP -n  D19C_SSA_V-2018-06-12.bin 
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU.bin
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU.bin -f ~/D19C/bitfiles/SEU_recompile/SSA_SEU.bit
+	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_3.bin -f ~/D19C/bitfiles/SEU/SEU_SSA_3.bit
+	./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_2.bin -f ~/D19C/bitfiles/SEU/SSA_SEU_2.bit
 fi
 
 

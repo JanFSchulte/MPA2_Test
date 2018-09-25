@@ -159,6 +159,15 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
    cnfg_phy_MPA_SSA_SEU_check_patterns1	4001301c    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA stub/centroid data during SEU tests
    cnfg_phy_MPA_SSA_SEU_check_patterns2	4001301d    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA stub/centroid data during SEU tests
    cnfg_phy_MPA_SSA_SEU_check_patterns3	4001301e    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA stub/centroid data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns1	4001301f    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns2	40013020    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns3	40013021    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns4	40013022    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns5	40013023    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns6	40013024    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns7	40013025    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC	40013026    000000ff     1     1 *BXs to wait before starting to do the automatic comparison
+
 * Readout Block
    cnfg_readout_packet_nbr		40015000    0000ffff	 1     1 *number of events in one packet, 0 means 1 event
    cnfg_readout_data_handshake_enable	40015001    00000001	 1     1 *enable data handshake - should be enabled
@@ -181,6 +190,8 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
 *
    cnfg_tlu_handshake_mode		40017000    00000003     1     1 *TLU handhsake mode: 0 - no handshake, 1 - simple handshake, 2 - data handshake
    cnfg_tlu_enabled			40017000    00000010     1     1 *Enable TLU block
+   cnfg_tlu_trigger_id_delay            40017000    00000f00     1     1 *Set trigger id delay
+
 *------------------------------------------------------------------------------------------
 *----------------------------------------------- Ctrl Registers ---------------------------
 *------------------------------------------------------------------------------------------
@@ -338,6 +349,9 @@ ipb_daq_system_stat			40030000    ffffffff     1     0     *Base for the status 
    stat_ddr3_self_check_done		40038000    00000004	 1     0     *DDR3 self check complete
    stat_ddr3_num_errors			40038001    ffffffff	 1     0     *Number of errors obtained during self test
    stat_ddr3_num_words			40038002    ffffffff	 1     0     *Number of words examined during self test
+* DDR3 Readout (direct access to the DDR3)
+   ddr3_readout                         C0000000    ffffffff     1     0     *the ddr3 address zero itself
+
 *--------------------------------------------------------------------
 *---------------------------- MPA SSA BOARD -------------------------
 *--------------------------------------------------------------------
