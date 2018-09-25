@@ -44,7 +44,8 @@ else
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU.bin
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU.bin -f ~/D19C/bitfiles/SEU_recompile/SSA_SEU.bit
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_3.bin -f ~/D19C/bitfiles/SEU/SEU_SSA_3.bit
-	./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_2.bin -f ~/D19C/bitfiles/SEU/SSA_SEU_2.bit
+	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_2.bin -f ~/D19C/bitfiles/SEU/SSA_SEU_2.bit
+	./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_4.bin -f ~/D19C/bitfiles/SEU/SEU_SSA_4.bit
 fi
 
 
