@@ -260,6 +260,7 @@ ipb_daq_system_ctrl			40020000    ffffffff     1     1     *Base for the control
    ctrl_phy_l1_SLVS_compare_read_data5_fifo     4002300e    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
    ctrl_phy_l1_SLVS_compare_read_data6_fifo     4002300f    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
    ctrl_phy_l1_SLVS_compare_read_data7_fifo     40023010    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
+   ctrl_phy_l1_SLVS_compare_read_data8_fifo     40023011    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
 * Readout Block
    ctrl_readout_reset			40025000    00000001	 1     1 *reset readout block. WARNING: it is not clearing
    ctrl_readout_done			40025000    00000002	 1     1 *...

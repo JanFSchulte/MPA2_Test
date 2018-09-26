@@ -2,6 +2,7 @@ from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
+
 from myScripts.Utilities import *
 
 import time
@@ -17,26 +18,99 @@ class SSA_SEU_utilities():
 	def __init__(self, ssa, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
 		self.ssa_strip_reg_map = ssa_strip_reg_map; self.ssa = ssa;
 		self.analog_mux_map = analog_mux_map; self.ssa_peri_reg_map = ssa_peri_reg_map;
-		self.I2C = I2C;	self.fc7 = FC7;	self.pwr = pwr; self.timer_data_taking = 0xffffffff
+		self.I2C = I2C;	self.fc7 = FC7;	self.pwr = pwr;
 
 	##############################################################
-	def Configure_Injection(self, strip_list, analog_injection = 0):
+	def Run_Test_SEU_ClusterData(self, strip =[10,20,30,40,50,60,70], delay_after_fast_reset = 0, run_time = 5, display = 1, filename = '', runname = '', delay = 71):
+		SendCommand_CTRL("global_reset")
+		p1, p2 = self.Stub_Evaluate_Pattern(strip)
+		sleep(0.1); self.Stub_loadCheckPatternOnFC7(p1, p2, 1, display)
+		sleep(0.1); self.Configure_Injection(strip_list = strip, hipflag_list = [], analog_injection = 0)
+		sleep(0.1); self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
+		sleep(0.1); Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 1, delay_before_next_pulse = 0, number_of_test_pulses = 0, enable_rst_L1 = 0, enable_initial_reset = 1)
+		sleep(0.1); self.Stub_delayDataTaking()
+		sleep(0.1); self.Stub_RunStateMachine(run_time = run_time, display = display)
+		sleep(0.1); SendCommand_CTRL("stop_trigger")
+		sleep(0.1);
+		CntBad  = fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo")
+		CntGood = fc7.read("stat_phy_slvs_compare_number_good_data")
+		print "____________________________________________"
+		print("->  \tSEU Cluster-Data  -> Number of good BX: %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad)))
+		print("->  \tSEU Cluster-Data  -> Number of bad  BX: %12d (%10.6f%%)" % (CntBad,  100*np.float(CntBad)/(CntGood+CntBad)))
+		print "____________________________________________"
+		return [CntGood, CntBad]
+
+	##############################################################
+	def Run_Test_SEU_L1(self, strip = [1,9,17,25,33,17,118,119,120], hipflags = [], run_time = 5, delay_after_fast_reset = 512, latency = 500, shift = 0, cal_pulse_period = 100, display = 1, filename = '', runname = '', delay = 71, cnt_shift = 0):
+		chip = 'SSA'
+		SendCommand_CTRL("global_reset")
+		sleep(1)
+		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern(strip, hipflags)
+		self.Configure_Injection(strip_list = strip, hipflag_list = hipflags, analog_injection = 0)
+		self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7)
+		self.I2C.peri_write('L1-Latency_MSB', (latency & 0xff00) >> 8)
+		self.I2C.peri_write('L1-Latency_LSB', (latency & 0x00ff) >> 0)
+		#Configure_TestPulse_MPA(delay_after_fast_reset = 512, delay_after_test_pulse = latency+3+offset, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_rst_L1 = 1)
+		#Configure_TestPulse_SSA(delay_after_fast_reset = delay_after_fast_reset,delay_after_test_pulse = latency+3+shift,	delay_before_next_pulse = cal_pulse_period,	number_of_test_pulses = 0,	enable_rst_L1 = 0,	enable_L1 = 1)
+		SendCommand_CTRL('fast_fast_reset')
+		sleep(0.1)
+		for i in range(cnt_shift):
+			send_trigger()
+		fc7.write("cnfg_fast_backpressure_enable", 0)
+		fc7.write("cnfg_fast_initial_fast_reset_enable", 0 )
+		fc7.write("cnfg_fast_delay_after_fast_reset",  delay_after_fast_reset )
+		fc7.write("cnfg_fast_delay_after_test_pulse",   latency+3+shift )
+		fc7.write("cnfg_fast_delay_before_next_pulse",  cal_pulse_period)
+		fc7.write("cnfg_fast_tp_fsm_fast_reset_en",  0 )
+		fc7.write("cnfg_fast_tp_fsm_test_pulse_en",  1)
+		fc7.write("cnfg_fast_tp_fsm_l1a_en",  1 )
+		fc7.write("cnfg_fast_triggers_to_accept",  0 )
+		fc7.write("cnfg_fast_source", 6)
+		fc7.write("cnfg_fast_initial_fast_reset_enable",  0 )
+		sleep(0.1)
+		SendCommand_CTRL("load_trigger_config")
+		sleep(0.1)
+		#self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
+		#self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
+		#self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
+		#Configure_TestPulse(delay_after_fast_reset = 0, delay_after_test_pulse = (latency+3+shift), delay_before_next_pulse = 0, number_of_test_pulses = 1)
+		#self.fc7.write("cnfg_fast_delay_between_consecutive_trigeers", 0)
+		self.L1_RunStateMachine(timer_data_taking = run_time)
+		## SendCommand_CTRL("stop_trigger")
+		#self.L1_ReadFIFOs(nevents = 5)878
+		n_in_fifo  = fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo")
+		n_correct  = fc7.read("stat_phy_l1_slvs_compare_number_good_data")
+		n_triggers = fc7.read("stat_phy_l1_slvs_compare_number_l1_triggers")
+		n_headers  = fc7.read("stat_phy_l1_slvs_compare_number_l1_headers_found")
+		print "____________________________________________"
+		print("->  \tSEU L1-Data       -> Correct events:     %12d (%10.6f%%)" % (n_correct, 100*np.float(n_correct)/(n_triggers)))
+		print("->  \tSEU L1-Data       -> Packets with Error: %12d (%10.6f%%)" % (n_in_fifo,  100*np.float(n_in_fifo)/(n_triggers)))
+		print("->  \tSEU L1-Data       -> Packets Missing:    %12d (%10.6f%%)" % ((n_triggers-n_headers),  100*np.float(n_triggers-n_headers)/(n_triggers)))
+		print "____________________________________________"
+		return [n_correct, n_in_fifo, (n_triggers-n_headers)]
+
+	##############################################################
+	def Configure_Injection(self, strip_list = [], hipflag_list = [], analog_injection = 0):
 		#here define the way to generate stub/centroid data pattern on the MPA/SSA
 		utils.activate_I2C_chip()
 		self.ssa.ctrl.activate_readout_normal()
 		self.I2C.peri_write("CalPulse_duration", 1)
-		self.I2C.strip_write("ENFLAGS", 0, 0)
-		self.I2C.strip_write("DigCalibPattern_L", 0, 0x1)
+		self.I2C.strip_write("ENFLAGS", 0, 0b01001)
+		self.I2C.strip_write("DigCalibPattern_L", 0, 0x0)
+		self.I2C.strip_write("DigCalibPattern_H", 0, 0x0)
 		word = np.zeros(16, dtype = np.uint8)
 		row = np.zeros(16, dtype = np.uint8)
 		pixel = np.zeros(16, dtype = np.uint8)
 		l = np.zeros(10, dtype = np.uint8)
 		for st in strip_list:
 			if(st>0 and st<121):
-				self.I2C.strip_write("ENFLAGS", st, 0b01001)
 				self.I2C.strip_write("DigCalibPattern_L", st, 0x1)
+		for st in hipflag_list:
+			if(st>0 and st<121):
+				self.I2C.strip_write("DigCalibPattern_H", st, 0x1)
 		sleep(0.1)
 
+	##############################################################
 	def Stub_Evaluate_Pattern(self, strip_list):
 		strip = np.sort(strip_list)
 		slist = np.zeros(8, dtype = ctypes.c_uint32)
@@ -45,6 +119,64 @@ class SSA_SEU_utilities():
 		p1 = (slist[0]<<0) | (slist[1]<<8) | (slist[2]<<16) | (slist[3]<<24)
 		p2 = (slist[4]<<0) | (slist[5]<<8) | (slist[6]<<16) | (slist[7]<<24)
 		return p1, p2
+
+	##############################################################
+	def L1_Evaluate_Pattern(self, strip_list, hflag_list):
+		strip = np.sort(strip_list)
+		hfleg = np.sort(hflag_list)
+		l1hit  = np.full(120, '0')
+		l1flag = np.full( 24, '0')
+		for st in strip:
+			l1hit[ st-1 ] = '1'
+		for st in hfleg:
+			l1flag[ st-1 ] = '1'
+		p1 = 0x00000000
+		p2 = 0x00000000
+		p3 = int( '0b' + ( ''.join((l1hit[0:30])[::-1])  + '10'    ) , 2)
+		p4 = int( '0b' + ( ''.join((l1hit[30:62])[::-1])  ) , 2)
+		p5 = int( '0b' + ( ''.join((l1hit[62:94])[::-1])  ) , 2)
+		p6 = int( '0b' + ( ''.join((l1flag[0:6])[::-1])   + ''.join((l1hit[94:120])[::-1])  ) , 2)
+		p7 = int( '0b' + ( '0'*10 + ''.join((l1flag[6:24])[::-1])  ) , 2)
+		return p1, p2, p3, p4, p5, p6, p7
+
+		#pattern7(17 downto 0) = bit(23 downto 6) of the MIP flags
+		#pattern6(31 downto 26) = bit (5 downto 0) of the MIP flags
+		#pattern6(25 downto 0) = bit (119 downto 94) of the hit info
+		#pattern5 = bit (93 downto 61) of the hit info
+		#pattern4 = bit (60 downto 29) of the hit info
+		#pattern3(31 downto 2)= last 30 bits of the hit info
+		#pattern3(1)= trailer bit
+
+		############################
+		#########for SSA:###########
+		############################
+		##### as am using the same state machine and the same registers the mapping for the SSA configuration check registers might look a bit odd. The state machine actaully saves a bit longer the data then the SSA l1 frame length. The l1 counter is incremented on FPGA, for the moment the BX counter is not checked.
+		##### pattern7(18 downto 0) = bit(23 downto 5) of the MIP flags
+		##### pattern6(31 downto 27) = bit (4 downto 0) of the MIP flags
+		##### pattern6(26 downto 0) = bit (119 downto 93) of the hit info
+		##### pattern5 = bit (92 downto 62) of the hit info
+		##### pattern4 = bit (61 downto 30) of the hit info
+		##### pattern3(31 downto 3)= last 29 bits of the hit info
+		##### pattern3(2)= trailer bit
+		#####
+		##### pattern2 = not used
+		##### pattern1 = not used
+		#####
+		##### pattern1 = 0x00000000
+		##### pattern2 = 0x00000000
+		##### pattern3                 # [31:3] = last 29 bits of the hit info
+		#####
+		##### #Example: last 8 hits: 10101010, HIP: 000011110000111100001111
+		##### pattern7 = 0b00000000000001111000011110000111
+		##### pattern6 = 0b10000000000000000000000000000000
+		##### pattern5 = 0x00000000
+		##### pattern4 = 0x00000000
+		##### #correct
+		##### pattern3 = 0b00000000000000000000010101010100
+		##### #wrong
+		##### #pattern3 = 0b10000000000000000000010101010100
+		##### pattern2 = 0x00000000
+		##### pattern1 = 0x00000000
 
 	##############################################################
 	def Stub_loadCheckPatternOnFC7(self, pattern1, pattern2, pattern3, display = 2):
@@ -158,25 +290,25 @@ class SSA_SEU_utilities():
 				fw4 = self.parse_to_bin32(fifo4_word)
 				FIFO[i, 0] = fifo4_word #BX
 				if(chip == "SSA"):
-					FIFO[i,8] = self.parse_to_bin8((fifo2_word & 0xff000000)>>24)
-					FIFO[i,7] = self.parse_to_bin8((fifo2_word & 0x00ff0000)>>16)
-					FIFO[i,6] = self.parse_to_bin8((fifo2_word & 0x0000ff00)>>8)
-					FIFO[i,5] = self.parse_to_bin8(fifo2_word & 0x000000ff)
-					FIFO[i,4] = self.parse_to_bin8((fifo1_word & 0xff000000)>>24)
-					FIFO[i,3] = self.parse_to_bin8((fifo1_word & 0x00ff0000)>>16)
-					FIFO[i,2] = self.parse_to_bin8((fifo1_word & 0x0000ff00)>>8)
-					FIFO[i,1] = self.parse_to_bin8(fifo1_word & 0x000000ff)
+					FIFO[i,8] = (fifo2_word & 0xff000000)>>24
+					FIFO[i,7] = (fifo2_word & 0x00ff0000)>>16
+					FIFO[i,6] = (fifo2_word & 0x0000ff00)>>8
+					FIFO[i,5] = fifo2_word & 0x000000f
+					FIFO[i,4] = (fifo1_word & 0xff000000)>>24
+					FIFO[i,3] = (fifo1_word & 0x00ff0000)>>16
+					FIFO[i,2] = (fifo1_word & 0x0000ff00)>>8
+					FIFO[i,1] = (fifo1_word & 0x000000ff)
 				elif(chip == "MPA"):
-					FIFO[i,10] = self.parse_to_bin8((fifo3_word & 0x0000ff00)>>8)
-					FIFO[i, 9] = self.parse_to_bin8(fifo3_word & 0x000000ff)
-					FIFO[i, 8] = self.parse_to_bin8((fifo2_word & 0xff000000)>>24)
-					FIFO[i, 7] = self.parse_to_bin8((fifo2_word & 0x00ff0000)>>16)
-					FIFO[i, 6] = self.parse_to_bin8((fifo2_word & 0x0000ff00)>>8)
-					FIFO[i, 5] = self.parse_to_bin8(fifo2_word & 0x000000ff)
-					FIFO[i, 4] = self.parse_to_bin8((fifo1_word & 0xff000000)>>24)
-					FIFO[i, 3] = self.parse_to_bin8((fifo1_word & 0x00ff0000)>>16)
-					FIFO[i, 2] = self.parse_to_bin8((fifo1_word & 0x0000ff00)>>8)
-					FIFO[i, 1] = self.parse_to_bin8(fifo1_word & 0x000000ff)
+					FIFO[i,10] = (fifo3_word & 0x0000ff00)>>8
+					FIFO[i, 9] = fifo3_word & 0x000000ff
+					FIFO[i, 8] = (fifo2_word & 0xff000000)>>24
+					FIFO[i, 7] = (fifo2_word & 0x00ff0000)>>16
+					FIFO[i, 6] = (fifo2_word & 0x0000ff00)>>8
+					FIFO[i, 5] = fifo2_word & 0x000000ff
+					FIFO[i, 4] = (fifo1_word & 0xff000000)>>24
+					FIFO[i, 3] = (fifo1_word & 0x00ff0000)>>16
+					FIFO[i, 2] = (fifo1_word & 0x0000ff00)>>8
+					FIFO[i, 1] = fifo1_word & 0x000000ff
 				if(display):
 					print("--------------------------")
 					print("Entry number: ", i ," in the FIFO:")
@@ -225,31 +357,6 @@ class SSA_SEU_utilities():
 			print("resend phase tuning signal")
 
 	##############################################################
-	def L1_configureChips(self):
-		#have to reset the chip so that the l1 counter would start at 1
-	   	SendCommand_CTRL("fast_fast_reset")
-		#here define the way to generate the fixed l1 payload pattern on the MPA/SSA
-	 	sleep(0.1)
-		#For the emulator:
-		#SendCommand_I2C(command type, hybrid_id, chip_id, page, read, register_address, data, ReadBack)
-	#	SendCommand_I2C(            0,         0,       0,    0,     0,              1,      8,       0)
-	#	SendCommand_I2C(            0,         0,       0,    0,     0,              2,      3,       0)
-	#	SendCommand_I2C(            0,         0,       0,    0,     0,              3,      0b00001010,       0)
-	#	SendCommand_I2C(            0,         0,       0,    0,     0,              4,      8,       0)
-	#	SendCommand_I2C(            0,         0,       0,    0,     0,              5,      3,       0)
-	#	SendCommand_I2C(            0,         0,       0,    0,     0,              6,      0b00001010,       0)
-	#	sleep(1)
-	#	SendCommand_I2C(            0,         0,       0,    0,     1,              1,      8,       0)
-	#	SendCommand_I2C(            0,         0,       0,    0,     1,              2,      3,       0)
-	#	SendCommand_I2C(            0,         0,       0,    0,     1,              3,      0b00001010,       0)
-	#	SendCommand_I2C(            0,         0,       0,    0,     1,              4,      8,       0)
-	#	SendCommand_I2C(            0,         0,       0,    0,     1,              5,      3,       0)
-	#	SendCommand_I2C(            0,         0,       0,    0,     1,              6,      0b00001010,       0)
-
-		ReadStatus()
-		ReadChipData(0,0)
-
-	##############################################################
 	def L1_loadCheckPatternOnFC7(self, pattern1, pattern2, pattern3, pattern4, pattern5, pattern6, pattern7):
 		fc7.write("cnfg_phy_l1_MPA_SSA_SEU_check_patterns1",pattern1)
 		fc7.write("cnfg_phy_l1_MPA_SSA_SEU_check_patterns2",pattern2)
@@ -280,7 +387,7 @@ class SSA_SEU_utilities():
 		print "*************************"
 
 	##############################################################
-	def L1_RunStateMachine(self):
+	def L1_RunStateMachine(self, timer_data_taking = 5, display = 0):
 		self.L1_printInfo("BEFORE STATE MACHINE RUNNING:")
 		fc7.write("ctrl_phy_SLVS_compare_start",1)
 		self.L1_printInfo("AFTER START STATE MACHINE:")
@@ -288,33 +395,28 @@ class SSA_SEU_utilities():
 		#Configure_Fast(0, 1000, 3, 0, 0)
 		#fc7.write("cnfg_fast_backpressure_enable",0)
 		#sleep(0.5)
-
-		#####  SendCommand_CTRL("start_trigger")
-
+		SendCommand_CTRL("start_trigger")
 		self.L1_printInfo("AFTER START TRIGGER:")
 		#start taking data and check the 80% full threshold of the FIFO
 		FIFO_almost_full = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
 		timer = 0
-		while(FIFO_almost_full != 1 and timer < self.timer_data_taking):
+		while(FIFO_almost_full != 1 and timer < timer_data_taking):
 			FIFO_almost_full = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
 			timer = timer + 1
-			message =  "Timer at: ", timer, "/", self.timer_data_taking
+			message =  "Timer at: ", timer, "/", timer_data_taking
 			self.L1_printInfo(message)
 			print "-----------------------------------------------------------------------------"
 			sleep(1)
-
-		###### SendCommand_CTRL("stop_trigger")
-
+		SendCommand_CTRL("stop_trigger")
 		sleep(1)
 		fc7.write("ctrl_phy_SLVS_compare_stop",1)
 		self.L1_printInfo("STATE MACHINE AND TRIGGER STOPPED:")
-		if(timer == self.timer_data_taking and FIFO_almost_full == 0):
+		if(timer == timer_data_taking and FIFO_almost_full == 0):
 			print "data taking stopped because reached the adequate time"
-		elif(FIFO_almost_full == 1 and timer < self.timer_data_taking ):
+		elif(FIFO_almost_full == 1 and timer < timer_data_taking ):
 			print "data taking stopped because the FIFO reached the 80%"
 		else:
 			print "data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)"
-
 
 	##############################################################
 	def L1_ReadFIFOs(self, chip = 'SSA', nevents = 16386):
@@ -332,139 +434,24 @@ class SSA_SEU_utilities():
 				fifo5_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data5_fifo")
 				fifo6_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data6_fifo")
 				fifo7_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data7_fifo")
+				fifo8_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data8_fifo")
+
 				print "Full l1 data package without the header (MSB downto LSB): "
 				print(self.parse_to_bin32(fifo7_word),self.parse_to_bin32(fifo6_word),self.parse_to_bin32(fifo5_word),self.parse_to_bin32(fifo4_word),self.parse_to_bin32(fifo3_word),self.parse_to_bin32(fifo2_word),self.parse_to_bin32(fifo1_word))
 				if(chip == "MPA"):
 					print "l1 counter: ", (fifo7_word & 0x3FE00000)>>21
 				if(chip == "SSA"):
-					print "l1 counter: ", (fifo7_word >>27) & 0xf
-					print "l1 counter: ", (fifo7_word >>28) & 0xf
-					print "l1 counter: ", (fifo7_word >>29) & 0xf
-					print "l1 counter: ", (fifo7_word >>10) & 0xf
+					print "L1 counter: ", (fifo7_word >>27) & 0xf
+					print "BX counter: ", fifo8_word
 		self.L1_printInfo("AFTER READING FIFO:")
 
-
-
-
-
-
-
-	##############################################################
-	##############################################################
-
-	def Run_Test_SEU_ClusterData(self, strip =[10,20,30,40,50,60,70], delay_after_fast_reset = 0, run_time = 5, display = 1, filename = '', runname = '', delay = 71):
-		#reset(); reset(); sleep(0.1)
-		p1, p2 = self.Stub_Evaluate_Pattern(strip)
-		#strip = [12,33]
-		sleep(0.1); self.Stub_loadCheckPatternOnFC7(p1, p2, 1, display)
-		sleep(0.1); self.Configure_Injection(strip, analog_injection = 0)
-		sleep(0.1); self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
-		sleep(0.1); Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 1, delay_before_next_pulse = 0, number_of_test_pulses = 0, enable_rst_L1 = 0, enable_initial_reset = 1)
-		sleep(0.1); self.Stub_delayDataTaking()
-		sleep(0.1); self.Stub_RunStateMachine(run_time = run_time, display = display)
-		sleep(0.1); SendCommand_CTRL("stop_trigger")
-		sleep(0.1);
-		CntBad  = fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo")
-		CntGood = fc7.read("stat_phy_slvs_compare_number_good_data")
-		print "____________________________________________"
-		print("->  \tSEU Cluster-Data  -> Number of bad  BX: %12d (%10.6f%%)" % (CntBad,  100*np.float(CntBad)/(CntGood+CntBad)))
-		print("->  \tSEU Cluster-Data  -> Number of good BX: %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad)))
-		print "____________________________________________"
-
-		return [CntGood, CntBad]
-
-
-	def Run_Test_SEU_L1(self, strip =[10,20,30,40,50,60,70], delay_after_fast_reset = 512, latency = 50, shift = 0, run_time = 5, cal_pulse_period = 100, display = 1, filename = '', runname = '', delay = 71):
-		chip = 'SSA'
-		reset()
-		#######################
-		####for SSA:###########
-		#######################
-		#as am using the same state machine and the same registers the mapping for the SSA configuration check registers might look a bit odd. The state machine actaully saves a bit longer the data then the SSA l1 frame length. The l1 counter is incremented on FPGA, for the moment the BX counter is not checked.
-		#pattern7(18 downto 0) = bit(23 downto 5) of the MIP flags
-		#pattern6(31 downto 27) = bit (4 downto 0) of the MIP flags
-		#pattern6(26 downto 0) = bit (119 downto 93) of the hit info
-		#pattern5 = bit (92 downto 62) of the hit info
-		#pattern4 = bit (61 downto 30) of the hit info
-		#pattern3(31 downto 3)= last 29 bits of the hit info
-		#pattern3(2)= trailer bit
-
-		#pattern2 = not used
-		#pattern1 = not used
-
-		#example:
-
-		#Example: last 8 hits: 10101010, HIP: 000011110000111100001111
-		pattern7 = 0b00000000000001111000011110000111
-		pattern6 = 0b10000000000000000000000000000000
-		pattern5 = 0x00000000
-		pattern4 = 0x00000000
-		#correct
-		pattern3 = 0b00000000000000000000010101010100
-		#wrong
-		#pattern3 = 0b10000000000000000000010101010100
-		pattern2 = 0x00000000
-		pattern1 = 0x00000000
-
-
-		pattern1 = 0
-		pattern2 = 0
-		pattern3 = 0
-		pattern4 = 0
-		pattern5 = 0
-		pattern6 = 0
-		pattern7 = 0
-
-		#######################
-		####end of for SSA:####
-		#######################
-
-
-		#self.L1_phase_tuning_MPA_emulator()
-
-		SendCommand_CTRL("global_reset")
-		sleep(1)
-		self.L1_configureChips()
-		self.L1_loadCheckPatternOnFC7(pattern1, pattern2, pattern3, pattern4, pattern5, pattern6, pattern7)
-
-		self.I2C.peri_write('L1-Latency_MSB', (latency & 0xff00) >> 8)
-		self.I2C.peri_write('L1-Latency_LSB', (latency & 0x00ff) >> 0)
-
-		#Configure_TestPulse_MPA(delay_after_fast_reset = 512, delay_after_test_pulse = latency+3+offset, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_rst_L1 = 1)
-
-		#Configure_TestPulse_SSA(delay_after_fast_reset = delay_after_fast_reset,delay_after_test_pulse = latency+3+shift,	delay_before_next_pulse = cal_pulse_period,	number_of_test_pulses = 0,	enable_rst_L1 = 0,	enable_L1 = 1)
-
-		#send_trigger()
-		fc7.write("cnfg_fast_backpressure_enable", 0)
-		fc7.write("cnfg_fast_initial_fast_reset_enable", 0 )
-		fc7.write("cnfg_fast_delay_after_fast_reset",  delay_after_fast_reset )
-		fc7.write("cnfg_fast_delay_after_test_pulse",   latency+3+shift )
-		fc7.write("cnfg_fast_delay_before_next_pulse",  cal_pulse_period)
-		fc7.write("cnfg_fast_tp_fsm_fast_reset_en",  0 )
-		fc7.write("cnfg_fast_tp_fsm_test_pulse_en",  1)
-		fc7.write("cnfg_fast_tp_fsm_l1a_en",  1 )
-		fc7.write("cnfg_fast_triggers_to_accept",  0 )
-		fc7.write("cnfg_fast_source", 6)
-		fc7.write("cnfg_fast_initial_fast_reset_enable",  0 )
-		sleep(0.1)
-		SendCommand_CTRL("load_trigger_config")
-		sleep(0.1)
-
-
-		#self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
-		#self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-		#self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-		#Configure_TestPulse(delay_after_fast_reset = 0, delay_after_test_pulse = (latency+3+shift), delay_before_next_pulse = 0, number_of_test_pulses = 1)
-		#self.fc7.write("cnfg_fast_delay_between_consecutive_trigeers", 0)
-		self.L1_RunStateMachine()
-		SendCommand_CTRL("stop_trigger")
-		#self.L1_ReadFIFOs(nevents = 5)878
 
 # seuutil.L1_RunStateMachine()
 
 #  seuutil.Run_Test_SEU_ClusterData()
-#  seuutil.ReadFIFOs()
+#  seuutil.Stub_ReadFIFOs()
 
 #  ssa.inject.digital_pulse([1,2,3,4,5, 116,117,118,119,120])
+#
 #  seuutil.Run_Test_SEU_L1(cal_pulse_period = 100)
-#  seuutil.L1_ReadFIFOs(nevents = 1)
+#  seuutil.L1_ReadFIFOs(nevents = 10)
