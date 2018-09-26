@@ -214,6 +214,16 @@ def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_be
   SendCommand_CTRL("load_trigger_config")
   sleep(0.1)
 
+def Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses, initial_reset = 0):
+  fc7.write("cnfg_fast_initial_fast_reset_enable", initial_reset)
+  fc7.write("cnfg_fast_delay_before_next_pulse", cal_pulse_period)
+  fc7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
+  fc7.write("cnfg_fast_triggers_to_accept", number_of_cal_pulses)
+  fc7.write("cnfg_fast_source", 9)
+  sleep(0.01)
+  SendCommand_CTRL("load_trigger_config")
+  sleep(0.01)
+
 def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst_L1):
 	fc7.write("cnfg_fast_initial_fast_reset_enable", 0)
 	fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)

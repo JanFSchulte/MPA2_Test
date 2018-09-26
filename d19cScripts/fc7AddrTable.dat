@@ -249,6 +249,7 @@ ipb_daq_system_ctrl			40020000    ffffffff     1     1     *Base for the control
    ctrl_phy_ssa_gen_lateral_phase_2     40023004    0000ff00     1     1 *For testing of the single SSA chip. Change the phase of the fake right lateral data going to the SSA chip. The unit of the phase 1/168th of the 320MHz clock cycle. Whatch out: this is an incremental process.
    ctrl_phy_SLVS_compare_start     40023005    00000001     1     1 *start the comparison of stub/centroid data for MPA/SSA SEU tests
    ctrl_phy_SLVS_compare_stop     40023005    00000002     1     1 *stop the comparison of stub/centroid data for MPA/SSA SEU tests
+   ctrl_phy_l1_SLVS_compare_start     40023005    00000004     1     1 *start the comparison of l1 data for MPA/SSA SEU tests  
    ctrl_phy_SLVS_compare_read_data1_fifo     40023006    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
    ctrl_phy_SLVS_compare_read_data2_fifo     40023007    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
    ctrl_phy_SLVS_compare_read_data3_fifo     40023008    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests

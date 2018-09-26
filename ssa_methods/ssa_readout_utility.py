@@ -105,7 +105,7 @@ class SSA_readout():
 		self.fc7.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
 
-	def l1_data(self, latency = 50, shift = 0, initialise = True, mipadapterdisable = False, trigger = True, multi = True, display = False, display_raw = False):
+	def l1_data(self, latency = 50, shift = 0, initialise = True, mipadapterdisable = True, trigger = True, multi = True, display = False, display_raw = False):
 		if(initialise == True):
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
@@ -150,6 +150,7 @@ class SSA_readout():
 			BX_counter = (data >> 145) & 0x1ff
 			l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
 			hidata = (data >> 121) & 0xffffff
+			print bin(hidata)
 			l1datavect = [0]*120
 			hipflagvect = [0]*24
 			for i in range(0,120):
@@ -373,8 +374,8 @@ class SSA_inject():
 			self.data_r = rightdata;
 		if(hip_list != self.hip_list):
 			self.hip_list = hip_list
+			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 			for cl in hip_list:
-				self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 				self.I2C.strip_write("DigCalibPattern_H", cl, sequence)
 		sleep(0.002)
 
