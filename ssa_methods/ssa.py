@@ -49,21 +49,20 @@ class SSA_ASIC:
 			sys.stdout.flush()
 		if(reset_board):
 			fc7.write("ctrl_command_global_reset", 1)
+			sleep(0.3);
 		if(reset_chip):
 			self.ctrl.reset(display=False)
+			sleep(0.3);
 		utils.activate_I2C_chip()
-		if(display): sleep(0.2)
-		else: sleep(0.1)
+		sleep(0.2)
 		if(display):
 			sys.stdout.write("->  \tTuning sampling phases..\r")
 			sys.stdout.flush()
-		self.ctrl.set_t1_sampling_edge(edge)
-		self.ctrl.init_slvs(slvs_current)
-		rt = self.ctrl.phase_tuning()
-		if(display): sleep(0.2)
-		else: sleep(0.1)
-		self.ctrl.activate_readout_normal()
-		self.ctrl.activate_readout_normal()
+		sleep(0.1); self.ctrl.set_t1_sampling_edge(edge)
+		sleep(0.1); self.ctrl.init_slvs(slvs_current)
+		sleep(0.1); rt = self.ctrl.phase_tuning()
+		sleep(0.2); self.ctrl.activate_readout_normal()
+		sleep(0.1); self.ctrl.activate_readout_normal()
 		if(display):
 			sys.stdout.write("->  \tReady!                  \r")
 			sys.stdout.flush()
@@ -82,3 +81,7 @@ class SSA_ASIC:
 
 	def init_all(self):
 		self.init(reset_board = True, reset_chip = False)
+
+	def set_lateral_sampling_shift(self, left, right):
+		SetLineDelayManual(0,0,9,0,left)
+		self.init(edge = 'negative', display = False)

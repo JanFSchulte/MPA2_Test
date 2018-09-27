@@ -34,41 +34,75 @@ class ssa_ctrl_base:
 		self.set_t1_sampling_edge("negative")
 		return rp
 
-	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
-		registers = []
-		for reg in self.ssa_peri_reg_map:
+	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True, rtarray = False, strip_list = range(1,121)):
+		registers = []; rm = []
+		peri_reg_map  = self.ssa_peri_reg_map.copy()
+		for i in peri_reg_map:
+			if('Fuse' in i): rm.append(i)
+			if('SEU' in i): rm.append(i)
+		for k in rm:
+			peri_reg_map.pop(k, None)
+		strip_reg_map = self.ssa_strip_reg_map.copy()
+		for i in strip_reg_map:
+			if('ReadCounter' in i): rm.append(i)
+		for k in rm:
+			strip_reg_map.pop(k, None)
+		for reg in peri_reg_map:
 			tmp = [-1, reg, self.I2C.peri_read(reg)]
 			registers.append(tmp)
-		for strip in range(1,121):
-			for reg in self.ssa_strip_reg_map:
+		for strip in strip_list:
+			for reg in strip_reg_map:
 				tmp = [strip, reg, self.I2C.strip_read(reg, strip)]
 				registers.append(tmp)
-		print "->  \tConfiguration Saved on file:   " + str(file)
+		#print "->  \tConfiguration Saved on file:   " + str(file)
 		if display:
 			for i in registers:
 				print i
+		dir = file[:file.rindex(os.path.sep)]
+		if not os.path.exists(dir): os.makedirs(dir)
 		CSV.ArrayToCSV(registers, file)
+		if(rtarray):
+			return np.array(registers)
 
-	def load_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
+	def load_configuration(self, file = '../SSA_Results/Configuration.csv', display=True, upload_on_chip = True, rtarray = False):
 		registers = CSV.CsvToArray(file)[:,1:4]
-		for tmp in registers:
-			if(tmp[0] == -1):
-				if display: print 'writing'
-				if (not 'Fuse' in tmp[1]):
-					self.I2C.peri_write(tmp[1], tmp[2])
-					r = self.I2C.peri_read(tmp[1])
-					if(r != tmp[2]):
-						print 'X>  \t Configuration ERROR Periphery  ' + str(tmp[1]) + '  ' + str(tmp[2]) + '  ' + str(r)
-			elif(tmp[0]>=1 and tmp[0]<=120):
-				if display: print 'writing'
-				if ((not 'ReadCounter' in tmp[1]) and ((not 'Fuse' in tmp[1]))):
-					self.I2C.strip_write(tmp[1], tmp[0], tmp[2])
-					r = self.I2C.strip_read(tmp[1], tmp[0])
-					if(r != tmp[2]):
-						print 'X>  \t Configuration ERROR Strip ' + str(tmp[0])
-			if display:
-				print [tmp[0], tmp[1], tmp[2], r]
-		print "->  \tConfiguration Loaded from file"
+		if(upload_on_chip):
+			for tmp in registers:
+				if(tmp[0] == -1):
+					if display: print 'writing'
+					if (not 'Fuse' in tmp[1]):
+						self.I2C.peri_write(tmp[1], tmp[2])
+						r = self.I2C.peri_read(tmp[1])
+						if(r != tmp[2]):
+							print 'X>  \t Configuration ERROR Periphery  ' + str(tmp[1]) + '  ' + str(tmp[2]) + '  ' + str(r)
+				elif(tmp[0]>=1 and tmp[0]<=120):
+					if display: print 'writing'
+					if ((not 'ReadCounter' in tmp[1]) and ((not 'Fuse' in tmp[1]))):
+						self.I2C.strip_write(tmp[1], tmp[0], tmp[2])
+						r = self.I2C.strip_read(tmp[1], tmp[0])
+						if(r != tmp[2]):
+							print 'X>  \t Configuration ERROR Strip ' + str(tmp[0])
+				if display:
+					print [tmp[0], tmp[1], tmp[2], r]
+			print "->  \tConfiguration Loaded from file"
+		if(rtarray):
+			return registers
+
+	def compare_configuration(self, conf, conf_ref, display = True):
+		error = [0]*121
+		#checklist = np.unique(conf[:,0])
+		for i in range(len(conf)):
+			if(int(conf[i,0]) == -1):
+				if(int(conf[i,2]) != int(conf_ref[i,2])):
+					error[0] += 1
+					if(display):
+						print("-X  \tConfiguration error. Reg: " + str(conf[i,1]) + " Expected: " + str(int(conf_ref[i,2])) + "Found: " + str(int(conf[i,2])))
+			elif(int(conf[i,0]) > 0):
+				if(int(conf[i,2]) != int(conf_ref[i,2])):
+					if(display):
+						print("-X  \tConfiguration error. Reg: " + str(conf[i,1]) + " Strip: " + str(int(conf[i,0])) + " Expected: " + str(int(conf_ref[i,2])) + " Found: " + str(int(conf[i,2])) )
+					error[int(conf[i,0])] += 1
+		return error
 
 
 	def set_output_mux(self, testline = 'highimpedence'):
@@ -371,6 +405,9 @@ class ssa_ctrl_base:
 		else:
 			return True
 
+	def read_seu_counter(self):
+		rp = self.I2C.peri_read('SEU_Counter')
+		return rp
 
 
 

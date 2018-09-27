@@ -186,7 +186,7 @@ class SSA_readout():
 #		ssa.readout.l1_data(display = True, trigger = False, display_raw = 1)
 
 
-	def lateral_data(self, display = False, shift = 0, initialize = True):
+	def lateral_data(self, display = False, shift = 0, initialize = True, raw = False):
 		if(initialize == True):
 			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
 			sleep(0.001)
@@ -221,6 +221,8 @@ class SSA_readout():
 				left = left | (tmp << (32*(i-10)))
 		left  = (left  >> ((shift+13)*8)) & 0xff
 		right = (right >> ((shift+13)*8)) & 0xff
+		if(raw):
+			return left, right
 	 	for i in range(1,9):
 	 		if ((right & 0b1) == 1):
 	 			coordinates.append(i-1)
@@ -335,7 +337,6 @@ class SSA_readout():
 
 
 
-
 class SSA_inject():
 
 
@@ -403,6 +404,8 @@ class SSA_inject():
 			self.fc7.SendCommand_CTRL("start_trigger")
 			sleep(0.01)
 		sleep(0.001)
+
+
 
 
 

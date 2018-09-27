@@ -215,14 +215,14 @@ def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_be
   sleep(0.1)
 
 def Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses, initial_reset = 0):
-  fc7.write("cnfg_fast_initial_fast_reset_enable", initial_reset)
-  fc7.write("cnfg_fast_delay_before_next_pulse", cal_pulse_period)
-  fc7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
-  fc7.write("cnfg_fast_triggers_to_accept", number_of_cal_pulses)
-  fc7.write("cnfg_fast_source", 9)
-  sleep(0.01)
+  sleep(0.01); fc7.write("cnfg_fast_initial_fast_reset_enable", initial_reset)
+  sleep(0.01); fc7.write("cnfg_fast_delay_before_next_pulse", cal_pulse_period)
+  sleep(0.01); fc7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
+  sleep(0.01); fc7.write("cnfg_fast_triggers_to_accept", number_of_cal_pulses)
+  sleep(0.01); fc7.write("cnfg_fast_source", 9)
+  sleep(0.1)
   SendCommand_CTRL("load_trigger_config")
-  sleep(0.01)
+  sleep(0.1)
 
 def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst_L1):
 	fc7.write("cnfg_fast_initial_fast_reset_enable", 0)
@@ -470,3 +470,15 @@ def DIO5Tester(fmc_id):
 
 	Configure_DIO5(out_en, term_en, thresholds)
 	ReadStatus("After DIO5 Config")
+
+def SetLineDelayManual(hybrid_id, chip_id, line_id, delay, bitslip):
+	# we use only one register to set everything (more convenient for lots of chips)
+	# bits: 31-28 - hybrid id, 27-24 - chip id, 23-20 - line id, 16 - enable manual delays, 12-8 - manual tap delay, 2-0 - bitslip
+	word = ((hybrid_id & 0xF) << 28) + ((chip_id & 0xF) << 24) + ((line_id & 0xF) << 20) + (1 << 16) + ((delay & 0x1F) << 8) + ((bitslip & 0x07) << 0)
+	# write word
+	fc7.write("cnfg_phy_manual_delays", word)
+	sleep(0.01)
+	# do tuning
+	fc7.write("ctrl_phy_phase_tune_again", 1)
+	# sleep
+	sleep(0.1)

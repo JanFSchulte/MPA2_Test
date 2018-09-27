@@ -182,6 +182,16 @@ class SSA_test_utility():
 		return rt
 
 
+	def lateral_output_phase_tuning(self):
+		for i in range(16):
+			self.ssa.set_lateral_sampling_shift(i,0)
+			self.ssa.inject.digital_pulse([1,2,3,4,5,6,7,8])
+			a, b = self.ssa.readout.lateral_data(shift =-1, raw = True)
+			print( bin(a) + '  ' + bin(b))
+			a, b = self.ssa.readout.lateral_data(shift = 0, raw = True)
+			print( bin(a) + '  ' + bin(b))
+			a, b = self.ssa.readout.lateral_data(shift = 1, raw = True)
+			print( bin(a) + '  ' + bin(b))
 
 	def lateral_input_phase_tuning(self, display = False, timeout = 256*3, delay = 4, shift = 0, init = False, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
 		utils.activate_I2C_chip()
