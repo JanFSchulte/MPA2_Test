@@ -24,7 +24,7 @@ class SSA_SEU():
 		self.summary = results()
 		self.runtest = RunTest('default')
 		self.l1_latency = [101, 351, 501]
-		self.run_time = 1 #sec
+		self.run_time = 10 #sec
 
 
 	def set_tun(self):
@@ -42,12 +42,14 @@ class SSA_SEU():
 		striplist = []
 		iteration = 0
 		stavailable = range(1,121)
+
 		for latency in self.l1_latency:
 			for rp in range(5):
 
 				self.ssa.reset(display = False)
+				init_time = time.time()
 				self.ssa.init(edge = 'negative', display = False)
-				self.test.lateral_input_phase_tuning(shift = 1)
+				#self.test.lateral_input_phase_tuning(shift = 1)
 
 				stavailable = [x for x in stavailable if x not in striplist]
 				striplist = random.sample(stavailable, 4)
@@ -71,7 +73,10 @@ class SSA_SEU():
 					strip_list = striplist, latency = latency)
 
 				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er]  = results
+
 				seucounter = self.ssa.ctrl.read_seu_counter()
+				seurate = np.float(seucounter)/(time.time() - init_time)
+				print("->  \tSEU Counter       ->  Value: " + str(seucounter) + " Rate: " + str(seurate) + " 1/s")
 
 				msg  = runname + ', ' + str(iteration) + ', ' + str(latency) + ', '
 				striplist.extend([0]*(8-len(striplist)))
@@ -96,9 +101,9 @@ class SSA_SEU():
 		error = self.ssa.ctrl.compare_configuration(conf_new, conf_ref)
 		#print(time.time() - t)
 		peri_er = bool(error[0])
-		strip_er = all(v == 0 for v in error[1:])
-		if(peri_er > 0):
+		strip_er = not all(v == 0 for v in error[1:])
+		if(peri_er):
 			print "-X  \tSEU Configuration -> Error in Periphery configuration"
-		if(strip_er > 0):
+		if(strip_er):
 			print "-X  \tSEU Configuration -> Error in Strip configuration"
 		return peri_er, strip_er
