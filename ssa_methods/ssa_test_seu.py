@@ -24,7 +24,7 @@ class SSA_SEU():
 		self.summary = results()
 		self.runtest = RunTest('default')
 		self.l1_latency = [101, 351, 501]
-		self.run_time = 10 #sec
+		self.run_time = 0.5 #sec
 
 
 	def set_tun(self):
@@ -34,7 +34,7 @@ class SSA_SEU():
 	def run_info(self):
 		return 'prova'
 
-	def main_test(self, filename = 'Try', folder = ''):
+	def main_test(self, filename = 'Try', folder = 'PROVA0'):
 
 		runname = self.run_info()
 		logfile = "../SSA_Results/SEU/" + folder + "/" + filename
@@ -55,7 +55,7 @@ class SSA_SEU():
 				striplist = random.sample(stavailable, 4)
 				striplist = list(np.sort(striplist))
 				iteration += 1
-
+				striplist = [15,16,17]
 				results = self.seuutil.Run_Test_SEU(
 					strip = striplist, hipflags = striplist, delay = 71, run_time = self.run_time,
 					cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 0)
@@ -73,6 +73,7 @@ class SSA_SEU():
 					strip_list = striplist, latency = latency)
 
 				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er]  = results
+				print("->  \tStrip List = " + str(striplist))
 
 				seucounter = self.ssa.ctrl.read_seu_counter()
 				seurate = np.float(seucounter)/(time.time() - init_time)

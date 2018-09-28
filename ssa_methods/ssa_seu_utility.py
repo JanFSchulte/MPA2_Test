@@ -173,7 +173,7 @@ class SSA_SEU_utilities():
 
 
 	##############################################################
-	def L1_Evaluate_Pattern(self, strip_list, hflag_list):
+	def L1_Evaluate_Pattern(self, strip_list = [3,7,12,13,18], hflag_list = [3,7,12,13,18]):
 		strip = np.sort(strip_list)
 		hfleg = np.sort(hflag_list)
 		l1hit  = np.full(120, '0')
@@ -181,11 +181,27 @@ class SSA_SEU_utilities():
 		for st in strip:
 			l1hit[ st-1 ] = '1'
 		l1flag = ['0']*24
-		cnt = 0
-		for st in strip_list:
-			if st in hflag_list:
-				l1flag[cnt] = '1'
-			cnt += 1
+		centroids = []
+		strip_list = np.array(strip_list)
+		tmp = enumerate( strip_list[strip_list<=120][strip_list>0] )
+		for k, g in groupby( tmp , lambda (i, x): i-x):
+			cluster = map( itemgetter(1), g)
+			size = np.size(cluster)
+			center  = np.mean(cluster)
+			centroids.append( [center, cluster] )
+		hiploc = []
+		for h in hflag_list:
+			for cl in centroids:
+				if(h in cl[1]):
+					hiploc.append( int(np.floor(cl[0])))
+		hiploc = np.unique(hiploc)
+		for i in hiploc:
+			location = 0
+			for cl in centroids:
+				if(i == int(np.floor(cl[0]))):
+					l1flag[location] = '1'
+				else:
+					location += 1
 		p1 = 0x00000000
 		p2 = 0x00000000
 		p3 = int( '0b' + ( ''.join((l1hit[0:30])[::-1])  + '10'    ) , 2)
@@ -193,8 +209,6 @@ class SSA_SEU_utilities():
 		p5 = int( '0b' + ( ''.join((l1hit[62:94])[::-1])  ) , 2)
 		p6 = int( '0b' + ( ''.join((l1flag[0:6])[::-1])   + ''.join((l1hit[94:120])[::-1])  ) , 2)
 		p7 = int( '0b' + ( '0'*10 + ''.join((l1flag[6:24])[::-1])  ) , 2)
-		#print l1hit
-		#print l1flag
 		return p1, p2, p3, p4, p5, p6, p7
 
 
@@ -354,14 +368,17 @@ class SSA_SEU_utilities():
 				fifo6_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data6_fifo")
 				fifo7_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data7_fifo")
 				fifo8_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data8_fifo")
+				fifo9_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data9_fifo")
 				if(display>1): print "Full l1 data package without the header (MSB downto LSB): "
 				FIFO[i,0] = fifo8_word
-				FIFO[i,1] = (fifo7_word >>27) & 0xf
-				FIFO[i,2] = (self.parse_to_bin32(fifo7_word) + self.parse_to_bin32(fifo6_word) + self.parse_to_bin32(fifo5_word) + self.parse_to_bin32(fifo4_word) + self.parse_to_bin32(fifo3_word))
+				FIFO[i,1] = fifo9_word
+				FIFO[i,2] = (fifo7_word >>27) & 0xf
+				FIFO[i,3] = (self.parse_to_bin32(fifo7_word) + self.parse_to_bin32(fifo6_word) + self.parse_to_bin32(fifo5_word) + self.parse_to_bin32(fifo4_word) + self.parse_to_bin32(fifo3_word))
 				if(display>0):
-					print "->  \tL1 counter: ", FIFO[i,1]
+					print "->  \tL1 counter  ", FIFO[i,2]
 					print "->  \tBX counter: ", FIFO[i,0]
-					print "->  \tPacket:     ", FIFO[i,2]
+					print "->  \tBX mirrow:  ", FIFO[i,1]
+					print "->  \tPacket:     ", FIFO[i,3]
 		fo = ("../SSA_Results/" + filename + "__SEU__L1-DATA-FIFO__" + runname + ".csv")
 		dir = fo[:fo.rindex(os.path.sep)]
 		if not os.path.exists(dir): os.makedirs(dir)
