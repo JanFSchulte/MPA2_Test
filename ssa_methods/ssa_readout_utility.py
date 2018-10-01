@@ -222,7 +222,7 @@ class SSA_readout():
 		left  = (left  >> ((shift+13)*8)) & 0xff
 		right = (right >> ((shift+13)*8)) & 0xff
 		if(raw):
-			return left, right
+			return bin(left), bin(right)
 	 	for i in range(1,9):
 	 		if ((right & 0b1) == 1):
 	 			coordinates.append(i-1)

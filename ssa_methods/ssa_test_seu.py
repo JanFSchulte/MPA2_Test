@@ -27,24 +27,33 @@ class SSA_SEU():
 		self.run_time = 0.5 #sec
 
 
-	def set_tun(self):
-		self.ion  = input("ION?    ")
-		self.tilt = input("LTI?    ")
+	def set_info(self):
+		self.ion    = raw_input("Ion    : ")
+		self.tilt   = raw_input("Angle  : ")
+		self.flux   = raw_input("Flux : ")
+		self.folder = raw_input("Folder : ")
 
 	def run_info(self):
-		return 'prova'
+		return ''
 
-	def main_test(self, filename = 'Try', folder = 'PROVA0'):
+	def main_test(self, run_repeat = 50, run_time = 5):
+		self.run_time = run_time
+		self.set_info()
+		for i in range(run_repeat):
+			self.time   = utils.date_time()
+			self.filename = "SEU_SSA_" + self.time + "__Ion-" + self.ion + "__Tilt-" + str(self.tilt) + "__Flux-" + str(self.flux) + "__"
+			self.seu_test( self.filename, self.folder)
+
+	def seu_test(self, filename = 'Try', folder = 'PROVA0'):
 
 		runname = self.run_info()
 		logfile = "../SSA_Results/SEU/" + folder + "/" + filename
 
-		striplist = []
-		iteration = 0
-		stavailable = range(1,121)
-
 		for latency in self.l1_latency:
-			for rp in range(5):
+			striplist = []
+			iteration = 0
+			stavailable = range(1,121)
+			for rp in range(10):
 
 				self.ssa.reset(display = False)
 				init_time = time.time()
@@ -55,7 +64,7 @@ class SSA_SEU():
 				striplist = random.sample(stavailable, 4)
 				striplist = list(np.sort(striplist))
 				iteration += 1
-				striplist = [15,16,17]
+
 				results = self.seuutil.Run_Test_SEU(
 					strip = striplist, hipflags = striplist, delay = 71, run_time = self.run_time,
 					cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 0)

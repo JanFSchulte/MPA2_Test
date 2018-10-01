@@ -83,5 +83,6 @@ class SSA_ASIC:
 		self.init(reset_board = True, reset_chip = False)
 
 	def set_lateral_sampling_shift(self, left, right):
-		SetLineDelayManual(0,0,9,0,left)
-		self.init(edge = 'negative', display = False)
+		SetLineDelayManual(0,0, 9,0,left)
+		SetLineDelayManual(0,0,10,0,right)
+		self.ctrl.phase_tuning()

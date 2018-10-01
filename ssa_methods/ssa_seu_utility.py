@@ -298,7 +298,7 @@ class SSA_SEU_utilities():
 					print "SSA Lateral 2: ", FIFO[i,2]
 		print "State of FSM after reading FIFOs: " , fc7.read("stat_phy_lateral_slvs_compare_state_machine")
 		print "Fifo almost full: ", fc7.read("stat_phy_lateral_slvs_compare_fifo_almost_full")
-		fo = ("../SSA_Results/" + filename + "__SEU__L1-DATA-FIFO__" + runname + ".csv")
+		fo = ("../SSA_Results/" + filename + "__SEU__LATERAL-FIFO__" + runname + ".csv")
 		dir = fo[:fo.rindex(os.path.sep)]
 		if not os.path.exists(dir): os.makedirs(dir)
 		CSV.ArrayToCSV(FIFO, fo)
@@ -322,7 +322,7 @@ class SSA_SEU_utilities():
 				FIFO[i,8]  = (fifo2_word & 0xff000000)>>24
 				FIFO[i,7]  = (fifo2_word & 0x00ff0000)>>16
 				FIFO[i,6]  = (fifo2_word & 0x0000ff00)>>8
-				FIFO[i,5]  = fifo2_word & 0x000000f
+				FIFO[i,5]  =  fifo2_word & 0x000000ff
 				FIFO[i,4]  = (fifo1_word & 0xff000000)>>24
 				FIFO[i,3]  = (fifo1_word & 0x00ff0000)>>16
 				FIFO[i,2]  = (fifo1_word & 0x0000ff00)>>8
@@ -344,7 +344,7 @@ class SSA_SEU_utilities():
 		if(display>0):
 			print "State of FSM after reading FIFOs: " , fc7.read("stat_phy_slvs_compare_state_machine")
 			print "Fifo almost full: ", fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-		fo = ("../SSA_Results/" + filename + "__SEU__L1-DATA-FIFO__" + runname + ".csv")
+		fo = ("../SSA_Results/" + filename + "__SEU__CLUSTER-FIFO__" + runname + ".csv")
 		dir = fo[:fo.rindex(os.path.sep)]
 		if not os.path.exists(dir): os.makedirs(dir)
 		CSV.ArrayToCSV(FIFO, fo)
