@@ -33,12 +33,12 @@ class SSA_SEU_utilities():
 	##############################################################
 	def Run_Test_SEU(
 			self, strip =[10,20,30,40], hipflags = [], cal_pulse_period = 1,
-			l1a_period = 39, latency = 101, run_time = 5, display = 1,
-			filename = '', runname = '', delay = 71):
+			l1a_period = 39, latency = 101, run_time = 30, display = 1,
+			filename = '', runname = '', delay = 73):
 
 		sleep(0.01); SendCommand_CTRL("global_reset")
-		sleep(0.50); SendCommand_CTRL("fast_fast_reset")
-		#self.ssa.init(edge = 'negative')
+		sleep(0.5); SendCommand_CTRL("fast_fast_reset")
+		sleep(0.01);self.ssa.init(edge = 'negative', display = False)
 		s1, s2, s3 = self.Stub_Evaluate_Pattern(strip)
 		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern(strip, hipflags)
 		sleep(0.01); self.Configure_Injection(strip_list = strip, hipflag_list = hipflags, analog_injection = 0, latency = latency)
