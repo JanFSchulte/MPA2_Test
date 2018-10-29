@@ -33,7 +33,7 @@ def DAC_linearity(block, point, bit, inst, step = 1, plot = 1):
 	print "DAC: ", DAC
 	for i in range(0, 1 << bit, step):
 		I2C.peri_write(DAC, i)
-		#sleep(0.1)
+		sleep(0.1)
 		data[i] = multimeter.measure(inst)
 		if (i % 10 == 0):
 			print "Done point ", i, " of ", 1 << bit
@@ -74,11 +74,11 @@ def calibrate_bias(point, block, DAC_val, exp_val, inst, gnd_corr):
 	I2C.peri_write('TESTMUX',0b00000001 << block)
 	I2C.peri_write(test, 0b00000001 << point)
 	I2C.peri_write(DAC, 0)
-	#sleep(0.1)
+	sleep(0.1)
 	off_val = multimeter.measure(inst)
-	#sleep(0.1)
+	sleep(0.1)
 	I2C.peri_write(DAC, DAC_val)
-	#sleep(0.1)
+	sleep(0.1)
 	act_val = multimeter.measure(inst)
 	LSB = (act_val - off_val) / DAC_val
 	DAC_new_val = DAC_val- int(round((act_val - exp_val - gnd_corr)/LSB))

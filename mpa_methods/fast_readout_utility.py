@@ -257,6 +257,7 @@ def strip_in_scan(n_pulse = 10, probe = 0, print_file = 1, filename =  "../cernb
 			data_array[i*2, line ] = np.average(temp[line])/(n_pulse*8)
 		edge = 0
 		temp = strip_in_test(n_pulse = n_pulse, latency = latency , edge = edge)
+		print temp
 		for line in range(0,8):
 			data_array[i*2+1, line ] = np.average(temp[line])/(n_pulse*8)
 	if print_file:

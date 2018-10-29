@@ -1,5 +1,6 @@
 from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
+import sys, os
 
 #####################
 # START HERE
@@ -30,6 +31,13 @@ from d19cScripts.MPA_SSA_BoardControl import *
 #fc7.write("cnfg_phy_SSA_gen_delay_stub_data",x)
 
 ################
+
+def blockPrint():
+	sys.stdout = open(os.devnull, 'w')
+
+def enablePrint():
+	sys.stdout = sys.__stdout__
+
 
 def reverse_mask(x):
 	#x = ((x & 0x55555555) << 1) | ((x & 0xAAAAAAAA) >> 1)
@@ -424,10 +432,15 @@ def read_I2C (chip, address, timeout = 0.001):
 	read_data = ReadChipDataNEW()
 	return read_data
 
-def align_out():
+def align_out(verbose = 1):
 	fc7.write("ctrl_phy_phase_tune_again", 1)
-	count = 0
-	while((fc7.read("stat_phy_phase_tuning_done") == 0) and (count < 10)):
-		sleep(0.5)
-		count += 1
-		print "Waiting for the phase tuning"
+	timeout_max = 2
+	timeout = 0
+	while(fc7.read("stat_phy_phase_tuning_done") == 0):
+		sleep(0.1)
+		if (timeout == timeout_max):
+			timeout = 0
+			if (verbose): print "Waiting for the phase tuning"
+			fc7.write("ctrl_phy_phase_tune_again", 1)
+		else:
+			timeout += 1

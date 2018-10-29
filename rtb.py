@@ -711,7 +711,8 @@ def mainpoweroff():
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
     # On powerup port defaults to on, so inverter is needed.
     # off bit (12-2017). Inverter must be manually soldered to board
-    Send_MPA_SSA_I2C_Command(powerenable, 0, write, 0, 0x01)  # send off bit
+    Send_MPA_SSA_I2C_Command(powerenable, 0, write, 0, 0x07)  # send off bit
+    #Send_MPA_SSA_I2C_Command(powerenable, 0, write, 0, 0x01)  # send off bit
 
 
 def mpareset():

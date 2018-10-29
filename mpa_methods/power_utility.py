@@ -148,10 +148,10 @@ def mpa_reset():
 	Vcshunt = 0.00250
 	Rshunt = 0.1
 	SetSlaveMap(verbose = 0)
-	print "MPA reset"
+	#print "MPA reset"
 	val = (mpaid << 5) + (ssaid << 1)
 	val2 = (mpaid << 5) + (ssaid << 1) + 16 # reset bit for MPA
-	Configure_MPA_SSA_I2C_Master(1, SLOW)
+	Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02, verbose = 0)  # route to 2nd PCF8574
 	Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val, verbose = 0)  # drop reset bit
 	Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2, verbose = 0)  # set reset bit
@@ -234,7 +234,39 @@ def main_power_on():
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
 	# On powerup port defaults to on, so inverter is needed.
 	# send on bit (12-2017).  Inverter must be manually soldered to board
-	Send_MPA_SSA_I2C_Command(powerenable, 0, write, 0, 0x00)  # send on bit
+	Send_MPA_SSA_I2C_Command(powerenable, 0, write, 0, 0x02)  # send on bit
+
+def main_power_off():
+	read = 1
+	write = 0
+	FAST = 4
+	SLOW = 2
+	mpaid = 0 # default MPa address (0-7)
+	ssaid = 0 # default SSa address (0-7)
+	i2cmux = 0
+	pcf8574 = 1 # MPA and SSA address and reset 8 bit port
+	powerenable = 2    # i2c ID 0x44
+	dac7678 = 4
+	ina226_5 = 5
+	ina226_6 = 6
+	ina226_7 = 7
+	ina226_8 = 8
+	ina226_9 = 9
+	ina226_10 = 10
+	ltc2487 = 3
+	Vc = 0.0003632813 # V/Dac step
+	#Vcshunt = 5.0/4000
+	Vcshunt = 0.00250
+	Rshunt = 0.1
+	power_off()
+	SetSlaveMap(verbose = 0)
+	# Main Power On
+	# send command to turn power on.  First set speed and route i2cmux then send
+	Configure_MPA_SSA_I2C_Master(1, SLOW)
+	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
+	# On powerup port defaults to on, so inverter is needed.
+	# send on bit (12-2017).  Inverter must be manually soldered to board
+	Send_MPA_SSA_I2C_Command(powerenable, 0, write, 0, 0x07)  # send on bit
 
 def power_on(VDDPST = 1.25, DVDD = 1.2, AVDD = 1.25, VBG = 0.3):
 	read = 1

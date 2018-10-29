@@ -103,31 +103,33 @@ def PowerParse(test = "rad", max_run = 100, filename = "/home/testMPA/cernbox/Ir
                     i +=1
             except IOError:
                 i += 1
-        plt.xlabel("Dose (kRad)")
+
     power = power.astype('float')
     power = np.delete(power, 0, 0)
     dose = np.delete(dose, 0, 0)
     # Plot DP1
-    plt.plot(dose, power[0::9], 'ro', label = "DP1")
+    #plt.plot(dose, power[0::9]/power[0::9][0] , 'ro', label = "DP1")
     #Plot DP2
-    plt.plot(dose, power[1::9], 'yo', label = "DP2")
+    #plt.plot(dose, power[1::9]/power[1::9][0], 'yo', label = "DP2")
     #Plot DP3
-    plt.plot(dose, power[2::9], 'go', label = "DP3")
+    plt.semilogx(dose*1000, power[2::9]/power[2::9][0], 'ro', label = "Digital Current")
     #Plot AN1
-    plt.plot(dose, power[3::9], 'b^', label = "AN1")
+    #plt.plot(dose, power[3::9]/power[3::9][0], 'b^', label = "AN1")
     #Plot AN2
-    plt.plot(dose, power[4::9], 'm^', label = "AN2")
+    #plt.plot(dose, power[4::9]/power[4::9][0], 'm^', label = "AN2")
     #Plot AN3
-    plt.plot(dose, power[5::9], 'k^', label = "AN3")
+    plt.semilogx(dose*1000, power[5::9]/power[5::9][0], 'bo', label = "Analog Current")
     #Plot PST1
-    plt.plot(dose, power[6::9], 'cs', label = "PST1")
+    #plt.plot(dose, power[6::9]/power[6::9][0], 'cs', label = "PST1")
     #Plot PST2
-    plt.plot(dose, power[7::9], 'rs', label = "PST2")
+    #plt.plot(dose, power[7::9]/power[7::9][0], 'rs', label = "PST2")
     #Plot PST3
-    plt.plot(dose, power[8::9], 'gs', label = "PST3")
-    plt.title("Power Measurements")
-    plt.ylabel("Current (mA)")
-    plt.legend()
+    plt.semilogx(dose*1000, power[8::9]/power[8::9][0], 'go', label = "IO Current")
+    plt.title("Power Measurements", pad = 10, fontsize = 16)
+    plt.ylabel("Current (mA)", labelpad = 10, fontsize = 16)
+    plt.xlabel("Dose (Rad)", labelpad = 10, fontsize = 16)
+    plt.grid(linestyle='--', linewidth = 1)
+    plt.legend(fontsize = 16)
     plt.show()
     return power
 
@@ -145,7 +147,7 @@ def ScurveParse(test = "rad", max_run = 100, filename = "/home/testMPA/cernbox/I
     while i <= max_run:
         try:
             if test == "rad":
-                data = CSV.csv_to_array(filename + "Run_" + str(i) + "MRad/Scurve15_CAL.csv")
+                data = CSV.csv_to_array(filename + "Run_" + str(i) + "kRad/Scurve15_CAL.csv")
             elif test == "probe":
                 data = CSV.csv_to_array(filename + "ChipN_" + str(i) + "_v0/Scurve15_CAL.csv")
             try:
@@ -185,6 +187,7 @@ def ScurveParse(test = "rad", max_run = 100, filename = "/home/testMPA/cernbox/I
     plt.ylabel("Threshold")
     plt.figure(2)
     plt.plot(dose, th_spread[1:], 'mo')
+    #plt.plot(dose, th_spread, 'mo')
     plt.title("Threshold Spread")
     if test == "rad":
         plt.xlabel("Dose (kRad)")
@@ -192,13 +195,14 @@ def ScurveParse(test = "rad", max_run = 100, filename = "/home/testMPA/cernbox/I
         plt.xlabel("Chip")
     plt.ylabel("Spread")
     plt.figure(3)
-    plt.plot(dose, noise_avg, 'ko')
-    plt.title("Average Noise")
+    plt.plot(dose/1000, (noise_avg/noise_avg[0]*100) - 100, 'ro')
+    plt.title("Noise Increase", pad = 10, fontsize = 16)
     if test == "rad":
-        plt.xlabel("Dose (kRad)")
+        plt.xlabel("Dose (MRad)", labelpad = 10, fontsize = 16)
     elif test == "probe":
         plt.xlabel("Chip")
-    plt.ylabel("Noise")
+    plt.ylabel("Noise [%]",  labelpad = 10, fontsize = 16)
+    plt.grid(linestyle='--', linewidth = 1)
     #plt.figure(4)
     #a = 0
     #while a < len(dose):
@@ -207,7 +211,7 @@ def ScurveParse(test = "rad", max_run = 100, filename = "/home/testMPA/cernbox/I
     #plt.title("Average Scurve")
     #plt.legend()
     plt.show()
-   # return noise_avg
+    return noise_avg
     #return th_spread
     #return th_avg
     print "noise average: ", np.mean(noise_avg)
