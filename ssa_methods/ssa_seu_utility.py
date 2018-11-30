@@ -34,14 +34,14 @@ class SSA_SEU_utilities():
 	def Run_Test_SEU(
 			self, strip =[10,20,30,40], hipflags = [], cal_pulse_period = 1,
 			l1a_period = 39, latency = 101, run_time = 30, display = 1,
-			filename = '', runname = '', delay = 73):
+			filename = '', runname = '', delay = 73, create_errors = False):
 
 		sleep(0.01); SendCommand_CTRL("global_reset")
 		sleep(0.5); SendCommand_CTRL("fast_fast_reset")
 		sleep(0.01);self.ssa.init(edge = 'negative', display = False)
 		s1, s2, s3 = self.Stub_Evaluate_Pattern(strip)
 		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern(strip, hipflags)
-		sleep(0.01); self.Configure_Injection(strip_list = strip, hipflag_list = hipflags, analog_injection = 0, latency = latency)
+		sleep(0.01); self.Configure_Injection(strip_list = strip, hipflag_list = hipflags, analog_injection = 0, latency = latency, create_errors = create_errors)
 		sleep(0.01); self.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = display)
 		sleep(0.01); self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = display)
 		sleep(0.01); Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0, initial_reset = 1)
@@ -114,7 +114,7 @@ class SSA_SEU_utilities():
 
 
 	##############################################################
-	def Configure_Injection(self, strip_list = [], hipflag_list = [], lateral = [], analog_injection = 0, latency = 100):
+	def Configure_Injection(self, strip_list = [], hipflag_list = [], lateral = [], analog_injection = 0, latency = 100, create_errors = False):
 		strip_list = np.sort(strip_list)
 		hipflag_list = np.sort(hipflag_list)
 		#here define the way to generate stub/centroid data pattern on the MPA/SSA
@@ -138,6 +138,14 @@ class SSA_SEU_utilities():
 		for st in hipflag_list:
 			if(st>0 and st<121):
 				sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", st, 0x1)
+
+		#### injet strip reset error case
+		if(create_errors):
+			for i in range(81, 89):
+				sleep(0.01); self.I2C.strip_write("ENFLAGS", i, 0b00101)
+				sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", i, 170)
+				sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", i, 170)
+
 		sleep(0.01)
 
 

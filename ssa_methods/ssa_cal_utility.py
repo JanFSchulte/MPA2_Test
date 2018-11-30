@@ -169,7 +169,7 @@ class SSA_cal_utility():
 		return scurves
 
 	###########################################################
-	def trimming_scurves(self, method = 'expected', cal_ampl = 30, th_nominal = 'default', default_trimming = 'keep', striprange = range(1,121), ratio = 'default', iterations = 5, nevents = 1000, plot = True, display = False, reevaluate = True):
+	def trimming_scurves(self, method = 'expected', cal_ampl = 30, th_nominal = 'default', default_trimming = 'keep', striprange = range(1,121), ratio = 'default', iterations = 5, nevents = 1000, plot = True, display = False, reevaluate = True, countershift = -4, filename = False):
 		utils.activate_I2C_chip()
 		# trimdac/thdac ratio
 		if(ratio == 'evaluate'):
@@ -195,12 +195,15 @@ class SSA_cal_utility():
 			trimdac_value = self.set_trimming(0, striprange, display = False)
 		else: return False
 		# evaluate initial S-Curves
+		if(display):
+			print self.set_trimming('keep', display = False)
 		scurve_init = self.scurves(
 			cal_ampl = cal_ampl,
 			nevents = nevents,
 			display = False,
-			plot = False,
+			plot = True,
 			filename = False,
+			countershift = countershift,
 			msg = "for iteration 0")
 
 		thlist_init, par_init = self.evaluate_scurve_thresholds(
@@ -218,12 +221,18 @@ class SSA_cal_utility():
 			else: exit(1)
 		elif(method == 'center'):
 			th_expected = np.mean(thlist_init)
+			print "\n------------------------------"
+			print th_expected
+			print thlist_init
+			print "------------------------------"
 		elif (method == 'highest'):
 			th_expected = np.max(thlist_init)
 		thlist = thlist_init
 		scurve = scurve_init
 		par = par_init
 		print "->  \tStandard deviation = %5.3f" % (np.std(thlist))
+
+
 		# start trimming on the S-Curves
 		for i in range(0, iterations):
 			trimdac_correction = np.zeros(120)
@@ -245,13 +254,17 @@ class SSA_cal_utility():
 				print "->  \tTarget threshold     " + str([th_expected]*10)
 				print "->  \tTrim-DAC Correction  " + str(trimdac_correction[0:10])
 				print "->  \tTrimming DAC values: " + str(trimdac_value[0:10])
+				print self.set_trimming('keep', display = False)
 			# evaluate new S-Curves
+			if(isinstance(filename, str)):
+				filename = filename + "_iteration_" + str(i)
 			scurve = self.scurves(
 				cal_ampl = cal_ampl,
 				nevents = nevents,
 				display = False,
-				plot = False,
-				filename = False,
+				plot = True,
+				filename = filename,
+				countershift = countershift,
 				msg = "for iteration " + str(i+1))
 			thlist, par = self.evaluate_scurve_thresholds(
 				scurve = scurve,
@@ -584,7 +597,7 @@ class SSA_cal_utility():
 	#	self.ssa.readout.cluster_data(initialize = True)
 	#	self.ssa.readout.cluster_data(initialize = True)
 	#	self.ssa.readout.cluster_data(initialize = False)
-	
+
 	###########################################################
 	def delayline_resolution(self, naverages = 100, charge = 40, threshold = 20, strip = 30):
 		self.ssa.ctrl.activate_readout_normal()

@@ -31,12 +31,13 @@ class SSA_readout():
 	 	data = []; tmp = [];
 	 	counter = 0; data_loc = 21 + shift;
 	 	status = [0]*3; timeout = 10;
+		if(initialize):
+			#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
+			sleep(0.001)
+			Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 0, delay_before_next_pulse = 0, number_of_test_pulses = 1, enable_rst_L1 = 0)
+			sleep(0.001)
+		#status_init = self.status()
 		if(send_test_pulse):
-		 	if(initialize):
-				#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
-				#sleep(0.001)
-				Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 0, delay_before_next_pulse = 0, number_of_test_pulses = 1, enable_rst_L1 = 0)
-			#status_init = self.status()
 			self.fc7.SendCommand_CTRL("start_trigger")
 		while (status[1] != 1 and counter<timeout):
 			sleep(0.001)
@@ -237,8 +238,8 @@ class SSA_readout():
 	def read_counters_fast(self, striplist = range(1,121), raw_mode_en = 0, shift = 0):
 		self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
-		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8 + shift) )
-		self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
+		self.I2C.peri_write('AsyncRead_StartDel_LSB', (8 + shift) )
+		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
 		self.fc7.start_counters_read(1)
 		timeout = 0
 		failed = False
@@ -252,7 +253,7 @@ class SSA_readout():
 		if raw_mode_en == 0:
 			count = self.fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 120)
 			count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
-			count[117] = (self.I2C.strip_read("ReadCounter_MSB",118) << 8) | self.I2C.strip_read("ReadCounter_LSB",118)
+			#count[117] = (self.I2C.strip_read("ReadCounter_MSB",118) << 8) | self.I2C.strip_read("ReadCounter_LSB",118)
 
 		else:
 			count = np.zeros((20000, ), dtype = np.uint16)
@@ -368,7 +369,7 @@ class SSA_inject():
 				elif (cl > 120):
 					leftdata = leftdata | (0b1 << (cl-121))
 				else:
-					self.I2C.strip_write("DigCalibPattern_L", cl, 0x1)
+					self.I2C.strip_write("DigCalibPattern_L", cl, sequence)
 		if(self.data_l != leftdata or self.data_r != rightdata):
 			self.ctrl.set_lateral_data(left = leftdata, right = rightdata)
 			self.data_l = leftdata;

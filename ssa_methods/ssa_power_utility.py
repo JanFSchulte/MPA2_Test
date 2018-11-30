@@ -210,12 +210,15 @@ class ssa_power_utility:
 		sleep(0.001)
 
 
-	def reset(self, display=True):
+	def reset(self, display=True, mode = 'auto'):
 		utils.print_enable(False)
 		sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2);
 		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0);  # drop reset bit
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1);  # set reset bit
+		if(mode == 'auto'):
+			sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0);  # drop reset bit
+			sleep(0.10); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1);  # set reset bit
+		else:
+			sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, int(mode));  # drop reset bit
 		sleep(0.01);
 		utils.activate_I2C_chip()
 		utils.print_enable(True)

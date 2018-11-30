@@ -29,7 +29,7 @@ class SSA_test_utility():
 		self.ssa.ctrl.set_cal_pulse_delay(0)
 		prev = [0xff]*nstrips
 		if(mode == "digital"):
-			self.ssa.inject.digital_pulse(hit_list = [], hip_list = [], initialise = True)
+			self.ssa.inject.digital_pulse(hit_list = [], hip_list = [], initialise = True, times = 8)
 		elif(mode == "analog"):
 			self.ssa.inject.analog_pulse(hit_list = [], initialise = True)
 			shift += 2
@@ -116,7 +116,7 @@ class SSA_test_utility():
 		else:
 			clrange = random.sample(range(1, 121), 120)
 		clrange *= nruns
-		self.ssa.readout.cluster_data(initialize = True)
+		self.ssa.readout.cluster_data(initialize = True, shift = shift)
 		cnt = {'cl_sum': 0, 'cl_err' : 0, 'li_sum': 0, 'li_err' : 0, 'lo_sum': 0, 'lo_err' : 0};
 		for i in clrange:
 			cnt['cl_sum'] += 1; wd = 0;

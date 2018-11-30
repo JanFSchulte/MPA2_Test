@@ -29,7 +29,8 @@ class ssa_calibration():
 		self.pcbadc = pcbadc;  self.multimeter = multimeter;
 		self.ssa_peri_reg_map = ssa_peri_reg_map;  self.ssa_strip_reg_map = ssa_strip_reg_map;
 		self.analog_mux_map = analog_mux_map;  self.initialised = False; self.minst = 0;
-		self.set_gpib_address(16); self.SetMode('ADC');
+		self.SetMode('MULTIMETER');
+		self.set_gpib_address(12);
 		self.par_list = [
 			self.Parameter("Analog Ground Interal ", "GND",                   0.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Bandgap Voltage       ", "VBG",                   0.3, -1, -1, 'set_dont_calibrate'),
@@ -52,12 +53,13 @@ class ssa_calibration():
 		self.gpib_address = address
 
 	def __initialise(self):
-		self.minst = self.multimeter.init_keithley(address = self.gpib_address)
+		self.minst = self.multimeter.init_keithley(address = self.gpib_address, avg = 0)
 		self.initialised = True
 
+
 	def calibrate_to_nominals(self):
-		#if(not self.initialised):
-		#	self.__initialise()
+		if(not self.initialised and (self.mode == 'MULTIMETER')):
+			self.__initialise()
 		for par in self.par_list:
 			if(par.docalibrate == 'set_calibrate'):
 				value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
@@ -74,8 +76,8 @@ class ssa_calibration():
 
 
 	def measure_bias(self, return_data = False):
-		#if(not self.initialised):
-		#	self.__initialise()
+		if(not self.initialised and (self.mode == 'MULTIMETER')):
+			self.__initialise()
 		for par in self.par_list:
 			value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
 			voltage = voltage*1E3
@@ -92,6 +94,8 @@ class ssa_calibration():
 	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot = True, average = 5, runname = '', filemode = 'w'):
 		# ['Bias_D5BFEED'] ['Bias_D5PREAMP']['Bias_D5TDR']['Bias_D5ALLV']['Bias_D5ALLI']
 		# ['Bias_CALDAC']['Bias_BOOSTERBASELINE']['Bias_THDAC']['Bias_THDACHIGH']['Bias_D5DAC8']
+		if(not self.initialised and (self.mode == 'MULTIMETER')):
+			self.__initialise()
 		if(not name in self.analog_mux_map):
 			print "->  \tInvalid DAC name"
 			return False

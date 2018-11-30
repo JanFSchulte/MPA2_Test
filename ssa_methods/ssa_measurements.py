@@ -22,13 +22,13 @@ class SSA_measurements():
 		self.__set_variables()
 
 	###########################################################
-	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2):
-		data = self.scurves_measure(cal_list = cal_list, trim_list = trim_list, mode = mode, rdmode = rdmode, filename = filename, runname = runname, plot = plot, nevents = nevents, speeduplevel = speeduplevel)
+	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = -4):
+		data = self.scurves_measure(cal_list = cal_list, trim_list = trim_list, mode = mode, rdmode = rdmode, filename = filename, runname = runname, plot = plot, nevents = nevents, speeduplevel = speeduplevel, countershift = countershift)
 		if(plot):
 			self.scurves_plot(data)
 		return data
 
-	def scurves_measure(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2):
+	def scurves_measure(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = 0):
 		plt.clf()
 		data = []
 		if(isinstance(filename, str)):
@@ -37,12 +37,12 @@ class SSA_measurements():
 			fo = False
 		for cal in cal_list:
 			if(trim_list == 'keep'):
-				d = self.cal.scurves(cal_ampl = cal, nevents = nevents,filename = fo, mode = mode, rdmode = rdmode,filename2 = 'trim',speeduplevel = speeduplevel,plot = False, msg = "CAL = " + str(cal))
+				d = self.cal.scurves(cal_ampl = cal, nevents = nevents,filename = fo, mode = mode, rdmode = rdmode,filename2 = 'trim',countershift = countershift, speeduplevel = speeduplevel,plot = False, msg = "CAL = " + str(cal))
 				data.append(d)
 			else:
 				for trim in trim_list:
 					t = self.cal.set_trimming(trim, 'all', False)
-					d = self.cal.scurves(cal_ampl = cal, nevents = nevents,filename = fo, mode = mode, rdmode = rdmode,filename2 = 'trim'+str(trim),speeduplevel = speeduplevel,plot = False, msg = "[CAL=" + str(cal) +"][TRIM="+str(trim)+']')
+					d = self.cal.scurves(cal_ampl = cal, nevents = nevents,filename = fo, mode = mode, rdmode = rdmode,filename2 = 'trim'+str(trim), countershift = countershift, speeduplevel = speeduplevel,plot = False, msg = "[CAL=" + str(cal) +"][TRIM="+str(trim)+']')
 					data.append(d)
 		return data
 
@@ -121,45 +121,72 @@ class SSA_measurements():
 
 
 	###########################################################
-	def scurve_trim(self, filename = 'Chip0/', calpulse = 50, plot = True, iterations = 5):
+	def scurve_trim(self, filename = 'Chip0/', calpulse = 50, plot = True, iterations = 5, countershift = -4):
 		print "->  \tS-Curve Trimming"
-		if plot:
-			data = self.scurves(mode = 'all', rdmode = 'fast', cal_list = [calpulse], trim_list = [0, 31], filename = filename, plot = False)
-			scurve_0 = data[0]; scurve_31 = data[1];
+		data = self.scurves(mode = 'all', rdmode = 'fast', cal_list = [calpulse], trim_list = [0, 31], filename = filename, plot = False, countershift = countershift)
+		scurve_0 = data[0]; scurve_31 = data[1];
 		scurve_init, scurve_trim = self.cal.trimming_scurves(
 			method = 'center',
 			default_trimming = 15,
 			cal_ampl = calpulse,
 			iterations = iterations,
-			plot = False)
+			plot = False,
+			countershift = countershift,
+			filename = filename)
 		if( isinstance(filename, str) ):
 			fo = "../SSA_Results/" + filename + "_scurve_" + "trim15" + "__cal_" + str(calpulse) + ".csv"
 			CSV.ArrayToCSV (array = scurve_init, filename = fo, transpose = True)
 			fo = "../SSA_Results/" + filename + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
 			CSV.ArrayToCSV (array = scurve_trim, filename = fo, transpose = True)
+			fo = "../SSA_Results/" + filename + "_scurve_" + "trim0" + "__cal_" + str(calpulse) + ".csv"
+			CSV.ArrayToCSV (array = scurve_0, filename = fo, transpose = True)
+			fo = "../SSA_Results/" + filename + "_scurve_" + "trim31" + "__cal_" + str(calpulse) + ".csv"
+			CSV.ArrayToCSV (array = scurve_31, filename = fo, transpose = True)
 		if plot:
-			plt.clf()
-			plt.figure(1)
-			plt.plot(scurve_init, 'b', alpha = 0.5)
-			plt.plot(scurve_trim, 'r', alpha = 0.5)
-			tmp, par_init = self.cal.evaluate_scurve_thresholds(scurve = scurve_init, nevents = 1000)
-			tmp, par = self.cal.evaluate_scurve_thresholds(scurve = scurve_trim, nevents = 1000)
-			plt.figure(2)
-			xplt = np.linspace(0,256, 2561)
-			for i in par_init:
-				plt.plot( xplt, f_errorfc(xplt, i[0], i[1], i[2]) , 'b', alpha = 0.5)
-			for i in par:
-				plt.plot( xplt, f_errorfc(xplt, i[0], i[1], i[2]) , 'r', alpha = 0.5)
-			plt.figure(3)
-			plt.axis([calpulse*1.15-30, calpulse*1.15+30, 0, 1010])
-			plt.plot(scurve_0,    'b', alpha = 0.5)
-			plt.plot(scurve_31,   'r', alpha = 0.5)
-			plt.plot(scurve_trim, 'y', alpha = 0.5)
-			plt.show()
+			self.scurve_trim_plot(filename = filename, calpulse = calpulse)
 		return scurve_trim, scurve_init
 
+	def scurve_trim_plot(self, filename = 'Chip0/', calpulse = 50):
+		fi = "../SSA_Results/" + filename + "_scurve_" + "trim15" + "__cal_" + str(calpulse) + ".csv"
+		scurve_init = CSV.csv_to_array(filename = fi)
+		scurve_init = np.transpose(scurve_init)
+		fi = "../SSA_Results/" + filename + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
+		scurve_trim = CSV.csv_to_array(filename = fi)
+		scurve_trim = np.transpose(scurve_trim)
+		fi = "../SSA_Results/" + filename + "_scurve_" + "trim0" + "__cal_" + str(calpulse) + ".csv"
+		scurve_0    = CSV.csv_to_array(filename = fi)
+		scurve_0    = np.transpose(scurve_0)
+		fi = "../SSA_Results/" + filename + "_scurve_" + "trim31" + "__cal_" + str(calpulse) + ".csv"
+		scurve_31   = CSV.csv_to_array(filename = fi)
+		scurve_31   = np.transpose(scurve_31)
+		plt.clf()
+		plt.figure(1)
+		plt.plot(scurve_init, 'b', alpha = 0.5)
+		plt.plot(scurve_trim, 'r', alpha = 0.5)
+		tmp, par_init = self.cal.evaluate_scurve_thresholds(scurve = scurve_init, nevents = 1000)
+		tmp, par = self.cal.evaluate_scurve_thresholds(scurve = scurve_trim, nevents = 1000)
+		plt.figure(2)
+		xplt = np.linspace(0,256, 2561)
+		for i in par_init:
+			plt.plot( xplt, f_errorfc(xplt, i[0], i[1], i[2]) , 'b', alpha = 0.5)
+		for i in par:
+			plt.plot( xplt, f_errorfc(xplt, i[0], i[1], i[2]) , 'r', alpha = 0.5)
+		plt.figure(3)
+		plt.axis([calpulse*1.15-30, calpulse*1.15+30, 0, 1010])
+		plt.plot(scurve_0,    'b', alpha = 0.5)
+		plt.plot(scurve_31,   'r', alpha = 0.5)
+		plt.plot(scurve_trim, 'y', alpha = 0.5)
+
+		f, axarr = plt.subplots(2, sharex=True)
+		axarr[0].plot(x, y)
+		axarr[0].set_title('Sharing X axis')
+		axarr[1].scatter(x, y)
+
+
+		plt.show()
+
 	###########################################################
-	def threshold_spread(self, calpulse = 50, file = '../SSA_results/Chip0', runname = '', use_stored_data = False, plot = True, nevents=1000, speeduplevel = 2, filemode = 'w'):
+	def threshold_spread(self, calpulse = 50, file = '../SSA_results/Chip0/', runname = '', use_stored_data = False, plot = True, nevents=1000, speeduplevel = 2, filemode = 'w'):
 		print "->  \tthreshold Spread Measurement"
 		fi = "../SSA_Results/" + file + "_" + str(runname) + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
 		print fi
@@ -311,6 +338,7 @@ class SSA_measurements():
 		plt.yticks(fontsize=16)
 		plt.ylabel("Threshold Voltage [mV]", fontsize=16)
 		plt.xlabel('Time [ns]', fontsize=16)
+		color=iter(sns.color_palette('deep'))
 		fo = "../SSA_Results/" + filename + "_" + str(runname) + "_ShaperPulse"
 		dmean = CSV.CsvToArray(filename = (fo+'_mean.csv'))[:,1:]
 		dstd  = CSV.CsvToArray(filename = (fo+'_std.csv'))[:,1:]
@@ -324,7 +352,6 @@ class SSA_measurements():
 		if(rawdata):
 			plt.plot(raw[0]*res, range(np.shape(raw)[1]*inv), 'ob-', mew = 0)
 			plt.plot(raw[1]*res, range(np.shape(raw)[1]*inv), 'or-', mew = 0)
-		color=iter(sns.color_palette('deep'))
 		for dset in dmean:
 			tmp = []
 			for i in range(np.size(dset)):

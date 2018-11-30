@@ -4,6 +4,7 @@ from time import sleep
 class keithley_multimeter():
 
 	def init_keithley(self, avg = 5, address = 16):
+		print "->  \tConnecting to Multimeter onGPIB address " + str(address)
 		inst = Gpib.Gpib(0, address)
 
 		# reset and clear
