@@ -64,7 +64,7 @@ class SSA_SEU():
 
 				results = self.seuutil.Run_Test_SEU(
 					strip = striplist, hipflags = striplist, delay = 73, run_time = self.run_time,
-					cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 0)
+					cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 0, stop_if_fifo_full = True)
 
 				seucounter = self.ssa.ctrl.read_seu_counter()
 

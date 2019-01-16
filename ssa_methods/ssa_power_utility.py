@@ -50,13 +50,21 @@ class ssa_power_utility:
 		Pd, Vd, Id = self.get_power_digital(display, False, True)
 		Pa, Va, Ia = self.get_power_analog(display, False, True)
 		Pp, Vp, Ip = self.get_power_pads(display, False, True)
-		print '->  \tTotal: %7.3fmW  [I=%7.3fmA]' % (Pd+Pa+Pp, Id+Ia+Ip )
+		if(display):
+			print '->  \tTotal: %7.3fmW  [             I=%7.3fmA]' % (Pd+Pa+Pp, Id+Ia+Ip )
 		utils.activate_I2C_chip()
 		if not return_all:
 			return [Pd,Pa,Pp]
 		else:
 			return [Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip]
 
+	def get_power_repeat(self, duration = 5):
+		t1 = time.time()
+		t0 = t1
+		while(t1<(t0+duration)):
+			print("____________________________________________________\n")
+			self.get_power(display = True)
+			t1 = time.time()
 
 	def get_power_digital(self, display = True, i2cact = True, rtv1 = False):
 		utils.print_enable(False)
@@ -217,12 +225,22 @@ class ssa_power_utility:
 		if(mode == 'auto'):
 			sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0);  # drop reset bit
 			sleep(0.10); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1);  # set reset bit
+			if(display):
+				print '->  \tSent Hard-Reset pulse '
 		else:
 			sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, int(mode));  # drop reset bit
+			if(display):
+				print '->  \tSSA Enabled ' if mode == 1 else '->  \tSSA Disabled '
 		sleep(0.01);
 		utils.activate_I2C_chip()
-		utils.print_enable(True)
-		if(display): print '->  \tSent Hard-Reset pulse '
+		utils.print_enable(True)		
+		if(display):
+			if(mode == 'auto'):
+				print '->  \tSent Hard-Reset pulse '
+			else:
+				print '->  \tSSA Enabled ' if mode == 1 else '->  \tSSA Disabled '
+
+
 
 	def _disable_ssa(self, display=True):
 		utils.print_enable(False)

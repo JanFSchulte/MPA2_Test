@@ -32,9 +32,9 @@ class SSA_SEU_utilities():
 
 	##############################################################
 	def Run_Test_SEU(
-			self, strip =[10,20,30,40], hipflags = [], cal_pulse_period = 1,
-			l1a_period = 39, latency = 101, run_time = 30, display = 1,
-			filename = '', runname = '', delay = 73, create_errors = False):
+			self, strip =[10,20,30,40], hipflags = [], cal_pulse_period = 1, l1a_period = 39,
+			latency = 101, run_time = 30, display = 1, filename = '', runname = '',
+			delay = 73, create_errors = False, stop_if_fifo_full = True):
 
 		sleep(0.01); SendCommand_CTRL("global_reset")
 		sleep(0.5); SendCommand_CTRL("fast_fast_reset")
@@ -47,12 +47,13 @@ class SSA_SEU_utilities():
 		sleep(0.01); Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0, initial_reset = 1)
 		sleep(0.01); fc7.write("cnfg_fast_backpressure_enable", 0)
 		sleep(0.01); self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
-		sleep(0.01); self.RunStateMachine_L1_and_Stubs(timer_data_taking = run_time, display = display)
+		sleep(0.01); self.RunStateMachine_L1_and_Stubs(timer_data_taking = run_time, display = display, stop_if_fifo_full = stop_if_fifo_full)
 		#sleep(0.1); self.Stub_RunStateMachine(run_time = run_time, display = display)
 		correction = int(latency/(l1a_period+1))
-		CL_ok, CL_er = self.Stub_printinfo(display = 1, header = 1, message = "SUMMARY")
+		if(display==0): display=1
+		CL_ok, CL_er = self.Stub_printinfo(display = display, header = 1, message = "SUMMARY")
 		LA_ok, LA_er = self.Lateral_printinfo(display = 0)
-		L1_ok, L1_er, LH_ok, LH_er = self.L1_printInfo(display = 1, correction = correction )
+		L1_ok, L1_er, LH_ok, LH_er = self.L1_printInfo(display = display, correction = correction )
 		return [CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er]
 
 	##############################################################
@@ -121,7 +122,8 @@ class SSA_SEU_utilities():
 		sleep(0.01); utils.activate_I2C_chip()
 		sleep(0.01); self.ssa.ctrl.activate_readout_normal(mipadapterdisable = 1)
 		sleep(0.01); self.I2C.peri_write("CalPulse_duration", 1)
-		sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b01001)
+		#sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b01001)
+		sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b00000)
 		sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", 0, 0x0)
 		sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", 0, 0x0)
 		sleep(0.01); self.I2C.peri_write('L1-Latency_MSB', (latency & 0xff00) >> 8)
@@ -134,6 +136,7 @@ class SSA_SEU_utilities():
 		l = np.zeros(10, dtype = np.uint8)
 		for st in strip_list:
 			if(st>0 and st<121):
+				sleep(0.01); self.I2C.strip_write("ENFLAGS", st, 0b01001)
 				sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", st, 0x1)
 		for st in hipflag_list:
 			if(st>0 and st<121):
@@ -151,7 +154,7 @@ class SSA_SEU_utilities():
 
 	##############################################################
 	def Stub_Evaluate_Pattern(self, strip_list, cluster_cut = 5):
-		strip = np.sort(strip_list)
+		strip = np.sort(strip_list[0:8])
 		slist = np.zeros(8, dtype = ctypes.c_uint32)
 		#### Lateral Data
 		lateral_left = 0; lateral_right = 0;
@@ -162,7 +165,7 @@ class SSA_SEU_utilities():
 				lateral_right += (0x1 << (strip[i]-112))
 		#### Clustering
 		centroids = []
-		strip_list = np.array(strip_list)
+		strip_list = np.array(strip_list[0:8])
 		tmp = enumerate( strip_list[strip_list<=120][strip_list>0] )
 		for k, g in groupby( tmp , lambda (i, x): i-x):
 			cluster = map( itemgetter(1), g)
@@ -182,7 +185,7 @@ class SSA_SEU_utilities():
 
 	##############################################################
 	def L1_Evaluate_Pattern(self, strip_list = [3,7,12,13,18], hflag_list = [3,7,12,13,18]):
-		strip = np.sort(strip_list)
+		strip = np.sort(strip_list[0:8])
 		hfleg = np.sort(hflag_list)
 		l1hit  = np.full(120, '0')
 		l1flag = np.full( 24, '0')
@@ -190,7 +193,7 @@ class SSA_SEU_utilities():
 			l1hit[ st-1 ] = '1'
 		l1flag = ['0']*24
 		centroids = []
-		strip_list = np.array(strip_list)
+		strip_list = np.array(strip_list[0:8])
 		tmp = enumerate( strip_list[strip_list<=120][strip_list>0] )
 		for k, g in groupby( tmp , lambda (i, x): i-x):
 			cluster = map( itemgetter(1), g)
@@ -522,7 +525,7 @@ class SSA_SEU_utilities():
 
 
 	##############################################################
-	def RunStateMachine_L1_and_Stubs(self, timer_data_taking = 5, display = 2):
+	def RunStateMachine_L1_and_Stubs(self, timer_data_taking = 5, display = 2, stop_if_fifo_full = True):
 		sleep(0.1)
 		FSM = fc7.read("stat_phy_slvs_compare_state_machine")
 		if(display > 1):
@@ -548,7 +551,8 @@ class SSA_SEU_utilities():
 		sleep(0.1); FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 		sleep(0.1); FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
 		timer = 0
-		while(FIFO_almost_full != 1 and FIFO_almost_full_L1 != 1 and timer < timer_data_taking):
+		stop_condition = True
+		while(stop_condition):
 			sleep(0.1); FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 			sleep(0.1); FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
 			timer = timer + 1
@@ -557,25 +561,29 @@ class SSA_SEU_utilities():
 			self.Lateral_printinfo(display = display)
 			self.L1_printInfo(display = display)
 			sleep(1)
+			if(stop_if_fifo_full):
+				stop_condition = (FIFO_almost_full != 1 and FIFO_almost_full_L1 != 1 and timer < timer_data_taking)
+			else:
+				stop_condition = (timer < timer_data_taking)
 		sleep(0.1); fc7.write("ctrl_phy_SLVS_compare_stop",1)
 		sleep(0.1); SendCommand_CTRL("stop_trigger")
 		sleep(0.1); SendCommand_CTRL("stop_trigger")
-
 		#print "State of FSM after stopping: " , fc7.read("stat_phy_slvs_compare_state_machine")
-		print "________________________________________________________________________________________\n"
-		if(timer == timer_data_taking and FIFO_almost_full == 0):
-			print "CLUSTERS: data taking stopped because reached the adequate time"
-		elif(FIFO_almost_full == 1 and timer < timer_data_taking ):
-			print "CLUSTERS: data taking stopped because the FIFO reached the 80%"
-		else:
-			print "CLUSTERS: data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)"
-		#print "State of FSM after stopping: " , fc7.read("stat_phy_slvs_compare_state_machine")
-		if(timer == timer_data_taking and FIFO_almost_full_L1 == 0):
-			print "L1-DATA:  data taking stopped because reached the adequate time"
-		elif(FIFO_almost_full_L1 == 1 and timer < timer_data_taking ):
-			print "L1-DATA:  data taking stopped because the FIFO reached the 80%"
-		else:
-			print "L1-DATA:  data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)"
+		if(display>-1):
+			print "________________________________________________________________________________________\n"
+			if(timer == timer_data_taking and FIFO_almost_full == 0):
+				print "CLUSTERS: data taking stopped because reached the adequate time"
+			elif(FIFO_almost_full == 1 and timer < timer_data_taking ):
+				print "CLUSTERS: data taking stopped because the FIFO reached the 80%"
+			else:
+				print "CLUSTERS: data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)"
+			#print "State of FSM after stopping: " , fc7.read("stat_phy_slvs_compare_state_machine")
+			if(timer == timer_data_taking and FIFO_almost_full_L1 == 0):
+				print "L1-DATA:  data taking stopped because reached the adequate time"
+			elif(FIFO_almost_full_L1 == 1 and timer < timer_data_taking ):
+				print "L1-DATA:  data taking stopped because the FIFO reached the 80%"
+			else:
+				print "L1-DATA:  data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)"
 
 
 	##############################################################

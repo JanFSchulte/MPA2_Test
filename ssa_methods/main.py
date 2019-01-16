@@ -25,14 +25,14 @@ I2C     = ssa_i2c_conf()
 pwr     = ssa_power_utility(I2C, FC7)
 ssa     = SSA_ASIC(I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
 cal     = SSA_cal_utility(ssa, I2C, FC7)
-test    = SSA_test_utility(ssa, I2C, FC7, cal, pwr)
 pcbadc  = onboard_adc()
 biascal = ssa_calibration(ssa, I2C, FC7, multimeter, pcbadc, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
 measure = SSA_measurements(ssa, I2C, FC7, cal, analog_mux_map, pwr, biascal)
+seuutil = SSA_SEU_utilities(ssa, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+test    = SSA_test_utility(ssa, I2C, FC7, cal, pwr, seuutil)
 toptest = SSA_test_top(ssa, I2C, FC7, cal, biascal, pwr, test, measure)
 xray    = SSA_test_xray(toptest, ssa, I2C, FC7, cal, biascal, pwr, test, measure)
 anl     = SSA_Analise_Test_results(toptest, test, measure, biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
-seuutil = SSA_SEU_utilities(ssa, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
 seu     = SSA_SEU(ssa, seuutil, I2C, FC7, cal, biascal, pwr, test, measure)
 
 
