@@ -233,7 +233,7 @@ class ssa_power_utility:
 				print '->  \tSSA Enabled ' if mode == 1 else '->  \tSSA Disabled '
 		sleep(0.01);
 		utils.activate_I2C_chip()
-		utils.print_enable(True)		
+		utils.print_enable(True)
 		if(display):
 			if(mode == 'auto'):
 				print '->  \tSent Hard-Reset pulse '
@@ -261,6 +261,7 @@ class ssa_power_utility:
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
 		if(display): print '->  \tSSA enabled '
+
 
 	def __initialise_constants(self):
 		self.pcbwrite = 0;
