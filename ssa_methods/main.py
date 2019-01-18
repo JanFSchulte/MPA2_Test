@@ -20,33 +20,33 @@ except ImportError:
 	multimeter = False
 	print "- Impossible to access GPIB instruments"
 
-FC7     = ssa_fc7_com(fc7)
-I2C     = ssa_i2c_conf()
-pwr     = ssa_power_utility(I2C, FC7)
-ssa     = SSA_ASIC(I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
-cal     = SSA_cal_utility(ssa, I2C, FC7)
-pcbadc  = onboard_adc()
-biascal = ssa_calibration(ssa, I2C, FC7, multimeter, pcbadc, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
-measure = SSA_measurements(ssa, I2C, FC7, cal, analog_mux_map, pwr, biascal)
-seuutil = SSA_SEU_utilities(ssa, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
-test    = SSA_test_utility(ssa, I2C, FC7, cal, pwr, seuutil)
-toptest = SSA_test_top(ssa, I2C, FC7, cal, biascal, pwr, test, measure)
-xray    = SSA_test_xray(toptest, ssa, I2C, FC7, cal, biascal, pwr, test, measure)
-anl     = SSA_Analise_Test_results(toptest, test, measure, biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
-seu     = SSA_SEU(ssa, seuutil, I2C, FC7, cal, biascal, pwr, test, measure)
+FC7         = ssa_fc7_com(fc7)
+ssa_i2c     = ssa_i2c_conf()
+ssa_pwr     = ssa_power_utility(ssa_i2c, FC7)
+ssa         = SSA_ASIC(ssa_i2c, FC7, ssa_pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+ssa_cal     = SSA_cal_utility(ssa, ssa_i2c, FC7)
+pcbadc      = onboard_adc()
+ssa_biascal = ssa_calibration(ssa, ssa_i2c, FC7, multimeter, pcbadc, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+ssa_measure = SSA_measurements(ssa, ssa_i2c, FC7, ssa_cal, analog_mux_map, ssa_pwr, ssa_biascal)
+ssa_seuutil = SSA_SEU_utilities(ssa, ssa_i2c, FC7, ssa_pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+ssa_test    = SSA_test_utility(ssa, ssa_i2c, FC7, ssa_cal, ssa_pwr, ssa_seuutil)
+ssa_toptest = SSA_test_top(ssa, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pwr, ssa_test, ssa_measure)
+ssa_xray    = SSA_test_xray(ssa_toptest, ssa, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pwr, ssa_test, ssa_measure)
+ssa_anl     = SSA_Analise_Test_results(ssa_toptest, ssa_test, ssa_measure, ssa_biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
+ssa_seu     = SSA_SEU(ssa, ssa_seuutil, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pwr, ssa_test, ssa_measure)
+SSA         = ssa
 
-
-def on():
+def ssa_on():
 	utils.activate_I2C_chip()
-	sleep(0.1);  pwr.set_supply('on', display=False)
-	sleep(0.1);  pwr.set_clock_source('internal')
+	sleep(0.1);  ssa_pwr.set_supply('on', display=False)
+	sleep(0.1);  ssa_pwr.set_clock_source('internal')
 	sleep(0.1);  ssa.init(reset_board = True, reset_chip = True, display = True)
 
-def off():
+def ssa_off():
 	utils.activate_I2C_chip()
-	pwr.set_supply('off')
+	ssa_pwr.set_supply('off')
 
-def init():
+def ssa_init():
 	ssa.init(reset_board = True, reset_chip = False, display = True)
 
 def reset_fc7():
@@ -56,9 +56,7 @@ def reset_ssa():
 	ssa.reset()
 
 def set_clock(val = 'internal'):
-	pwr.set_clock_source(val)
+	ssa_pwr.set_clock_source(val)
 	sleep(0.1);  ssa.init(reset_board = False, reset_chip = False, display = True)
 
 #utils.activate_I2C_chip()
-
-print "_____________________________________________________\n\n"
