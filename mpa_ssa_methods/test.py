@@ -1,11 +1,61 @@
 from mpa_methods import *
+import random
 
 
 class test_utility():
 
-	def __init__(self, SSA, MPA, FC7, pwr, inj):
+	def __init__(self, SSA, MPA, FC7, pwr, PS):
 		self.SSA = SSA; self.MPA = MPA; self.FC7 = FC7;
-		self.inj = inj; self.pwr = pwr;
+		self.PS = PS; self.pwr = pwr;
+
+
+	def OneStub(self, ssa_line = 3, stub_bend = 0, display = True):
+		strips = []
+		pixels = []
+		#### 8 independent Strip Clusters ####
+		sch = range(1,120)
+		for i in range(8):
+			tmp = random.sample(sch, 1)[0]
+			sch = filter(lambda x: ((x < tmp-5) or (x > tmp+5)) , sch)
+			strips.append(tmp)
+		strips.sort()
+		#### A single stub ####
+		col = strips[ ssa_line ] + stub_bend
+		row = random.randint(0,16)
+		target_stub = [np.float(col), row, stub_bend]
+		pixels.append([col, row])
+
+		#### 8 Pixel Clusters that dont make a stub ####
+		sch = range(1,120)
+		for i in strips:
+			sch = filter(lambda x: ((x<i-5) or (x>i+5)) , sch)
+		tmp = random.sample(sch, 7)
+		for col in tmp:
+			row = random.randint(0,16)
+			pixels.append([col, row])
+		pixels.sort()
+		#### Inject strip and pixel hits ####
+		r = self.PS.inj.stub(strips, pixels)
+		#### readout stubs ####
+		s = self.PS.rdo.stubs(calpulse = 1)
+		#### Verify ####
+		Error = True
+		for i in range(len(s)):
+			s[i][0] = s[i][0]/2.0
+			s[i][1] = s[i][1]+1
+		if(len(s)==1):
+			if(s[0] == target_stub):
+				Error = False
+		rtstr  = "  Expect = {:s}\n".format(target_stub)
+		rtstr += "        Found  = {:s}\n".format(',\t'.join(map(str, s)))
+		rtstr += "        Pixels = {:s}\n".format(''.join( ["{:12s}".format(str([i])) for i in strips] ))
+		rtstr += "        Pixels = {:s}\n".format(''.join( ["{:12s}".format(i) for i in pixels] ))
+		if(Error):
+			print( "-> ER " + rtstr )
+		else:
+			if(display): print( "-> OK " + rtstr )
+		return (not Error)
+
 
 	def shiftreg_test(self, val = 'all', display = 1):
 		cor = [0]*8; cnt = [0]*8;
@@ -15,7 +65,7 @@ class test_utility():
 				vect = [0]*8
 				value = val if (val != 'all') else (strip)
 				vect[line] = value
-				self.inj.ssa_shiftreg(vect)
+				self.PS.inj.ssa_shiftreg(vect)
 				time.sleep(0.001)
 				self.FC7.send_test()
 				#time.sleep(0.001)

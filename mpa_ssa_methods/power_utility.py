@@ -22,11 +22,11 @@ class mpassa_power_utility:
 		elif (value == 'external' or value == 1):
 			self.fc7.write("cnfg_clock_ext_clk_en", 1)
 
-	def on(self):
+	def on(self, slvs = 0b111):
 		self.set_supply('on', display = False)
 		self.enable_ssa(display = False)
 		self.enable_mpa(display = False)
-		self.SSA.ctrl.init_slvs(0b110)
+		self.SSA.ctrl.init_slvs(slvs)
 		sleep(0.1);
 		self.get_power(display = True)
 
