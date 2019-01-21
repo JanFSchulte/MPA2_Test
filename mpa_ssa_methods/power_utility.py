@@ -10,9 +10,9 @@ import inspect
 
 class mpassa_power_utility:
 
-	def __init__(self, I2C, FC7):
-		self.I2C = I2C;
-		self.fc7 = FC7;
+	def __init__(self, I2C, FC7, MPA, SSA):
+		self.I2C = I2C;	self.fc7 = FC7;
+		self.MPA = MPA;	self.SSA = SSA;
 		self.__initialise_constants()
 		self.state = curstate(main = 0, dvdd = 0, avdd = 0, pvdd = 0)
 
@@ -23,9 +23,12 @@ class mpassa_power_utility:
 			self.fc7.write("cnfg_clock_ext_clk_en", 1)
 
 	def on(self):
-		self.set_supply('on')
-		self.enable_ssa()
-		self.enable_mpa()
+		self.set_supply('on', display = False)
+		self.enable_ssa(display = False)
+		self.enable_mpa(display = False)
+		self.SSA.ctrl.init_slvs(0b110)
+		sleep(0.1);
+		self.get_power(display = True)
 
 	def off(self):
 		self.disable_ssa()
@@ -44,6 +47,8 @@ class mpassa_power_utility:
 		print '->  \tSent Re-Sync command'
 		sleep(0.001)
 
+	def set_slvs(self, val=0b110):
+		self.SSA.ctrl.init_slvs(val&0b111)
 
 	def set_supply(self, mode = 'on', d = 1.0, a = 1.25, p = 1.25, bg = 0.280, display = True):
 		if(mode == 'on' or mode == 1):
@@ -59,12 +64,14 @@ class mpassa_power_utility:
 			sleep(0.00); self.set_avdd('SSA',0); self.set_avdd('MPA',0);
 			sleep(0.10); self.set_pvdd('SSA',0); self.set_pvdd('MPA',0);
 			sleep(0.10); self.mainpoweroff()
-		sleep(0.1); self.get_power(display = display)
+		if(display):
+			sleep(0.1); self.get_power(display = display)
 
 	def get_power(self, display = True):
 		sPd, sVd, sId = self.get_pwr_dvdd('SSA', display, False, True)
 		sPa, sVa, sIa = self.get_pwr_avdd('SSA', display, False, True)
 		sPp, sVp, sIp = self.get_pwr_pvdd('SSA', display, False, True)
+		if(display): print("")
 		mPd, mVd, mId = self.get_pwr_dvdd('MPA', display, False, True)
 		mPa, mVa, mIa = self.get_pwr_avdd('MPA', display, False, True)
 		mPp, mVp, mIp = self.get_pwr_pvdd('MPA', display, False, True)

@@ -340,41 +340,40 @@ class SSA_readout():
 
 class SSA_inject():
 
-
 	def __init__(self, I2C, FC7, ssactrl, ssastrip):
-		self.I2C = I2C
-		self.fc7 = FC7
-		self.ctrl = ssactrl
-		self.strip = ssastrip
-		self.hitmode = 'none'
-		self.data_l = 0
-		self.data_r = 0
-		self.hit_list = []
-		self.hip_list = []
-
+		self.I2C = I2C; self.fc7 = FC7;
+		self.ctrl = ssactrl; self.strip = ssastrip;
+		self.__initialise()
 
 	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, sequence = 0xff, initialise = True):
+		leftdata  = 0; rightdata = 0;
+
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
 			self.I2C.peri_write("CalPulse_duration", times)
-			self.I2C.strip_write("ENFLAGS", 0, 0b01001)
+			#self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 			#fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
-		leftdata  = 0; rightdata = 0;
-		if(hit_list != self.hit_list):
+
+		if(sequence != self.DigCalibPattern): #to speedup
+			self.I2C.strip_write("DigCalibPattern_L", 0, sequence)
+
+		if(hit_list != self.hit_list):#to speedup
 			self.hit_list = hit_list
-			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
+			self.I2C.strip_write("ENFLAGS", 0, 0b0)
 			for cl in hit_list:
 				if (cl < 1):
 					rightdata = rightdata | (0b1 << (7+cl))
 				elif (cl > 120):
 					leftdata = leftdata | (0b1 << (cl-121))
 				else:
-					self.I2C.strip_write("DigCalibPattern_L", cl, sequence)
-		if(self.data_l != leftdata or self.data_r != rightdata):
+					self.I2C.strip_write("ENFLAGS", cl, 0b01001)
+
+		if(self.data_l != leftdata or self.data_r != rightdata):#to speedup
 			self.ctrl.set_lateral_data(left = leftdata, right = rightdata)
 			self.data_l = leftdata;
 			self.data_r = rightdata;
-		if(hip_list != self.hip_list):
+
+		if(hip_list != self.hip_list):#to speedup
 			self.hip_list = hip_list
 			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 			for cl in hip_list:
@@ -405,6 +404,15 @@ class SSA_inject():
 			self.fc7.SendCommand_CTRL("start_trigger")
 			sleep(0.01)
 		sleep(0.001)
+
+
+	def __initialise(self):
+		self.hitmode = 'none'
+		self.data_l = 0
+		self.data_r = 0
+		self.hit_list = []
+		self.hip_list = []
+		self.DigCalibPattern = 0
 
 
 

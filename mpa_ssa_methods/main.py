@@ -7,6 +7,8 @@ from myScripts.BasicADC import *
 from mpa_ssa_methods.inject_utility import *
 from mpa_ssa_methods.readout_utility import *
 from mpa_ssa_methods.power_utility import *
+from mpa_ssa_methods.test import *
+
 
 try:
 	multimeter = keithley_multimeter()
@@ -15,5 +17,6 @@ except ImportError:
 
 MPA = False
 
-pwr = mpassa_power_utility(ssa_i2c, FC7)
-inj = inject_utility(SSA, MPA)
+pwr  = mpassa_power_utility(ssa_i2c, FC7, MPA, SSA)
+inj  = inject_utility(SSA, MPA, FC7, I2C, ssa_i2c)
+test = test_utility(SSA, MPA, FC7, pwr, inj)
