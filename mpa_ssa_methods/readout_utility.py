@@ -7,7 +7,7 @@ class readout_utility():
 		self.SSA = SSA; self.MPA = MPA; self.FC7 = FC7;
 		self.i2c_mpa = i2c_mpa; self.i2c_ssa = i2c_ssa;
 
-	def stubs(self, calpulse=1):
+	def stubs(self, calpulse=1, raw=0):
 		send_test(calpulse)
 		sleep(0.001)
 		rp = read_stubs()
@@ -20,7 +20,10 @@ class readout_utility():
 					stubslist.append(tmp)
 		#st = list(rp[1][13]) + list(rp[1][14])
 		#st = filter(lambda x: x != 0, st)
-		return stubslist
+		if(raw):
+			return stubslist, rp
+		else:
+			return stubslist
 
 
 		#print test_pp_digital(row, pixel) # send test pulse to defined row and pixel

@@ -8,8 +8,18 @@ class test_utility():
 		self.SSA = SSA; self.MPA = MPA; self.FC7 = FC7;
 		self.PS = PS; self.pwr = pwr;
 
+	def OneStub_AllTxLines(self, nruns=1000, display=1):
+		nerr=[0]*8
+		for line in range(8):
+			for i in range(nruns):
+				rp = self.OneStub(display = display)
+				if(not rp):	nerr[line] += 1
+				utils.ShowPercent(i+1, nruns, "One stub test running")
+			res = 1.0-(nerr[line]/np.float(nruns))
+			print( "->\tStubs match with hit on SSA line {l:1d}: {r:5.2f}% correct".format(l=line, r=(res*100)) )
 
-	def OneStub(self, ssa_line = 3, stub_bend = 0, display = True):
+
+	def OneStub(self, ssa_line = 3, n_pixel_cl = 3, stub_bend = 0, display = 1):
 		strips = []
 		pixels = []
 		#### 8 independent Strip Clusters ####
@@ -21,23 +31,22 @@ class test_utility():
 		strips.sort()
 		#### A single stub ####
 		col = strips[ ssa_line ] + stub_bend
-		row = random.randint(0,16)
+		row = random.randint(1,16)
 		target_stub = [np.float(col), row, stub_bend]
 		pixels.append([col, row])
-
 		#### 8 Pixel Clusters that dont make a stub ####
 		sch = range(1,120)
 		for i in strips:
 			sch = filter(lambda x: ((x<i-5) or (x>i+5)) , sch)
-		tmp = random.sample(sch, 7)
+		tmp = random.sample(sch, (n_pixel_cl-1))
 		for col in tmp:
-			row = random.randint(0,16)
+			row = random.randint(1,16)
 			pixels.append([col, row])
 		pixels.sort()
 		#### Inject strip and pixel hits ####
-		r = self.PS.inj.stub(strips, pixels)
+		self.PS.inj.stub(strips, pixels)
 		#### readout stubs ####
-		s = self.PS.rdo.stubs(calpulse = 1)
+		s, raw = self.PS.rdo.stubs(calpulse=1, raw=1)
 		#### Verify ####
 		Error = True
 		for i in range(len(s)):
@@ -48,12 +57,13 @@ class test_utility():
 				Error = False
 		rtstr  = "  Expect = {:s}\n".format(target_stub)
 		rtstr += "        Found  = {:s}\n".format(',\t'.join(map(str, s)))
-		rtstr += "        Pixels = {:s}\n".format(''.join( ["{:12s}".format(str([i])) for i in strips] ))
+		rtstr += "        Strips = {:s}\n".format(''.join( ["{:12s}".format(str([i])) for i in strips] ))
 		rtstr += "        Pixels = {:s}\n".format(''.join( ["{:12s}".format(i) for i in pixels] ))
 		if(Error):
-			print( "-> ER " + rtstr )
+			if(display>0): print( "-> ER " + rtstr )
+			if(display>2): print raw
 		else:
-			if(display): print( "-> OK " + rtstr )
+			if(display>1): print( "-> OK " + rtstr )
 		return (not Error)
 
 

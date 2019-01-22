@@ -12,9 +12,9 @@ class ps_utility():
 		self.rdo = readout_utility(SSA, MPA, FC7, i2c_mpa, i2c_ssa)
 
 
-	def initialise(self, retimepix = 5):
+	def initialise(self, slvs = 0b100, retimepix = 5):
 		try:
-			self.SSA.ctrl.init_slvs(0b110)
+			self.SSA.ctrl.init_slvs(slvs)
 			time.sleep(0.001)
 			activate_sync() # activate synchronous mode
 			self.SSA.ctrl.activate_readout_normal()
