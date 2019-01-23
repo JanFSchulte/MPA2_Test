@@ -8,7 +8,9 @@ class test_utility():
 		self.SSA = SSA; self.MPA = MPA; self.FC7 = FC7;
 		self.PS = PS; self.pwr = pwr;
 
-	def OneStub_AllTxLines(self, nruns=1000, display=1):
+	##########################################################################
+	def OneStub_loop(self, nruns=1000, display=1):
+		#self.PS.initialise()
 		nerr=[0]*8
 		for line in range(8):
 			for i in range(nruns):
@@ -18,7 +20,7 @@ class test_utility():
 			res = 1.0-(nerr[line]/np.float(nruns))
 			print( "->\tStubs match with hit on SSA line {l:1d}: {r:5.2f}% correct".format(l=line, r=(res*100)) )
 
-
+	##########################################################################
 	def OneStub(self, ssa_line = 3, n_pixel_cl = 3, stub_bend = 0, display = 1):
 		strips = []
 		pixels = []
@@ -66,7 +68,42 @@ class test_utility():
 			if(display>1): print( "-> OK " + rtstr )
 		return (not Error)
 
+	##########################################################################
+	def L1_SSA_loop(self, nruns=1000, display = 1):
+		nerr = 0
+		for i in range(nruns):
+			rp = self.L1_SSA(display=display, ncl = random.randint(2,8))
+			if(not rp):	nerr+=1
+			utils.ShowPercent(i+1, nruns, "SSA L1 data test running")
+		res = 1.0-(nerr/np.float(nruns))
+		print( "->\tSSA L1 data match: {r:5.2f}% ".format(r=(res*100)) )
 
+	##########################################################################
+	def L1_SSA(self, ncl = 5, display = 1):
+		strips = []
+		sch = range(1,120)
+		self.PS.rdo.L1(init=1)
+		for i in range(ncl):
+			tmp = random.sample(sch, 1)[0]
+			sch = filter(lambda x: ((x < tmp-1) or (x > tmp+1)) , sch)
+			strips.append(tmp)
+		strips.sort()
+		self.PS.inj.strip_dig(strips)
+		strcl, pixcl = self.PS.rdo.L1(init=0, verbose=(display>2))
+		Error = False
+		if(len(strcl)==len(strips)):
+			for s in strips:
+				if(s not in np.array(strcl)[:,0]):
+					Error = True
+		rtstr  = "       Expect = {:s}\n".format(strips)
+		rtstr += "       Found  = {:s}\n".format(list(np.array(strcl)[:,0]))
+		if(Error):
+			if(display>0): print( "->   ER SSA L1 Data\n" + rtstr )
+		else:
+			if(display>1): print( "->   OK SSA L1 Data\n" + rtstr )
+		return (not Error)
+
+	##########################################################################
 	def shiftreg_test(self, val = 'all', display = 1):
 		cor = [0]*8; cnt = [0]*8;
 		I2C.peri_write('ECM', 0b01000001) #MPA in SSA passthrough mode
@@ -90,6 +127,7 @@ class test_utility():
 		ret = ["{0:0.2f}%".format(i) for i in res]
 		return ret
 
+	##########################################################################
 	def shiftreg_vs_vdd(self, SLVS_Current=0b110, vstep = 0.1):
 		pvdd_list = np.arange(0.9, 1.4, vstep)
 		dvdd_list = np.arange(0.8, 1.4, vstep)

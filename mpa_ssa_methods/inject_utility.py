@@ -30,8 +30,9 @@ class inject_utility():
 
 
 	def pixel_dig(self, hit_list = []):
-		if(not isinstance(hit_list[0], list)):
-			hit_list = [hit_list]
+		if(len(hit_list)>0):
+			if(not isinstance(hit_list[0], list)):
+				hit_list = [hit_list]
 		disable_pixel(0,0) # Disable all pixel
 		for [pixel, row] in hit_list:
 			I2C.pixel_write('ENFLAGS', row, pixel, 0x20)

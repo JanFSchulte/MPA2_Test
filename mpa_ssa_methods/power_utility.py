@@ -231,7 +231,7 @@ class mpassa_power_utility:
 		setvoltage = setvoltage << 4
 		Configure_MPA_SSA_I2C_Master(1, 2)
 		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
-		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x35, setvoltage)  # tx to DAC C
+		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, val, setvoltage)  # tx to DAC C
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
 		self.state.avdd = targetvoltage

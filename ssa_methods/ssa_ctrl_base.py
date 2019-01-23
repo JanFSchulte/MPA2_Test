@@ -409,6 +409,13 @@ class ssa_ctrl_base:
 		rp = self.I2C.peri_read('SEU_Counter')
 		return rp
 
+	def set_l1_latency(self, latency):
+		time.sleep(0.001)
+		self.I2C.peri_write('L1-Latency_MSB', (latency & 0xff00) >> 8)
+		time.sleep(0.001)
+		self.I2C.peri_write('L1-Latency_LSB', (latency & 0x00ff) >> 0)
+		time.sleep(0.001)
+
 
 
 
