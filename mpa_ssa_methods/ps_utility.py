@@ -14,6 +14,7 @@ class ps_utility():
 
 	def initialise(self, slvs = 0b100, retimepix = 5):
 		try:
+			activate_I2C_chip(verbose = 0)
 			self.SSA.ctrl.init_slvs(slvs)
 			time.sleep(0.001)
 			activate_sync() # activate synchronous mode
@@ -25,6 +26,7 @@ class ps_utility():
 			self.i2c_mpa.peri_write("ConfSLVS", 0b00111111)
 			self.FC7.reset()
 			align_MPA()
+			#align_out()
 			activate_I2C_chip(verbose = 0)
 			return True
 		except:

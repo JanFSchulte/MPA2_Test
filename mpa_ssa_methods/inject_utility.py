@@ -6,6 +6,7 @@ class inject_utility():
 	def __init__(self, SSA, MPA, FC7, i2c_mpa, i2c_ssa):
 		self.SSA = SSA; self.MPA = MPA; self.FC7 = FC7;
 		self.i2c_mpa = i2c_mpa; self.i2c_ssa = i2c_ssa;
+		self.mpadigpattent = False
 
 
 	def stub(self, strips = [], pixels = []):
@@ -29,14 +30,23 @@ class inject_utility():
 			initialise = initialise)
 
 
-	def pixel_dig(self, hit_list = []):
+	def pixel_dig(self, hit_list = [], read_back = True):
 		if(len(hit_list)>0):
 			if(not isinstance(hit_list[0], list)):
 				hit_list = [hit_list]
 		disable_pixel(0,0) # Disable all pixel
+		time.sleep(0.001)
 		for [pixel, row] in hit_list:
 			I2C.pixel_write('ENFLAGS', row, pixel, 0x20)
-		I2C.pixel_write('DigPattern', 0, 0,  0b00000001)
+			time.sleep(0.001)
+			if(read_back):
+				tmp = I2C.pixel_read('ENFLAGS', row, pixel)
+				if(tmp!=0x20):
+					print("\n\n-> MPA-I2C error")
+					print("\n\n-> MPA-I2C error {r:0d}-{p:0d} found: 0x{v:0x} - expected 0x20".format(r=row, p=pixel, v=tmp))
+		if(not self.mpadigpattent):
+			I2C.pixel_write('DigPattern', 0, 0,  0b00000001)
+			self.mpadigpattent = True
 
 
 	def pixel_anl(self):

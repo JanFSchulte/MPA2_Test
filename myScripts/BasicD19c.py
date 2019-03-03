@@ -153,7 +153,12 @@ def read_L1(verbose = 1):
 				width_strip[i] 		= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000001110) >> 1
 				MIP[i] 				= (int(strip_data[11*i:11*(i+1)], 2) & 0b00000000001)
 			except ValueError:
-				print "Parsing problem"
+				print "\nParsing problem - Strip"
+				print "Header: " + bin(header)
+				print "error: " + bin(error)
+				print "L1_ID: " + str(L1_ID)
+				print "strip_counter: " + str(strip_counter)
+				print "pixel_counter: " + str(pixel_counter)
 			if verbose: print "Position: " + str(pos_strip[i]) + " Width: " + str(width_strip[i]) + " MIP: " + str(MIP[i])
 		if verbose: print "Pixel Cluster:"
 		pos_pixel = np.zeros((pixel_counter,), dtype = np.int)
@@ -166,11 +171,16 @@ def read_L1(verbose = 1):
 				width_pixel[i] 	= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000001110000) >> 4
 				Z[i] 			= (int(pixel_data[14*i:14*(i+1)], 2) & 0b00000000001111) + 1
 			except ValueError:
-				print "Parsing problem"
+				print "\nParsing problem - Pixel"
+				print "Header: " + bin(header)
+				print "error: " + bin(error)
+				print "L1_ID: " + str(L1_ID)
+				print "strip_counter: " + str(strip_counter)
+				print "pixel_counter: " + str(pixel_counter)
 			if verbose: print "Position: " + str(pos_pixel[i]) + " Width: " + str(width_pixel[i]) + " Row Number: " + str(Z[i])
 		return strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z
 	else:
-		if verbose: print "Header not found!"
+		print "Header not found!"
 
 
 

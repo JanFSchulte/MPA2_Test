@@ -107,6 +107,7 @@ class SSA_readout():
 
 
 	def l1_data(self, latency = 50, shift = 0, initialise = True, mipadapterdisable = True, trigger = True, multi = True, display = False, display_raw = False):
+		disable_pixel(0,0)
 		if(initialise == True):
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)

@@ -7,9 +7,10 @@ class readout_utility():
 		self.SSA = SSA; self.MPA = MPA; self.FC7 = FC7;
 		self.i2c_mpa = i2c_mpa; self.i2c_ssa = i2c_ssa;
 
-	def stubs(self, calpulse=1, raw=0):
-		send_test(calpulse)
-		sleep(0.001)
+	def stubs(self, calpulse=1, raw=0, trg=1):
+		if(trg):
+			send_test(calpulse)
+			sleep(0.001)
 		rp = read_stubs()
 		st = [list(rp[1][13]), list(rp[2][13]), list(rp[3][13])]
 		stubslist = []
@@ -18,8 +19,6 @@ class readout_utility():
 				tmp = [rp[1][cycle][i], rp[2][cycle][i], rp[3][cycle][i]]
 				if(tmp[0]!=0):
 					stubslist.append(tmp)
-		#st = list(rp[1][13]) + list(rp[1][14])
-		#st = filter(lambda x: x != 0, st)
 		if(raw):
 			return stubslist, rp
 		else:
@@ -37,25 +36,27 @@ class readout_utility():
 				delay_before_next_pulse = 0,
 				number_of_test_pulses = 1)
 			self.FC7.write("cnfg_fast_delay_between_consecutive_trigeers", 0)
+			time.sleep(0.001)
 			self.SSA.ctrl.set_l1_latency(latency)
+			time.sleep(0.001)
 		self.FC7.SendCommand_CTRL("start_trigger")
+		time.sleep(0.001)
 		l1data = read_L1(verbose = verbose)
-		if(raw):
-			return l1data
-			
 		str_clusters = []
 		pix_clusters = []
-		str_n, pix_n, str_row, str_width, str_hip, pix_row, pix_width, pix_col = l1data
-
-		for i in range(str_n):
-			str_clusters.append([str_row[i], 0, str_width[i]])
-		for i in range(pix_n):
-			pix_clusters.append([pix_row[i], pix_col[i], pix_width[i]])
-
-		sorter = lambda x: (x[0], x[2], x[1]) #setup the sorter function
-		str_clusters = sorted(str_clusters)
-		pix_clusters = sorted(pix_clusters)
-		return str_clusters, pix_clusters
+		if(not(l1data is None)):
+			str_n, pix_n, str_row, str_width, str_hip, pix_row, pix_width, pix_col = l1data
+			for i in range(str_n):
+				str_clusters.append([str_row[i], 0, str_width[i]])
+			for i in range(pix_n):
+				pix_clusters.append([pix_row[i], pix_col[i], pix_width[i]])
+			sorter = lambda x: (x[0], x[2], x[1]) #setup the sorter function
+			str_clusters = sorted(str_clusters)
+			pix_clusters = sorted(pix_clusters)
+		if(raw):
+			return l1data
+		else:
+			return str_clusters, pix_clusters
 
 
 

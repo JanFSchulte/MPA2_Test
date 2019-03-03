@@ -8,6 +8,7 @@ from ssa_methods.ssa_i2c_conf import *
 from ssa_methods.ssa_ctrl_base import *
 from ssa_methods.ssa_ctrl_strip import *
 from ssa_methods.ssa_readout_utility import *
+from ssa_methods.ssa_inject_utility import *
 
 
 class SSA_ASIC:

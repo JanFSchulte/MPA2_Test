@@ -50,7 +50,8 @@ class mpassa_power_utility:
 	def set_slvs(self, val=0b110):
 		self.SSA.ctrl.init_slvs(val&0b111)
 
-	def set_supply(self, mode = 'on', d = 1.0, a = 1.25, p = 1.25, bg = 0.280, display = True):
+	def set_supply(self, mode = 'on', d = 1.0, a = 1.20, p = 1.20, bg = 0.280, display = True):
+		# d = 1.0; a = 1.25; p = 1.25; bg = 0.280; self=pwr;
 		if(mode == 'on' or mode == 1):
 			sleep(0.00); self.mainpoweron()
 			sleep(0.01); self.set_pvdd('SSA', p);  self.set_pvdd('MPA', p);
