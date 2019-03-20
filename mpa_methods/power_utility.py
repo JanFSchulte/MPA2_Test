@@ -6,7 +6,7 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from mpa_methods.mpa_i2c_conf import *
 from mpa_methods.cal_utility import *
-from mpa_methods.fast_readout_utility import *
+#from mpa_methods.fast_readout_utility import *
 import numpy as np
 import time
 import sys

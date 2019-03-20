@@ -13,7 +13,7 @@ class ChipMeasurement:
         self.start = time.time()
         self.tag = tag # UNIQUE ID
         #self.DIR = "../AutoProbeResults/"+self.tag # Commented by DC to run test in different folder
-        self.DIR = "../cernbox/AutoProbeResults/Wafer_N6T903-05C7_Digital/"+self.tag
+        self.DIR = "../cernbox/AutoProbeResults/Wafer_N6T903-05C7/"+self.tag
         exists = False
         version = 0
         while not exists:
@@ -24,7 +24,7 @@ class ChipMeasurement:
                 exists = True
             version += 1
         print self.DIR + "<<< USING THIS"
-        self.TEST = ProbeCardTest.ProbeMeasurement(self.DIR)
+        self.TEST = ProbeCardTest2.ProbeMeasurement(self.DIR)
     def RUN(self, chipinfo):
         return self.TEST.Run(chipinfo)
 
@@ -45,8 +45,8 @@ class AUTOPROBER:
         self.ProbeStation.write("*IDN?")
         self.colprint(self.ProbeStation.read(100))
         time.sleep(0.25)
-        self.ProbeStation.write("StepFirstDie")
-        #self.ProbeStation.write("StepNextDie 8 1")
+        self.ProbeStation.write("StepFirstDie") # Start from 1
+        #self.ProbeStation.write("StepNextDie 5 7") # Starts from specific (Numbering is automatic)
         self.colprint("Stepped to first die: " + self.ProbeStation.read(100))
         time.sleep(0.25)
         self.ProbeStation.write("ReadChuckPosition")
@@ -69,14 +69,14 @@ class AUTOPROBER:
         print self.BadChips
         print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
         # set overtravel a little higher for second pass
-        self.ProbeStation.write("SetChuckHeight O V Y 110")
+        self.ProbeStation.write("SetChuckHeight O V Y 0")
         self.colprint("Increasing overtravel: " + self.ProbeStation.read(100))
         time.sleep(0.25)
         # go over bad chips
         for C in self.BadChips:
             ChipStatus = self.PROBESPECIFIC(C[0],C[1])
             print ChipStatus
-        self.ProbeStation.write("SetChuckHeight O V Y 100")
+        self.ProbeStation.write("SetChuckHeight O V Y 0")
         self.colprint("Resetting overtravel: " + self.ProbeStation.read(100))
         time.sleep(0.25)
     def NEWCHIPMSR(self, inf):

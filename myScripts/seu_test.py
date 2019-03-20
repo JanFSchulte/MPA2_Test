@@ -8,8 +8,9 @@ from mpa_methods.cal_utility import *
 from mpa_methods.power_utility import *
 from mpa_methods.bias_calibration import *
 from myScripts.BasicMultimeter import *
-
-
+from mpa_methods.fast_readout_utility import *
+import ProbeCardTest2 as PCT
+PM = PCT.ProbeMeasurement("./")
 #timer_data_taking = 3
 
 def align_SSA_input(edge, curr):
@@ -174,7 +175,7 @@ def configureChip(latency, offset = 5, analog_injection = 0):
 	sleep(0.01)
 	#I2C.peri_write('ECM',  0)
 	alignStub = 6
-	alignL1 = 0
+	alignL1 = 6
 	align = 0b00000000 | (alignStub << 3) | alignL1
 	I2C.peri_write('LatencyRx320', align)
 	#I2C.peri_write('LatencyRx320', 0b00101111) # Trigger line aligned with FC7
@@ -185,7 +186,7 @@ def configureChip(latency, offset = 5, analog_injection = 0):
 	sleep(0.01)
 	fc7.write("cnfg_phy_SSA_enable_gen_l1_data", 1)
 	sleep(0.01)
-	fc7.write("cnfg_phy_SSA_gen_delay_trig_data",6)
+	fc7.write("cnfg_phy_SSA_gen_delay_trig_data",7)
 	sleep(0.01)
 	fc7.write("cnfg_phy_SSA_gen_offset_SSA_BX_cnt_format", 0)
 	sleep(0.01)
@@ -200,6 +201,8 @@ def configureChip(latency, offset = 5, analog_injection = 0):
 		set_threshold(200)
 	else:
 		I2C.pixel_write('DigPattern', 0, 0,  0b00000001)
+		set_calibration(100)
+		set_threshold(200)
 	sleep(0.01)
 	#activate_pp()
 
@@ -229,6 +232,7 @@ def configurePixel(cluster_col, cluster_row, cluster_width, strip, runname, iter
 			if (analog_injection):
 				enable_pix_EdgeBRcal(cluster_row[i], cluster_col[i] + j)
 			else:
+				I2C.pixel_write('DigPattern', cluster_row[i], cluster_col[i] + j,  0b00000001)
 				I2C.pixel_write('ENFLAGS', cluster_row[i], cluster_col[i] + j , 0x20)
 		#
 		if (n_pclust > 5):
@@ -438,6 +442,9 @@ def RunStateMachine(runname, iteration, print_file, timer_data_taking, latency):
 	FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 	FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
 	timer = 0
+	sleep(1)
+	PM.CheckTotalPower(1)
+	activate_I2C_chip(verbose = 0)
 	while(FIFO_almost_full != 1 and FIFO_almost_full_L1 != 1 and timer < timer_data_taking):
 		FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 		FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")

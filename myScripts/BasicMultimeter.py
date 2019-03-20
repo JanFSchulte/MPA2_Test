@@ -3,7 +3,7 @@ from time import sleep
 
 class keithley_multimeter():
 
-	def init_keithley(self, avg = 5, address = 02):
+	def init_keithley(self, avg = 5, address = 16):
 		inst = Gpib.Gpib(0, address)
 
 		# reset and clear
