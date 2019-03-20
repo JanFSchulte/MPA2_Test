@@ -13,7 +13,7 @@ class ChipMeasurement:
         self.start = time.time()
         self.tag = tag # UNIQUE ID
         #self.DIR = "../AutoProbeResults/"+self.tag # Commented by DC to run test in different folder
-        self.DIR = "../cernbox/AutoProbeResults/Wafer_N6T903-05C7/"+self.tag
+        self.DIR = "../../cernbox/AutoProbeResults/Wafer_N6T903-05C7/"+self.tag
         exists = False
         version = 0
         while not exists:
