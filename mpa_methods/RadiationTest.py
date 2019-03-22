@@ -12,7 +12,7 @@ from mpa_methods.fast_readout_utility import *
 from mpa_methods.bias_calibration import *
 from mpa_methods.power_utility import *
 
-class ProbeMeasurement:
+class TIDMeasurement:
     def __init__(self, DIR):
         self.start = time.time()
         self.DIR = DIR
@@ -496,5 +496,5 @@ class ProbeMeasurement:
         return 1
 
 if __name__ == '__main__': # TEST
-    TEST = ProbeMeasurement(sys.argv[1])
+    TEST = TIDMeasurement(sys.argv[1])
     TEST.Run("words")
