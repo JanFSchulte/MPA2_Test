@@ -1,4 +1,13 @@
 #
+# Class for radiation test routine
+#
+#
+#
+# In order to test:
+#   import mpa_methods.RadiationTest as RT
+#   TM = RT.TIDMeasurement("../TestFolder")
+#   TM.Run("")
+
 import csv
 import numpy
 import time
@@ -24,30 +33,31 @@ class TIDMeasurement:
         self.colprint(chipinfo)
         self.colprint_general(chipinfo)
         try:
-            PowerStatus = self.PowerOnCheck()
-            #self.CheckTotalPower()
-            DP1 = self.Dig
-            AN1 = self.Ana
-            PST1 = self.PST
+            # Power in reset state:
+            self.colprint("Disabling MPA")
+            mpa_disable()
+            sleep(1)
+            PST1, DP1, AP1 =  measure_current()
+            message = "I/O current: " + str(PST1) + " mA"
+            message = "Digital current: " + str(DP1) + " mA"
+            message = "Analog current: " + str(AP1) + " mA"
+            self.colprint(message)
+            sleep(1)
             self.colprint("Enabling MPA")
-            MPAEnableCheck = self.MPAEnable()
-            if self.CheckTotalPower(True):
-                self.colprint("Power after enable is OK!")
-                self.colprint_general("Power after enable is OK!")
-            DP2 = self.Dig
-            AN2 = self.Ana
-            PST2 = self.PST
+            mpa_enable()
+            sleep(1)
+            PST2, DP2, AP2 =  measure_current()
+            if ( (PST2 < 30) and (DP2 < 200) and (AP2 < 100)): self.colprint("Power within limit")
             self.AlignTests()
-            if self.CheckTotalPower(True):
-                self.colprint("Power after align is OK!")
-                self.colprint_general("Power after align is OK!")
-            DP3 = self.Dig
-            AN3 = self.Ana
-            PST3 = self.PST
+            PST3, DP3, AP3 =  measure_current()
             with open(self.DIR+'/PowerMeasurement.csv', 'wb') as csvfile:
                 CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
                 DigP = [DP1, DP2, DP3, AN1, AN2, AN3, PST1, PST2, PST3]
                 CVwriter.writerow(DigP)
+        except:
+            self.colprint("Issue with Power Measurement")
+            self.Flag = 0
+        try:
             n = 0
             ShiftM = "Shift Test Failed!"
             while n < 2:
@@ -59,19 +69,30 @@ class TIDMeasurement:
             if ShiftM == "Shift Test Failed!":
                 self.Flag = 0
             self.colprint(ShiftM)
-            self.Flag = self.Curves()
-            mpa_reset()
-            activate_I2C_chip()
-            I2C.peri_write("ConfSLVS", 0b00111111)
-            disable_pixel(0,0)
-            align_out()
-            self.PixTests()
-            self.colprint("DONE!")
-            sleep(3)
         except:
-            self.colprint("WE MESSED UP!!!")
+            self.colprint("Issue with Shift test")
             self.Flag = 0
-        #power_off()
+        sleep(1)
+        #try: self.Flag = self.AnalogMeasurement()
+        #except:
+        #    self.colprint("Issue with Analog Measurement")
+        #    self.Flag = 0
+        sleep(1)
+        try: self.PixTests()
+        except:
+            self.colprint("Issue with Pixel test")
+            self.Flag = 0
+        sleep(1)
+        try: self.StripInTest()
+        except:
+            self.colprint("Issue with StripIn test")
+            self.Flag = 0
+        sleep(1)
+        try: self.MemoryTest()
+        except:
+            self.colprint("Issue with Memory test")
+            self.Flag = 0
+        self.colprint("DONE!")
         self.end = time.time()
         self.colprint("TOTAL TIME:")
         self.colprint(str((self.end - self.start)/60.))
@@ -88,7 +109,16 @@ class TIDMeasurement:
     def colprint_general(self, text):
         self.GeneralLogFile.write(str(text)+"\n")
 
-    def Curves(self):
+    def start_measurement(self, reset = 1):
+        if reset: mpa_reset()
+        sleep(0.1)
+        activate_I2C_chip(frequency = 4, verbose = 0)
+        sleep(0.1)
+        I2C.peri_write('EdgeSelT1Raw', 0)
+        sleep(0.1)
+        I2C.peri_write('EdgeSelTrig', 0)
+
+    def AnalogMeasurement(self):
         self.colprint("Getting Curves")
         activate_I2C_chip(verbose = 0)
 
@@ -182,6 +212,11 @@ class TIDMeasurement:
         #    CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
         #    for i in BadPixD: CVwriter.writerow(i)
 
+    def StripInTest(self):
+        reset()
+        self.start_measurement()
+        align_out()
+        sleep(0.1)
         strip_in = strip_in_scan(n_pulse = 5, filename = self.DIR + "/striptest", probe=0)
         good_si = 0
         for i in range(0,16):
@@ -194,56 +229,20 @@ class TIDMeasurement:
             self.colprint("Strip Input scan failed")
             self.colprint_general("Strip Input scan failed")
 
-        ## Test 31 ##
-        #set_DVDD(1.2)
-        #sleep(0.2)
-        #mpa_reset()
-        #sleep(0.2)
-        #reset()
-        #sleep(0.2)
-        #align_out()
-        #sleep(0.2)
-        #mempix = []
-        #mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_12", gate = 0, verbose = 0))
-        #if len(mempix[0]) > 0: mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_12", gate = 0, verbose = 0))
-        #BadPixM = self.GetActualBadPixels(mempix)
-        #self.colprint(str(BadPixM) + " << Bad Pixels (Mem)")
-        #with open(self.DIR+'/BadPixelsM_12.csv', 'wb') as csvfile:
-        #    CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        #    for i in BadPixM: CVwriter.writerow(i)
-
-        ##if len(BadPixM) > 100 or len(BadPixA) > 100:
-        ##    self.Flag = 0
-
-        #set_DVDD(1.0)
-        #sleep(0.2)
-        #mpa_reset()
-        #sleep(0.2)
-        #reset()
-        #sleep(0.2)
-        #align_out()
-        #sleep(0.2)
+    def MemoryTest(self):
         mempix = []
-        mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_10", gate = 0, verbose = 0))
-        if len(mempix[0]) > 0: mempix.append(mem_test(print_log=1, filename = self.DIR + "/LogMemTest_10", gate = 0, verbose = 0))
+        bad_pix, error, stuck, i2c_issue, missing = mem_test(print_log=1, filename = self.DIR + "/LogMemTest_10", gate = 0, verbose = 0)
+        mempix.append(bad_pix)
+        if len(mempix[0]) > 0:
+            sleep(1)
+            bad_pix, error, stuck, i2c_issue, missing = mem_test(print_log=1, filename = self.DIR + "/LogMemTest_10_rpt", gate = 0, verbose = 0)
+            mempix.append(bad_pix)
         BadPixM = self.GetActualBadPixels(mempix)
         self.colprint(str(BadPixM) + " << Bad Pixels (Mem)")
         with open(self.DIR+'/BadPixelsM_10.csv', 'wb') as csvfile:
             CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
             for i in BadPixM: CVwriter.writerow(i)
-        #set_DVDD(1.2)
-        #sleep(0.2)
-        mpa_reset()
-        activate_I2C_chip()
-        I2C.peri_write("ConfSLVS", 0b00111111)
-        disable_pixel(0,0)
-        align_out()
-        #sleep(0.2)
-        #reset()
-        #sleep(0.2)
-        #align_out()
-        #sleep(0.2)
-        #mem_test(filename = self.DIR + "/memtest.csv")
+
     def GetActualBadPixels(self, BPA):
         print BPA
         badpix = BPA[0]
@@ -255,9 +254,10 @@ class TIDMeasurement:
         for i in goodpix:
             badpix.remove(i)
         return badpix
+
     def Shift(self):
         self.colprint("Doing Shift/Mem Tests")
-        activate_I2C_chip(verbose = 0)
+        self.start_measurement()
         I2C.peri_write("LFSR_data", 0b10101010)
         Check1 = I2C.peri_read("LFSR_data")
         self.colprint("Writing: "+str(bin(Check1)))
@@ -275,11 +275,13 @@ class TIDMeasurement:
             if bin(C) != "0b0" and i > 49:
                 OK = False
         return OK
+
     def AlignTests(self):
-        mpa_reset()
-        activate_I2C_chip()
-        I2C.peri_write("ConfSLVS", 0b00111111)
-        disable_pixel(0,0)
+        self.start_measurement()
+        #mpa_reset()
+        #activate_I2C_chip()
+        #I2C.peri_write("ConfSLVS", 0b00111111)
+        #disable_pixel(0,0)
         self.colprint("Trying to Align...")
         align_out()
         self.ground = measure_gnd()
@@ -305,195 +307,6 @@ class TIDMeasurement:
         avg = Sum/n
         self.colprint("Alignment DAC Values (avg, min, max)")
         self.colprint(str(avg) +", "+ str(Min) +", "+ str(Max))
-    def PowerOnCheck(self):
-        self.DeltaDIG = 0.
-        self.PVALS = ["0","0","0"]
-        self.colprint("Checking Power-On...")
-        PowerMessage = ""
-        if self.Power("PST"):
-            PowerMessage += "PST power OK! ("+str(self.PVALS[0])+")  "
-        else:
-            return "PST power too high! ("+str(self.PVALS[0])+")"
-        if self.Power("DIG"):
-            PowerMessage += "DIG power OK! ("+str(self.PVALS[1])+")  "
-        else:
-            return "DIG power too high! ("+str(self.PVALS[1])+")"
-        if self.Power("ANA"):
-            PowerMessage += "ANA power OK! ("+str(self.PVALS[2])+")  "
-        else:
-            return "ANA power too high! ("+str(self.PVALS[2])+")"
-        if self.CheckTotalPower(False):
-            return PowerMessage
-        else: return "Power too low!"
-    def MPAEnable(self):
-        if self.Power("MPA"): self.colprint("MPA ENABLED!!")
-        else: self.colprint("MPA NOT ENABLED :( ")
-    def Power(self, which):
-        VDDPST = 1.25
-        DVDD = 1.2
-        AVDD = 1.25
-        VBG = 0.3
-        read = 1
-    	write = 0
-    	cbc3 = 15
-    	FAST = 4
-    	SLOW = 2
-    	mpaid = 0 # default MPa address (0-7)
-    	ssaid = 0 # default SSa address (0-7)
-    	i2cmux = 0
-    	pcf8574 = 1 # MPA and SSA address and reset 8 bit port
-    	powerenable = 2    # i2c ID 0x44
-    	dac7678 = 4
-    	ina226_5 = 5
-    	ina226_6 = 6
-    	ina226_7 = 7
-    	ina226_8 = 8
-    	ina226_9 = 9
-    	ina226_10 = 10
-    	ltc2487 = 3
-    	Vc = 0.0003632813 # V/Dac step
-    	#Vcshunt = 5.0/4000
-    	Vcshunt = 0.00250
-    	Rshunt = 0.1
-
-        SetSlaveMap(verbose = 0)
-        if which == "PST":
-            self.colprint("Turning on PST")
-            set_VDDPST()
-
-            Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
-            sleep(1)
-            ret=Send_MPA_SSA_I2C_Command(ina226_10, 0, read, 0x01, 0, verbose = 0)  #read VR on shunt
-            VAL = (Vcshunt * ret)/Rshunt
-            self.PVALS[0] = VAL
-            if VAL > 30: return 0
-        if which == "DIG":
-            ## test 31 ## set_DVDD(V = 1.2)
-            set_DVDD()
-
-            Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
-            sleep(1)
-            ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
-            VAL = (Vcshunt * ret)/Rshunt
-            self.PVALS[1] = VAL
-            if VAL > 200:
-                return 0
-        if which == "ANA":
-            set_AVDD()
-
-            Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
-            sleep(1)
-            ret=Send_MPA_SSA_I2C_Command(ina226_8, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
-            VAL = (Vcshunt * ret)/Rshunt
-            self.PVALS[2] = VAL
-            if VAL > 100:
-                return 0
-        if which == "MPA":
-            Vlimit = 0.5
-            if (VBG > Vlimit):
-                VBG = Vlimit
-            Vc2 = 4095/1.5
-            setvoltage = int(round(VBG * Vc2))
-            setvoltage = setvoltage << 4
-            Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x01, verbose = 0)  # to SCO on PCA9646
-            Send_MPA_SSA_I2C_Command(dac7678, 0, write, 0x36, setvoltage, verbose = 0)  # tx to DAC C
-            sleep(2)
-            val2 = (mpaid << 5) + 16 # reset bit for MPA
-            Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
-            Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02, verbose = 0)  # route to 2nd PCF8574
-            Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2, verbose = 0)  # set reset bit
-            if not self.CheckTotalPower(True):
-                return 0
-        return 1
-    def GetDigiPower(self):
-        read = 1
-        write = 0
-        cbc3 = 15
-        FAST = 4
-        SLOW = 2
-        mpaid = 0 # default MPa address (0-7)
-        ssaid = 0 # default SSa address (0-7)
-        i2cmux = 0
-        pcf8574 = 1 # MPA and SSA address and reset 8 bit port
-        powerenable = 2    # i2c ID 0x44
-        dac7678 = 4
-        ina226_5 = 5
-        ina226_6 = 6
-        ina226_7 = 7
-        ina226_8 = 8
-        ina226_9 = 9
-        ina226_10 = 10
-        ltc2487 = 3
-        Vc = 0.0003632813 # V/Dac step
-        #Vcshunt = 5.0/4000
-        Vcshunt = 0.00250
-        Rshunt = 0.1
-        SetSlaveMap(verbose = 0)
-        # readDVDD
-        Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
-        Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
-        sleep(1)
-        ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
-        VDIG = (Vcshunt * ret)/Rshunt
-        return VDIG
-    def CheckTotalPower(self, enabled):
-        read = 1
-        write = 0
-        cbc3 = 15
-        FAST = 4
-        SLOW = 2
-        mpaid = 0 # default MPa address (0-7)
-        ssaid = 0 # default SSa address (0-7)
-        i2cmux = 0
-        pcf8574 = 1 # MPA and SSA address and reset 8 bit port
-        powerenable = 2    # i2c ID 0x44
-        dac7678 = 4
-        ina226_5 = 5
-        ina226_6 = 6
-        ina226_7 = 7
-        ina226_8 = 8
-        ina226_9 = 9
-        ina226_10 = 10
-        ltc2487 = 3
-        Vc = 0.0003632813 # V/Dac step
-        #Vcshunt = 5.0/4000
-        Vcshunt = 0.00250
-        Rshunt = 0.1
-        SetSlaveMap(verbose = 0)
-        # readVDDPST
-        Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
-        Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
-        sleep(1)
-        ret=Send_MPA_SSA_I2C_Command(ina226_10, 0, read, 0x01, 0, verbose = 0)  #read VR on shunt
-        VPST = (Vcshunt * ret)/Rshunt
-        message = "VDDPST current: " + str(VPST) + " mA"
-        self.PST = VPST
-        self.colprint(message)
-        # readDVDD
-        Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
-        Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
-        sleep(1)
-        ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
-        VDIG = (Vcshunt * ret)/Rshunt
-        message = "DVDD current: " + str(VDIG) + " mA"
-        self.Dig = VDIG
-        self.colprint(message)
-        # readAVDD
-        Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
-        Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646
-        sleep(1)
-        ret=Send_MPA_SSA_I2C_Command(ina226_8, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
-        VANA = (Vcshunt * ret)/Rshunt
-        message = "AVDD current: " + str(VANA) + " mA"
-        self.Ana = VANA
-        self.colprint(message)
-        if (VPST < 10 or VDIG < 15 or VANA < 30) and enabled:
-            return 0
-        return 1
 
 if __name__ == '__main__': # TEST
     TEST = TIDMeasurement(sys.argv[1])

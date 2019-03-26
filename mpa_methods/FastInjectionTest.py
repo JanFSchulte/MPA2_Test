@@ -8,7 +8,6 @@
 #   FIM = FIT.FastInjectionMeasurement("../TestFolder")
 #   FIM.RunRandomTest8p8s(n = 5, timer_data_taking = 5, cal_pulse_period = 1, l1a_period = 39, latency = 500, runname = "Test")
 
-#
 import csv
 import numpy
 import time
@@ -116,7 +115,8 @@ class FastInjectionMeasurement:
         self.GeneralLogFile.write(str(text)+"\n")
 
     def configureChip(self, latency, offset = 5, analog_injection = 0):
-    	#I2C configuration
+        set_DVDD(1.2)
+        #I2C configuration
     	activate_I2C_chip(frequency = 4, verbose = 0)
     	sleep(0.01)
     	disable_pixel(0,0)
@@ -131,8 +131,8 @@ class FastInjectionMeasurement:
     	I2C.peri_write('EdgeSelTrig', 0) # 1 = rising
     	sleep(0.01)
     	#I2C.peri_write('ECM',  0)
-    	alignStub = 1
-    	alignL1 = 6
+    	alignStub = 2
+    	alignL1 = 3
     	align = 0b00000000 | (alignStub << 3) | alignL1
     	I2C.peri_write('LatencyRx320', align)
     	#I2C.peri_write('LatencyRx320', 0b00101111) # Trigger line aligned with FC7
@@ -563,10 +563,14 @@ class FastInjectionMeasurement:
 
 
     def Run(self, col, row, width, strip, timer_data_taking = 5, offset = 5, cal_pulse_period = 10, l1a_period = 101, latency = 100, diff = 2, skip = 1, verbose = 0, print_file = 0, runname =  "../cernbox/SEU_results/", iteration = 0):
-        #mpa_reset()
+        mpa_reset()
+        sleep(0.1)
         reset()
+        sleep(0.1)
         SendCommand_CTRL("fast_fast_reset")
+        sleep(0.1)
         self.configureChip( latency = latency - diff,  offset = offset, analog_injection = 0)
+        sleep(0.1)
         align_out(0)
         if (skip == 0):
     		Configure_TestPulse_MPA(delay_after_fast_reset = 512, delay_after_test_pulse = latency, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_rst_L1 = 1)

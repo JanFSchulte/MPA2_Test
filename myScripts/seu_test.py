@@ -9,8 +9,8 @@ from mpa_methods.power_utility import *
 from mpa_methods.bias_calibration import *
 from myScripts.BasicMultimeter import *
 from mpa_methods.fast_readout_utility import *
-import ProbeCardTest2 as PCT
-PM = PCT.ProbeMeasurement("./")
+#import ProbeCardTest2 as PCT
+#PM = PCT.ProbeMeasurement("./")
 #timer_data_taking = 3
 
 def align_SSA_input(edge, curr):
