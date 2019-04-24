@@ -269,14 +269,14 @@ def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_be
   SendCommand_CTRL("load_trigger_config")
   sleep(0.01)
 
-def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst_L1):
-  fc7.write("cnfg_fast_initial_fast_reset_enable", 1)
+def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst, enable_init_rst, enable_L1):
+  fc7.write("cnfg_fast_initial_fast_reset_enable", enable_init_rst) #enable_rst_L1
   fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
   fc7.write("cnfg_fast_delay_after_test_pulse", delay_after_test_pulse)
   fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
-  fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
+  fc7.write("cnfg_fast_tp_fsm_fast_reset_en", enable_rst) #enable_rst_L1
   fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-  fc7.write("cnfg_fast_tp_fsm_l1a_en", enable_rst_L1)
+  fc7.write("cnfg_fast_tp_fsm_l1a_en", enable_L1)
   fc7.write("cnfg_fast_triggers_to_accept", number_of_test_pulses)
   fc7.write("cnfg_fast_source", 6)
   sleep(0.1)

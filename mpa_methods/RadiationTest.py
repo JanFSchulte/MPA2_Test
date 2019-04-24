@@ -33,26 +33,33 @@ class TIDMeasurement:
         self.colprint(chipinfo)
         self.colprint_general(chipinfo)
         try:
+        # Set power levels
+            reset()
+            sleep(1)
+            set_DVDD(1.0)
+            sleep(1)
             # Power in reset state:
             self.colprint("Disabling MPA")
             mpa_disable()
             sleep(1)
-            PST1, DP1, AP1 =  measure_current()
-            message = "I/O current: " + str(PST1) + " mA"
-            message = "Digital current: " + str(DP1) + " mA"
-            message = "Analog current: " + str(AP1) + " mA"
-            self.colprint(message)
+            PST1, DIG1, ANA1 =  measure_current();
+            message = "I/O current: " + str(PST1) + " mA"; self.colprint(message)
+            message = "Digital current: " + str(DIG1) + " mA"; self.colprint(message)
+            message = "Analog current: " + str(ANA1) + " mA"; self.colprint(message)
             sleep(1)
             self.colprint("Enabling MPA")
             mpa_enable()
             sleep(1)
-            PST2, DP2, AP2 =  measure_current()
-            if ( (PST2 < 30) and (DP2 < 200) and (AP2 < 100)): self.colprint("Power within limit")
+            PST2, DIG2, ANA2 =  measure_current();
+            message = "I/O current: " + str(PST2) + " mA"; self.colprint(message)
+            message = "Digital current: " + str(DIG2) + " mA"; self.colprint(message)
+            message = "Analog current: " + str(ANA2) + " mA"; self.colprint(message)
+            if ( (PST2 < 30) and (DIG2 < 200) and (ANA2 < 100)): self.colprint("Power within limit")
             self.AlignTests()
-            PST3, DP3, AP3 =  measure_current()
+            PST3, DIG3, ANA3 =  measure_current();
             with open(self.DIR+'/PowerMeasurement.csv', 'wb') as csvfile:
                 CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                DigP = [DP1, DP2, DP3, AN1, AN2, AN3, PST1, PST2, PST3]
+                DigP = [PST1, DIG1, ANA1, PST2, DIG2, ANA2, PST3, DIG3, ANA3]
                 CVwriter.writerow(DigP)
         except:
             self.colprint("Issue with Power Measurement")
@@ -73,10 +80,10 @@ class TIDMeasurement:
             self.colprint("Issue with Shift test")
             self.Flag = 0
         sleep(1)
-        #try: self.Flag = self.AnalogMeasurement()
-        #except:
-        #    self.colprint("Issue with Analog Measurement")
-        #    self.Flag = 0
+        try: self.Flag = self.AnalogMeasurement()
+        except:
+            self.colprint("Issue with Analog Measurement")
+            self.Flag = 0
         sleep(1)
         try: self.PixTests()
         except:
@@ -117,6 +124,7 @@ class TIDMeasurement:
         I2C.peri_write('EdgeSelT1Raw', 0)
         sleep(0.1)
         I2C.peri_write('EdgeSelTrig', 0)
+        sleep(0.1)
 
     def AnalogMeasurement(self):
         self.colprint("Getting Curves")
@@ -231,10 +239,14 @@ class TIDMeasurement:
 
     def MemoryTest(self):
         mempix = []
+        self.start_measurement()
+        align_out()
         bad_pix, error, stuck, i2c_issue, missing = mem_test(print_log=1, filename = self.DIR + "/LogMemTest_10", gate = 0, verbose = 0)
         mempix.append(bad_pix)
         if len(mempix[0]) > 0:
             sleep(1)
+            self.start_measurement()
+            align_out()
             bad_pix, error, stuck, i2c_issue, missing = mem_test(print_log=1, filename = self.DIR + "/LogMemTest_10_rpt", gate = 0, verbose = 0)
             mempix.append(bad_pix)
         BadPixM = self.GetActualBadPixels(mempix)

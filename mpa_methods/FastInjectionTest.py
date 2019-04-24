@@ -131,7 +131,7 @@ class FastInjectionMeasurement:
     	I2C.peri_write('EdgeSelTrig', 0) # 1 = rising
     	sleep(0.01)
     	#I2C.peri_write('ECM',  0)
-    	alignStub = 2
+    	alignStub = 4
     	alignL1 = 3
     	align = 0b00000000 | (alignStub << 3) | alignL1
     	I2C.peri_write('LatencyRx320', align)
@@ -573,7 +573,7 @@ class FastInjectionMeasurement:
         sleep(0.1)
         align_out(0)
         if (skip == 0):
-    		Configure_TestPulse_MPA(delay_after_fast_reset = 512, delay_after_test_pulse = latency, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_rst_L1 = 1)
+    		Configure_TestPulse_MPA(delay_after_fast_reset = 512, delay_after_test_pulse = latency, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_L1 = 1, enable_rst = 0, enable_init_rst = 1)
     	else:
     	    Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0)
     	self.configurePixel(col,  row, width, strip, runname = runname, iteration = iteration, print_file = print_file, analog_injection = 0, verbose = verbose)

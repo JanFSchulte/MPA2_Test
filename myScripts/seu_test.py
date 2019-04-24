@@ -631,7 +631,7 @@ def RunSEU(col, row, width, strip, timer_data_taking = 5, offset = 5, cal_pulse_
 	configureChip( latency = latency - diff,  offset = offset, analog_injection = 0)
 	align_out(0)
 	if (skip == 0):
-		Configure_TestPulse_MPA(delay_after_fast_reset = 512, delay_after_test_pulse = latency, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_rst_L1 = 1)
+		Configure_TestPulse_MPA(delay_after_fast_reset = 512, delay_after_test_pulse = latency, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_L1 = 1, enable_rst = 0, enable_init_rst = 1)
 	else:
 		Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0)
 	configurePixel(col,  row, width, strip, runname = runname, iteration = iteration, print_file = print_file, analog_injection = 0, verbose = verbose)
