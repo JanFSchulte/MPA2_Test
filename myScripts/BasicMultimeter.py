@@ -12,7 +12,7 @@ class keithley_multimeter():
 		#inst.write("*CLR")
 		sleep(0.1)
 		# idn
-		inst.write("*IDN?")
+		#inst.write("*IDN?")
 		print inst.read(100)
 
 		# don't know what is that
