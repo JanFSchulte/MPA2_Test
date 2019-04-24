@@ -58,11 +58,11 @@ class SSA_Analise_Test_results():
 	def FE_Gain_Noise_Std(self, plot = True, evaluate = False, return_values = False):
 		er = True
 		if not evaluate:
-			calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, er = self.FE_Gain_Noise_Std__Reload()
+			calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets, er = self.FE_Gain_Noise_Std__Reload()
 		if(er or evaluate):
-			calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean = self.FE_Gain_Noise_Std__Calculate()
+			calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets = self.FE_Gain_Noise_Std__Calculate()
 		if(plot):
-			self.FE_Gain_Noise_Std__Plot(calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean)
+			self.FE_Gain_Noise_Std__Plot(calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets)
 		if return_values:
 			return calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean
 
@@ -158,7 +158,7 @@ class SSA_Analise_Test_results():
 			thmean[str(cal)] = np.array(c_thmean, dtype = float)
 			sigmamean[str(cal)] = np.array(c_sigmamean, dtype = float)
 			CSV.array_to_csv(c_thresholds, self.path + 'ANALYSIS/S-Curve_Threshold_cal_'+str(cal)+'.csv')
-			CSV.array_to_csv(c_noise,     self.path + 'ANALYSIS/S-Curve_Noise_cal_'+str(cal)+'.csv')
+			CSV.array_to_csv(c_noise,      self.path + 'ANALYSIS/S-Curve_Noise_cal_'+str(cal)+'.csv')
 			CSV.array_to_csv(c_thmean,     self.path + 'ANALYSIS/S-Curve_Threshold_Mean_cal_'+str(cal)+'.csv')
 			CSV.array_to_csv(c_sigmamean,  self.path + 'ANALYSIS/S-Curve_Noise_Mean_cal_'+str(cal)+'.csv')
 		# FE Gain and offset
@@ -166,7 +166,8 @@ class SSA_Analise_Test_results():
 		if not (np.shape(thresholds[ str(calpulses[0])])[0] == np.shape(thresholds[ str(calpulses[1])])[0] == np.shape(thresholds[ str(calpulses[2])])[0]):
 			print '->  \t ERROR. The number of files for different calibration charge are not equal. This may make the fitting fail.'
 		nelements = np.shape(thresholds[ str(calpulses[0])])[0]
-		gains = np.zeros([120,nelements]);
+		gains    = np.zeros([120,nelements]);
+		offsets  = np.zeros([120,nelements]);
 		gainmean = np.zeros(nelements);
 		#return thresholds, calpulses
 		print nelements
@@ -177,11 +178,13 @@ class SSA_Analise_Test_results():
 			for i in range( 0, nelements ):
 				par, cov = curve_fit( f= f_line,  xdata = calpulses, ydata = ths[:, i], p0 = [0, 0])
 				gains[s, i] = par[0]
+				offsets[s, i] = par[1]
 		for i in range( 0, nelements ):
 			gainmean[i] = np.average(gains[:, i] )
-		CSV.array_to_csv(gains, self.path    + 'ANALYSIS/S-Curve_Gain.csv')
+		CSV.array_to_csv(gains,    self.path + 'ANALYSIS/S-Curve_Gain.csv')
 		CSV.array_to_csv(gainmean, self.path + 'ANALYSIS/S-Curve_Gain_Mean.csv')
-		return calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean
+		CSV.array_to_csv(offsets,  self.path + 'ANALYSIS/S-Curve_Offset.csv')
+		return calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets
 
 
 
@@ -192,27 +195,30 @@ class SSA_Analise_Test_results():
 		f1 = self.path + 'ANALYSIS/S-Curve_cal_values.csv'
 		f2 = self.path + 'ANALYSIS/S-Curve_Gain.csv'
 		f3 = self.path + 'ANALYSIS/S-Curve_Gain_Mean.csv'
+		f4 = self.path + 'ANALYSIS/S-Curve_Offset.csv'
 		if(not( os.path.isfile(f1) and os.path.isfile(f2) and os.path.isfile(f3) )):
 			print '->  \tImpossible to find pre-calculated results. Re-calculating..'
-			return -1,-1,-1,-1,-1,-1,-1, True
+			return -1,-1,-1,-1,-1,-1,-1, -1, True
 		calpulses = CSV.csv_to_array(f1)[:,1]
 		c_gains = CSV.csv_to_array(f2)
+		c_offsets = CSV.csv_to_array(f4)
 		gainmean = CSV.csv_to_array(f3)[:,1]
 		gains = c_gains[:, 1:(np.shape(c_gains)[1])]
+		offsets = c_offsets[:, 1:(np.shape(c_offsets)[1])]
 		for cal in calpulses:
 			c_thresholds = CSV.csv_to_array(self.path + 'ANALYSIS/S-Curve_Threshold_cal_'+str(cal)+'.csv')
-			c_noise     = CSV.csv_to_array(self.path + 'ANALYSIS/S-Curve_Noise_cal_'+str(cal)+'.csv')
+			c_noise      = CSV.csv_to_array(self.path + 'ANALYSIS/S-Curve_Noise_cal_'+str(cal)+'.csv')
 			c_thmean     = CSV.csv_to_array(self.path + 'ANALYSIS/S-Curve_Threshold_Mean_cal_'+str(cal)+'.csv')
 			c_sigmamean  = CSV.csv_to_array(self.path + 'ANALYSIS/S-Curve_Noise_Mean_cal_'+str(cal)+'.csv')
 			thresholds[str(cal)] = c_thresholds[:, 1:(np.shape(c_thresholds)[1])]
 			noise[str(cal)]     = c_noise[:, 1:(np.shape(c_noise)[1])]
 			thmean[str(cal)]     = c_thmean[:, 1]
 			sigmamean[str(cal)]  = c_sigmamean[:, 1]
-		return calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, False
+		return calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets, False
 
 	#def FE_Gain_Noise_Std__Plot_singleRun(self, alpulses, thresholds, noise, thmean, sigmamean, gains, gainmean):
 
-	def FE_Gain_Noise_Std__Plot(self, calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean):
+	def FE_Gain_Noise_Std__Plot(self, calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets):
 		typcal = str(calpulses[int(len(calpulses)/2)])
 		self.typcal = typcal
 		multifile = (np.shape(thresholds[typcal])[0] > 1)
@@ -276,6 +282,41 @@ class SSA_Analise_Test_results():
 			sermean.append(np.mean(ser))
 			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{G_{FE}} = %6.2f $' % (sermean[i]), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
 		fpl = self.path + 'ANALYSIS/S-Curve_Gain_hist'+self.pltname+'.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
+
+		# FE Offset distribution ################################
+		plt.clf();
+		#w, h = plt.figaspect(1/1.5)
+		#fig = plt.figure(figsize=(w,h))
+		fig = plt.figure(figsize=(18,12))
+		plt.style.use('seaborn-deep')
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(False)
+		ax.spines["right"].set_visible(False)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.xticks(fontsize=32)
+		plt.yticks(fontsize=32)
+		plt.ylabel("Normalised distribution", fontsize=32)
+		plt.xlabel('Front-End Offset [mv]', fontsize=32)
+		bn = False
+		sermean = []
+		for i in range(len(self.instances_to_plot)):
+			ser = (offsets[:,self.instances_to_plot[i]]) * offsets[self.instances_to_plot[i]]
+			print len(ser)
+			if(bn is False):
+				bn = np.arange(min(ser)-2, max(ser)+2, 0.2)
+			plt.hist(ser, normed = True, bins = bn, alpha = 0.7)
+			xt = plt.xticks()[0] # find minimum and maximum of xticks to know where we should compute theoretical distribution
+			xmin, xmax = min(xt), max(xt)
+			lnspc = np.linspace(xmin, xmax, len(ser))
+			m, s = stats.norm.fit(ser) # get mean and standard deviation
+			pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
+			plt.plot(lnspc, pdf_g, 'r' , label="Norm") # plot i
+			sermean.append(np.mean(ser))
+			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{OFS_{FE}} = %6.2f mV$' % (sermean[i]), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
+		fpl = self.path + 'ANALYSIS/S-Curve_Offset_hist'+self.pltname+'.png'
 		plt.savefig(fpl, bbox_inches="tight");
 		print("->  \tPlot saved in %s" % (fpl))
 
