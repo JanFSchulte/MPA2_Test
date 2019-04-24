@@ -216,7 +216,6 @@ def Configure_TestPulse_MPA_SSA(delay_before_next_pulse, number_of_test_pulses):
   # now write
   Configure_TestPulse(50, 50, delay_before_next_pulse, number_of_test_pulses)
 
-<<<<<<< HEAD
 '''Fast Command Block
    cnfg_fast_triggers_to_accept                  *number of triggers to accepted (0 - continuous triggering)
    cnfg_fast_user_frequency                      *frequency of the trigger\_source=3 (1...1000 kHz range).
@@ -255,9 +254,6 @@ def Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse =
 	SendCommand_CTRL("load_trigger_config")
 	sleep(0.1)
 
-=======
->>>>>>> 125849d447fc62a8b8ec23ab2e69fd0cde0debb8
-
 def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses):
   fc7.write("cnfg_fast_initial_fast_reset_enable", 1)
   fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
@@ -283,7 +279,6 @@ def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, dela
   SendCommand_CTRL("load_trigger_config")
   sleep(0.1)
 
-<<<<<<< HEAD
 def Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses, initial_reset = 0):
   sleep(0.01); fc7.write("cnfg_fast_initial_fast_reset_enable", initial_reset)
   sleep(0.01); fc7.write("cnfg_fast_delay_before_next_pulse", cal_pulse_period)
@@ -294,33 +289,17 @@ def Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses, initial_re
   SendCommand_CTRL("load_trigger_config")
   sleep(0.1)
 
-def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst_L1):
-	fc7.write("cnfg_fast_initial_fast_reset_enable", 0)
-	fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
-	fc7.write("cnfg_fast_delay_after_test_pulse", delay_after_test_pulse)
-	fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
-	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
-	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-	fc7.write("cnfg_fast_tp_fsm_l1a_en", enable_rst_L1)
-	fc7.write("cnfg_fast_triggers_to_accept", number_of_test_pulses)
-	fc7.write("cnfg_fast_source", 6)
-	sleep(0.1)
-	SendCommand_CTRL("load_trigger_config")
-	sleep(0.1)
-=======
-def Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses):
-  fc7.write("cnfg_fast_initial_fast_reset_enable", 1)
-  fc7.write("cnfg_fast_delay_after_fast_reset", 500)
-  fc7.write("cnfg_fast_delay_before_next_pulse", cal_pulse_period)
-  fc7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
-  fc7.write("cnfg_fast_triggers_to_accept", number_of_cal_pulses)
-  fc7.write("cnfg_fast_source", 9)
-  # disable the l1 backpressure
-  fc7.write("cnfg_fast_backpressure_enable", 0)
-  sleep(0.01)
-  SendCommand_CTRL("load_trigger_config")
-  sleep(0.01)
->>>>>>> 125849d447fc62a8b8ec23ab2e69fd0cde0debb8
+def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst, enable_init_rst, enable_L1):
+  fc7.write("cnfg_fast_initial_fast_reset_enable", enable_init_rst) #enable_rst_L1
+  fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
+  fc7.write("cnfg_fast_delay_after_test_pulse", delay_after_test_pulse)
+  fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
+  fc7.write("cnfg_fast_tp_fsm_fast_reset_en", enable_rst) #enable_rst_L1
+  fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
+  fc7.write("cnfg_fast_tp_fsm_l1a_en", enable_L1)
+  fc7.write("cnfg_fast_triggers_to_accept", number_of_test_pulses)
+  fc7.write("cnfg_fast_source", 6)
+  sleep(0.1)
 
 # Configure I2C
 def Configure_I2C(mask):

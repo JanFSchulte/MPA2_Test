@@ -96,6 +96,17 @@ class SSA_SEU():
 				fo.write(msg + '\n')
 				fo.close()
 
+	def analyse_stub_error_buffer(self, folder = "../SSA_Results/SEU_Results_anl"):
+		labels = []
+		datalog = []
+		self.dirs = os.listdir(folder)
+		self.dirs = [s for s in self.dirs  if "Test_" in s]
+		self.dirs.sort()
+
+
+
+
+
 
 	##############################################################
 	def compile_logs(self, folder = "../SSA_Results/SEU_Results", cl_cut = 100, l1_cut = 100):
@@ -159,7 +170,7 @@ class SSA_SEU():
 		print("->  \tCompiled log saved in: " + str( folder + "/cmplog.csv") )
 
 
-
+	##############################################################
 	def plot_logs(self, folder = "../SSA_Results/SEU_Results", compile_data = True, cl_cut = 70, l1_cut = 70):
 		if(compile_data):
 			self.compile_logs(folder = folder, cl_cut = cl_cut, l1_cut = l1_cut)
@@ -213,64 +224,13 @@ class SSA_SEU():
 		plt.semilogy(er_l100[:,0], er_l100[:,1], '--o', color = c, markersize = 10, markeredgewidth = 0)
 		c = next(color)
 		plt.semilogy(er_l500[:,0], er_l500[:,1], '--o', color = c, markersize = 10, markeredgewidth = 0)
-		#fig = plt.figure(figsize=(16,12))
-		#color=iter(sns.color_palette('deep'))
-		#plt.semilogy(er_clus_100_t00[:,0], er_clus_100_t00[:,1], 'ro')
-		#plt.semilogy(er_clus_500_t00[:,0], er_clus_500_t00[:,1], 'ro')
-		#plt.semilogy(er_l100_t00[:,0], er_l100_t00[:,1], 'bo')
-		#plt.semilogy(er_l500_t00[:,0], er_l500_t00[:,1], 'go')
-		#plt.semilogy(er_l100_t30[:,0], er_l100_t30[:,1], 'bo')
-		#plt.semilogy(er_l500_t30[:,0], er_l500_t30[:,1], 'go')
-		#plt.show()
-		#plt.figure(7)
-		#plt.semilogy(er_l100[:,0], er_l100[:,1], '-ro')
-		#plt.semilogy(l1_data100[:,0], l1_data100[:,1], '-go')
-		#plt.semilogy(er_l100_t00[:,0], er_l100_t00[:,1], '-bo')
-		#plt.semilogy(er_l100_t30[:,0], er_l100_t30[:,1], '-bo')
-		#plt.show()
-		#return er_l100, er_l100_t00, er_l100_t30
 
-
-
-
-		#lt.figure(7)
-		#lt.semilogy(er_clus_100_t30[:,0], er_clus_100_t30[:,1], 'ro')
-		#lt.semilogy(er_clus_500_t30[:,0], er_clus_500_t30[:,1], 'ro')
-		#lt.semilogy(er_l100_t30[:,0], er_l100_t30[:,1], 'bo')
-		#lt.semilogy(er_l500_t30[:,0], er_l500_t30[:,1], 'go')
-		#lt.show()
-
-		#return er_clus[:,1],er_l100[:,1],er_l500[:,1]
-		#plt.figure()
-		#plt.plot(er_l100_t00[:,0], er_l100_t00[:,1], 'o')
-		#plt.plot(er_l500_t00[:,0], er_l500_t00[:,1], 'o')
-		#plt.figure()
-		#plt.plot(er_l100[:,0], er_l100[:,1], 'o')
-		#plt.figure()
-		#plt.plot(er_clus_t00[:,0], er_clus_t00[:,1], 'o')
-		#plt.figure()
-		#plt.plot(er_clus_t30[:,0], er_clus_t30[:,1], 'o')
-		#plt.show()
-		#eturn datalog
-
+	##############################################################
 	def seucounter_try(self, iterations = 1000):
 		curtime = time.time()
 		for i in range(iterations):
 			cnt = self.ssa.ctrl.read_seu_counter()
 			print("->  \t%10.6f -> %3d" % ( (time.time()-curtime), cnt))
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	##############################################################
 	def check_configuration(self, filename = 'Try', strip_list = range(1,121), latency = 500):
@@ -306,7 +266,6 @@ class SSA_SEU():
 			if( (time.time()-tinit) > runtime):
 				return
 
-	##############################################################
 	def init_parameters(self):
 		self.summary = results()
 		self.runtest = RunTest('default')
@@ -355,7 +314,6 @@ class SSA_SEU():
 			CSV.ArrayToCSV(registers, file+ str(i))
 
 
-
 	def CheckConfiguration(self, folder = "../SSA_Results/SEU_Results/"):
 		labels = []; datalog = [];
 		dirs = os.listdir(folder)
@@ -389,6 +347,46 @@ class SSA_SEU():
 
 					CSV.array_to_csv(conf_read[:,1:], folder + '/' + dt + "/CONFIG/" + f )
 			CSV.array_to_csv(errors, folder + '/' + dt + "/CONFIG/Conf_ErLog.csv")
+
+
+
+		#fig = plt.figure(figsize=(16,12))
+		#color=iter(sns.color_palette('deep'))
+		#plt.semilogy(er_clus_100_t00[:,0], er_clus_100_t00[:,1], 'ro')
+		#plt.semilogy(er_clus_500_t00[:,0], er_clus_500_t00[:,1], 'ro')
+		#plt.semilogy(er_l100_t00[:,0], er_l100_t00[:,1], 'bo')
+		#plt.semilogy(er_l500_t00[:,0], er_l500_t00[:,1], 'go')
+		#plt.semilogy(er_l100_t30[:,0], er_l100_t30[:,1], 'bo')
+		#plt.semilogy(er_l500_t30[:,0], er_l500_t30[:,1], 'go')
+		#plt.show()
+		#plt.figure(7)
+		#plt.semilogy(er_l100[:,0], er_l100[:,1], '-ro')
+		#plt.semilogy(l1_data100[:,0], l1_data100[:,1], '-go')
+		#plt.semilogy(er_l100_t00[:,0], er_l100_t00[:,1], '-bo')
+		#plt.semilogy(er_l100_t30[:,0], er_l100_t30[:,1], '-bo')
+		#plt.show()
+		#return er_l100, er_l100_t00, er_l100_t30
+
+		#lt.figure(7)
+		#lt.semilogy(er_clus_100_t30[:,0], er_clus_100_t30[:,1], 'ro')
+		#lt.semilogy(er_clus_500_t30[:,0], er_clus_500_t30[:,1], 'ro')
+		#lt.semilogy(er_l100_t30[:,0], er_l100_t30[:,1], 'bo')
+		#lt.semilogy(er_l500_t30[:,0], er_l500_t30[:,1], 'go')
+		#lt.show()
+
+		#return er_clus[:,1],er_l100[:,1],er_l500[:,1]
+		#plt.figure()
+		#plt.plot(er_l100_t00[:,0], er_l100_t00[:,1], 'o')
+		#plt.plot(er_l500_t00[:,0], er_l500_t00[:,1], 'o')
+		#plt.figure()
+		#plt.plot(er_l100[:,0], er_l100[:,1], 'o')
+		#plt.figure()
+		#plt.plot(er_clus_t00[:,0], er_clus_t00[:,1], 'o')
+		#plt.figure()
+		#plt.plot(er_clus_t30[:,0], er_clus_t30[:,1], 'o')
+		#plt.show()
+		#eturn datalog
+
 
 
 
