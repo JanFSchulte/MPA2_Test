@@ -523,7 +523,7 @@ def s_curve_rbr_fr(n_pulse = 1000, s_type = "THR", ref_val = 50, row = range(1,1
 	else: return "S-Curve type not recognized"
 	count = 0
 	fc7.write("cnfg_fast_backpressure_enable", 0)
-	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
+	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
 	count = 0
 	cur_val = start
 	count_err = 0
@@ -593,7 +593,7 @@ def s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", ref_val = 100, row = range(1,
 	else: return "S-Curve type not recognized"
 	sleep(1)
 	fc7.write("cnfg_fast_backpressure_enable", 0)
-	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
+	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
 	count = 0
 	cur_val = start
 	while (cur_val < stop): # Temoporary: need to add clear counter fast command
@@ -644,7 +644,7 @@ def s_curve_pbp_all(n_pulse = 1000, s_type = "CAL", ref_val = 100, row = range(1
 	else: return "S-Curve type not recognized"
 	sleep(1)
 	fc7.write("cnfg_fast_backpressure_enable", 0)
-	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
+	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
 	count = 0
 	cur_val = start
 	while (cur_val < stop): # Temoporary: need to add clear counter fast command
@@ -714,7 +714,7 @@ def s_curve_pbp_test(n_pulse = 1000, s_type = "CAL", ref_val = 100, primary_row 
 	else: return "S-Curve type not recognized"
 	sleep(1)
 	fc7.write("cnfg_fast_backpressure_enable", 0)
-	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_rst_L1 = 0)
+	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
 
 	# Find Gain
 	thDAC = measure_DAC_testblocks(point = 5, bit = 8, step = 32, plot = 0, print_file = 0)

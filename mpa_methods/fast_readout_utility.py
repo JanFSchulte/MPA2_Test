@@ -329,7 +329,7 @@ def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121
 
 
 	for d in delay:
-		Configure_TestPulse_MPA(delay_after_fast_reset = d + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 200, number_of_test_pulses = 1, enable_rst_L1 = 1)
+		Configure_TestPulse_MPA(delay_after_fast_reset = d + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 200, number_of_test_pulses = 1, enable_L1 = 1, enable_rst = 1, enable_init_rst = 1)
 		sleep(1)
 		## Automatic change of sempling edge on error
 		#try:
@@ -418,7 +418,7 @@ def mem_test_REN (latency = 255, delay = [10], delay_pulse_cal = 200,  delay_pul
 	fc7.write("cnfg_fast_backpressure_enable", 0)
 	disable_pixel(0,0)
 	for d in delay:
-		Configure_TestPulse_MPA(delay_after_fast_reset = d + 512, delay_after_test_pulse = delay_pulse_cal, delay_before_next_pulse = delay_pulse_next, number_of_test_pulses = 3, enable_rst_L1 = 1)
+		Configure_TestPulse_MPA(delay_after_fast_reset = d + 512, delay_after_test_pulse = delay_pulse_cal, delay_before_next_pulse = delay_pulse_next, number_of_test_pulses = 3, enable_L1 = 1, enable_rst = 1, enable_init_rst = 1)
 		for r in row:
 			for p in pixel:
 				try:

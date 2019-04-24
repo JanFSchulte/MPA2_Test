@@ -407,7 +407,7 @@ def measure_current(print_file = 0, filename =  "../cernbox/MPA_Results/digital_
 	Vcshunt = 0.00250
 	Rshunt = 0.1
 
-	SetSlaveMap()
+	SetSlaveMap(verbose = 0)
 # readVDDPST
 	Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08, verbose = 0)  # to SC3 on PCA9646

@@ -7,6 +7,7 @@ import random
 import time
 import mpa_methods.RadiationTest as RT
 import mpa_methods.FastInjectionTest as FIT
+#execfile('mpa_methods/AutomatedIrradiation.py')
 
 #class ChipMeasurement:
 #    def __init__(self, tag):
@@ -43,13 +44,14 @@ class TID_control:
         self.TID = str(0)
         self.KeepOnStepping = True
         self.BadMeasurements = []
+        raw_input("Press Enter when irradiation starts...")
         self.InitialTime = int(time.time())
         while self.KeepOnStepping:
             self.DIR = "../TestFolder/" + self.name + "_" + self.TID + "_FI"
             os.makedirs(self.DIR)
             FIM = FIT.FastInjectionMeasurement(self.DIR)
-            FIM.RunRandomTest8p8s(n = 15, timer_data_taking = 180, cal_pulse_period = 1, l1a_period = 39, latency = 500, runname = "Test")
-            self.TID = str(round((((int(time.time())- self.InitialTime) / 60)* DoseRate),1))
+            FIM.RunRandomTest8p8s(n = 60, timer_data_taking = 60, cal_pulse_period = 1, l1a_period = 39, latency = 500, runname = "Test")
+            self.TID = str(round((((int(time.time())- self.InitialTime) / 3600.0)* DoseRate),2))
             ChipStatus = self.NEXT(TargetTID)
             print ChipStatus
             if ChipStatus == 0:
@@ -84,10 +86,10 @@ class TID_control:
         self.colprint("DOSE:" + self.TID)
         info = "TID "+self.TID + "MRad"
         GoodNess = self.NEWCHIPMSR(info)
-        if int(self.TID) >= TargetTID:
+        if int(float(self.TID)) >= TargetTID:
             self.KeepOnStepping = False
         return GoodNess
 
 if __name__ == '__main__': # TEST
     TID_control = TID_control("ChipN")
-    TID_control.MSR_ALL(TargetTID = 500, DoseRate = 1)
+    TID_control.MSR_ALL(TargetTID = 10, DoseRate = 1)

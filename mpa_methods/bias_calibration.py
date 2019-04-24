@@ -88,8 +88,8 @@ def calibrate_bias(point, block, DAC_val, exp_val, inst, gnd_corr):
 		DAC_new_val = 31
 	I2C.peri_write(DAC, DAC_new_val)
 	new_val = multimeter.measure(inst)
-	#if (new_val - gnd_corr < exp_val + exp_val*0.05 )&(new_val - gnd_corr > exp_val - exp_val*0.05):
-	if (new_val - gnd_corr < exp_val + exp_val*0.02 )&(new_val - gnd_corr > exp_val - exp_val*0.052):
+	if (new_val - gnd_corr < exp_val + exp_val*0.05 )&(new_val - gnd_corr > exp_val - exp_val*0.05):
+	#if (new_val - gnd_corr < exp_val + exp_val*0.02 )&(new_val - gnd_corr > exp_val - exp_val*0.02):
 		i = 1
 		print "Calibration bias point ", point, "of test point", block, "--> Done (", new_val, "V for ", DAC_new_val, " DAC)"
 	else:
@@ -139,7 +139,7 @@ def measure_bg():
 
 def calibrate_chip(gnd_corr, print_file = 1, filename = "test"):
 	activate_I2C_chip(verbose = 0)
-	inst = multimeter.init_keithley(3)
+	inst = multimeter.init_keithley(avg = 10)
 	DAC_val = [15, 15, 15, 15, 15]
 	exp_val = [0.082, 0.082, 0.108, 0.082, 0.082]
 	data = np.zeros((5, 7), dtype = np.int16 )
