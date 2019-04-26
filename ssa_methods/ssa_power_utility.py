@@ -29,21 +29,22 @@ class ssa_power_utility:
 	def off(self):
 		self.set_supply('off')
 
-	def set_supply(self, mode = 'on', d = 1.2, a = 1.25, p = 1.25, bg = 0.270, display = True):
+	def set_supply(self, mode = 'on', d = 1.0, a = 1.2, p = 1.2, bg = 0.270, display = True):
 		if(mode == 'on' or mode == 1):
 			sleep(0.00); self.mainpoweron()
 			sleep(0.01); self.set_pvdd(p);
 			sleep(0.20); self.set_dvdd(d);
 			sleep(0.00); self.set_avdd(a);
 			sleep(0.10); self.set_vbf(bg)
-			sleep(0.10); self.reset()
+			sleep(2.00); self.reset()
+			sleep(0.50); self.get_power(display = display)
 		elif(mode == 'off' or mode == 0):
 			sleep(0.00); self.set_vbf(0)
 			sleep(0.10); self.set_avdd(0);
 			sleep(0.00); self.set_dvdd(0);
 			sleep(0.10); self.set_pvdd(0)
 			sleep(0.10); self.mainpoweroff()
-		sleep(0.1); self.get_power(display = display)
+			sleep(0.10); self.get_power(display = display)
 
 
 	def get_power(self, display = True, return_all = False):

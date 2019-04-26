@@ -34,12 +34,12 @@ USB-GPIB-HS with CentOS + Python:
 9. load the module: "sudo modprobe ni_usb_gpib"
 10. reconnect the device 
 11. 
-sudo chown acarat  /dev/gpib*  
-sudo chown acarat /dev/usb_gpib
+sudo chown acaratel  /dev/gpib*  
+sudo chown acaratel /dev/usb_gpib
 11. try to run in python:
 python
 import Gpib
-inst = Gpib.Gpib(0,16) # Device address 16
+inst = Gpib.Gpib(0,2) # Device address 16
 inst.write("*IDN?")
 inst.read(100) # read 100 bytes
 

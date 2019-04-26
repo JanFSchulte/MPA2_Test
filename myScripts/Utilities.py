@@ -124,6 +124,34 @@ class Utilities:
 		st = datetime.now().strftime("%Y-%m-%d_%H:%M")
 		return st
 
+	def print_error(self, text, logfile = False):
+		sys.stdout.write("\033[1;31m")
+		print(str(text))
+		sys.stdout.write("\033[0;0m")
+		if(isinstance(logfile, str)):
+			self.LogFile.write(str(text)+"\n")
+
+	def print_warning(self, text, logfile = False):
+		sys.stdout.write("\033[1;33m")
+		print(str(text))
+		sys.stdout.write("\033[0;0m")
+		if(isinstance(logfile, str)):
+			self.LogFile.write(str(text)+"\n")
+
+	def print_info(self, text, logfile = False):
+		sys.stdout.write("\033[1;34m")
+		print(str(text))
+		sys.stdout.write("\033[0;0m")
+		if(isinstance(logfile, str)):
+			self.LogFile.write(str(text)+"\n")
+
+	def print_good(self, text, logfile = False):
+		sys.stdout.write("\033[1;32m")
+		print(str(text))
+		sys.stdout.write("\033[0;0m")
+		if(isinstance(logfile, str)):
+			self.LogFile.write(str(text)+"\n")
+
 def print_method(name):
 	lines = inspect.getsourcelines(name)
 	print("".join(lines[0]))

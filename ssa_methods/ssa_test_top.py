@@ -23,6 +23,7 @@ class SSA_test_top():
 		self.summary = results()
 		self.runtest = RunTest('default')
 		self.config_file = ''; self.dvdd = 1.05; self.pvdd = 1.20; #for the offset of the board
+		self.filename = False
 
 
 	def run_caracterization(self):
@@ -54,8 +55,13 @@ class SSA_test_top():
 
 
 	def initialise(self, file = False, plot = False):
-		if (not isinstance(file, str)): return
-		filename = '../SSA_Results/' + file
+		if (isinstance(file, str)):
+			self.filename = file
+		filename = self.filename
+		if (not isinstance(filename, str)):
+			print("Log file name not setup")
+			return
+		filename = '../SSA_Results/' + filename
 		dir = filename[:filename.rindex(os.path.sep)]
 		if not os.path.exists(dir):
 			os.makedirs(dir)
