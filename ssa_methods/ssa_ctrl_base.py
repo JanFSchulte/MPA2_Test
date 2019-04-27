@@ -125,8 +125,8 @@ class ssa_ctrl_base:
 		self.I2C.peri_write('SLVS_pad_current', current)
 		r = self.I2C.peri_read('SLVS_pad_current')
 		if (self.I2C.peri_read("SLVS_pad_current") != (current & 0b111) ):
-			print "Error! I2C did not work properly"
-			exit(1)
+			utils.print_error("->\tI2C did not work properly")
+			#exit(1)
 
 
 	def set_lateral_lines_alignament(self):
@@ -177,16 +177,16 @@ class ssa_ctrl_base:
 
 	def align_out(self):
 		fc7.write("ctrl_phy_phase_tune_again", 1)
-		timeout_max = 2
+		timeout_max = 3
 		timeout = 0
+		sleep(0.1)
 		while(fc7.read("stat_phy_phase_tuning_done") == 0):
 			sleep(0.1)
+			utils.print_warning("->\tWaiting for the phase tuning")
+			timeout+=1
 			if (timeout == timeout_max):
-				timeout = 0
-				print "Waiting for the phase tuning"
-				fc7.write("ctrl_phy_phase_tune_again", 1)
-			else:
-				timeout += 1
+				return False
+		return True
 
 	def set_t1_sampling_edge(self, edge):
 		if edge == "rising" or edge == "positive":

@@ -57,7 +57,7 @@ class ssa_calibration():
 		self.initialised = True
 
 
-	def calibrate_to_nominals(self):
+	def calibrate_to_nominals(self, measure = True):
 		if(not self.initialised and (self.mode == 'MULTIMETER')):
 			self.__initialise()
 		for par in self.par_list:
@@ -71,7 +71,8 @@ class ssa_calibration():
 				best_dac = self.__tune_parameter(self.minst, par.par_name, par.nominal)
 				par.best_dac = best_dac
 		print "\n\nSummary of tuning (tuned values):"
-		self.measure_bias()
+		if(measure):
+			self.measure_bias()
 		self.ssa.ctrl.set_output_mux('highimpedence')
 
 

@@ -51,9 +51,11 @@ class SSA_ASIC:
 		if(reset_board):
 			fc7.write("ctrl_command_global_reset", 1)
 			sleep(0.3);
+			if(display): utils.print_info("->  \tReset FC7 Firmware")
 		if(reset_chip):
 			self.ctrl.reset(display=False)
 			sleep(0.3);
+			if(display): utils.print_info("->  \tReset SSA Chip")
 		utils.activate_I2C_chip()
 		sleep(0.2)
 		if(display):
@@ -62,19 +64,18 @@ class SSA_ASIC:
 		sleep(0.1); self.ctrl.set_t1_sampling_edge(edge)
 		sleep(0.1); self.ctrl.init_slvs(slvs_current)
 		sleep(0.1); rt = self.ctrl.phase_tuning()
+		if(rt):
+			if(display): utils.print_good("->  \tShift register mode ok")
+			if(display): utils.print_good("->  \tSampling phases tuned")
+		else:
+			if(display): utils.print_error("->  \tImpossible to complete phase tuning")
 		sleep(0.2); self.ctrl.activate_readout_normal()
 		sleep(0.1); self.ctrl.activate_readout_normal()
 		if(display):
+			utils.print_info("->  \tActivated normal readout mode");
 			sys.stdout.write("->  \tReady!                  \r")
 			sys.stdout.flush()
 			sleep(0.2)
-			sys.stdout.write("                              \r")
-			sys.stdout.flush()
-			if(reset_board): print "->  \tReset FC7 Firmware"
-			if(reset_chip):  print "->  \tReset SSA Chip"
-			print "->  \tInitialised SLVS pads and sampling edges"
-			print "->  \tSampling phases tuned"
-			print "->  \tActivated normal readout mode"
 			if(read_current):
 				self.pwr.get_power(display = True)
 		return rt

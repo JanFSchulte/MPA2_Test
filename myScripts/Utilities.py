@@ -34,11 +34,17 @@ class curstate():
 class Utilities:
 
 	def __init__(self):
+		self.logfile = False
+		self.errorlog = False
 		p = []
 
 	class cl_clustdispl(float):
 		def __repr__(self):
 			return "{:6.1f}".format(self)
+
+	def set_log_files(logfile, errorlog):
+		self.logfile = open(logfile, "w")
+		self.errorlog = open(errorlog, "w")
 
 	def reverse_bit_order(self, n, width = 32):
 		b = '{:0{width}b}'.format(n, width=width)
@@ -128,29 +134,37 @@ class Utilities:
 		sys.stdout.write("\033[1;31m")
 		print(str(text))
 		sys.stdout.write("\033[0;0m")
-		if(isinstance(logfile, str)):
-			self.LogFile.write(str(text)+"\n")
+		if(self.logfile):
+			self.logfile.write(str(text)+"\n")
+		if(self.errorlog):
+			self.errorlog.write(str(text)+"\n")
+
 
 	def print_warning(self, text, logfile = False):
 		sys.stdout.write("\033[1;33m")
 		print(str(text))
 		sys.stdout.write("\033[0;0m")
-		if(isinstance(logfile, str)):
-			self.LogFile.write(str(text)+"\n")
+		if(self.logfile):
+			self.logfile.write(str(text)+"\n")
 
 	def print_info(self, text, logfile = False):
 		sys.stdout.write("\033[1;34m")
 		print(str(text))
 		sys.stdout.write("\033[0;0m")
-		if(isinstance(logfile, str)):
-			self.LogFile.write(str(text)+"\n")
+		if(self.logfile):
+			self.logfile.write(str(text)+"\n")
 
 	def print_good(self, text, logfile = False):
 		sys.stdout.write("\033[1;32m")
 		print(str(text))
 		sys.stdout.write("\033[0;0m")
-		if(isinstance(logfile, str)):
-			self.LogFile.write(str(text)+"\n")
+		if(self.logfile):
+			self.logfile.write(str(text)+"\n")
+
+	def print_log(self, text, logfile = False):
+		print(str(text))
+		if(self.logfile):
+			self.logfile.write(str(text)+"\n")
 
 def print_method(name):
 	lines = inspect.getsourcelines(name)

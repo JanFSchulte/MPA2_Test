@@ -6,6 +6,7 @@ from ssa_methods.ssa_readout_utility import *
 from ssa_methods.ssa_inject_utility import *
 from ssa_methods.ssa_measurements import *
 from ssa_methods.ssa_test_top import *
+from ssa_methods.ssa_test_waferprobing import *
 from ssa_methods.ssa_test_xray import *
 from ssa_methods.ssa_analise_utility import *
 from ssa_methods.ssa_fc7_com import *
@@ -35,6 +36,7 @@ ssa_toptest = SSA_test_top(ssa, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pwr, ssa
 ssa_xray    = SSA_test_xray(ssa_toptest, ssa, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pwr, ssa_test, ssa_measure)
 ssa_anl     = SSA_Analise_Test_results(ssa_toptest, ssa_test, ssa_measure, ssa_biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
 ssa_seu     = SSA_SEU(ssa, ssa_seuutil, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pwr, ssa_test, ssa_measure)
+ssa_wp      = SSA_ProbeMeasurement(ssa, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pwr, ssa_test, ssa_measure)
 SSA         = ssa
 
 def ssa_on():

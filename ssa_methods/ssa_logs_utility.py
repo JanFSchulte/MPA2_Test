@@ -32,9 +32,9 @@ class results():
 		self.d[name] = self.logpar(name, value, unit, descr, run)
 
 	def update(self, runname = 'Run-0'):
-		self.summary[0] = '\n%16s ; %24s ; %10s ; %16s ; %24s\n'  % ('RunName', 'Test', 'Results', 'Unit', 'Description' )
+		self.summary[0] = '\n%16s , %24s , %10s , %16s , %24s\n'  % ('RunName', 'Test', 'Results', 'Unit', 'Description' )
 		self.summary[1] = '\n%24s   %10s %1s %24s\n'  % ('Test', 'Results', 'Unit', '' )
-		self.summary[2] = '\n%16s ; ' % (runname)
+		self.summary[2] = '\n%16s , ' % (runname)
 		for i in self.d:
 			if (isinstance(self.d[i].value, bool)):
 				temp = 'True' if self.d[i].value else 'False'
@@ -46,9 +46,9 @@ class results():
 				temp = str(self.d[i].value)
 			else:
 				temp = 'conversion error'
-			self.summary[0] += '%16s ; %24s ; %10s ; %4s ; %24s\n'  % (self.d[i].run,   self.d[i].name,   temp,  self.d[i].unit,  self.d[i].descr)
+			self.summary[0] += '%16s , %24s , %10s , %4s , %24s\n'  % (self.d[i].run,   self.d[i].name,   temp,  self.d[i].unit,  self.d[i].descr)
 			self.summary[1] += '%24s : %10s %4s %24s\n'  % (self.d[i].name,   temp,  self.d[i].unit,  self.d[i].descr)
-			self.summary[2] += '%16s ; ' % (temp)
+			self.summary[2] += '%16s , ' % (temp)
 
 	def display(self, runname = 'Run-0'):
 		self.update(runname = runname)
