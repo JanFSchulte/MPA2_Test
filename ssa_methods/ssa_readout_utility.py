@@ -17,6 +17,7 @@ class SSA_readout():
 		self.I2C = I2C;	self.fc7 = FC7;self.ctrl = ssactrl;
 		self.strip = ssastrip; self.utils = utils;
 		self.ofs_initialised = False;  self.ofs = [0]*6;
+		self.cl_shift = 0
 
 
 	def status(self):
@@ -27,14 +28,18 @@ class SSA_readout():
 		return [l1_data_ready, stub_data_ready, counters_ready]
 
 
-	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False, return_as_pattern = False):
+	def cluster_data(self, apply_offset_correction = False, display = False, shift = 'default', initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False, return_as_pattern = False):
 	 	data = []; tmp = [];
-	 	counter = 0; data_loc = 21 + shift;
+		if(shift == 'default'):
+			ishift = self.cl_shift
+		else:
+			ishift = shift
+	 	counter = 0; data_loc = 21 + ishift;
 	 	status = [0]*3; timeout = 10;
 		if(initialize):
 			#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
 			sleep(0.001)
-			Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 0, delay_before_next_pulse = 0, number_of_test_pulses = 1, enable_rst_L1 = 0)
+			Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 0, delay_before_next_pulse = 500, number_of_test_pulses = 1, enable_rst_L1 = 0)
 			sleep(0.001)
 		#status_init = self.status()
 		if(send_test_pulse):
@@ -92,10 +97,12 @@ class SSA_readout():
 		else:
 			return coordinates
 
-	def cluster_data_delay(self, shift = 0, display = False, debug = False):
+	def cluster_data_delay(self, shift = 'default', display = False, debug = False):
+		if(shift == 'default'):
+			ishift = self.cl_shift
 		cl_array = self.cluster_data(lookaround = True, display = display, display_pattern = debug)
 		delay = [] #[-np.inf]*len(cl_array[0])
-		cnt = -21 - shift
+		cnt = -21 - ishift
 		for cl in cl_array[0]:
 			if(cl != 0):
 				delay.append(cnt)
@@ -112,7 +119,7 @@ class SSA_readout():
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-			Configure_TestPulse(delay_after_fast_reset = 0, delay_after_test_pulse = (latency+3+shift), delay_before_next_pulse = 0, number_of_test_pulses = 1)
+			Configure_TestPulse(delay_after_fast_reset = 0, delay_after_test_pulse = (latency+3+ishift), delay_before_next_pulse = 0, number_of_test_pulses = 1)
 			self.fc7.write("cnfg_fast_delay_between_consecutive_trigeers", 0)
 			self.I2C.peri_write('L1-Latency_MSB', 0)
 			self.I2C.peri_write('L1-Latency_LSB', latency)
@@ -280,18 +287,17 @@ class SSA_readout():
 		return False, count
 
 
-	def all_lines(self):
-		self.fc7.SendCommand_CTRL("fast_test_pulse")
-		self.fc7.SendCommand_CTRL("fast_trigger")
-
-		self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
-		self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-		self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
-
-		Configure_TestPulse(199, 50, 400, 1)
-		sleep(0.001)
-		self.fc7.SendCommand_CTRL("start_trigger")
-		sleep(0.1)
+	def all_lines(self, trigger = True, cluster = True, l1data = True, lateral = True):
+		if(trigger):
+			self.fc7.SendCommand_CTRL("fast_test_pulse")
+			self.fc7.SendCommand_CTRL("fast_trigger")
+			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
+			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
+			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
+			Configure_TestPulse(199, 50, 400, 1)
+			sleep(0.001)
+			self.fc7.SendCommand_CTRL("start_trigger")
+			sleep(0.1)
 		status = self.fc7.read("stat_slvs_debug_general")
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
@@ -302,22 +308,22 @@ class SSA_readout():
 		print "---> MPA Stub Data Ready: ", ((status & 0x00000002) >> 1)
 		print "---> MPA Counters Ready: ", ((status & 0x00000004) >> 2)
 		print "---> Lateral Data Counters Ready: ", ((status & 0x00000008) >> 3)
-
-		print "\n--> L1 Data: "
-		for word in ssa_l1_data:
-		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
-
-		counter = 0
-		print "\n--> Stub Data: "
-		for word in ssa_stub_data:
-		    if (counter % 10 == 0):
-		        print "Line: " + str(counter/10)
-		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
-		    counter += 1
-
-		print "\n--> Lateral Data: "
-		for word in lateral_data:
-		    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+		if(l1data):
+			print "\n--> L1 Data: "
+			for word in ssa_l1_data:
+			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+		if(cluster):
+			counter = 0
+			print "\n--> Stub Data: "
+			for word in ssa_stub_data:
+			    if (counter % 10 == 0):
+			        print "Line: " + str(counter/10)
+			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+			    counter += 1
+		if(lateral):
+			print "\n--> Lateral Data: "
+			for word in lateral_data:
+			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
 
 
 	def __apply_offset_correction(self, val, enable = True):
@@ -414,8 +420,6 @@ class SSA_inject():
 		self.hit_list = []
 		self.hip_list = []
 		self.DigCalibPattern = 0
-
-
 
 
 

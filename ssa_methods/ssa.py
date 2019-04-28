@@ -88,3 +88,15 @@ class SSA_ASIC:
 		SetLineDelayManual(0,0, 9,0,left)
 		SetLineDelayManual(0,0,10,0,right)
 		self.ctrl.phase_tuning()
+
+	def cl_word_alignment(self):
+		tv = [10,20,30,40,50,60,70,80]
+		for shift in range(-4,5):
+			self.readout.cl_shift = shift
+			self.inject.digital_pulse(tv)
+			rp = self.readout.cluster_data()
+			if(rp == tv):
+				utils.print_info('->\tCluster-data word alignment successfull ({:d})'.format(self.readout.cl_shift))
+				return True
+		utils.print_error('->\tCluster-data word alignment error')
+		return False

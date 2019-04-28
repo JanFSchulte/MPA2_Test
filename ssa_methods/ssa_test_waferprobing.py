@@ -61,11 +61,15 @@ class SSA_ProbeMeasurement():
 		self.pwr.set_supply(mode='on', display=False, d=self.dvdd, a=self.avdd, p=self.pvdd)
 		time.sleep(0.5)
 
-		self.test_routine_power(fo,'','_PowerOn')
-		self.test_routine_initialize(fo)
+		self.pwr.reset(False, 0)
+		self.test_routine_power(fo,'','_Reset')
+		self.pwr.reset(False, 1)
 		self.test_routine_power(fo,'','_Enabled')
+		self.test_routine_initialize(fo)
+		self.test_routine_power(fo,'','_Initialized')
 		self.test_routine_measure_bias(fo,'','_Reset')
 		self.test_routine_calibrate(fo)
+		self.test_routine_power(fo,'','_Calibrated')
 		self.test_routine_measure_bias(fo,'','_Calibrated')
 
 		self.summary.display()
@@ -143,3 +147,17 @@ class SSA_ProbeMeasurement():
 				print "X>  \tError in reading Config regs. Reiterating."
 				wd +=1
 		wd = 0
+
+
+	def test_routine_digital(self, filename = 'default', runname = '', shift = [0,0,0,0,0,0,0]):
+		filename = self.summary.get_file_name(filename)
+		time_init = time.time()
+		self.ssa.init(reset_board = True, reset_chip = False, display = False)
+		wd = 0
+		#self.ssa.init(reset_board = True, reset_chip = True)
+		#self.ssa.load_configuration(self.config_file, display = False)
+		#try:
+		#	self.test.force_alinament()
+		#except:
+		#	print "X>  \tError in Initial Alinement"
+		#print 'start'
