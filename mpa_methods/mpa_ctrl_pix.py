@@ -50,3 +50,27 @@ class mpa_ctrl_pix:
 	def enable_dig_cal(self, r,p, pattern = 0b00000001):
 		self.I2C.pixel_write('ENFLAGS', r, p, 0x20)
 		self.I2C.pixel_write('DigPattern', r, p, pattern)
+	def load_trim(self, data_array):
+		for r in range(1,17):
+			for p in range(1,120):
+				self.I2C.pixel_write("TrimDAC",r,p,data_array[(r-1)*120+p])
+	def reset_trim(self, value = 15):
+		self.I2C.pixel_write("TrimDAC",0,0,value)
+	def read_pixel_counter(self, row, pixel):
+		data1 = self.I2C.pixel_read('ReadCounter_LSB',row, pixel)
+		data2 = self.I2C.pixel_read('ReadCounter_MSB',row, pixel)
+		if ((data1 == None) or (data2 == None)):
+			data1 = self.I2C.pixel_read('ReadCounter_LSB',row, pixel, 0.01) # Repeat with higher timeout time
+			data2 = self.I2C.pixel_read('ReadCounter_MSB',row, pixel, 0.01) # Repeat with higher timeout time
+		if ((data1 == None) or (data2 == None)):
+			sleep(1)
+			activate_I2C_chip(verbose = 0)
+			sleep(1)
+			data1 = self.I2C.pixel_read('ReadCounter_LSB',row, pixel, 0.01) # Repeat with higher timeout time
+			data2 = self.I2C.pixel_read('ReadCounter_MSB',row, pixel, 0.01) # Repeat with higher timeout time
+		if ((data1 == None) or (data2 == None)):
+			print "Error Reading I2C"
+			data = 0
+		else:
+			data = ((data2 & 0x0ffffff) << 8) | (data1 & 0x0fffffff)
+		return data

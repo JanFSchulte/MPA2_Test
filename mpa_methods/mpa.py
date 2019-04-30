@@ -12,14 +12,14 @@ from mpa_methods.mpa_readout_utility import *
 
 class MPA_ASIC:
 
-	def __init__(self, I2C, FC7, pwr, mpa_peri_reg_map, mpa_strip_reg_map, analog_mux_map):
-		self.i2c     = I2C
-		self.ctrl    = mpa_ctrl_base(I2C, FC7, pwr, mpa_peri_reg_map, mpa_strip_reg_map, analog_mux_map)
-		self.strip   = mpa_ctrl_strip(I2C, FC7, mpa_peri_reg_map, mpa_strip_reg_map, analog_mux_map)
-		self.inject  = mpa_inject(I2C, FC7, self.ctrl, self.strip)
-		self.readout = mpa_readout(I2C, FC7, self.ctrl, self.strip)
-		self.pwr     = pwr
-		self.fc7     = FC7
+	def __init__(self, I2C, FC7, pwr, mpa_peri_reg_map, mpa_strip_reg_map):
+		self.i2c     	= I2C
+		self.ctrl_base  = mpa_ctrl_base(I2C, FC7, pwr, mpa_peri_reg_map, mpa_strip_reg_map)
+		self.ctrl_pix   = mpa_ctrl_pix(I2C, FC7, pwr, mpa_peri_reg_map, mpa_strip_reg_map)
+		self.inject  	= mpa_inject(I2C, FC7, self.ctrl_base, self.ctrl_pix)
+		self.readout 	= mpa_readout(I2C, FC7, self.ctrl_base, self.ctrl_pix)
+		self.pwr     	= pwr
+		self.fc7     	= FC7
 
 	def reset(self, display=True):
 		self.ctrl.reset(display = display)

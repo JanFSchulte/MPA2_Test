@@ -34,19 +34,7 @@ def errorfc(x, *p):
 	a, mu, sigma = p
 	return a*0.5*erfc((x-mu)/sigma)
 
-def inject():
-	sleep(0.005)
-	open_shutter()
-	if (cal != 0):
-		sleep(0.005)
-		SendCommand_CTRL("start_trigger")
-		test = 1
-		while (test):
-			test = fc7.read("stat_fast_fsm_state")
-			sleep(0.001)
-	else:
-		sleep(0.000001*n_pulse)
-		close_shutter()
+
 ##### plot_extract_scurve function take scurve data and extract threhsold and noise data. If plot = 1, it also plot scurves and histograms
 def plot_extract_scurve(row, pixel, s_type, scurve, n_pulse, nominal_DAC, start, stop, extract, plot):
 	th_array = np.zeros(2040, dtype = np.int )
@@ -92,72 +80,6 @@ def plot_extract_scurve(row, pixel, s_type, scurve, n_pulse, nominal_DAC, start,
 			print "Noise Average: ", np.mean(noise_array[1:1920]), " Spread SD: ", np.std(noise_array[1:1920])
 	if extract:
 		return 	th_array, noise_array
-
-##### send_pulses
-def send_pulses(n_pulse):
-	open_shutter()
-	sleep(0.01)
-	for i in range(0, n_pulse):
-		send_test()
-		sleep(0.1)
-	sleep(0.001)
-	close_shutter()
-
-def send_pulses_fast(n_pulse, row, pixel, cal):
-	disable_pixel(0, 0)
-	enable_pix_counter(row, pixel)
-	#enable_pix_disable_ancal(row, pixel)
-	sleep(0.0025)
-	try:
-		open_shutter(8)
-	except ChipsException:
-		print "Error ChipsException, repeat command"
-		sleep (0.001)
-		open_shutter(8)
-	if (cal != 0):
-		SendCommand_CTRL("start_trigger")
-		test = 1
-		while (test):
-			test = fc7.read("stat_fast_fsm_state")
-			sleep(0.001)
-	else:
-		sleep(0.000001*n_pulse)
-	try:
-		close_shutter(8)
-	except ChipsException:
-		print "Error ChipsException, repeat ccommand"
-		sleep (0.001)
-		close_shutter(8)
-
-def send_pulses_fast_all(n_pulse, row, pixel, cal):
-	disable_pixel(0, 0)
-	for r in row:
-		for p in pixel:
-			enable_pix_disable_ancal(r, p)
-			#enable_pix_counter(r,p)
-	sleep(0.0025)
-	try:
-		open_shutter(8)
-	except ChipsException:
-		print "Error ChipsException, repeat ccommand"
-		sleep (0.001)
-		open_shutter(8)
-	if (cal != 0):
-		SendCommand_CTRL("start_trigger")
-		test = 1
-		while (test):
-			test = fc7.read("stat_fast_fsm_state")
-			sleep(0.001)
-	else:
-		sleep(1*n_pulse)
-	try:
-		close_shutter(8)
-	except ChipsException:
-		print "Error ChipsException, repeat ccommand"
-		sleep (0.001)
-		close_shutter(8)
-
-
 def read_pixel_counter(row, pixel):
 	data1 = I2C.pixel_read('ReadCounter_LSB',row, pixel)
 	data2 = I2C.pixel_read('ReadCounter_MSB',row, pixel)
@@ -176,7 +98,6 @@ def read_pixel_counter(row, pixel):
 	else:
 		data = ((data2 & 0x0ffffff) << 8) | (data1 & 0x0fffffff)
 	return data
-
 # Readout Counters current method
 def ReadoutCounters(raw_mode_en = 0):
 	# set the raw mode to the firmware
@@ -225,6 +146,7 @@ def ReadoutCounters(raw_mode_en = 0):
 	failed = False
 	return failed, count
 #a = s_curve(100, 50, [1],[2,7],  32)
+# OBSOLETE
 def s_curve(n_pulse, cal, row, pixel, step = 1, start = 0, stop = 256, print_file =1, filename = "../cernbox/MPA_Results/scurve"):
 	clear_counters()
 	clear_counters()
@@ -270,6 +192,7 @@ def s_curve(n_pulse, cal, row, pixel, step = 1, start = 0, stop = 256, print_fil
 	return data_array
 
 #hit_map(100, 250, 200)
+#OBSOLETE
 def hit_map(n_pulse, cal, th, row = range(1,17), pixel = range (2,120) , print_file =0, filename = "../cernbox/MPA_Results/hitmap"):
 	t0 = time.time()
 	pixel = np.array(pixel)
@@ -302,7 +225,7 @@ def hit_map(n_pulse, cal, th, row = range(1,17), pixel = range (2,120) , print_f
 	#print "Elapsed Time: " + str(t1 - t0)
 	return data_array
 #a = s_curve_rbr(100, 50, [1], 1)
-
+#OBSOLETE
 def hit_map_plot(n_pulse = 1000, cal = 40, th = 100, row = range(1,17), pixel = range (1,120)):
 	clear_counters()
 	t0 = time.time()
@@ -347,7 +270,7 @@ def hit_map_plot(n_pulse = 1000, cal = 40, th = 100, row = range(1,17), pixel = 
 	ax = sns.heatmap(data_array, vmin = 0, xticklabels = 5, yticklabels = row)
 	plt.show()
 	return data_array
-
+#OBSOLETE
 def heat_map(row = range(1,17), start_data = 150, start_th = 160, end_th = 180, file_name = "Am-241_tin_long_cal_0.csv"):
 	data = CSV.csv_to_array(file_name)
 	data_array = np.zeros((16, 119), dtype = np.int)
@@ -358,7 +281,7 @@ def heat_map(row = range(1,17), start_data = 150, start_th = 160, end_th = 180, 
 	plt.show()
 	return data_array
 
-
+#OBSOLETE
 def s_curve_rbr(n_pulse, cal, row, step = 1, start = 0, stop = 256, plot = 1, print_file =1, filename = "../cernbox/MPA_Results/scurve"):
 	t0 = time.time()
 	clear_counters()
