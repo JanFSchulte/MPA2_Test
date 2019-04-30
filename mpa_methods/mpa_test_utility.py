@@ -12,10 +12,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-class MPA_test_utility():
-	def __init__(self, mpa, I2C, fc7, cal, pwr):
-	self.mpa = mpa;	self.I2C = I2C;	self.fc7 = fc7;
-	self.cal = cal; self.pwr = pwr;
+class mpa_test_utility():
+	def __init__(self, mpa, I2C, fc7):
+		self.mpa = mpa;
+		self.I2C = I2C;
+		self.fc7 = fc7;
 	def test_pp_digital(self, row, pixel):
 		self.I2C.pixel_write('ENFLAGS', row, pixel, 0x20)
 		sleep(0.001)

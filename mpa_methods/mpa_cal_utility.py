@@ -15,8 +15,8 @@ from scipy.special import erf
 import matplotlib.cm as cm
 import seaborn as sns
 
-class MPA_cal_utility():
-	def __init__(self, ssa, I2C, fc7):
+class mpa_cal_utility():
+	def __init__(self, mpa, I2C, fc7):
 		# Class instantiation
 		self.mpa = mpa
 		self.I2C = I2C
@@ -38,50 +38,49 @@ class MPA_cal_utility():
 		a, mu, sigma = p
 		return a*0.5*erfc((x-mu)/sigma)
 ##### plot_extract_scurve function take scurve data and extract threhsold and noise data. If plot = 1, it also plot scurves and histograms
-def plot_extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, start, stop, extract, plot):
-	th_array = np.zeros(2040, dtype = np.int )
-	noise_array = np.zeros(2040, dtype = np.float )
-	for r in row:
-		for p in pixel:
-			if plot:
-				plt.plot(range(start,stop), scurve[(r-1)*120+p,0:(stop-start)],'-')
+	def plot_extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, start, stop, extract, plot):
+		th_array = np.zeros(2040, dtype = np.int )
+		noise_array = np.zeros(2040, dtype = np.float )
+		for r in row:
+			for p in pixel:
+				if plot:
+					plt.plot(range(start,stop), scurve[(r-1)*120+p,0:(stop-start)],'-')
 			# Noise and Spread study
+				if extract:
+					try:
+						if s_type == "THR":
+							start_DAC = np.argmax(scurve[(r-1)*120+p,:]) + 10
+							par, cov = curve_fit(self.errorfc, range(start_DAC, (stop-start)), scurve[(r-1)*120+p,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
+						elif s_type == "CAL":
+							start_DAC = 0
+							par, cov = curve_fit(self.errorf, range(start_DAC, (stop-start)), scurve[(r-1)*120+p,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
+						th_array[(r-1)*120+p] = int(round(par[1]))
+						noise_array[(r-1)*120+p] = par[2]
+					except RuntimeError or TypeError:
+						print "Fitting failed on pixel ", p , " row: " ,r
+		if plot:
+			if s_type == "THR":	plt.xlabel('Threshold DAC value')
+			if s_type == "CAL":	plt.xlabel('Calibration DAC value')
+			plt.ylabel('Counter Value')
 			if extract:
-				try:
-					if s_type == "THR":
-						start_DAC = np.argmax(scurve[(r-1)*120+p,:]) + 10
-						par, cov = curve_fit(errorfc, range(start_DAC, (stop-start)), scurve[(r-1)*120+p,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
-					elif s_type == "CAL":
-						start_DAC = 0
-						par, cov = curve_fit(errorf, range(start_DAC, (stop-start)), scurve[(r-1)*120+p,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
-					th_array[(r-1)*120+p] = int(round(par[1]))
-					noise_array[(r-1)*120+p] = par[2]
-				except RuntimeError or TypeError:
-					print "Fitting failed on pixel ", p , " row: " ,r
-	if plot:
-		if s_type == "THR":	plt.xlabel('Threshold DAC value')
-		if s_type == "CAL":	plt.xlabel('Calibration DAC value')
-		plt.ylabel('Counter Value')
+				th_array = [a for a in th_array if a != 0]
+				noise_array = [b for b in noise_array if b != 0]
+				plt.figure(2)
+				if len(th_array) == 1:
+					plt.title("Threshold")
+					plt.plot(pixel, th_array, 'o')
+				else:
+					plt.hist(th_array[1:1920], bins=range(min(th_array), max(th_array) + 1, 1))
+				plt.figure(3)
+				if len(noise_array) == 1:
+					plt.title("Noise")
+					plt.plot(pixel, noise_array, 'o')
+				else:
+					plt.hist(noise_array, bins=np.arange(min(noise_array), max(noise_array) + 1 , 0.1))
+				print "Threshold Average: ", np.mean(th_array[1:1920]), " Spread SD: ", np.std(th_array[1:1920])
+				print "Noise Average: ", np.mean(noise_array[1:1920]), " Spread SD: ", np.std(noise_array[1:1920])
 		if extract:
-			th_array = [a for a in th_array if a != 0]
-			noise_array = [b for b in noise_array if b != 0]
-			plt.figure(2)
-			if len(th_array) == 1:
-				plt.title("Threshold")
-				plt.plot(pixel, th_array, 'o')
-			else:
-				plt.hist(th_array[1:1920], bins=range(min(th_array), max(th_array) + 1, 1))
-			plt.figure(3)
-			if len(noise_array) == 1:
-				plt.title("Noise")
-				plt.plot(pixel, noise_array, 'o')
-			else:
-				plt.hist(noise_array, bins=np.arange(min(noise_array), max(noise_array) + 1 , 0.1))
-
-			print "Threshold Average: ", np.mean(th_array[1:1920]), " Spread SD: ", np.std(th_array[1:1920])
-			print "Noise Average: ", np.mean(noise_array[1:1920]), " Spread SD: ", np.std(noise_array[1:1920])
-	if extract:
-		return 	th_array, noise_array
+			return 	th_array, noise_array
 # Readout Counters current method
 	def ReadoutCounters(self, raw_mode_en = 0):
 	# set the raw mode to the firmware
@@ -128,7 +127,7 @@ def plot_extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, 
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		failed = False
 		return failed, count
-
+# Test S-curve: cal.s_curve_rbr_fr( n_pulse = 100, s_type = "CAL", ref_val = 150, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = 0, extract = 0, plot = 1, print_file =0 )
 	def s_curve_rbr_fr(self, n_pulse = 1000, s_type = "THR", ref_val = 50, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 200, extract_val = 0, extract = 1, plot = 1, print_file =1, filename = "../cernbox/MPA_Results/scurve_fr_"):
 		t0 = time.time()
 		self.fc7.clear_counters(8)
@@ -136,9 +135,9 @@ def plot_extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, 
 		nrow = int(row.shape[0])
 		nstep = (stop-start)/step+1
 		data_array = np.zeros((2040, nstep), dtype = np.int16 )
-		activate_async()
-		if s_type == "THR":	set_calibration(ref_val)
-		elif s_type == "CAL":	set_threshold(ref_val)
+		self.mpa.ctrl_base.activate_async()
+		if s_type == "THR":	self.mpa.ctrl_base.set_calibration(ref_val)
+		elif s_type == "CAL":	self.mpa.ctrl_base.set_threshold(ref_val)
 		else: return "S-Curve type not recognized"
 		count = 0
 		self.fc7.write("cnfg_fast_backpressure_enable", 0)
@@ -148,11 +147,11 @@ def plot_extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, 
 		count_err = 0
 		failed = 0
 		while (cur_val < stop): # Temoporary: need to add clear counter fast command
-			if s_type == "CAL":	self.ctrl_base.set_calibration(cur_val)
-			elif s_type == "THR":	self.ctrl_base.set_threshold(cur_val)
+			if s_type == "CAL":	self.mpa.ctrl_base.set_calibration(cur_val)
+			elif s_type == "THR":	self.mpa.ctrl_base.set_threshold(cur_val)
 			self.utils.ShowPercent(count, (stop-start)/step, "")
 			for r in row:
-				self.inject.send_pulses_fast(n_pulse, r, 0, cur_val)
+				self.mpa.inject.send_pulses_fast(n_pulse, r, 0, cur_val)
 			sleep(0.005)
 			fail, temp = self.ReadoutCounters()
 			sleep(0.005)
@@ -190,7 +189,7 @@ def plot_extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, 
 ### Trimming routine
 	def trimming_step(self, pix_out = [["Row", "Pixel", "DAC"]], n_pulse = 1000, s_type = "THR", ref_val = 10, iteration = 1, nominal_DAC = 110, data_array = np.zeros(2040, dtype = np.int ), plot = 1,  stop = 150, ratio = 3.90, row = range(1,17), pixel = range(1,120)):
 		t0 = time.time()
-		self.ctrl_pix.load_trim(data_array)
+		self.mpa.ctrl_pix.load_trim(data_array)
 		try: scurve_init = self.s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
 		except TypeError: return
 		scurve = scurve_init
@@ -202,10 +201,10 @@ def plot_extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, 
 					try:
 						if s_type == "THR":
 							start_DAC = np.argmax(scurve[(r-1)*120+p,:]) + 10
-							par, cov = curve_fit(errorfc, range(start_DAC, stop), scurve[(r-1)*120+p,start_DAC + 1 :stop + 1], p0= [n_pulse, nominal_DAC, 2])
+							par, cov = curve_fit(self.errorfc, range(start_DAC, stop), scurve[(r-1)*120+p,start_DAC + 1 :stop + 1], p0= [n_pulse, nominal_DAC, 2])
 						elif s_type == "CAL":
 							start_DAC = 0
-							par, cov = curve_fit(errorf, range(start_DAC, stop), scurve[(r-1)*120+p,start_DAC + 1 :stop + 1], p0= [n_pulse, nominal_DAC, 2])
+							par, cov = curve_fit(self.errorf, range(start_DAC, stop), scurve[(r-1)*120+p,start_DAC + 1 :stop + 1], p0= [n_pulse, nominal_DAC, 2])
 						init_DAC = int(round(par[1]))
 						trim_DAC = int(round((nominal_DAC - init_DAC)/ratio))
 						curr_dac = self.I2C.pixel_read("TrimDAC",r,p)
@@ -248,11 +247,8 @@ def plot_extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, 
 			self.I2C.pixel_write("TrimDAC",0,0,0)
 			row = range(i, 17, nstep)
 			print "Doing Rows: ", row
-			try:
-				data_array, pix_out = self.trimming_step(pix_out = pix_out, n_pulse = n_pulse, s_type = s_type, ref_val = ref_val, iteration = iteration, nominal_DAC = nominal_DAC, data_array = data_array, plot = 0, stop = stop, ratio = ratio, row = row)
-			except:
-				return
-		self.ctrl_pix.load_trim(data_array)
+			data_array, pix_out = self.trimming_step(pix_out = pix_out, n_pulse = n_pulse, s_type = s_type, ref_val = ref_val, iteration = iteration, nominal_DAC = nominal_DAC, data_array = data_array, plot = 0, stop = stop, ratio = ratio, row = row)
+		self.mpa.ctrl_pix.load_trim(data_array)
 		if print_file:
 			CSV.ArrayToCSV (data_array, str(filename) + "_ScCal" + ".csv")
 		if extract:

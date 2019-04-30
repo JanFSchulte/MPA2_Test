@@ -9,7 +9,7 @@ import sys
 import inspect
 import random
 
-class MPA_inject():
+class mpa_inject():
 	def __init__(self, I2C, fc7, ctrl_base, ctrl_pix):
 		self.I2C = I2C
 		self.fc7 = fc7

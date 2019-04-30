@@ -26,6 +26,9 @@ class mpa_ctrl_base:
 		rp = self.pwr.reset(display=display)
 		self.set_sampling_edge("negative")
 		return rp
+	def init_slvs(self, curr = 1):
+		currSLVS = 0b00111000 | curr
+		self.I2C.peri_write("ConfSLVS", currSLVS)
 ## Operation mode selection:
 	def activate_async(self):
 		self.I2C.peri_write('ReadoutMode',0b01)

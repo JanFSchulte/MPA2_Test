@@ -29,7 +29,7 @@ class mpa_calibration():
 		self.measure_avg = 10
 		self.set_gpib_address(16)
 	def set_gpib_address(self, address):
-	self.gpib_address = address
+		self.gpib_address = address
 	def __initialise(self):
 		self.multimeterinst = self.multimeter.init_keithley(avg = self.measure_avg, address = self.gpib_address)
 		self.initialised = True
