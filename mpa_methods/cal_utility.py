@@ -34,24 +34,6 @@ def errorfc(x, *p):
 	a, mu, sigma = p
 	return a*0.5*erfc((x-mu)/sigma)
 
-def set_calibration(cal):
-	I2C.peri_write('CalDAC0',cal)
-	I2C.peri_write('CalDAC1',cal)
-	I2C.peri_write('CalDAC2',cal)
-	I2C.peri_write('CalDAC3',cal)
-	I2C.peri_write('CalDAC4',cal)
-	I2C.peri_write('CalDAC5',cal)
-	I2C.peri_write('CalDAC6',cal)
-
-def set_threshold(th):
-	I2C.peri_write('ThDAC0',th)
-	I2C.peri_write('ThDAC1',th)
-	I2C.peri_write('ThDAC2',th)
-	I2C.peri_write('ThDAC3',th)
-	I2C.peri_write('ThDAC4',th)
-	I2C.peri_write('ThDAC5',th)
-	I2C.peri_write('ThDAC6',th)
-
 def inject():
 	sleep(0.005)
 	open_shutter()
@@ -65,83 +47,6 @@ def inject():
 	else:
 		sleep(0.000001*n_pulse)
 		close_shutter()
-
-def enable_test(block, point):
-	activate_I2C_chip(verbose = 0)
-	disable_test()
-	test = "TEST" + str(block)
-	I2C.peri_write('TESTMUX',0b00000001 << block)
-	I2C.peri_write(test, 0b00000001 << point)
-
-def set_DAC(block, point, value):
-	activate_I2C_chip(verbose = 0)
-	test = "TEST" + str(block)
-	I2C.peri_write('TESTMUX',0b00000001 << block)
-	I2C.peri_write(test, 0b00000001 << point)
-	nameDAC = ["A", "B", "C", "D", "E", "F"]
-	DAC = nameDAC[point] + str(block)
-	I2C.peri_write(DAC, value)
-
-
-def activate_async():
-	I2C.peri_write('ReadoutMode',0b01)
-
-def activate_sync():
-	I2C.peri_write('ReadoutMode',0b00)
-
-def enable_pix_counter(r,p):
-	I2C.pixel_write('ENFLAGS', r, p, 0x53)
-
-def enable_pix_disable_ancal(r,p):
-	I2C.pixel_write('ENFLAGS', r, p, 0x13)
-
-def enable_pix_sync(r,p):
-	I2C.pixel_write('ENFLAGS', r, p, 0x53)
-
-def enable_pix_EdgeBRcal(r,p, polarity = "rise"):
-	I2C.pixel_write('ModeSel', r, p, 0b00)
-	if (polarity == "rise"):
-		I2C.pixel_write('ENFLAGS', r, p, 0x57) # with pixel counter for debugging
-	elif (polarity == "fall"):
-		I2C.pixel_write('ENFLAGS', r, p, 0x55) # with pixel counter for debugging
-	else:
-		print "Polarity not recognized"
-		return
-	#sleep(0.001)
-	#return bin(I2C.pixel_read('ENFLAGS', r, p))
-
-def enable_pix_LevelBRcal(r,p, polarity = "rise"):
-
-	I2C.pixel_write('ModeSel', r, p, 0b01)
-	if (polarity == "rise"):
-		I2C.pixel_write('ENFLAGS', r, p, 0x5b) # with pixel counter for debugging
-	elif (polarity == "fall"):
-		I2C.pixel_write('ENFLAGS', r, p, 0x59) # with pixel counter for debugging
-	else:
-		print "Polarity not recognized"
-		return
-
-	#return bin(I2C.pixel_read('ENFLAGS', r, p))
-
-def disable_pixel(r,p):
-	I2C.pixel_write('ENFLAGS', r, p, 0x00)
-	#I2C.pixel_write('ModeSel', r, p, 0x00)
-
-def activate_shift():
-	I2C.peri_write('ReadoutMode',0b10)
-
-def activate_pp():
-	I2C.peri_write('ECM',0b10000001)
-
-def activate_ss():
-	I2C.peri_write('ECM',0b01000001)
-
-def activate_ps():
-	I2C.peri_write('ECM',0b00001000)
-
-def enable_dig_cal(r,p, pattern = 0b00000001):
-	I2C.pixel_write('ENFLAGS', r, p, 0x20)
-	I2C.pixel_write('DigPattern', r, p, pattern)
 ##### plot_extract_scurve function take scurve data and extract threhsold and noise data. If plot = 1, it also plot scurves and histograms
 def plot_extract_scurve(row, pixel, s_type, scurve, n_pulse, nominal_DAC, start, stop, extract, plot):
 	th_array = np.zeros(2040, dtype = np.int )

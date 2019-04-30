@@ -18,7 +18,7 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from datetime import datetime
 
-class ssa_fc7_com():
+class mpa_fc7_com():
 	def __init__(self, fc7_if):
 		self.fc7 = fc7_if
 

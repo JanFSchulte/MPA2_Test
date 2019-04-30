@@ -21,13 +21,7 @@ from mpa_methods.cal_utility import *
 
 
 
-def set_out_mapping(map = [1, 2, 3, 4, 5, 0]):
-	I2C.peri_write('OutSetting_0',map[0])
-	I2C.peri_write('OutSetting_1',map[1])
-	I2C.peri_write('OutSetting_2',map[2])
-	I2C.peri_write('OutSetting_3',map[3])
-	I2C.peri_write('OutSetting_4',map[4])
-	I2C.peri_write('OutSetting_5',map[5])
+
 
 ### New alignment method - USE THIS FUNCTION
 def align_MPA():
