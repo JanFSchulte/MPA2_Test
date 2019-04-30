@@ -20,7 +20,7 @@ echo "  "                                               >> LaunchPy.py
 echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('MPA') "  >> LaunchPy.py
 #echo "from mpa_methods.cal_utility import * "  >> LaunchPy.py
 echo "from mpa_methods.mpa_i2c_conf import *"  >> LaunchPy.py
-echo "from mpa_methods.power_utility import *"  >> LaunchPy.py
+echo "from mpa_methods.mpa_power_utility import *"  >> LaunchPy.py
 echo "from mpa_methods.fast_readout_utility import *"  >> LaunchPy.py
 echo "from mpa_methods.bias_calibration import *"  >> LaunchPy.py
 echo "from mpa_methods.krum_test import *"  >> LaunchPy.py
