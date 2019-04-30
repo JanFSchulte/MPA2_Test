@@ -13,12 +13,12 @@ mpa   = MPA_ASIC(I2C, FC7, pwr, mpa_peri_reg_map, mpa_row_reg_map, mpa_pixel_reg
 cal   = mpa_cal_utility(mpa, I2C, FC7)
 test  = mpa_test_utility(mpa, I2C, FC7)
 
-try:
-	from mpa_methods.mpa_bias_utility import *
-	biascal = mpa_calibration(mpa, I2C, FC7, multimeter, mpa_peri_reg_map, mpa_row_reg_map, mpa_pixel_reg_map)
-except ImportError:
-	biascal = False
-	print "- Impossible to access GPIB instruments"
+#try:
+#	from mpa_methods.mpa_bias_utility import *
+#	biascal = mpa_calibration(mpa, I2C, FC7, multimeter, mpa_peri_reg_map, mpa_row_reg_map, mpa_pixel_reg_map)
+#except ImportError:
+#	biascal = False
+#	print "- Impossible to access GPIB instruments"
 
 #measure     = SSA_measurements(ssa, I2C, FC7, cal, analog_mux_map, pwr, biascal)
 #toptest     = SSA_test_top(ssa, I2C, FC7, cal, biascal, pwr, test, measure)
