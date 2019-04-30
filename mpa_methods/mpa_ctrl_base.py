@@ -36,11 +36,11 @@ class mpa_ctrl_base:
 		self.I2C.peri_write('ReadoutMode',0b00)
 	def activate_shift(self):
 		self.I2C.peri_write('ReadoutMode',0b10)
-	def activate_pp():
+	def activate_pp(self):
 		self.I2C.peri_write('ECM',0b10000001)
-	def activate_ss():
+	def activate_ss(self):
 		self.I2C.peri_write('ECM',0b01000001)
-	def activate_ps():
+	def activate_ps(self):
 		self.I2C.peri_write('ECM',0b00001000)
 # Pixel mode selection
 	def enable_pix_counter(self, r, p):

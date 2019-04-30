@@ -20,19 +20,17 @@ class mpa_test_utility():
 	def test_pp_digital(self, row, pixel):
 		self.I2C.pixel_write('ENFLAGS', row, pixel, 0x20)
 		sleep(0.001)
-		self.I2C.send_test(8)
-		sleep(0.001)
+		self.fc7.send_test(8)
 		return read_stubs()
 	def digital_pixel_test(self, row = range(1,17), pixel = range(1,121), print_log = 1, filename =  "../cernbox/MPA_Results/digital_pixel_test.log"):
-		# I am adding something, I'm really sorry. - Marc
 		OutputBadPix = []
 		t0 = time.time()
 		if print_log:
 			f = open(filename, 'w')
 			f.write("Starting Test:\n")
-		self.ctrl_base.activate_sync()
+		self.mpa.ctrl_base.activate_sync()
 		sleep(0.1)
-		self.ctrl_base.activate_pp()
+		self.mpa.ctrl_base.activate_pp()
 		sleep(0.1)
 		self.I2C.pixel_write('DigPattern', 0, 0,  0b10000000)
 		sleep(0.1)
@@ -40,7 +38,7 @@ class mpa_test_utility():
 		sleep(0.1)
 		for r in row:
 			for p in pixel:
-				self.ctrl_pix.disable_pixel(0,0)
+				self.mpa.ctrl_pix.disable_pixel(0,0)
 				nst, pos, Z, bend = self.test_pp_digital(r, p)
 				check_pix = 0
 				check_row = 0
@@ -59,6 +57,7 @@ class mpa_test_utility():
 					print error_message
 					if print_log:
 						f.write(error_message)
+		self.mpa.ctrl_pix.disable_pixel(0,0)
 		if print_log:
 			f.write("Test Completed")
 			f.close()
@@ -67,26 +66,24 @@ class mpa_test_utility():
 		print "Elapsed Time: " + str(t1 - t0)
 		return OutputBadPix
 	def test_pp_analog(self, row, pixel):
-		self.I2C.enable_pix_EdgeBRcal(row, pixel)
+		self.mpa.ctrl_pix.enable_pix_EdgeBRcal(row, pixel)
 		sleep(0.001)
 		self.fc7.send_test(8)
-		#sleep(0.001)
 		return read_stubs()
 	def analog_pixel_test(self, row = range(1,17), pixel = range(2,120), print_log = 1, filename =  "../cernbox/MPA_Results/analog_pixel_test.log"):
 		t0 = time.time()
-		# I am adding something, I'm really sorry. - Marc
 		OutputBadPix = []
 		if print_log:
 			f = open(filename, 'w')
 			f.write("Starting Test:\n")
-		self.ctrl_base.set_calibration(200)
-		self.ctrl_base.set_threshold(200)
-		self.ctrl_base.activate_sync()
-		self.ctrl_base.activate_pp()
+		self.mpa.ctrl_base.set_calibration(200)
+		self.mpa.ctrl_base.set_threshold(200)
+		self.mpa.ctrl_base.activate_sync()
+		self.mpa.ctrl_base.activate_pp()
 		sleep(0.1)
 		for r in row:
 			for p in pixel:
-				self.ctrl_pix.disable_pixel(0,0)
+				self.mpa.ctrl_pix.disable_pixel(0,0)
 				nst, pos, Z, bend = self.test_pp_analog(r, p)
 				check_pix = 0
 				check_row = 0
@@ -105,6 +102,7 @@ class mpa_test_utility():
 					print error_message
 					if print_log:
 						f.write(error_message)
+		self.mpa.ctrl_pix.disable_pixel(0,0)
 		if print_log:
 			f.write("Test Completed")
 			f.close()
@@ -121,7 +119,7 @@ class mpa_test_utility():
 			value = strip[4] << 24 | strip[5] << 16 | strip[6] << 8 | strip[7]
 			reg = "cnfg_phy_SSA_gen_stub_data_format_" +str(l) + "_1"
 			self.fc7.write(reg, value)
-	def strip_in_def( line ,strip = 8*[128]):
+	def strip_in_def( self, line ,strip = 8*[128]):
 		value = strip[0] << 24 | strip[1] << 16 | strip[2] << 8 | strip[3]
 		reg = "cnfg_phy_SSA_gen_stub_data_format_" +str(line) + "_0"
 		self.fc7.write(reg, value)
@@ -154,9 +152,9 @@ class mpa_test_utility():
 				count_val += 1
 			count_line += 1
 		return line_check
-	def strip_in_scan(self, n_pulse = 10, probe = 0, print_file = 1, filename =  "../cernbox/MPA_Results/strip_in_scan"):
+	def strip_in_scan(self, n_pulse = 10, probe = 0, print_file = 0, filename =  "../cernbox/MPA_Results/strip_in_scan"):
 		t0 = time.time()
-		self.ctrl_base.activate_ss()
+		self.mpa.ctrl_base.activate_ss()
 		data_array = np.zeros((16, 8 ), dtype = np.float16 )
 		if probe:
 			self.I2C.peri_write("InSetting_0",0)
@@ -188,30 +186,30 @@ class mpa_test_utility():
 		return data_array
 # Memory Test
 	def memory_test(self, latency, row, pixel, diff, dig_inj = 1, verbose = 1): # Diff = 2
-		self.ctrl_pix.disable_pixel(0,0)
+		self.mpa.ctrl_pix.disable_pixel(0,0)
 		if dig_inj:
 			self.I2C.pixel_write('ENFLAGS', row, pixel, 0x20)
 		else:
-			self.ctrl_pix.enable_pix_LevelBRcal(row,pixel, polarity = "rise")
+			self.mpa.ctrl_pix.enable_pix_LevelBRcal(row,pixel, polarity = "rise")
 		sleep(0.001)
 		self.fc7.SendCommand_CTRL("start_trigger")
 		sleep(0.001)
 		return read_L1(verbose)
-	def mem_test(self, latency = 255, delay = [10], row = range(1,17), pixel = range(1,121), diff = 2, print_log = 1, filename =  "../cernbox/MPA_Results/digital_mem_test.log", dig_inj =1, gate = 0, verbose = 1):
+	def mem_test(self, latency = 255, delay = [10], row = range(1,17), pixel = range(1,121), diff = 2, print_log = 0, filename =  "../cernbox/MPA_Results/digital_mem_test.log", dig_inj =1, gate = 0, verbose = 1):
 		t0 = time.time()
 		bad_pix = []
 		print "Running Test:"
 		if print_log:
 			f = open(filename, 'w')
 			f.write("Starting Test:\n")
-		self.ctrl_base.activate_sync()
-		self.ctrl_base.activate_pp()
+		self.mpa.ctrl_base.activate_sync()
+		self.mpa.ctrl_base.activate_pp()
 		self.I2C.row_write('L1Offset_1', 0,  latency - diff)
 		self.I2C.row_write('L1Offset_2', 0,  0)
 		self.I2C.row_write('MemGatEn', 0,  gate)
 		self.I2C.pixel_write('DigPattern', 0, 0,  0b00000001)
 		self.fc7.write("cnfg_fast_backpressure_enable", 0)
-		self.ctrl_pix.disable_pixel(0,0)
+		self.mpa.ctrl_pix.disable_pixel(0,0)
 		stuck = 0; i2c_issue = 0; error = 0; missing = 0
 		for d in delay:
 			Configure_TestPulse_MPA(delay_after_fast_reset = d + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 200, number_of_test_pulses = 1, enable_L1 = 1, enable_rst = 1, enable_init_rst = 1)
@@ -225,27 +223,27 @@ class mpa_test_utility():
 			#sleep(1)
 			for r in row:
 				for p in pixel:
-					try:
-						strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = self.memory_test(latency = latency, row = r, pixel = p, diff = diff, dig_inj = dig_inj, verbose = 0)
-						found = 0
-						for i in range(0, pixel_counter):
-							if (pos_pixel[i] == p) and (Z[i] == r):
-								found = 1
-							elif (pos_pixel[i] == p-1) and (Z[i] == r):
-								found = 1
-								i2c_issue += 1
-						if (pixel_counter > 1): stuck += 1
-						if (not found):
-							bad_pix.append([p,r])
-							error += 1
-							error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(d) + " " + str(pixel_counter) + " " +  str(pos_pixel) + " " + str(Z) + "\n"
-							if verbose: print error_message
-							if print_log: f.write(error_message)
-					except TypeError:
-						missing += 1
-						error_message = "Header not Found in Pixel: " + str(p) + " of Row: " + str(r) + "\n"
+					#try:
+					strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = self.memory_test(latency = latency, row = r, pixel = p, diff = diff, dig_inj = dig_inj, verbose = 0)
+					found = 0
+					for i in range(0, pixel_counter):
+						if (pos_pixel[i] == p) and (Z[i] == r):
+							found = 1
+						elif (pos_pixel[i] == p-1) and (Z[i] == r):
+							found = 1
+							i2c_issue += 1
+					if (pixel_counter > 1): stuck += 1
+					if (not found):
+						bad_pix.append([p,r])
+						error += 1
+						error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(d) + " " + str(pixel_counter) + " " +  str(pos_pixel) + " " + str(Z) + "\n"
 						if verbose: print error_message
 						if print_log: f.write(error_message)
+					#except TypeError:
+					#	missing += 1
+					#	error_message = "Header not Found in Pixel: " + str(p) + " of Row: " + str(r) + "\n"
+					#	if verbose: print error_message
+					#	if print_log: f.write(error_message)
 		print "-------------------------------------"
 		print "-------------------------------------"
 		print " Number of error: ", error
