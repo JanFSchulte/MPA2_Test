@@ -24,7 +24,6 @@ i2c_command         		0000000e    ffffffff     1     1   * SYS I2C: i2c command
   i2c_regaddr 	  		0000000e    0000ff00     1     1   * SYS I2C: register
   i2c_wrdata  			0000000e    000000ff     1     1   * SYS I2C: data
 *
-
 i2c_reply			0000000f    ffffffff     1     0   * SYS I2C: i2c reply
   i2c_reply_status      	0000000f    0c000000     1     0   * SYS I2C: status
   i2c_reply_error       	0000000f    08000000     1     0   * SYS I2C: error
@@ -124,7 +123,6 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
    cnfg_fast_tp_fsm_l1a_en		40012009    00000040     1     1 *trigger source 6: enable l1a signal
    cnfg_fast_seu_ntriggers_to_skip	4001200A    ffffffff     1     1 *trigger source 6: number of l1a to skip
 * Physical Interface Abstraction Layer
-   cnfg_phy_slvs_ssa_first_counter_del  40013000    0000ff00	 1     1
    cnfg_phy_slvs_raw_mode_en		40013000    00000001     1     1 *1 - outputs 20000 clock cycles of the raw data from the stub lines, 0 - outputs parsed counters for the MPA/SSA chips
    cnfg_phy_i2c_freq                    40013001    0000000f     1     1 *setting of the i2c frequency clock. (d0, 0.1MHz), (d1,0.5MHz), (d2,0.4MHz), (d3,0.8MHz), (d4,1MHz), (d5,2MHz), (d6,4MHz), (d7,5MHz), (d8,8MHz), (d9,10MHz)
    cnfg_phy_i2c_master_en		40013001    00000100     1     1 *enable I2C master, 1 by default
@@ -169,10 +167,6 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
    cnfg_phy_l1_MPA_SSA_SEU_check_patterns6	40013024    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
    cnfg_phy_l1_MPA_SSA_SEU_check_patterns7	40013025    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
    cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC	40013026    000000ff     1     1 *BXs to wait before starting to do the automatic comparison
-   cnfg_phy_lateral_MPA_SSA_SEU_check_patterns1	40013026    0000ffff     1     1 *patterns to load. These will be compared to the SSA lateral data during SEU tests
-
-*   cnfg_phy_l1_MPA_SSA_SEU_check_misc_enable_first_error_bit_check	40013026    00000100     1     1 *if one also the first error bit from the MPA package is compared to the check pattern
-*   cnfg_phy_lateral_MPA_SSA_SEU_check_patterns1	40013027    0000ffff     1     1 *patterns to load. These will be compared to the SSA lateral data during SEU tests
 
 * Readout Block
    cnfg_readout_packet_nbr		40015000    0000ffff	 1     1 *number of events in one packet, 0 means 1 event
@@ -196,6 +190,8 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
 *
    cnfg_tlu_handshake_mode		40017000    00000003     1     1 *TLU handhsake mode: 0 - no handshake, 1 - simple handshake, 2 - data handshake
    cnfg_tlu_enabled			40017000    00000010     1     1 *Enable TLU block
+   cnfg_tlu_trigger_id_delay            40017000    00000f00     1     1 *Set trigger id delay
+
 *------------------------------------------------------------------------------------------
 *----------------------------------------------- Ctrl Registers ---------------------------
 *------------------------------------------------------------------------------------------
@@ -255,23 +251,11 @@ ipb_daq_system_ctrl			40020000    ffffffff     1     1     *Base for the control
    ctrl_phy_ssa_gen_lateral_phase_1     40023004    000000ff     1     1 *For testing of the single SSA chip. Change the phase of the fake left lateral data going to the SSA chip. The unit of the phase 1/168th of the 320MHz clock cycle. Whatch out: this is an incremental process.
    ctrl_phy_ssa_gen_lateral_phase_2     40023004    0000ff00     1     1 *For testing of the single SSA chip. Change the phase of the fake right lateral data going to the SSA chip. The unit of the phase 1/168th of the 320MHz clock cycle. Whatch out: this is an incremental process.
    ctrl_phy_SLVS_compare_start     40023005    00000001     1     1 *start the comparison of stub/centroid data for MPA/SSA SEU tests
-   ctrl_phy_SLVS_compare_stop     40023005    00000002     1     1 *stop the comparison of stub/centroid and l1 data for MPA/SSA SEU tests
-   ctrl_phy_l1_SLVS_compare_start     40023005    00000004     1     1 *start the comparison of l1 data for MPA/SSA SEU tests
+   ctrl_phy_SLVS_compare_stop     40023005    00000002     1     1 *stop the comparison of stub/centroid data for MPA/SSA SEU tests
    ctrl_phy_SLVS_compare_read_data1_fifo     40023006    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
    ctrl_phy_SLVS_compare_read_data2_fifo     40023007    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
    ctrl_phy_SLVS_compare_read_data3_fifo     40023008    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
    ctrl_phy_SLVS_compare_read_data4_fifo     40023009    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
-   ctrl_phy_l1_SLVS_compare_read_data1_fifo     4002300a    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
-   ctrl_phy_l1_SLVS_compare_read_data2_fifo     4002300b    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
-   ctrl_phy_l1_SLVS_compare_read_data3_fifo     4002300c    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
-   ctrl_phy_l1_SLVS_compare_read_data4_fifo     4002300d    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
-   ctrl_phy_l1_SLVS_compare_read_data5_fifo     4002300e    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
-   ctrl_phy_l1_SLVS_compare_read_data6_fifo     4002300f    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
-   ctrl_phy_l1_SLVS_compare_read_data7_fifo     40023010    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
-   ctrl_phy_l1_SLVS_compare_read_data8_fifo     40023011    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests: FC7 BX counter
-   ctrl_phy_l1_SLVS_compare_read_data9_fifo     40023012    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests: MPA/SSA 9/4 LSBs: mirror L1 counter
-   ctrl_phy_lateral_SLVS_compare_read_data1_fifo  40023013    ffffffff     1     0 *read out part of the FIFO containing mismatched lateral data for MPA/SSA SEU tests
-   ctrl_phy_lateral_SLVS_compare_read_data2_fifo  40023014    ffffffff     1     0 *read out part of the FIFO containing mismatched lateral data for MPA/SSA SEU tests
 * Readout Block
    ctrl_readout_reset			40025000    00000001	 1     1 *reset readout block. WARNING: it is not clearing
    ctrl_readout_done			40025000    00000002	 1     1 *...
@@ -324,7 +308,6 @@ ipb_daq_system_stat			40030000    ffffffff     1     0     *Base for the status 
    stat_phy_phase_fsm_state_chip1	40033002    0f000000	 1     0     *same for chip 1
    stat_phy_phase_fsm_state_chip0_ssa_lateral_l     40033002    0000000f	 1     0 *status of the phase tuning for ssa lateral data l
    stat_phy_phase_fsm_state_chip0_ssa_lateral_r     40033002    000000f0	 1     0 *status of the phase tuning for ssa lateral data r
-*
    stat_phy_slvs_compare_data_ready     40033003    00000001	 1     0 *data ready flag for the data stored in the FIFO for MPA/SSA SEU testing (goes to 1 when state machine is finished with comparing and back to 0 when FIFO empty)
    stat_phy_slvs_compare_state_machine 40033003    0000001E	 1     0 *gives you back the number of the state where the state machine to compare stub/centroid data for MPA/SSA SEU testing is located
    stat_phy_slvs_compare_fifo_almost_full 40033003    00000020	 1     0 *almost full flag for the FIFO storing the mismatches in stub/centroid data for MPA/SSA SEU testing
@@ -340,12 +323,6 @@ ipb_daq_system_stat			40030000    ffffffff     1     0     *Base for the status 
    stat_phy_l1_slvs_compare_number_good_data 40033006    ffffffff	 1     0 *32 bit counter saying how many l1 frames matched the check pattern (counter stops at it's max, is reset when starting the SEU compare state machine again or on reset)
    stat_phy_l1_slvs_compare_number_l1_triggers 40033007    ffffffff	 1     0 *32 bit counter saying how many l1 triggers were sent during running of the state machine
    stat_phy_l1_slvs_compare_number_l1_headers_found 40033008    ffffffff	 1     0 *32 bit counter saying how many l1 headers were found during the running of the state machine
-   stat_phy_lateral_slvs_compare_data_ready             40033009    00000001	 1     0 *data ready flag for the data stored in the FIFO for MPA/SSA SEU testing (goes to 1 when state machine is finished with comparing and back to 0 when FIFO empty)
-   stat_phy_lateral_slvs_compare_state_machine          40033009    0000001E	 1     0 *gives you back the number of the state where the state machine to compare stub/centroid data for MPA/SSA SEU testing is located
-   stat_phy_lateral_slvs_compare_fifo_almost_full       40033009    00000020	 1     0 *almost full flag for the FIFO storing the mismatches in lateral data for MPA/SSA SEU testing
-   stat_phy_lateral_slvs_compare_fifo_empty             40033009    00000040	 1     0 *empty flag for the FIFO storing the mismatches in lateral data for MPA/SSA SEU testing
-   stat_phy_lateral_slvs_compare_numbere_events_written_to_fifo 40033009    003fff00	 1     0 *counter counting the number of events written to the fifo during the running of the compare state machine
-   stat_phy_lateral_slvs_compare_number_good_data       4003300A    ffffffff	 1     0 *32 bit counter saying how many BXs matched the check pattern (counter stops at it's max, is reset when starting the SEU compare state machine again or on reset)
    stat_slvs_debug_general              4003300F    ffffffff     1     0
    stat_slvs_debug_mpa_l1_ready		4003300F    00000001	 1     0     *SLVS debug L1 line buffered
    stat_slvs_debug_mpa_stub_ready	4003300F    00000002	 1     0     *SLVS debug stub data buffered
@@ -380,6 +357,9 @@ ipb_daq_system_stat			40030000    ffffffff     1     0     *Base for the status 
    stat_ddr3_self_check_done		40038000    00000004	 1     0     *DDR3 self check complete
    stat_ddr3_num_errors			40038001    ffffffff	 1     0     *Number of errors obtained during self test
    stat_ddr3_num_words			40038002    ffffffff	 1     0     *Number of words examined during self test
+* DDR3 Readout (direct access to the DDR3)
+   ddr3_readout                         C0000000    ffffffff     1     0     *the ddr3 address zero itself
+
 *--------------------------------------------------------------------
 *---------------------------- MPA SSA BOARD -------------------------
 *--------------------------------------------------------------------

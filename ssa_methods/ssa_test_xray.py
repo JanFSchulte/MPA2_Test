@@ -19,7 +19,7 @@ class SSA_test_xray():
 		self.ssa = ssa;	  self.I2C = I2C;	self.fc7 = fc7;
 		self.cal = cal;   self.pwr = pwr;   self.biascal = biascal;
 		self.test = test; self.measure = measure; self.toptest = toptest
-		self.biascal.set_gpib_address(12)
+		#self.biascal.set_gpib_address(12)
 
 
 	def configure_tests(self):

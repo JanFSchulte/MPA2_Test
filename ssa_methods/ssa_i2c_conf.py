@@ -12,15 +12,17 @@ class ssa_i2c_conf:
 		self.debug = False
 		self.readback = False
 
-	def set_debug_mode(self, value = True):
+	def set_debug_mode(self, value = True, display = 0):
 		self.debug = value
-		if(value): print "->  \tSSA Configuration debug mode Enabled"
-		else: print "->  \tSSA Configuration debug mode Disabled"
+		if(display):
+			if(value): print "->  \tSSA Configuration debug mode Enabled"
+			else: print "->  \tSSA Configuration debug mode Disabled"
 
-	def set_readback_mode(self, value = True):
+	def set_readback_mode(self, value = True, display = 0):
 		self.readback = value
-		if(value): print "->  \tSSA Configuration Write-Read-Back mode Enabled"
-		else: print "->  \tSSA Configuration Write-Read-Back mode Disabled"
+		if(display):
+			if(value): print "->  \tSSA Configuration Write-Read-Back mode Enabled"
+			else: print "->  \tSSA Configuration Write-Read-Back mode Disabled"
 
 	def set_freq(self, value):
 		self.freq = value

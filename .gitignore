@@ -5,3 +5,5 @@ LaunchPy.py
 *tmp*
 *temp*
 myScripts/ipaddr_ssa.dat
+vivado*
+fw_bitfiles/

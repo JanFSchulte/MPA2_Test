@@ -325,13 +325,12 @@ def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121
 	for d in delay:
 		Configure_TestPulse_MPA(delay_after_fast_reset = d + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 200, number_of_test_pulses = 1, enable_L1 = 1, enable_rst = 1, enable_init_rst = 1)
 		sleep(1)
-		## Automatic change of sempling edge on error
-		#try:
-		#	strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = memory_test(latency = latency, row = 10, pixel = 5, diff = diff, dig_inj = dig_inj, verbose = 0)
-		#except TypeError:
-		#	print "Header not Found! Changing sampling phase of T1"
-		#	I2C.peri_write('EdgeSelT1Raw', 0)
-		#sleep(1)
+		try:
+			strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = memory_test(latency = latency, row = 10, pixel = 5, diff = diff, dig_inj = dig_inj, verbose = 0)
+		except TypeError:
+			print "Header not Found! Changing sampling phase of T1"
+			#I2C.peri_write('EdgeSelT1Raw', 0)
+		sleep(1)
 		for r in row:
 			for p in pixel:
 				try:

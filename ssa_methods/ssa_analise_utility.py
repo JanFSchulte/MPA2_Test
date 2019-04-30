@@ -40,28 +40,29 @@ class SSA_Analise_Test_results():
 		else: self.__set_run_preset(preset)
 
 	def set_data_path(self, val):
-		self.path = path # the path of the data
+		self.path = val # the path of the data
 	def set_test_name(self, val):
-		self.run_name = name # The initial part of the name of every SSA log
+		self.run_name = val # The initial part of the name of every SSA log
 	def set_data_rate(self, val):
-		self.measure_rate = measure_rate # for instance the X-Ray Dose Rate or Temperature Step
+		self.measure_rate = val # for instance the X-Ray Dose Rate or Temperature Step
 	def set_dataseries_name(self, val):
-		self.XLabel_Series = XLabel_Series
+		self.XLabel_Series = val
 
 	## Top Methods ####################################################################################
 
 	def FE_Threshold_Trimming(self, filename = 'Init', plot = True):
+		plt.clf()
 		return self.FE_Threshold_Trimming__Plot(filename = filename, plot = plot)
 
 
 	def FE_Gain_Noise_Std(self, plot = True, evaluate = False, return_values = False):
+		er = True
 		if not evaluate:
-			er = True
-			calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, er = self.FE_Gain_Noise_Std__Reload()
+			calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets, er = self.FE_Gain_Noise_Std__Reload()
 		if(er or evaluate):
-			calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean = self.FE_Gain_Noise_Std__Calculate()
+			calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets = self.FE_Gain_Noise_Std__Calculate()
 		if(plot):
-			self.FE_Gain_Noise_Std__Plot(calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean)
+			self.FE_Gain_Noise_Std__Plot(calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets)
 		if return_values:
 			return calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean
 
@@ -78,14 +79,17 @@ class SSA_Analise_Test_results():
 		G = self.Convert_ThDacCalDac_to_mVfC(FE_gain, CAL_gain_array, THD_gain_array)
 		return G
 
-	def Multi_run(self, runlist = [2,5]):
+	def Multi_run(self, runlist = [2,5], evaluate = False):
 		self.noise_mean = []; self.noise_std = []; self.noise_x = [];self.PAVDD = []; self.PDVDD = []; self.pwr_x = []; self.VBG = []; self.thresholds = [];
 		for r in runlist:
 			self.__set_run_preset(r)
 			self.pltname = 'MULTI-1'
 			self.DAC_Gain_Ofs_Dnl_Inl_all()
-			self.FE_Gain_Noise_Std()
-			self.Power_plot()
+			self.FE_Gain_Noise_Std(evaluate = evaluate)
+			try:
+				self.Power_plot()
+			except: #in case of single file or recalibration point
+				pass
 		self.noise_gain_multirun_plot(len(runlist))
 		self.power_multirun_plot(len(runlist))
 		self.dacs_multirun_plot(len(runlist))
@@ -154,7 +158,7 @@ class SSA_Analise_Test_results():
 			thmean[str(cal)] = np.array(c_thmean, dtype = float)
 			sigmamean[str(cal)] = np.array(c_sigmamean, dtype = float)
 			CSV.array_to_csv(c_thresholds, self.path + 'ANALYSIS/S-Curve_Threshold_cal_'+str(cal)+'.csv')
-			CSV.array_to_csv(c_noise,     self.path + 'ANALYSIS/S-Curve_Noise_cal_'+str(cal)+'.csv')
+			CSV.array_to_csv(c_noise,      self.path + 'ANALYSIS/S-Curve_Noise_cal_'+str(cal)+'.csv')
 			CSV.array_to_csv(c_thmean,     self.path + 'ANALYSIS/S-Curve_Threshold_Mean_cal_'+str(cal)+'.csv')
 			CSV.array_to_csv(c_sigmamean,  self.path + 'ANALYSIS/S-Curve_Noise_Mean_cal_'+str(cal)+'.csv')
 		# FE Gain and offset
@@ -162,7 +166,8 @@ class SSA_Analise_Test_results():
 		if not (np.shape(thresholds[ str(calpulses[0])])[0] == np.shape(thresholds[ str(calpulses[1])])[0] == np.shape(thresholds[ str(calpulses[2])])[0]):
 			print '->  \t ERROR. The number of files for different calibration charge are not equal. This may make the fitting fail.'
 		nelements = np.shape(thresholds[ str(calpulses[0])])[0]
-		gains = np.zeros([120,nelements]);
+		gains    = np.zeros([120,nelements]);
+		offsets  = np.zeros([120,nelements]);
 		gainmean = np.zeros(nelements);
 		#return thresholds, calpulses
 		print nelements
@@ -173,11 +178,13 @@ class SSA_Analise_Test_results():
 			for i in range( 0, nelements ):
 				par, cov = curve_fit( f= f_line,  xdata = calpulses, ydata = ths[:, i], p0 = [0, 0])
 				gains[s, i] = par[0]
+				offsets[s, i] = par[1]
 		for i in range( 0, nelements ):
 			gainmean[i] = np.average(gains[:, i] )
-		CSV.array_to_csv(gains, self.path    + 'ANALYSIS/S-Curve_Gain.csv')
+		CSV.array_to_csv(gains,    self.path + 'ANALYSIS/S-Curve_Gain.csv')
 		CSV.array_to_csv(gainmean, self.path + 'ANALYSIS/S-Curve_Gain_Mean.csv')
-		return calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean
+		CSV.array_to_csv(offsets,  self.path + 'ANALYSIS/S-Curve_Offset.csv')
+		return calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets
 
 
 
@@ -188,27 +195,30 @@ class SSA_Analise_Test_results():
 		f1 = self.path + 'ANALYSIS/S-Curve_cal_values.csv'
 		f2 = self.path + 'ANALYSIS/S-Curve_Gain.csv'
 		f3 = self.path + 'ANALYSIS/S-Curve_Gain_Mean.csv'
+		f4 = self.path + 'ANALYSIS/S-Curve_Offset.csv'
 		if(not( os.path.isfile(f1) and os.path.isfile(f2) and os.path.isfile(f3) )):
 			print '->  \tImpossible to find pre-calculated results. Re-calculating..'
-			return -1,-1,-1,-1,-1,-1,-1, True
+			return -1,-1,-1,-1,-1,-1,-1, -1, True
 		calpulses = CSV.csv_to_array(f1)[:,1]
 		c_gains = CSV.csv_to_array(f2)
+		c_offsets = CSV.csv_to_array(f4)
 		gainmean = CSV.csv_to_array(f3)[:,1]
 		gains = c_gains[:, 1:(np.shape(c_gains)[1])]
+		offsets = c_offsets[:, 1:(np.shape(c_offsets)[1])]
 		for cal in calpulses:
 			c_thresholds = CSV.csv_to_array(self.path + 'ANALYSIS/S-Curve_Threshold_cal_'+str(cal)+'.csv')
-			c_noise     = CSV.csv_to_array(self.path + 'ANALYSIS/S-Curve_Noise_cal_'+str(cal)+'.csv')
+			c_noise      = CSV.csv_to_array(self.path + 'ANALYSIS/S-Curve_Noise_cal_'+str(cal)+'.csv')
 			c_thmean     = CSV.csv_to_array(self.path + 'ANALYSIS/S-Curve_Threshold_Mean_cal_'+str(cal)+'.csv')
 			c_sigmamean  = CSV.csv_to_array(self.path + 'ANALYSIS/S-Curve_Noise_Mean_cal_'+str(cal)+'.csv')
 			thresholds[str(cal)] = c_thresholds[:, 1:(np.shape(c_thresholds)[1])]
 			noise[str(cal)]     = c_noise[:, 1:(np.shape(c_noise)[1])]
 			thmean[str(cal)]     = c_thmean[:, 1]
 			sigmamean[str(cal)]  = c_sigmamean[:, 1]
-		return calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, False
+		return calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets, False
 
+	#def FE_Gain_Noise_Std__Plot_singleRun(self, alpulses, thresholds, noise, thmean, sigmamean, gains, gainmean):
 
-
-	def FE_Gain_Noise_Std__Plot(self, calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean):
+	def FE_Gain_Noise_Std__Plot(self, calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets):
 		typcal = str(calpulses[int(len(calpulses)/2)])
 		self.typcal = typcal
 		multifile = (np.shape(thresholds[typcal])[0] > 1)
@@ -235,22 +245,25 @@ class SSA_Analise_Test_results():
 			sl_std  = self._sliding_mean(gain_mean , 1)
 			plt.fill_between(x, gain_mean - gain_std,  gain_mean + gain_std, color="#3F5D7D")
 			plt.plot(x, gain_mean, color="white", lw=3)
-			plt.savefig(self.path + 'ANALYSIS/S-Curve_Gain_Mean'+self.pltname+'.png', bbox_inches="tight");
+			fpl = self.path + 'ANALYSIS/S-Curve_Gain_Mean'+self.pltname+'.png'
+			plt.savefig(fpl, bbox_inches="tight");
+			print("->  \tPlot saved in %s" % (fpl))
 
 		# FE Gain distribution ################################
 		plt.clf();
-		w, h = plt.figaspect(1/1.5)
-		fig = plt.figure(figsize=(w,h))
+		#w, h = plt.figaspect(1/1.5)
+		#fig = plt.figure(figsize=(w,h))
+		fig = plt.figure(figsize=(18,12))
 		plt.style.use('seaborn-deep')
 		ax = plt.subplot(111)
 		ax.spines["top"].set_visible(False)
 		ax.spines["right"].set_visible(False)
 		ax.get_xaxis().tick_bottom()
 		ax.get_yaxis().tick_left()
-		plt.xticks(fontsize=16)
-		plt.yticks(fontsize=16)
-		plt.ylabel("Normalised distribution", fontsize=16)
-		plt.xlabel('Front-End Gain [mv/fC]', fontsize=16)
+		plt.xticks(fontsize=32)
+		plt.yticks(fontsize=32)
+		plt.ylabel("Normalised distribution", fontsize=32)
+		plt.xlabel('Front-End Gain [mv/fC]', fontsize=32)
 		FE_Gain_mVfC, THD_gain_array, CAL_gain_array, = self.Convert_ThDacCalDac_to_mVfC( np.ones(len(gains[0,:])) , return_vals = True)
 		bn = False
 		sermean = []
@@ -267,24 +280,62 @@ class SSA_Analise_Test_results():
 			pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
 			plt.plot(lnspc, pdf_g, 'r' , label="Norm") # plot i
 			sermean.append(np.mean(ser))
-			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{G_{FE}} = %6.2f $' % (sermean[i]), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=16, color='darkred')
-		plt.savefig(self.path + 'ANALYSIS/S-Curve_Gain_hist'+self.pltname+'.png', bbox_inches="tight");
+			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{G_{FE}} = %6.2f $' % (sermean[i]), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
+		fpl = self.path + 'ANALYSIS/S-Curve_Gain_hist'+self.pltname+'.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
+
+		# FE Offset distribution ################################
+		plt.clf();
+		#w, h = plt.figaspect(1/1.5)
+		#fig = plt.figure(figsize=(w,h))
+		fig = plt.figure(figsize=(18,12))
+		plt.style.use('seaborn-deep')
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(False)
+		ax.spines["right"].set_visible(False)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.xticks(fontsize=32)
+		plt.yticks(fontsize=32)
+		plt.ylabel("Normalised distribution", fontsize=32)
+		plt.xlabel('Front-End Offset [mv]', fontsize=32)
+		bn = False
+		sermean = []
+		for i in range(len(self.instances_to_plot)):
+			ser = (offsets[:,self.instances_to_plot[i]]) * offsets[self.instances_to_plot[i]]
+			print len(ser)
+			if(bn is False):
+				bn = np.arange(min(ser)-2, max(ser)+2, 0.2)
+			plt.hist(ser, normed = True, bins = bn, alpha = 0.7)
+			xt = plt.xticks()[0] # find minimum and maximum of xticks to know where we should compute theoretical distribution
+			xmin, xmax = min(xt), max(xt)
+			lnspc = np.linspace(xmin, xmax, len(ser))
+			m, s = stats.norm.fit(ser) # get mean and standard deviation
+			pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
+			plt.plot(lnspc, pdf_g, 'r' , label="Norm") # plot i
+			sermean.append(np.mean(ser))
+			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{OFS_{FE}} = %6.2f mV$' % (sermean[i]), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
+		fpl = self.path + 'ANALYSIS/S-Curve_Offset_hist'+self.pltname+'.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
 
 		# FE Noise evolution #################################
 		if multifile:
 			plt.clf();
-			w, h = plt.figaspect(1/6.0)
-			fig = plt.figure(figsize=(w,h))
+			#w, h = plt.figaspect(1/6.0)
+			#fig = plt.figure(figsize=(w,h))
+			fig = plt.figure(figsize=(18,12))
 			ax = plt.subplot(111)
 			ax.spines["top"].set_visible(False)
 			ax.spines["right"].set_visible(False)
 			ax.get_xaxis().tick_bottom()
 			ax.get_yaxis().tick_left()
 			x = np.array(range( min( len(noise[typcal][:,0]), len(THD_gain_array), len(FE_Gain_mVfC)))) * self.measure_rate
-			plt.xticks(range(np.int(np.round(float(np.min(x))/10)*10), np.int(np.round(float(np.max(x))/10)*10) , 20), fontsize=16)
-			plt.yticks(fontsize=16)
-			plt.ylabel("Front-End Noise", fontsize=16)
-			plt.xlabel(self.XLabel_Series, fontsize=16)
+			plt.xticks(range(np.int(np.round(float(np.min(x))/10)*10), np.int(np.round(float(np.max(x))/10)*10) , 20), fontsize=32)
+			plt.yticks(fontsize=32)
+			plt.ylabel("Front-End Noise", fontsize=32)
+			plt.xlabel(self.XLabel_Series, fontsize=32)
 			ser = []
 			for i in x:
 				ser.append( self.Convert_Noise_dac_to_electrons(noise[typcal][i,:], THD_gain_array[i] , FE_Gain_mVfC[i]) )
@@ -298,25 +349,30 @@ class SSA_Analise_Test_results():
 			noise_mean_smooth = interpolate.spline(x, noise_mean, xnew)
 			noise_std_smooth = interpolate.spline(x, noise_std, xnew)
 			noise_hat = scypy_signal.savgol_filter(x = noise_mean_smooth , window_length = 999, polyorder = 5)
-			plt.fill_between(xnew, noise_hat - noise_std_smooth,  noise_hat + noise_std_smooth, color="#3F5D7D", alpha = 0.3)
+			color=iter(sns.color_palette('deep'))
+			c = next(color)
+			plt.fill_between(xnew, noise_hat - noise_std_smooth,  noise_hat + noise_std_smooth, color=c, alpha = 0.3, lw = 3)
 			#plt.plot(x, noise_mean, color='#3F5D7D', lw=1)
-			plt.plot(xnew, noise_hat, color='r', lw=1)
-			plt.savefig(self.path + 'ANALYSIS/S-Curve_Noise_Mean'+self.pltname+'.png', bbox_inches="tight");
+			plt.plot(xnew, noise_hat, color=c, lw=1)
+			fpl = self.path + 'ANALYSIS/S-Curve_Noise_Mean'+self.pltname+'.png'
+			plt.savefig(fpl, bbox_inches="tight");
+			print("->  \tPlot saved in %s" % (fpl))
 
 		# Noise #############################################
 		plt.clf();
-		w, h = plt.figaspect(1/1.5)
-		fig = plt.figure(figsize=(w,h))
+		#w, h = plt.figaspect(1/1.5)
+		#fig = plt.figure(figsize=(w,h))
+		fig = plt.figure(figsize=(18,12))
 		plt.style.use('seaborn-deep')
 		ax = plt.subplot(111)
 		ax.spines["top"].set_visible(False)
 		ax.spines["right"].set_visible(False)
 		ax.get_xaxis().tick_bottom()
 		ax.get_yaxis().tick_left()
-		plt.xticks(fontsize=16)
-		plt.yticks(fontsize=16)
-		plt.ylabel("Normalised distribution", fontsize=16)
-		plt.xlabel('Noise [e-]', fontsize=16)
+		plt.xticks(fontsize=32)
+		plt.yticks(fontsize=32)
+		plt.ylabel("Normalised distribution", fontsize=32)
+		plt.xlabel('Noise [e-]', fontsize=32)
 		bn = False
 		FE_Gain_mVfC, THD_gain_array, CAL_gain_array, = self.Convert_ThDacCalDac_to_mVfC( np.ones(len(gains[0,:])) , return_vals = True)
 		ser = []
@@ -335,22 +391,25 @@ class SSA_Analise_Test_results():
 			m, s = stats.norm.fit(ser[i]) # get mean and standard deviation
 			pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
 			plt.plot(lnspc, pdf_g, color = 'red' , label="Norm") # plot i
-			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{noise} = %6.2f $' % (np.mean(ser[i])), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=16, color='darkred')
-		plt.savefig(self.path + 'ANALYSIS/S-Curve_Noise_hist'+self.pltname+'.png', bbox_inches="tight");
+			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{noise} = %6.2f $' % (np.mean(ser[i])), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
+		fpl = self.path + 'ANALYSIS/S-Curve_Noise_hist'+self.pltname+'.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
 
 		plt.clf();
-		w, h = plt.figaspect(1/1.5)
-		fig = plt.figure(figsize=(w,h))
+		#w, h = plt.figaspect(1/1.5)
+		#fig = plt.figure(figsize=(w,h))
+		fig = plt.figure(figsize=(18,12))
 		plt.style.use('seaborn-deep')
 		ax = fig.add_subplot(111, projection='3d')
 		ax.spines["top"].set_visible(False)
 		ax.spines["right"].set_visible(False)
 		ax.get_xaxis().tick_bottom()
 		#ax.get_yaxis().tick_left()
-		plt.xticks(fontsize=16)
-		plt.yticks(fontsize=16)
-		plt.ylabel("Normalised distribution", fontsize=16)
-		plt.xlabel('Noise [e-]', fontsize=16)
+		plt.xticks(fontsize=32)
+		plt.yticks(fontsize=32)
+		plt.ylabel("Normalised distribution", fontsize=32)
+		plt.xlabel('Noise [e-]', fontsize=32)
 		#plt.zlabel(self.XLabel_Series, fontsize=16)
 		color=iter(sns.color_palette('deep'))
 		for i, z, in zip( range(len(self.instances_to_plot)), range(len(self.instances_to_plot))):
@@ -362,22 +421,25 @@ class SSA_Analise_Test_results():
 		ax.set_xlabel('X')
 		ax.set_ylabel('Y')
 		ax.set_zlabel('Z')
-		plt.savefig(self.path + 'ANALYSIS/S-Curve_Noise_hist'+self.pltname+'_3d.png', bbox_inches="tight");
+		fpl = self.path + 'ANALYSIS/S-Curve_Noise_hist'+self.pltname+'_3d.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
 
 
 
 		# FE threshold distribution ################################
 		plt.clf();
-		w, h = plt.figaspect(1/1.5)
-		fig = plt.figure(figsize=(w,h))
+		#w, h = plt.figaspect(1/1.5)
+		#fig = plt.figure(figsize=(w,h))
+		fig = plt.figure(figsize=(18,12))
 		plt.style.use('seaborn-deep')
 		ax = plt.subplot(111)
 		ax.spines["top"].set_visible(False)
 		ax.spines["right"].set_visible(False)
 		ax.get_xaxis().tick_bottom()
 		ax.get_yaxis().tick_left()
-		plt.ylabel("Normalised distribution", fontsize=16)
-		plt.xlabel('Threshold', fontsize=16)
+		plt.ylabel("Normalised distribution", fontsize=32)
+		plt.xlabel('Threshold', fontsize=32)
 		bn = False
 		ser = []
 		for i in range(len(self.instances_to_plot)):
@@ -385,8 +447,8 @@ class SSA_Analise_Test_results():
 			print len(dataset)
 			ser.append(dataset)
 		bn = np.round(np.arange(np.min(ser)-2, np.max(ser)+3, 1))
-		plt.xticks( bn, fontsize=16)
-		plt.yticks(fontsize=16)
+		plt.xticks( bn, fontsize=32)
+		plt.yticks(fontsize=32)
 		sigma = []
 		for i in range(len(self.instances_to_plot)):
 			plt.hist(ser[i], normed = True, bins = bn, alpha = 0.7)
@@ -398,8 +460,11 @@ class SSA_Analise_Test_results():
 			pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
 			#plt.text(2011.5, 100 , 'mean noise pre-rad' , fontsize=16, color='r')
 			plt.plot(lnspc, pdf_g, color = 'red' , label="Norm") # plot i
-			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{\sigma} = %6.2f $' % (sigma[i]), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=16, color='darkred')
-			plt.savefig(self.path + 'ANALYSIS/S-Curve_Threshold_Std'+self.pltname+'.png', bbox_inches="tight");
+			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{\sigma} = %6.2f $' % (sigma[i]), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
+			fpl = self.path + 'ANALYSIS/S-Curve_Threshold_Std'+self.pltname+'.png'
+			plt.savefig(fpl, bbox_inches="tight");
+			print("->  \tPlot saved in %s" % (fpl))
+
 
 
 	##############################################################################################
@@ -427,36 +492,50 @@ class SSA_Analise_Test_results():
 		bn = np.arange(cmin-7, cmax+5, 1)
 		plt.clf();
 		gs = gridspec.GridSpec(2, 1, height_ratios=[2, 1])
-		w, h = plt.figaspect(1/1.5)
-		fig = plt.figure(figsize=(w,h))
+		#w, h = plt.figaspect(1/1.5)
+		fig = plt.figure(figsize=(18,18))
 		plt.style.use('seaborn-deep')
 		color=iter(sns.color_palette('deep')) #iter(cm.summer(np.linspace(0,1, len(scurves) )))
 		#plt.subplot(2, 1, 2)
 		ax0 = plt.subplot(gs[1])
 		ax0.spines["top"].set_visible(False); ax0.spines["right"].set_visible(False)
 		ax0.get_xaxis().tick_bottom(); ax0.get_yaxis().tick_left()
-		plt.xticks(fontsize=16); plt.yticks(fontsize=16)
+		plt.xticks(fontsize=32); plt.yticks(fontsize=32)
 		plt.xlim(min(bn), max(bn)); plt.ylim(0, 1100)
 		for i in scurves:
 			c=next(color)
 			plt.plot( scurves[i] , color = c)
 		#plt.subplot(2, 1, 1)
 		ax1 = plt.subplot(gs[0])
-		plt.xticks(fontsize=16); plt.yticks(fontsize=16)
+		plt.xticks(fontsize=32)
+		plt.yticks(fontsize=32)
+		plt.setp(ax1.get_xticklabels(), visible=False)
 		plt.xlim(min(bn), max(bn));
+		plt.ylim(0, 1)
 		ax1.spines["top"].set_visible(False); ax1.spines["right"].set_visible(False)
 		ax1.get_xaxis().tick_bottom(); ax1.get_yaxis().tick_left()
+		labels = ["Optimal trimming values", "Not trimmed: THDAC = MIN", "Not trimmed: THDAC = MAX"]
+		cnt = 0
+		stds = []
 		for i in scurves:
-			plt.hist(c_thresholds[i], normed = True, bins = bn, alpha = 0.7)
+			plt.hist(c_thresholds[i], normed = True, bins = bn, alpha = 0.7, label = (labels[cnt]))
 			xt = plt.xticks()[0]
 			xmin, xmax = min(xt), max(xt)
 			lnspc = np.linspace(xmin, xmax, len(c_thresholds[i]))
 			m, s = stats.norm.fit(c_thresholds[i]) # get mean and standard deviation
+			stds.append(s)
 			pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
 			xnew = np.linspace(np.min(lnspc), np.max(lnspc), 1000, endpoint=True)
 			pdf_l = interpolate.spline(lnspc, pdf_g, xnew)
-			plt.plot(xnew, pdf_l, 'r' , label="Norm") # plot i
-		plt.savefig(self.path + 'ANALYSIS/S-Curve_Threshold_Trimming'+self.pltname+'.png', bbox_inches="tight");
+			plt.plot(xnew, pdf_l, c = 'darkred', lw = 2) # plot i
+			cnt += 1
+		leg = ax1.legend(fontsize = 24, )
+		leg.get_frame().set_linewidth(0.0)
+		fpl = self.path + 'ANALYSIS/S-Curve_Threshold_Trimming'+self.pltname+'.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
+		plt.show()
+		return stds
 
 
 	##############################################################################################
@@ -538,20 +617,81 @@ class SSA_Analise_Test_results():
 		plt.ylabel("mW", fontsize=16)
 		plt.xlabel(self.XLabel_Series, fontsize=16)
 		color=iter(sns.color_palette('deep'))
-		PAVDD_int = interpolate.spline(x, PAVDD, xnew)
-		PDVDD_int = interpolate.spline(x, PDVDD, xnew)
-		VBG_int   = interpolate.spline(x, VBG, xnew)
+		#PAVDD_int = interpolate.spline(x, PAVDD, xnew)
+		#PDVDD_int = interpolate.spline(x, PDVDD, xnew)
+		#VBG_int   = interpolate.spline(x, VBG, xnew)
 		self.PAVDD.append(PAVDD)
 		self.PDVDD.append(PDVDD)
 		self.VBG.append(VBG)
 		self.pwr_x.append(xnew)
 		c = next(color)
-		plt.plot(xnew, PAVDD_int, color=c, lw=3)
+		plt.plot(x, PAVDD, color=c, lw=3)
 		c = next(color)
-		plt.plot(xnew, PDVDD_int, color=c, lw=3)
+		plt.plot(x, PDVDD, color=c, lw=3)
 		#c = next(color)
-		#plt.plot(xnew, VBG_int, color=c, lw=2)
-		if save: plt.savefig(self.path + 'ANALYSIS/Power_'+self.pltname+'.png', bbox_inches="tight");
+		#plt.plot(x, VBG, color=c, lw=3)
+		self.PrcPAVDD = PAVDD
+		self.PrcPDVDD = PDVDD
+		self.PrcVBG   = VBG
+
+		if save:
+			fpl = self.path + 'ANALYSIS/Power_'+self.pltname+'.png'
+			plt.savefig(fpl, bbox_inches="tight");
+			print("->  \tPlot saved in %s" % (fpl))
+
+	def power_gain_percent_variation_plot(self):
+
+		self.DAC_Gain_Ofs_Dnl_Inl(name = 'THDAC')
+		self.Power_plot()
+		plt.clf();
+		fig = plt.figure(figsize=(18,18))
+		plt.style.use('seaborn-deep')
+		color=iter(sns.color_palette('deep'))
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(False)
+		ax.spines["right"].set_visible(False)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		x = range(0,100)
+		plt.xticks(range(np.int(np.round(float(np.min(x))/10)*10), np.int(np.round(float(np.max(x))/10)*10) , 20), fontsize=32)
+		plt.ylabel(" Variation [%]", fontsize=32)
+		plt.xlabel(self.XLabel_Series, fontsize=32)
+		plt.yticks(fontsize=32)
+		xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
+
+		c = next(color)
+		PrcPAVDD = (100.0*(self.PrcPAVDD/self.PrcPAVDD[0]-1))[x]
+		plt.plot(x, PrcPAVDD, color=c, lw=0, marker='o')
+		PrcPAVDD = interpolate.spline(x, PrcPAVDD, xnew)
+		PrcPAVDD = scypy_signal.savgol_filter(x = PrcPAVDD , window_length = 501, polyorder = 5, mode='nearest')
+		plt.plot(xnew, PrcPAVDD, color=c, lw=2)
+
+		c = next(color)
+		PrcPDVDD = (100.0*(self.PrcPDVDD/self.PrcPDVDD[0]-1))[x]
+		plt.plot(x, PrcPDVDD, color=c, lw=0, marker='o')
+		PrcPDVDD = scypy_signal.savgol_filter(x = PrcPDVDD , window_length = 51, polyorder = 5, mode='nearest')
+		#PrcPDVDD[0] = 0
+		#PrcPDVDD = interpolate.spline(x, PrcPDVDD, xnew)
+		plt.plot(x, PrcPDVDD, color=c, lw=2)
+
+		c = next(color)
+		PrcThGAIN = (100.0*(self.PrcThGAIN/self.PrcThGAIN[0]-1))[x]
+		plt.plot(x, PrcThGAIN, color=c, lw=0, marker='o')
+		#PrcThGAIN = interpolate.spline(x, PrcThGAIN, xnew)
+		#PrcThGAIN = scypy_signal.savgol_filter(x = PrcThGAIN , window_length = 501, polyorder = 5, mode='nearest')
+		fn = interpolate.interp1d(x, PrcThGAIN, kind='cubic')
+		plt.plot(xnew, fn(xnew), color=c, lw=2)
+
+
+
+		#plt.plot(x, (100.0*(self.PrcVBG/self.PrcVBG[0]-1))[x], color=c, lw=0, marker='o')
+		#c = next(color)
+		#plt.plot(x, (100.0*(self.PrcThGAIN/self.PrcThGAIN[0]-1))[x], color=c, lw=0, marker='o')
+		fpl = self.path + 'ANALYSIS/' + '_Percent_Evolution'+self.pltname+'.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
+
+
 
 	def power_multirun_plot(self, nplots):
 		xmax = np.min(list( np.max(self.pwr_x[i]) for i in range(len(self.pwr_x))))
@@ -572,7 +712,9 @@ class SSA_Analise_Test_results():
 			plt.plot(x, self.PAVDD[i][x], color=c, lw=3, alpha = 0.8)
 			plt.plot(x, self.PDVDD[i][x], color=c, lw=3, alpha = 0.8)
 			#c = next(color);
-		plt.savefig(self.path + 'ANALYSIS/Power'+self.pltname+'_multirun.png', bbox_inches="tight");
+		fpl = self.path + 'ANALYSIS/Power'+self.pltname+'_multirun.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
 		fig = plt.figure(figsize=(w,h))
 		ax = plt.subplot(111)
 		ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
@@ -591,8 +733,9 @@ class SSA_Analise_Test_results():
 			plt.plot(xnew, vbg_smuth , color=c, lw=0.8, alpha = 0.8)
 			plt.plot(xnew, vbg_hat   , color=c, lw=3, alpha = 0.8)
 			#c = next(color);
-		plt.savefig(self.path + 'ANALYSIS/V_BG'+self.pltname+'_multirun.png', bbox_inches="tight");
-
+		fpl = self.path + 'ANALYSIS/V_BG'+self.pltname+'_multirun.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
 
 
 	def dacs_multirun_plot(self, nplots):
@@ -618,7 +761,9 @@ class SSA_Analise_Test_results():
 			plt.plot(xnew, gain_hat , color=c, lw=3, alpha = 0.8)
 
 			#c = next(color);
-		plt.savefig(self.path + 'ANALYSIS/DAC_GAIN'+self.pltname+'_multirun.png', bbox_inches="tight");
+		fpl = self.path + 'ANALYSIS/DAC_GAIN'+self.pltname+'_multirun.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
 
 
 
@@ -684,7 +829,36 @@ class SSA_Analise_Test_results():
 		if name == 'THDAC':
 			self.DAC_GAINs.append(GAINs)
 		plt.plot(x, GAINs, color="#3F5D7D", lw=3)
-		plt.savefig(self.path + 'ANALYSIS/' + name + '_GAIN_Evolution'+self.pltname+'.png', bbox_inches="tight");
+		fpl = self.path + 'ANALYSIS/' + name + '_GAIN_Evolution'+self.pltname+'.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
+
+
+		plt.clf();
+		fig = plt.figure(figsize=(18,18))
+		plt.style.use('seaborn-deep')
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(False)
+		ax.spines["right"].set_visible(False)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		x = np.array(range(len(GAINs))) * self.measure_rate
+		plt.xticks(range(np.int(np.round(float(np.min(x))/10)*10), np.int(np.round(float(np.max(x))/10)*10) , 20), fontsize=32)
+		plt.ylabel(name + " Gain [mV/cnt]", fontsize=32)
+		plt.xlabel(self.XLabel_Series, fontsize=32)
+		plt.yticks(fontsize=32)
+		gain_mean = np.array([np.mean(GAINs) for i in x])
+		gain_std  = np.array([ np.std(GAINs) for i in x])
+		#plt.ylim(np.mean(gain_mean)-np.max(gain_std)*5, np.mean(gain_mean)+np.max(gain_std)*5)
+		if name == 'THDAC':
+			self.DAC_GAINs.append(GAINs)
+			self.PrcThGAIN = GAINs
+		plt.plot(x, 100.0*(GAINs/GAINs[0]-1), color="#3F5D7D", lw=0, marker='o')
+		fpl = self.path + 'ANALYSIS/' + name + '_GAIN_Evolution'+self.pltname+'Percent.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
+
+
 
 		plt.clf();
 		w, h = plt.figaspect(1/1.5)
@@ -702,7 +876,9 @@ class SSA_Analise_Test_results():
 		plt.xlabel('Control code' , fontsize=16)
 		for i in self.instances_to_plot:
 			plt.plot(x, vals[i][:,1], lw=6, alpha = 0.5)
-		plt.savefig(self.path + 'ANALYSIS/' + name + '_GAIN_Caracteristics.png', bbox_inches="tight");
+		fpl = self.path + 'ANALYSIS/' + name + '_GAIN_Caracteristics.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
 
 		plt.clf();
 		w, h = plt.figaspect(1/2.5)
@@ -726,13 +902,110 @@ class SSA_Analise_Test_results():
 		plt.text(1, 1.00, self.label[0] + r'  ${INL_{MAX}} = %6.2f $' % ( INLs[self.instances_to_plot[ 0]] ), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=16, color='darkred')
 		if(len(self.instances_to_plot)>1):
 			plt.text(1, 0.95, self.label[-1]  + r'  ${INL_{MAX}} = %6.2f $' % ( INLs[self.instances_to_plot[-1]]), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=16, color='darkred')
-		plt.savefig(self.path + 'ANALYSIS/' + name + '_GAIN_INLs'+self.pltname+'.png', bbox_inches="tight");
+		fpl = self.path + 'ANALYSIS/' + name + '_GAIN_INLs'+self.pltname+'.png'
+		plt.savefig(fpl, bbox_inches="tight");
+		print("->  \tPlot saved in %s" % (fpl))
 
 
 	##############################################################################################
 	def noise_gain_multirun_plot(self, nplots):
 		plt.clf();
-		w, h = plt.figaspect(1/6.0)
+		fig = plt.figure(figsize=(18,18))
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(False)
+		ax.spines["right"].set_visible(False)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		xmax = np.min(list( np.max(self.noise_x[i]) for i in range(len(self.noise_x))))
+		x = range(xmax+1)
+		plt.xticks(range(np.int(np.round(float(np.min(x))/10)*10), np.int(np.round(float(np.max(x))/10)*10) , 20), fontsize=32)
+		plt.yticks(fontsize=32)
+		plt.ylabel("FE Noise [e-]", fontsize=32)
+		plt.xlabel(self.XLabel_Series, fontsize=32)
+		color=iter(sns.color_palette('deep'))
+		for i in range(nplots):
+			noise_mean = np.array(self.noise_mean[i])
+			for nk in range(1,len(noise_mean)-1):
+				if(np.abs(noise_mean[nk]-noise_mean[nk-1])  > 20):
+					noise_mean[nk] = (noise_mean[nk+1]+noise_mean[nk-1])/2.0
+			noise_std  = np.array(self.noise_std[i])
+			xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
+			noise_mean_smooth = interpolate.spline(x, noise_mean[x], xnew)
+			noise_std_smooth = interpolate.spline(x, noise_std[x], xnew)
+			noise_mean_hat = scypy_signal.savgol_filter(x = noise_mean_smooth , window_length = 301, polyorder = 5)
+			noise_std_hat = scypy_signal.savgol_filter(x = noise_std_smooth , window_length = 301, polyorder = 5)
+			c = next(color)
+			plt.fill_between(xnew, noise_mean_hat - noise_std_hat,  noise_mean_hat + noise_std_hat, alpha = 0.3, color = c)
+			plt.plot(x, noise_mean[x], lw=0, color = c, marker='.') ## no filter
+			plt.plot(xnew, noise_mean_hat, lw=3, color = c)
+
+			fpl = self.path + 'ANALYSIS/S-Curve_Noise_Mean_DoubleRun'+self.pltname+'.png'
+			plt.savefig(fpl, bbox_inches="tight");
+			print("->  \tPlot saved in %s" % (fpl))
+
+		plt.clf();
+		w, h = plt.figaspect(1/1)
+		fig = plt.figure(figsize=(w,h))
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(False)
+		ax.spines["right"].set_visible(False)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		xmax = np.min(list( np.max(self.noise_x[i]) for i in range(len(self.noise_x))))
+		x = range(xmax+1)
+		plt.xticks(range(np.int(np.round(float(np.min(x))/10)*10), np.int(np.round(float(np.max(x))/10)*10) , 20), fontsize=16)
+		plt.yticks(fontsize=16)
+		plt.ylabel("FE Noise [e-]", fontsize=16)
+		plt.xlabel(self.XLabel_Series, fontsize=16)
+		color=iter(sns.color_palette('deep'))
+		for i in range(nplots):
+			noise_mean = np.array(self.noise_mean[i])
+			noise_std  = np.array(self.noise_std[i])
+			xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
+			noise_mean_smooth = interpolate.spline(x, noise_mean[x], xnew)
+			noise_std_smooth = interpolate.spline(x, noise_std[x], xnew)
+			noise_mean_hat = scypy_signal.savgol_filter(x = noise_mean_smooth , window_length = 301, polyorder = 5)
+			noise_std_hat = scypy_signal.savgol_filter(x = noise_std_smooth , window_length = 301, polyorder = 5)
+			c = next(color)
+			plt.fill_between(xnew, ((noise_mean_hat-noise_std_hat)/noise_mean_hat[0]-1),  ((noise_mean_hat+noise_std_hat)/noise_mean_hat[0]-1), alpha = 0.3, color = c)
+			plt.plot(xnew, 100.0*((noise_mean_hat/noise_mean_hat[0])-1), lw=3, color = c)
+			fpl = self.path + 'ANALYSIS/S-Curve_Noise_Mean_DoubleRun'+self.pltname+'Percent.png'
+			plt.savefig(fpl, bbox_inches="tight");
+			print("->  \tPlot saved in %s" % (fpl))
+
+		plt.clf();
+		w, h = plt.figaspect(1/1)
+		fig = plt.figure(figsize=(w,h))
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(False)
+		ax.spines["right"].set_visible(False)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		xmax = np.min(list( np.max(self.noise_x[i]) for i in range(len(self.noise_x))))
+		x = range(xmax+1)
+		plt.xticks(range(np.int(np.round(float(np.min(x))/10)*10), np.int(np.round(float(np.max(x))/10)*10) , 20), fontsize=16)
+		plt.yticks(fontsize=16)
+		plt.ylabel("FE Noise [e-]", fontsize=16)
+		plt.xlabel(self.XLabel_Series, fontsize=16)
+		color=iter(sns.color_palette('deep'))
+		for i in range(nplots):
+			plt.xscale('log')
+			noise_mean = np.array(self.noise_mean[i])
+			noise_std  = np.array(self.noise_std[i])
+			xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
+			noise_mean_smooth = interpolate.spline(x, noise_mean[x], xnew)
+			noise_std_smooth = interpolate.spline(x, noise_std[x], xnew)
+			noise_mean_hat = scypy_signal.savgol_filter(x = noise_mean_smooth , window_length = 501, polyorder = 5)
+			noise_std_hat = scypy_signal.savgol_filter(x = noise_std_smooth , window_length = 501, polyorder = 5)
+			c = next(color)
+			plt.fill_between(xnew, noise_mean_hat - noise_std_hat,  noise_mean_hat + noise_std_hat, alpha = 0.3, color = c)
+			plt.plot(xnew, noise_mean_hat, lw=2, color = c)
+			fpl = self.path + 'ANALYSIS/S-Curve_Noise_Mean_DoubleRun'+self.pltname+'LOG.png'
+			plt.savefig(fpl, bbox_inches="tight");
+			print("->  \tPlot saved in %s" % (fpl))
+
+		plt.clf();
+		w, h = plt.figaspect(1/1)
 		fig = plt.figure(figsize=(w,h))
 		ax = plt.subplot(111)
 		ax.spines["top"].set_visible(False)
@@ -753,11 +1026,16 @@ class SSA_Analise_Test_results():
 			noise_mean_smooth = interpolate.spline(x, noise_mean[x], xnew)
 			noise_std_smooth = interpolate.spline(x, noise_std[x], xnew)
 			noise_mean_hat = scypy_signal.savgol_filter(x = noise_mean_smooth , window_length = 501, polyorder = 5)
+			noise_mean_hat = (noise_mean_hat)/noise_mean_hat[0] - 1
 			noise_std_hat = scypy_signal.savgol_filter(x = noise_std_smooth , window_length = 501, polyorder = 5)
+			noise_std_hat = (noise_std_hat)/noise_mean_hat[0]
 			c = next(color)
 			plt.fill_between(xnew, noise_mean_hat - noise_std_hat,  noise_mean_hat + noise_std_hat, alpha = 0.3, color = c)
 			plt.plot(xnew, noise_mean_hat, lw=2, color = c)
-			plt.savefig(self.path + 'ANALYSIS/S-Curve_Noise_Mean_DoubleRun'+self.pltname+'.png', bbox_inches="tight");
+			fpl = self.path + 'ANALYSIS/S-Curve_Noise_Mean_DoubleRun'+self.pltname+'Percent1.png'
+			plt.savefig(fpl, bbox_inches="tight");
+			print("->  \tPlot saved in %s" % (fpl))
+
 
 		plt.clf();
 		w, h = plt.figaspect(1/6.0)
@@ -787,7 +1065,9 @@ class SSA_Analise_Test_results():
 			c = next(color)
 			plt.fill_between(xnew, th_mean_hat - th_std_hat,  th_mean_hat + th_std_hat, alpha = 0.3, color = c)
 			plt.plot(xnew, th_mean_smooth, lw=2, color = c)
-			plt.savefig(self.path + 'ANALYSIS/S-Curve_Threshold_Mean_DoubleRun'+self.pltname+'.png', bbox_inches="tight");
+			fpl = self.path + 'ANALYSIS/S-Curve_Threshold_Mean_DoubleRun'+self.pltname+'.png'
+			plt.savefig(fpl, bbox_inches="tight");
+			print("->  \tPlot saved in %s" % (fpl))
 
 
 
@@ -915,6 +1195,22 @@ class SSA_Analise_Test_results():
 			self.instances_to_plot = [0,1,2]
 			self.pltname = '_Run3'
 			self.label = [' Pre-Rad :', '120 Mrad :', '120 Mrad Re-Calib :']
+		elif(n==7):
+			self.path =  '../../Desktop/aaa/X-Ray_Chip-C5_T-30C_100Mrad_final/'
+			self.run_name = 'X-Ray_-30C_'
+			self.measure_rate = 1
+			self.XLabel_Series = 'Total Ionising Dose [Mrad]'
+			self.instances_to_plot = [0] #first and last
+			self.label = ['']
+			self.pltname = ''
+		elif(n==8):
+			self.path =  '../../Desktop/aaa/NEW_RECALIB/'
+			self.run_name = 'X-Ray_ChipC7_T25C_RECALIB'
+			self.measure_rate = 1
+			self.XLabel_Series = 'Total Ionising Dose [Mrad]'
+			self.instances_to_plot = [0, -1] #first and last
+			self.pltname = ''
+			self.label = [' Pre-Rad :', '100 Mrad :', '200 Mrad :']
 
 
 

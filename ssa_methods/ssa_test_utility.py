@@ -10,13 +10,16 @@ import inspect
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+from threading import Thread
+
 
 
 class SSA_test_utility():
 
-	def __init__(self, ssa, I2C, fc7, cal, pwr):
+	def __init__(self, ssa, I2C, fc7, cal, pwr, seuutil):
 		self.ssa = ssa;	self.I2C = I2C;	self.fc7 = fc7;
-		self.cal = cal; self.pwr = pwr;
+		self.cal = cal; self.pwr = pwr; self.seuutil = seuutil;
+		self.striplist = []
 
 
 	def cluster_data(self, mode = "digital",  nstrips = 5, min_clsize = 1, max_clsize = 4, nruns = 1000, shift = 0, display=False, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
@@ -29,7 +32,7 @@ class SSA_test_utility():
 		self.ssa.ctrl.set_cal_pulse_delay(0)
 		prev = [0xff]*nstrips
 		if(mode == "digital"):
-			self.ssa.inject.digital_pulse(hit_list = [], hip_list = [], initialise = True)
+			self.ssa.inject.digital_pulse(hit_list = [], hip_list = [], initialise = True, times = 8)
 		elif(mode == "analog"):
 			self.ssa.inject.analog_pulse(hit_list = [], initialise = True)
 			shift += 2
@@ -69,7 +72,8 @@ class SSA_test_utility():
 			stfound = utils.cl2str(r)
 			stprev = utils.cl2str(prev)
 			sthits = utils.cl2str(cl_hits)
-			dstr = stexpected + ';    ' + stfound + '; ' + ';    ' + sthits + ';    ' + "                                            "
+			#dstr = stexpected + ';    ' + stfound + '; ' + ';    ' + sthits + ';    ' + "                                            "
+			dstr = "->       REF:" + stexpected + ';         OUT:' + stfound + '; ' + ";                                            "
 			if (err[0]):
 				erlog = "Cluster-Data-Error;   " + dstr
 				cnt['cl_err'] += 1
@@ -115,7 +119,7 @@ class SSA_test_utility():
 		else:
 			clrange = random.sample(range(1, 121), 120)
 		clrange *= nruns
-		self.ssa.readout.cluster_data(initialize = True)
+		self.ssa.readout.cluster_data(initialize = True, shift = shift)
 		cnt = {'cl_sum': 0, 'cl_err' : 0, 'li_sum': 0, 'li_err' : 0, 'lo_sum': 0, 'lo_err' : 0};
 		for i in clrange:
 			cnt['cl_sum'] += 1; wd = 0;
@@ -181,6 +185,16 @@ class SSA_test_utility():
 		return rt
 
 
+	def lateral_output_phase_tuning(self):
+		for i in range(16):
+			self.ssa.set_lateral_sampling_shift(i,0)
+			self.ssa.inject.digital_pulse([1,2,3,4,5,6,7,8])
+			a, b = self.ssa.readout.lateral_data(shift =-1, raw = True)
+			print( bin(a) + '  ' + bin(b))
+			a, b = self.ssa.readout.lateral_data(shift = 0, raw = True)
+			print( bin(a) + '  ' + bin(b))
+			a, b = self.ssa.readout.lateral_data(shift = 1, raw = True)
+			print( bin(a) + '  ' + bin(b))
 
 	def lateral_input_phase_tuning(self, display = False, timeout = 256*3, delay = 4, shift = 0, init = False, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
 		utils.activate_I2C_chip()
@@ -508,6 +522,60 @@ class SSA_test_utility():
 		plt.plot(x, y*100.0, 'o')
 		plt.show()
 		return rate
+
+	def measure_dynamic_power_old(self, NHits = 5, L1_rate = 1000, display_errors = False):
+		striplist = random.sample(range(1,60), NHits)
+		striplist = list(np.sort(striplist)*2)
+		print striplist
+		hiplist = striplist
+		display = 0 if display_errors else -1
+		t1 = FuncThread(
+			self.seuutil.Run_Test_SEU,
+			striplist, hiplist, 1, int(40000.0/L1_rate-1),
+			501, 7, display, '', '', 73, False, False)
+		time.sleep(0.5)
+		t1.start();
+		time.sleep(10)
+		while(True):
+			try:
+				[Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip] = self.pwr.get_power(display = False, return_all = True)
+				break
+			except:
+				pass
+		t1.join()
+		return [Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip]
+
+	def measure_dynamic_power(self, NHits = 5, L1_rate = 1000, display_errors = False, slvs_current=7):
+		self.striplist = random.sample([item for item in range(0,61) if item not in self.striplist], NHits)
+		#self.striplist = random.sample(range(0,60), NHits)
+		striplist = list(np.sort(self.striplist)*2)
+		#print self.striplist
+		hiplist = self.striplist
+		display = 0 if display_errors else -1
+		sleep(0.01); SendCommand_CTRL("global_reset")
+		sleep(0.01);  SendCommand_CTRL("fast_fast_reset")
+		sleep(0.01); self.seuutil.ssa.init(edge = 'negative', display = False, slvs_current=slvs_current)
+		s1, s2, s3 = self.seuutil.Stub_Evaluate_Pattern(striplist)
+		p1, p2, p3, p4, p5, p6, p7 = self.seuutil.L1_Evaluate_Pattern(striplist, hiplist)
+		sleep(0.01); self.seuutil.Configure_Injection(strip_list = striplist, hipflag_list = hiplist, analog_injection = 0, latency = 501, create_errors = False)
+		sleep(0.01); self.seuutil.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = 0)
+		sleep(0.01); Configure_SEU(1, int(40000.0/L1_rate-1), number_of_cal_pulses = 0, initial_reset = 1)
+		sleep(0.01); fc7.write("cnfg_fast_backpressure_enable", 0)
+		sleep(0.01); self.seuutil.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", 73)
+		sleep(0.01); SendCommand_CTRL("start_trigger")
+		sleep(0.50); pw = self.pwr.get_power(display = False, return_all = True)
+		sleep(0.01); SendCommand_CTRL("stop_trigger")
+		return pw
+
+	def power_vs_occupancy(self, L1_rate = 1000, display_errors = False, slvs_current = 7):
+		#self.pwr.set_supply(mode='on', d=DVDD, a=AVDD, p=PVDD, bg = 0.270, display = True)
+		I = []
+		for nclusters in range(0,32,1):
+			[Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip] = self.measure_dynamic_power(NHits = nclusters, L1_rate = L1_rate, display_errors = display_errors, slvs_current=slvs_current)
+			I.append([nclusters, Id, Ia, Ip])
+			print("->\tN Clusters %5.1f  -> Current = %7.3f - %7.3f - %7.3f" % (nclusters/2.0, Id, Ia, Ip ))
+		return I
+
 
 '''
 def prova(i):

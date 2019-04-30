@@ -716,73 +716,94 @@ def mainpoweroff():
 
 
 def mpareset():
+    global mpastate, ssastate
     print "MPA reset"
     ssaid = int(ssaaddressentry.get())
     mpaid = int(mpaaddressentry.get())
-    val = (mpaid << 5) + (ssaid << 1)
+    val  = (mpaid << 5) + (ssaid << 1)
     val2 = (mpaid << 5) + (ssaid << 1) + 16 # reset bit for MPA
+    if(ssastate):
+        val2 += 1
+        val  += 1
     Configure_MPA_SSA_I2C_Master(1, SLOW)
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
     Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val)  # drop reset bit
     Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2)  # set reset bit
-    print hex(val2)
-    print hex(val)
+    print "\n\n" + bin(val2) + "\n\n"
+    mpastate = True
 
 def mpaenable():
+    global mpastate, ssastate
     print "MPA enable"
     ssaid = int(ssaaddressentry.get())
     mpaid = int(mpaaddressentry.get())
-    val = (mpaid << 5) + (ssaid << 1)
     val2 = (mpaid << 5) + (ssaid << 1) + 16 # reset bit for MPA
+    if(ssastate):
+        val2 += 1
     Configure_MPA_SSA_I2C_Master(1, SLOW)
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
     Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2)  # set reset bit
+    print "\n\n" + bin(val2) + "\n\n"
+    mpastate = True
 
 def mpadisable():
+    global mpastate, ssastate
     print "MPA disable"
     ssaid = int(ssaaddressentry.get())
     mpaid = int(mpaaddressentry.get())
     val = (mpaid << 5) + (ssaid << 1)
-    val2 = (mpaid << 5) + (ssaid << 1) + 16 # reset bit for MPA
+    if(ssastate):
+        val += 1
     Configure_MPA_SSA_I2C_Master(1, SLOW)
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
     Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val)  # set reset bit
+    print "\n\n" + bin(val) + "\n\n"
+    mpastate = False
 
 def ssareset():
+    global mpastate, ssastate
     print "SSA reset"
     ssaid = int(ssaaddressentry.get())
     mpaid = int(mpaaddressentry.get())
-    val = (mpaid << 5) + (ssaid << 1)
+    val  = (mpaid << 5) + (ssaid << 1)
     val2 = (mpaid << 5) + (ssaid << 1) + 1 # reset bit for SSA
+    if(mpastate):
+        val2 += 16
+        val  += 16
     Configure_MPA_SSA_I2C_Master(1, SLOW)
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
     Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val)  # drop reset bit
     Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2)  # set reset bit
-    print hex(val)
-    print hex(val2)
+    print "\n\n" + bin(val2) + "\n\n"
+    ssastate = True
 
 def ssaenable():
+    global mpastate, ssastate
     print "SSA enable"
     ssaid = int(ssaaddressentry.get())
     mpaid = int(mpaaddressentry.get())
-    val = (mpaid << 5) + (ssaid << 1)
     val2 = (mpaid << 5) + (ssaid << 1) + 1 # reset bit for SSA
+    if(mpastate):
+        val2 += 16
     Configure_MPA_SSA_I2C_Master(1, SLOW)
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
     Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val2)  # set reset bit
-    print hex(val)
-    print hex(val2)
+    print "\n\n" + bin(val2) + "\n\n"
+    ssastate = True
 
 def ssadisable():
+    global mpastate, ssastate
     print "SSA disable"
     ssaid = int(ssaaddressentry.get())
     mpaid = int(mpaaddressentry.get())
     val = (mpaid << 5) + (ssaid << 1)
-    val2 = (mpaid << 5) + (ssaid << 1) + 1 # reset bit for SSA
+    if(mpastate):
+        val += 16
     Configure_MPA_SSA_I2C_Master(1, SLOW)
     Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x02)  # route to 2nd PCF8574
     Send_MPA_SSA_I2C_Command(pcf8574, 0, write, 0, val)  # set reset bit
-
+    print "\n\n" + bin(val) + "\n\n"
+    ssastate = False
 
 def setallfields():
     mpavddwrite()
@@ -1083,6 +1104,8 @@ ina226_8 = 8
 ina226_9 = 9
 ina226_10 = 10
 ltc2487 = 3
+ssastate = False
+mpastate = False
 
 Vc = 0.0003632813 # V/Dac step
 #Vcshunt = 5.0/4000
@@ -1099,7 +1122,7 @@ sleep(1)
 SetSlaveMap()
 # sets the mpa/ssa i2c master config
 Configure_MPA_SSA_I2C_Master(1)
-
+global s
 #######
 
 
@@ -1112,7 +1135,7 @@ root.mainloop()
 
 
 
-
+global s
 
 
 

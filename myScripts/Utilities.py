@@ -17,7 +17,15 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from datetime import datetime
+import threading
 
+class FuncThread(threading.Thread):
+	def __init__(self, target, *args):
+		self._target = target
+		self._args = args
+		threading.Thread.__init__(self)
+	def run(self):
+		self._target(*self._args)
 
 class curstate():
 	def __init__(self, **kwds):

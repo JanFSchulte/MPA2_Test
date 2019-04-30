@@ -27,15 +27,17 @@ class SSA_readout():
 		return [l1_data_ready, stub_data_ready, counters_ready]
 
 
-	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False):
+	def cluster_data(self, apply_offset_correction = False, display = False, shift = 0, initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False, return_as_pattern = False):
 	 	data = []; tmp = [];
 	 	counter = 0; data_loc = 21 + shift;
 	 	status = [0]*3; timeout = 10;
+		if(initialize):
+			#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
+			sleep(0.001)
+			Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 0, delay_before_next_pulse = 0, number_of_test_pulses = 1, enable_rst_L1 = 0)
+			sleep(0.001)
+		#status_init = self.status()
 		if(send_test_pulse):
-		 	if(initialize):
-				Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
-				sleep(0.001)
-			#status_init = self.status()
 			self.fc7.SendCommand_CTRL("start_trigger")
 		while (status[1] != 1 and counter<timeout):
 			sleep(0.001)
@@ -80,7 +82,12 @@ class SSA_readout():
 		if(display_pattern):
 			ctmp = np.array(data[0]).astype(bool).astype(int)
 			print "[%5s]" % '|'.join(map(str, ctmp))
-		if(getstatus):
+		if return_as_pattern:
+			ctmp = np.zeros([8,40])
+			for i in range(0,8):
+				ctmp[i,:] = data[i]
+			return ctmp
+		elif(getstatus):
 			return coordinates, status
 		else:
 			return coordinates
@@ -99,7 +106,8 @@ class SSA_readout():
 		self.fc7.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
 
-	def l1_data(self, latency = 50, shift = 0, initialise = True, mipadapterdisable = False, trigger = True, multi = True, display = False, display_raw = False):
+	def l1_data(self, latency = 50, shift = 0, initialise = True, mipadapterdisable = True, trigger = True, multi = True, display = False, display_raw = False):
+		disable_pixel(0,0)
 		if(initialise == True):
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
@@ -144,6 +152,7 @@ class SSA_readout():
 			BX_counter = (data >> 145) & 0x1ff
 			l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
 			hidata = (data >> 121) & 0xffffff
+			print bin(hidata)
 			l1datavect = [0]*120
 			hipflagvect = [0]*24
 			for i in range(0,120):
@@ -179,7 +188,7 @@ class SSA_readout():
 #		ssa.readout.l1_data(display = True, trigger = False, display_raw = 1)
 
 
-	def lateral_data(self, display = False, shift = 0, initialize = True):
+	def lateral_data(self, display = False, shift = 0, initialize = True, raw = False):
 		if(initialize == True):
 			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
 			sleep(0.001)
@@ -214,6 +223,8 @@ class SSA_readout():
 				left = left | (tmp << (32*(i-10)))
 		left  = (left  >> ((shift+13)*8)) & 0xff
 		right = (right >> ((shift+13)*8)) & 0xff
+		if(raw):
+			return bin(left), bin(right)
 	 	for i in range(1,9):
 	 		if ((right & 0b1) == 1):
 	 			coordinates.append(i-1)
@@ -228,8 +239,8 @@ class SSA_readout():
 	def read_counters_fast(self, striplist = range(1,121), raw_mode_en = 0, shift = 0):
 		self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
-		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8 + shift) )
-		self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
+		self.I2C.peri_write('AsyncRead_StartDel_LSB', (8 + shift) )
+		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
 		self.fc7.start_counters_read(1)
 		timeout = 0
 		failed = False
@@ -243,7 +254,7 @@ class SSA_readout():
 		if raw_mode_en == 0:
 			count = self.fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 120)
 			count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
-			count[117] = (self.I2C.strip_read("ReadCounter_MSB",118) << 8) | self.I2C.strip_read("ReadCounter_LSB",118)
+			#count[117] = (self.I2C.strip_read("ReadCounter_MSB",118) << 8) | self.I2C.strip_read("ReadCounter_LSB",118)
 
 		else:
 			count = np.zeros((20000, ), dtype = np.uint16)
@@ -328,47 +339,45 @@ class SSA_readout():
 
 
 
-
 class SSA_inject():
 
-
 	def __init__(self, I2C, FC7, ssactrl, ssastrip):
-		self.I2C = I2C
-		self.fc7 = FC7
-		self.ctrl = ssactrl
-		self.strip = ssastrip
-		self.hitmode = 'none'
-		self.data_l = 0
-		self.data_r = 0
-		self.hit_list = []
-		self.hip_list = []
-
+		self.I2C = I2C; self.fc7 = FC7;
+		self.ctrl = ssactrl; self.strip = ssastrip;
+		self.__initialise()
 
 	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, sequence = 0xff, initialise = True):
+		leftdata  = 0; rightdata = 0;
+
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
 			self.I2C.peri_write("CalPulse_duration", times)
-			self.I2C.strip_write("ENFLAGS", 0, 0b01001)
+			#self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 			#fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
-		leftdata  = 0; rightdata = 0;
-		if(hit_list != self.hit_list):
+
+		if(sequence != self.DigCalibPattern): #to speedup
+			self.I2C.strip_write("DigCalibPattern_L", 0, sequence)
+
+		if(hit_list != self.hit_list):#to speedup
 			self.hit_list = hit_list
-			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
+			self.I2C.strip_write("ENFLAGS", 0, 0b0)
 			for cl in hit_list:
 				if (cl < 1):
 					rightdata = rightdata | (0b1 << (7+cl))
 				elif (cl > 120):
 					leftdata = leftdata | (0b1 << (cl-121))
 				else:
-					self.I2C.strip_write("DigCalibPattern_L", cl, 0x1)
-		if(self.data_l != leftdata or self.data_r != rightdata):
+					self.I2C.strip_write("ENFLAGS", cl, 0b01001)
+
+		if(self.data_l != leftdata or self.data_r != rightdata):#to speedup
 			self.ctrl.set_lateral_data(left = leftdata, right = rightdata)
 			self.data_l = leftdata;
 			self.data_r = rightdata;
-		if(hip_list != self.hip_list):
+
+		if(hip_list != self.hip_list):#to speedup
 			self.hip_list = hip_list
+			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 			for cl in hip_list:
-				self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 				self.I2C.strip_write("DigCalibPattern_H", cl, sequence)
 		sleep(0.002)
 
@@ -396,6 +405,17 @@ class SSA_inject():
 			self.fc7.SendCommand_CTRL("start_trigger")
 			sleep(0.01)
 		sleep(0.001)
+
+
+	def __initialise(self):
+		self.hitmode = 'none'
+		self.data_l = 0
+		self.data_r = 0
+		self.hit_list = []
+		self.hip_list = []
+		self.DigCalibPattern = 0
+
+
 
 
 
