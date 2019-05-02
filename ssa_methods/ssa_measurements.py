@@ -22,7 +22,7 @@ class SSA_measurements():
 		self.__set_variables()
 
 	###########################################################
-	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = -4):
+	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = 0):
 		data = self.scurves_measure(cal_list = cal_list, trim_list = trim_list, mode = mode, rdmode = rdmode, filename = filename, runname = runname, plot = plot, nevents = nevents, speeduplevel = speeduplevel, countershift = countershift)
 		if(plot):
 			self.scurves_plot(data)
@@ -402,44 +402,45 @@ class SSA_measurements():
 		return peakingTime
 
 	###########################################################
-	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, ideal_gain = 1.840, ideal_offset = 0.8, filename = 'temp/temp', plot = True, filemode = 'w', runname = ''):
+	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, eval_inl_dnl = True, npoints = 10 ,filename = 'temp/temp', plot = True, filemode = 'w', runname = '', ideal_gain = 1.840, ideal_offset = 0.8):
 		utils.activate_I2C_chip()
 		if(self.bias == False): return False, False
 		if(not (name in self.muxmap)): return False, False
 		if(isinstance(filename, str)):
 			fo = "../SSA_Results/" + filename
-		nlin_params, nlin_data, fit_params, raw = self.bias.measure_dac_linearity(
-			name = name,
-			nbits = nbits,
-			filename = fo,
-			filename2 = "",
-			plot = False,
-			average = 1,
-			runname = runname,
-			filemode = filemode)
-		g, ofs, sigma = fit_params
-		DNL, INL = nlin_data
-		DNLMAX, INLMAX = nlin_params
-		x, data = raw
+		if(eval_inl_dnl):
+			nlin_params, nlin_data, fit_params, raw = self.bias.measure_dac_linearity(
+				name = name, nbits = nbits,	filename = fo,	filename2 = "",
+				plot = False, average = 1, runname = runname, filemode = filemode)
+			g, ofs, sigma = fit_params
+			DNL, INL = nlin_data
+			DNLMAX, INLMAX = nlin_params
+			x, data = raw
+		else:
+			g, ofs, raw = self.bias.measure_dac_gain_offset(name = name, nbits = 8, npoints = 10)
+			x, data = raw
 		if name == 'Bias_THDAC':
 			baseline = self.bias.get_voltage('Bias_BOOSTERBASELINE')
 			data = (0 - np.array(data)) + baseline
 		elif name in self.muxmap:
 			data = np.array(data)
-		else: return False
+		else:
+			return False
 		if plot:
 			plt.clf()
 			plt.figure(1)
 			#plt.plot(x, f_line(x, ideal_gain/1000, ideal_offset/1000), '-b', linewidth=5, alpha = 0.5)
 			plt.plot(x, data, '-r', linewidth=5,  alpha = 0.5)
-			plt.figure(2); plt.ylim(-1, 1); plt.bar( x, DNL, color='b', edgecolor = 'b', align='center')
-			plt.figure(3); plt.ylim(-1, 1); plt.bar( x, INL, color='r', edgecolor = 'r', align='center')
-			plt.figure(4); plt.ylim(-1, 1); plt.plot(x, INL, color='r')
-
+			if(eval_inl_dnl):
+				plt.figure(2); plt.ylim(-1, 1); plt.bar( x, DNL, color='b', edgecolor = 'b', align='center')
+				plt.figure(3); plt.ylim(-1, 1); plt.bar( x, INL, color='r', edgecolor = 'r', align='center')
+				plt.figure(4); plt.ylim(-1, 1); plt.plot(x, INL, color='r')
 			plt.show()
-
 		#return DNL, INL, x, data
-		return DNLMAX, INLMAX, g, ofs
+		if(eval_inl_dnl):
+			return DNLMAX, INLMAX, g, ofs
+		else:
+			return g, ofs
 
 	###########################################################
 	def power_vs_occupancy(self, th = range(2,13), trim = False, plot = 1, print_file =1, filename = "pwr1", itr = 1000, rp= 1):

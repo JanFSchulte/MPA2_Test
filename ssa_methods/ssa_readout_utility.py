@@ -17,7 +17,7 @@ class SSA_readout():
 		self.I2C = I2C;	self.fc7 = FC7;self.ctrl = ssactrl;
 		self.strip = ssastrip; self.utils = utils;
 		self.ofs_initialised = False;  self.ofs = [0]*6;
-		self.cl_shift = 0
+		self.cl_shift = {'digital':0, 'analog':0}
 
 
 	def status(self):
@@ -31,12 +31,12 @@ class SSA_readout():
 	def cluster_data(self, apply_offset_correction = False, display = False, shift = 'default', initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False, return_as_pattern = False):
 	 	data = []; tmp = [];
 		if(shift == 'default'):
-			ishift = self.cl_shift
+			ishift = self.cl_shift['digital']
+			if('ssa_inject_utility_mode') in utils.generic_parameters:
+				if(utils.generic_parameters['ssa_inject_utility_mode'] == 'analog'):
+					ishift = self.cl_shift['analog']
 		else:
 			ishift = shift
-		if('ssa_inject_utility_mode') in utils.generic_parameters:
-			if(utils.generic_parameters['ssa_inject_utility_mode'] == 'analog'):
-				ishift += 2
 	 	counter = 0; data_loc = 21 + ishift;
 	 	status = [0]*3; timeout = 10;
 		if(initialize):
@@ -251,7 +251,7 @@ class SSA_readout():
 	def read_counters_fast(self, striplist = range(1,121), raw_mode_en = 0, shift = 0):
 		self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
-		self.I2C.peri_write('AsyncRead_StartDel_LSB', (8 + shift) )
+		self.I2C.peri_write('AsyncRead_StartDel_LSB', (3 + shift) )
 		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
 		self.fc7.start_counters_read(1)
 		timeout = 0

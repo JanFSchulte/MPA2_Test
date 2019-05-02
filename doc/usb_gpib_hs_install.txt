@@ -39,7 +39,7 @@ sudo chown acaratel /dev/usb_gpib
 11. try to run in python:
 python
 import Gpib
-inst = Gpib.Gpib(0,2) # Device address 16
+inst = Gpib.Gpib(0,16) # Device address 16
 inst.write("*IDN?")
 inst.read(100) # read 100 bytes
 

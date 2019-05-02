@@ -155,6 +155,51 @@ class ssa_calibration():
 		return  nlin_params, nlin_data, fit_params, raw
 
 
+
+	def measure_dac_gain_offset(self, name='Bias_THDAC', nbits=8, npoints = 10, filename = False, filename2 = "", plot = True, average = 5, runname = '', filemode = 'w'):
+		# ['Bias_D5BFEED'] ['Bias_D5PREAMP']['Bias_D5TDR']['Bias_D5ALLV']['Bias_D5ALLI']
+		# ['Bias_CALDAC']['Bias_BOOSTERBASELINE']['Bias_THDAC']['Bias_THDACHIGH']['Bias_D5DAC8']
+		if(not self.initialised and (self.mode == 'MULTIMETER')):
+			self.__initialise()
+		if(not name in self.analog_mux_map):
+			print "->  \tInvalid DAC name"
+			return False
+		fullscale = 2**nbits
+		self.ssa.ctrl.set_output_mux(name)
+		x = np.linspace(0,fullscale, npoints, dtype=int, endpoint=False)
+		data = np.zeros(len(x), dtype=np.float);
+		for i in range(len(x)):
+			self.I2C.peri_write(name, x[i])
+			sleep(0.1)
+			if(self.mode == 'MULTIMETER'):
+				data[i] = self.multimeter.measure(self.minst)
+			else:
+				data[i] = self.pcbadc.measure('SSA', average)
+			utils.ShowPercent(x[i], fullscale-1, "Measuring "+name+" linearity                         ")
+		if( isinstance(filename, str) ):
+			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_Caracteristics_" + name + filename2
+			CSV.ArrayToCSV (array = data, filename = fo + ".csv", transpose = True)
+		g, ofs, sigma = utils.linear_fit(x, data)
+		self.ssa.ctrl.set_output_mux('highimpedence')
+		print "DAC "+name+'['+str(nbits)+'-bit]:'
+		print "->       GAIN = %6.3f mV/cnt" % (g*1000.0)
+		print "->     OFFSET = %6.3f mV"     % (ofs*1000.0)
+		if(plot):
+			plt.clf()
+			plt.plot(x, data, '-x')
+		raw = [x, data]
+		if( isinstance(filename, str) ):
+			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_DNL_INL_" + name + filename2 + '.csv'
+			CSV.ArrayToCSV (array = np.array([data, dnl, inl]), filename = fo + ".csv", transpose = True)
+			fo = open("../SSA_Results/" + filename + "_Parameters_" + name + filename2 + '.csv', filemode)
+			fo.write( "\n%s ; %s10.3f ; %s10.3f ; %s10.3f ;" % (runname, g, ofs, sigma) )
+			fo.close()
+		return  g, ofs, raw
+
+
+
+
+
 	def _dac_dnl_inl(self, data, nbits, plot = True):
 		fullscale = 2**nbits
 		INL = np.zeros(fullscale, dtype=np.float)

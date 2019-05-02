@@ -105,22 +105,42 @@ class SSA_ASIC:
 	def alignment_cluster_data_word(self, display=False):
 		tv = [10,20,30,40,50,60,70,80]
 		self.ctrl.set_lateral_data(left=0, right=0)
-		self.inject.digital_pulse([], initialise = True)
-		self.inject.digital_pulse([], initialise = True)
+		status = {'digital':False, 'analog':False}
+		for mode in ['digital', 'analog']:
+			if(mode == 'digital'):
+				self.inject.digital_pulse(initialise = True)
+			elif(mode == 'analog'):
+				self.inject.analog_pulse(initialise = True)
+			self.readout.cluster_data(initialize = True)
+			for shift in range(-5,6):
+				ext = False
+				self.readout.cl_shift[mode] = shift
+				if(mode == 'digital'):
+					self.inject.digital_pulse(tv, initialise = False)
+				elif(mode == 'analog'):
+					self.inject.analog_pulse(tv, initialise = False)
+				time.sleep(0.1)
+				rp = []
+				for i in range(20):
+					rp.append(self.readout.cluster_data(initialize = False))
+					if(display): print(rp[-1])
+					if(rp[-4:] == rp[-5:-1]):
+						if(map(float, rp[-1]) == map(float, tv)):
+							utils.print_info('->\tCluster-data word alignment {m:s} successfull ({r:d})'.format(m=mode, r=self.readout.cl_shift[mode]))
+							self.generic_parameters['cl_word_alignment_{m:s}'.format(m=mode)] = True
+							status[mode] = True
+							ext = True
+							break
+				if(ext): break
+		if(not status['digital']):
+			utils.print_error('->\tCluster-data word alignment digital injection error')
+			self.generic_parameters['cl_word_alignment_{m:s}'.format(m='digital')] = True
+		if(not status['analog']):
+			utils.print_error('->\tCluster-data word alignment analog injection error')
+			self.generic_parameters['cl_word_alignment_{m:s}'.format(m='analog')] = True
+		print self.readout.cl_shift
+		return (status['digital'] and status['analog'])
 
-		for shift in range(-5,6):
-			self.readout.cl_shift = shift
-			self.inject.digital_pulse(tv)
-			time.sleep(0.1)
-			rp = self.readout.cluster_data()
-			if(display): print(rp)
-			if(map(float, rp) == map(float, tv)):
-				utils.print_info('->\tCluster-data word alignment successfull ({:d})'.format(self.readout.cl_shift))
-				self.generic_parameters['cl_word_alignment'] = True
-				return True
-		utils.print_error('->\tCluster-data word alignment error')
-		self.generic_parameters['cl_word_alignment'] = False
-		return False
 
 	def alignment_lateral_input(self, display = False, timeout = 256*3, delay = 4, shift = 'default', init = False, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
 		utils.activate_I2C_chip()
@@ -172,8 +192,8 @@ class SSA_ASIC:
 		return [alined_left, alined_right]
 
 	def cl_word_aligned(self):
-		if 'cl_word_alignment' in self.generic_parameters:
-			return self.generic_parameters['cl_word_alignment']
+		if ('cl_word_alignment_digital' in self.generic_parameters) and ('cl_word_alignment_analog' in self.generic_parameters):
+			return self.generic_parameters['cl_word_alignment_digital'] and self.generic_parameters['cl_word_alignment_analog']
 		else:
 			return False
 
