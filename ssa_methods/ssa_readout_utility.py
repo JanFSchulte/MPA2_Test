@@ -34,6 +34,9 @@ class SSA_readout():
 			ishift = self.cl_shift
 		else:
 			ishift = shift
+		if('ssa_inject_utility_mode') in utils.generic_parameters:
+			if(utils.generic_parameters['ssa_inject_utility_mode'] == 'analog'):
+				ishift += 2
 	 	counter = 0; data_loc = 21 + ishift;
 	 	status = [0]*3; timeout = 10;
 		if(initialize):
@@ -43,12 +46,14 @@ class SSA_readout():
 			sleep(0.001)
 		#status_init = self.status()
 		if(send_test_pulse):
+			#self.fc7.SendCommand_CTRL("stop_trigger")
 			self.fc7.SendCommand_CTRL("start_trigger")
 		while (status[1] != 1 and counter<timeout):
 			sleep(0.001)
 			status = self.status()
 			counter += 1
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
+		#self.fc7.SendCommand_CTRL("stop_trigger")
 		counter = 0
 		for word in ssa_stub_data:
 			counter += 1
@@ -109,17 +114,17 @@ class SSA_readout():
 			cnt += 1
 		return delay
 
-	def send_trigger(duration = 0):
+	def send_trigger(self, duration = 0):
 		self.fc7.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
 
 	def l1_data(self, latency = 50, shift = 0, initialise = True, mipadapterdisable = True, trigger = True, multi = True, display = False, display_raw = False):
-		disable_pixel(0,0)
+		#disable_pixel(0,0)
 		if(initialise == True):
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-			Configure_TestPulse(delay_after_fast_reset = 0, delay_after_test_pulse = (latency+3+ishift), delay_before_next_pulse = 0, number_of_test_pulses = 1)
+			Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = (latency+3+shift), delay_before_next_pulse = 0, number_of_test_pulses = 1, enable_rst_L1 = 0, enable_initial_reset = 0, enable_L1 = 1)
 			self.fc7.write("cnfg_fast_delay_between_consecutive_trigeers", 0)
 			self.I2C.peri_write('L1-Latency_MSB', 0)
 			self.I2C.peri_write('L1-Latency_LSB', latency)
@@ -127,7 +132,7 @@ class SSA_readout():
 			sleep(0.001)
 		if trigger:
 			self.fc7.SendCommand_CTRL("start_trigger")
-		#send_trigger(1)
+			#self.send_trigger(1)
 		sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
 		sleep(0.001)
@@ -159,7 +164,7 @@ class SSA_readout():
 			BX_counter = (data >> 145) & 0x1ff
 			l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
 			hidata = (data >> 121) & 0xffffff
-			print bin(hidata)
+			#print bin(hidata)
 			l1datavect = [0]*120
 			hipflagvect = [0]*24
 			for i in range(0,120):
@@ -287,8 +292,8 @@ class SSA_readout():
 		return False, count
 
 
-	def all_lines(self, trigger = True, cluster = True, l1data = True, lateral = True):
-		if(trigger):
+	def all_lines(self, trigger = True, configure = True, cluster = True, l1data = True, lateral = True):
+		if(configure):
 			self.fc7.SendCommand_CTRL("fast_test_pulse")
 			self.fc7.SendCommand_CTRL("fast_trigger")
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
@@ -296,13 +301,13 @@ class SSA_readout():
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
 			Configure_TestPulse(199, 50, 400, 1)
 			sleep(0.001)
+		if(trigger):
 			self.fc7.SendCommand_CTRL("start_trigger")
 			sleep(0.1)
 		status = self.fc7.read("stat_slvs_debug_general")
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
 		lateral_data = self.fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
-
 		print "--> Status: "
 		print "---> MPA L1 Data Ready: ", ((status & 0x00000001) >> 0)
 		print "---> MPA Stub Data Ready: ", ((status & 0x00000002) >> 1)
@@ -342,87 +347,6 @@ class SSA_readout():
 			cr = val - 3
 			## TO BE IMPLEMENTED
 		return cr
-
-
-
-class SSA_inject():
-
-	def __init__(self, I2C, FC7, ssactrl, ssastrip):
-		self.I2C = I2C; self.fc7 = FC7;
-		self.ctrl = ssactrl; self.strip = ssastrip;
-		self.__initialise()
-
-	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, sequence = 0xff, initialise = True):
-		leftdata  = 0; rightdata = 0;
-
-		if(initialise == True):
-			self.ctrl.activate_readout_normal()
-			self.I2C.peri_write("CalPulse_duration", times)
-			#self.I2C.strip_write("ENFLAGS", 0, 0b01001)
-			#fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
-
-		if(sequence != self.DigCalibPattern): #to speedup
-			self.I2C.strip_write("DigCalibPattern_L", 0, sequence)
-
-		if(hit_list != self.hit_list):#to speedup
-			self.hit_list = hit_list
-			self.I2C.strip_write("ENFLAGS", 0, 0b0)
-			for cl in hit_list:
-				if (cl < 1):
-					rightdata = rightdata | (0b1 << (7+cl))
-				elif (cl > 120):
-					leftdata = leftdata | (0b1 << (cl-121))
-				else:
-					self.I2C.strip_write("ENFLAGS", cl, 0b01001)
-
-		if(self.data_l != leftdata or self.data_r != rightdata):#to speedup
-			self.ctrl.set_lateral_data(left = leftdata, right = rightdata)
-			self.data_l = leftdata;
-			self.data_r = rightdata;
-
-		if(hip_list != self.hip_list):#to speedup
-			self.hip_list = hip_list
-			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
-			for cl in hip_list:
-				self.I2C.strip_write("DigCalibPattern_H", cl, sequence)
-		sleep(0.002)
-
-
-	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [50, 100], cal_pulse_amplitude = 255, initialise = True, trigger = False):
-		if(initialise == True):
-			self.ctrl.activate_readout_normal()
-			self.ctrl.set_cal_pulse(amplitude = cal_pulse_amplitude, duration = 15, delay = 'keep')
-			self.ctrl.set_threshold(threshold[0])
-			self.ctrl.set_threshold_H(threshold[1])
-			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
-			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
-			#Configure_TestPulse_MPA_SSA(200, 1)
-		if(mode != self.hitmode): # to speed up
-			self.hitmode = mode
-			self.strip.set_sampling_mode('all', mode)
-		#enable pulse injection in selected clusters
-		self.I2C.strip_write("ENFLAGS", 0, 0b00000)
-		for cl in hit_list:
-			if(cl > 0 and cl < 121):
-				self.I2C.strip_write("ENFLAGS", cl, 0b10001)
-				sleep(0.001)
-		if(trigger == True):
-			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-			self.fc7.SendCommand_CTRL("start_trigger")
-			sleep(0.01)
-		sleep(0.001)
-
-
-	def __initialise(self):
-		self.hitmode = 'none'
-		self.data_l = 0
-		self.data_r = 0
-		self.hit_list = []
-		self.hip_list = []
-		self.DigCalibPattern = 0
-
-
-
 
 
 #	def alignment_slvs(align_word = 128, step = 10):

@@ -54,6 +54,7 @@ class SSA_inject():
 			for cl in hip_list:
 				self.I2C.strip_write("DigCalibPattern_H", cl, sequence)
 		sleep(0.001)
+		utils.generic_parameters['ssa_inject_utility_mode'] = 'digital'
 
 
 	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [50, 100], cal_pulse_amplitude = 255, initialise = True, trigger = False):
@@ -79,12 +80,13 @@ class SSA_inject():
 			self.fc7.SendCommand_CTRL("start_trigger")
 			sleep(0.01)
 		sleep(0.001)
+		utils.generic_parameters['ssa_inject_utility_mode'] = 'analog'
 
 
 	def __initialise(self):
 		self.hitmode = 'none'
-		self.data_l = 0
-		self.data_r = 0
+		self.data_l = False
+		self.data_r = False
 		self.hit_list = []
 		self.hip_list = []
 		self.DigCalibPattern = 0

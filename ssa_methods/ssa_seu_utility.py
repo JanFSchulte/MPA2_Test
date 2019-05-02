@@ -546,7 +546,7 @@ class SSA_SEU_utilities():
 		FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 		if(display > 1):
 			print "State of FSM after starting: " , state
-			print "Almost full flag of FIFO after starting: " , fifof
+			print "Almost full flag of FIFO after starting: " , FIFO_almost_full
 		#start taking data and check the 80% full threshold of the FIFO
 		sleep(0.1); FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 		sleep(0.1); FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")

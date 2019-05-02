@@ -22,34 +22,41 @@ class SSA_test_utility():
 		self.striplist = []
 
 
-	def cluster_data(self, mode = "digital",  nstrips = 5, min_clsize = 1, max_clsize = 4, nruns = 1000, shift = 0, display=False, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
+	def cluster_data(self, mode = "digital",  nstrips = 8, min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = False):
 		fo = open("../SSA_Results/" + file + "_Test_ClusterData2_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = '';
 		utils.activate_I2C_chip()
-		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
+		SendCommand_CTRL("stop_trigger")
+		if (init):
+			self.ssa.init(reset_board = False, reset_chip = False, display = False)
+		if(not self.ssa.cl_word_aligned()):
+			self.ssa.alignment_cluster_data_word()
+		time.sleep(0.1)
 		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
 		self.ssa.ctrl.set_cal_pulse_delay(0)
 		prev = [0xff]*nstrips
 		if(mode == "digital"):
-			self.ssa.inject.digital_pulse(hit_list = [], hip_list = [], initialise = True, times = 8)
+			self.ssa.inject.digital_pulse(initialise = True, times = 1)
 		elif(mode == "analog"):
-			self.ssa.inject.analog_pulse(hit_list = [], initialise = True)
-			shift += 2
+			self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', cal_pulse_amplitude = 255, threshold = [50, 100])
 		else:
 			return False
 		self.ssa.readout.cluster_data(initialize = True)
 		cnt = {'cl_sum': 0, 'cl_err' : 0};
 		for i in range(0,nruns):
 			#clrange = np.array( random.sample(range(1, 60), nstrips)) * 2
-			cl_hits, cl_centroids = self._generate_clusters(nstrips, min_clsize, max_clsize)
+			if(lateral):
+				cl_hits, cl_centroids = self._generate_clusters(nstrips, min_clsize, max_clsize, -2, 124)
+			else:
+				cl_hits, cl_centroids = self._generate_clusters(nstrips, min_clsize, max_clsize, 1, 121)
 			wd = 0;
 			err = [False]*3
 			if(mode == "digital"):
 				self.ssa.inject.digital_pulse(hit_list = cl_hits, initialise = False)
 			elif(mode == "analog"):
-				self.ssa.inject.analog_pulse( hit_list = cl_hits, initialise = False, cal_pulse_amplitude = 255)
-			time.sleep(0.001)
+				self.ssa.inject.analog_pulse( hit_list = cl_hits, initialise = False)
+			time.sleep(0.005) #### important at nstrips = 8 (I2C time)
 			r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 			if(hfi):
 				while(r==prev and len(prev)>0): #for firmware issure to be fix in D19C
@@ -59,6 +66,7 @@ class SSA_test_utility():
 						self.ssa.inject.digital_pulse(hit_list = cl_hits, initialise = False)
 					elif(mode == "analog"):
 						self.ssa.inject.analog_pulse( hit_list = cl_hits, initialise = False)
+					time.sleep(0.001)
 					r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 					if(wd>5): break
 					wd += 1;
@@ -89,19 +97,26 @@ class SSA_test_utility():
 				fo.write(runname + ' ; ' + erlog + ' \n')
 				print '\t' + erlog
 			cnt['cl_sum'] += 1;
-			utils.ShowPercent(cnt['cl_sum'], nruns, "Running clusters test based on digital test pulses")
+			if(mode == 'digital'):  utils.ShowPercent(cnt['cl_sum'], nruns, "Running clusters test based on digital test pulses")
+			elif(mode == 'analog'): utils.ShowPercent(cnt['cl_sum'], nruns, "Running clusters test based on analog test pulses")
 		utils.ShowPercent(nruns, nruns, "Done                                                      ")
 		fo.close()
 		rt = 100*(1-cnt['cl_err']/float(cnt['cl_sum']))
+		if(rt == 100):
+			utils.print_good("->\tCluster data test with {mode:s} injection -> 100%".format(mode=mode))
+		else:
+			utils.print_error("->\tCluster data test with {mode:s} injection -> {res:5.3f}%".format(mode=mode, res=rt))
 		return rt
 
 
 
-	def cluster_data_basic(self, mode = "digital", nruns = 5, shift = 0, shiftL = 0, display=False, lateral = True, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
+	def cluster_data_basic(self, mode = "digital", nruns = 5, shift = 'default', shiftL = 0, display=False, lateral = True, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
 		fo = open("../SSA_Results/" + file + "_Test_ClusterData_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = ''; stlateralout = '';
 		#print "->  \tRemember to call test.lateral_input_phase_tuning() before to run this test"
 		utils.activate_I2C_chip()
+		if(not self.ssa.cl_word_aligned()):
+			self.ssa.cl_word_alignment()
 		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
 		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
@@ -111,7 +126,6 @@ class SSA_test_utility():
 			self.ssa.inject.digital_pulse(hit_list = [], hip_list = [], initialise = True)
 		elif(mode == "analog"):
 			self.ssa.inject.analog_pulse(hit_list = [], initialise = True)
-			shift += 2
 		else:
 			return False
 		if(lateral):
@@ -184,66 +198,23 @@ class SSA_test_utility():
 		rt = [100*(1-cnt['cl_err']/float(cnt['cl_sum'])) , 100*(1-cnt['li_err']/float(cnt['li_sum'])) , 100*(1-cnt['lo_err']/float(cnt['lo_sum'])) ]
 		return rt
 
-
-	def lateral_output_phase_tuning(self):
-		for i in range(16):
-			self.ssa.set_lateral_sampling_shift(i,0)
-			self.ssa.inject.digital_pulse([1,2,3,4,5,6,7,8])
-			a, b = self.ssa.readout.lateral_data(shift =-1, raw = True)
-			print( bin(a) + '  ' + bin(b))
-			a, b = self.ssa.readout.lateral_data(shift = 0, raw = True)
-			print( bin(a) + '  ' + bin(b))
-			a, b = self.ssa.readout.lateral_data(shift = 1, raw = True)
-			print( bin(a) + '  ' + bin(b))
-
-	def lateral_input_phase_tuning(self, display = False, timeout = 256*3, delay = 4, shift = 0, init = False, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
-		utils.activate_I2C_chip()
-		fo = open("../SSA_Results/" + file + "_Test_LateralInput.csv", filemode)
-		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
-		self.ssa.readout.cluster_data(initialize = True)
-		alined_left  = False; alined_right = False; cnt = 0; print "";
-		fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay)
-		self.ssa.inject.digital_pulse([100, 121, 124], initialise = True)
-		#self.ssa.ctrl.set_lateral_data(0b00001001, 0)
-		while ((alined_left == False) and (cnt < timeout)):
-			clusters = self.ssa.readout.cluster_data(initialize = False, shift = shift)
-			if len(clusters) == 3:
-				if(clusters[0] == 100 and clusters[1] == 121 and clusters[2] == 124):
-					alined_left = True
-			utils.ShowPercent(cnt, timeout+1, "Allaining left input line\t\t" + str(clusters) + "           ")
-			time.sleep(0.001)
-			#if  (cnt==256): fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay+1)
-			#elif(cnt==512): fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay+2)
-			self.ssa.ctrl.set_lateral_data_phase(0,5)
-			time.sleep(0.001)
-			cnt += 1
-		if(alined_left == True):
-			utils.ShowPercent(100, 100, "Left Input line alined    \t\t" + str(clusters) + "           ")
-		else:
-			utils.ShowPercent(100, 100, "Impossible to align left input data line  ")
-		#self.ssa.ctrl.set_lateral_data(0, 0b10100000)
-		self.ssa.inject.digital_pulse([-2, 0, 10], initialise = True)
-		cnt = 0
-		while ((alined_right == False) and (cnt < timeout)):
-			clusters = self.ssa.readout.cluster_data(initialize = False, shift = shift)
-			if len(clusters) == 3:
-				if(clusters[0] == -2 and clusters[1] == 0 and clusters[2] == 10):
-					alined_right = True
-			utils.ShowPercent(cnt, timeout+1, "Allaining right input line\t\t" + str(clusters) + "           ")
-			time.sleep(0.001)
-			self.ssa.ctrl.set_lateral_data_phase(5,0)
-			time.sleep(0.001)
-			cnt += 1
-		if(alined_right == True):
-			utils.ShowPercent(100, 100, "Right input line alined     \t\t" + str(clusters) + "           ")
-		else:
-			utils.ShowPercent(100, 100, "Impossible to align right input data line")
-		fo.write(str(runname) + ' ; ' + str(alined_left) + " ; " + str(alined_right) + ' \n')
-		return [alined_left, alined_right]
+	def lateral_input_phase_tuning(self, display = False, timeout = 256*3, delay = 4, shift = 'default', init = False, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+		return self.ssa.alignment_cluster_data_word(display = display, timeout = timeout, delay = delay, shift = shift, init = init, file = file, filemode = filemode, runname = runname)
 
 
+	#def lateral_output_phase_tuning(self):
+	#	for i in range(16):
+	#		self.ssa.set_lateral_sampling_shift(i,0)
+	#		self.ssa.inject.digital_pulse([1,2,3,4,5,6,7,8])
+	#		a, b = self.ssa.readout.lateral_data(shift =-1, raw = True)
+	#		print( bin(a) + '  ' + bin(b))
+	#		a, b = self.ssa.readout.lateral_data(shift = 0, raw = True)
+	#		print( bin(a) + '  ' + bin(b))
+	#		a, b = self.ssa.readout.lateral_data(shift = 1, raw = True)
+	#		print( bin(a) + '  ' + bin(b))
 
-	def l1_data_basic(self, mode = "digital", nruns = 5, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+
+	def l1_data_basic(self, mode = "digital", nruns = 1, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
 		fo = open("../SSA_Results/" + file + "_Test_L1_" + mode + ".csv", filemode)
 		counter = [[0,0],[0,0]]
 		utils.activate_I2C_chip()
@@ -305,6 +276,10 @@ class SSA_test_utility():
 		fo.close()
 		result = [ (1.0 - float(counter[0][1])/float(counter[0][0]))*100.0  ,  (1.0 - float(counter[1][1])/float(counter[1][0]))*100.0  ]
 		#return "%5.2f%%" % (result)
+		if(result[0] == 100 and result[1] == 100):
+			utils.print_good("->\L1 data test scan with {mode:s} injection -> 100%".format(mode=mode))
+		else:
+			utils.print_error("->\tCluster data test scan with {mode:s} injection -> {res0:5.3f}% hit - {res1:5.3f}% HIP flags".format(mode=mode, res0=result[0], res1=result[1]))
 		return result
 
 
@@ -463,11 +438,11 @@ class SSA_test_utility():
 #		dstr = "[%3d][%3d][%3s][%3s]" % (L1_counter, BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
 #		print dstr
 
-	def _generate_clusters(self, nclusters, min_clsize = 1, max_clsize = 4):
+	def _generate_clusters(self, nclusters, min_clsize = 1, max_clsize = 4, smin=-2, smax=124):
 		hit = []; c = []; exc = [];
 		for i in range(nclusters):
 			size = random.sample(range(min_clsize, max_clsize), 1)[0]
-			rangelist = list( set(range(1, 80-size)) - set(exc) )
+			rangelist = list( set(range(smin, smax-size)) - set(exc) )
 			adr = random.sample(rangelist, 1)[0]
 			cll = range(adr, adr+size)
 			hit += cll

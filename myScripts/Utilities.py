@@ -36,6 +36,7 @@ class Utilities:
 	def __init__(self):
 		self.logfile = False
 		self.errorlog = False
+		self.generic_parameters = {}
 		p = []
 
 	class cl_clustdispl(float):
