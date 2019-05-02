@@ -97,8 +97,7 @@ class mpa_cal_utility():
 			mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 			timeout += 1
 		if (timeout >= 50):
-			print "Fail: "
-			print self.fc7.read("stat_slvs_debug_mpa_counters_store_fsm_state")
+			print "Fail: ", self.fc7.read("stat_slvs_debug_mpa_counters_store_fsm_state")
 			failed = True;
 			return failed, 0
 	#print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
@@ -127,8 +126,10 @@ class mpa_cal_utility():
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		failed = False
 		return failed, count
-# Test S-curve: cal.s_curve_rbr_fr( n_pulse = 100, s_type = "CAL", ref_val = 150, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = 0, extract = 0, plot = 1, print_file =0 )
-	def s_curve_rbr_fr(self, n_pulse = 1000, s_type = "THR", ref_val = 50, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 200, extract_val = 0, extract = 1, plot = 1, print_file =1, filename = "../cernbox/MPA_Results/scurve_fr_"):
+# Test S-curve (~60 secs):
+# cal.s_curve( n_pulse = 250, s_type = "CAL", ref_val = 150, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 2000, extract_val = 0, extract = 0, plot = 1, print_file =0 )
+# NB: product n_pulse*pulse_delay > 500e3 to avoid communication problem (IP bus related?)
+	def s_curve(self, n_pulse = 1000, s_type = "THR", rbr = 0, ref_val = 50, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 200, extract_val = 0, extract = 1, plot = 1, print_file =1, filename = "../cernbox/MPA_Results/scurve_fr_"):
 		t0 = time.time()
 		self.fc7.clear_counters(8)
 		row = np.array(row)
@@ -150,23 +151,21 @@ class mpa_cal_utility():
 			if s_type == "CAL":	self.mpa.ctrl_base.set_calibration(cur_val)
 			elif s_type == "THR":	self.mpa.ctrl_base.set_threshold(cur_val)
 			self.utils.ShowPercent(count, (stop-start)/step, "")
-			for r in row:
-				self.mpa.inject.send_pulses_fast(n_pulse, r, 0, cur_val)
-			sleep(0.005)
+			if rbr:
+				for r in row:
+					self.mpa.inject.send_pulses_fast(n_pulse, r, 0, cur_val)
+			else: self.mpa.inject.send_pulses_fast(n_pulse, 0, 0, cur_val)
 			fail, temp = self.ReadoutCounters()
-			sleep(0.005)
-			if fail and (count_err < 10): # LOOK HERE (exit condition)
-				print "FailedPoint, repeat!"
-				activate_I2C_chip(verbose = 0)
-				count_err += 1
-			else:
-				data_array [:, count]= temp
-				count += 1
-				cur_val += step
+			if fail: fail, temp = self.ReadoutCounters()
+			data_array [:, count]= temp
+			count += 1
+			cur_val += step
 			if (count_err == 10):
 				cur_val = stop
 				failed = 1
-			clear_counters(8)
+			self.fc7.clear_counters(8)
+			sleep(0.001)
+			self.fc7.clear_counters(8)
 		if failed == 1:
 			print ("S-Curve extraction failed")
 			return "exit at scurve"
@@ -177,20 +176,20 @@ class mpa_cal_utility():
 			if extract_val == 0:
 				if s_type == "THR":	extract_val = ref_val*1.66+70
 				elif s_type == "CAL":	extract_val = ref_val/1.66-40
-			th_array, noise_array = self.plot_extract_scurve(row = row, pixel = range(1,120), s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, plot = plot, extract = extract)
-			t1 = time.time()
-			print "END"
-			print "Elapsed Time: " + str(t1 - t0)
-			plt.show()
-			return data_array, th_array, noise_array
+			th_array, noise_array = self.plot_extract_scurve(row = row, pixel = range(2,120), s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, plot = plot, extract = extract)
 		elif plot:
-			self.plot_extract_scurve(row = row, pixel = range(1,120), s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, extract = 0, plot = plot)
-		return data_array
+			self.plot_extract_scurve(row = row, pixel = range(2,120), s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, extract = 0, plot = plot)
+		t1 = time.time()
+		print "END"
+		print "Elapsed Time: " + str(t1 - t0)
+		if plot or extract: plt.show()
+		if extract: return data_array, th_array, noise_array
+		else: return data_array
 ### Trimming routine
 	def trimming_step(self, pix_out = [["Row", "Pixel", "DAC"]], n_pulse = 1000, s_type = "THR", ref_val = 10, iteration = 1, nominal_DAC = 110, data_array = np.zeros(2040, dtype = np.int ), plot = 1,  stop = 150, ratio = 3.90, row = range(1,17), pixel = range(1,120)):
 		t0 = time.time()
 		self.mpa.ctrl_pix.load_trim(data_array)
-		try: scurve_init = self.s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
+		try: scurve_init = self.s_curve(n_pulse = n_pulse,  s_type = s_type, rbr = 0, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 500, extract = 0, plot = 0, print_file =0)
 		except TypeError: return
 		scurve = scurve_init
 		for i in range(0,iteration):
@@ -223,16 +222,16 @@ class mpa_cal_utility():
 					except RuntimeError or TypeError:
 						print "Fitting failed on pixel ", p , " row: " ,r
 			if (i != iteration - 1):
-				try: scurve = self.s_curve_rbr_fr(n_pulse = n_pulse, s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
+				try: scurve = self.s_curve(n_pulse = n_pulse, s_type = s_type, rbr = 0, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
 				except TypeError: return
 		if plot:
 			for r in row:
 				for p in pixel:
 					self.I2C.pixel_write("TrimDAC",r,p,data_array[(r-1)*120+p])
-			try: scurve_final = self.s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
+			try: scurve_final = self.s_curve(n_pulse = n_pulse,  s_type = s_type, rbr = 0, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
 			except TypeError: return
 			plt.figure(1)
-			th_array, noise_array = self.plot_extract_scurve(s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, start = start, stop = stop, plot = 1, extract = 1)
+			th_array, noise_array = self.plot_extract_scurve(row = row, pixel = range(2,120),s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, start = start, stop = stop, plot = 1, extract = 1)
 			t1 = time.time()
 			print "END"
 			print "Trimming Elapsed Time: " + str(t1 - t0)
@@ -252,8 +251,8 @@ class mpa_cal_utility():
 		if print_file:
 			CSV.ArrayToCSV (data_array, str(filename) + "_ScCal" + ".csv")
 		if extract:
-			scurve = self.s_curve_rbr_fr(n_pulse = n_pulse,  s_type = s_type, ref_val = ref_val, row = range(1,17), step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
-			th_array, noise_array = self.plot_extract_scurve(row = range(1,17), pixel = range(1,120), s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, start = 0, stop = stop, plot = plot, extract = 1)
+			scurve = self.s_curve(n_pulse = n_pulse,  s_type = s_type, rbr = 0, ref_val = ref_val, row = range(1,17), step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
+			th_array, noise_array = self.plot_extract_scurve(row = range(1,17), pixel = range(2,120), s_type = s_type, scurve = scurve , n_pulse = n_pulse, nominal_DAC = nominal_DAC, start = 0, stop = stop, plot = plot, extract = 1)
 			print "Pixel not trimmerable: " ,np.size(pix_out)/3-1
 			t1 = time.time()
 			print "END"

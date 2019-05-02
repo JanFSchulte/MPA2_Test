@@ -1,4 +1,5 @@
 from d19cScripts.fc7_daq_methods import *
+from d19cScripts.phase_tuning_control import *
 from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
@@ -122,6 +123,13 @@ class mpa_ctrl_base:
 				self.fc7.write("ctrl_phy_phase_tune_again", 1)
 			else:
 				timeout += 1
+	def align_out_all(self, verbose = 1):
+		self.I2C.peri_write("ReadoutMode", 2)
+		self.I2C.peri_write("LFSR_data", 0b10100000)
+		sleep(1)
+		TuneMPA()
+		#self.I2C.peri_write("ReadoutMode", 0)
+
 
 #	def save_configuration(self, file = '../MPA_Results/Configuration.csv', display=True):
 #		registers = []

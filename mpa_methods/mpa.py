@@ -46,9 +46,9 @@ class MPA_ASIC:
 		if(display):
 			sys.stdout.write("->  \tTuning sampling phases..\r")
 			sys.stdout.flush()
-		self.ctrl_base.set_sampling_edge(edge)
-		self.ctrl_base.init_slvs(slvs_current)
-		rt = self.ctrl_base.align_out()
+		self.ctrl_base.set_sampling_edge(edge); sleep(0.2)
+		self.ctrl_base.init_slvs(slvs_current); sleep(0.2)
+		rt = self.ctrl_base.align_out_all()
 		if(display): sleep(0.2)
 		else: sleep(0.1)
 		self.ctrl_base.activate_sync()
