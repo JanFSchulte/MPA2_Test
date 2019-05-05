@@ -248,26 +248,31 @@ class SSA_readout():
 		return coordinates
 
 
-	def read_counters_fast(self, striplist = range(1,121), raw_mode_en = 0, shift = 0):
-		self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
+	def read_counters_fast(self, striplist = range(1,121), raw_mode_en = 0, shift = 0, initialize = True):
+		#t = time.time()
+		if(initialize):
+			self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
+			self.I2C.peri_write('AsyncRead_StartDel_LSB', (3 + shift) )
+
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
-		self.I2C.peri_write('AsyncRead_StartDel_LSB', (3 + shift) )
 		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
 		self.fc7.start_counters_read(1)
 		timeout = 0
 		failed = False
-		while ((mpa_counters_ready == 0) & (timeout < 50)):
-			sleep(0.01)
+		while ((mpa_counters_ready == 0) & (timeout < 100)):
+			#### sleep(0.01)
 			timeout += 1
 			mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
+			time.sleep(0.001)
 		if(timeout >= 50):
 			failed = True;
 			return failed, -1
 		if raw_mode_en == 0:
 			count = self.fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 120)
-			count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
+			if(119 in striplist): ## BUG IN SSA CHIP (STRIP 120 COUNTER READABLE ONLY VIA I2C)
+				count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
+				#count[118] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",119)
 			#count[117] = (self.I2C.strip_read("ReadCounter_MSB",118) << 8) | self.I2C.strip_read("ReadCounter_LSB",118)
-
 		else:
 			count = np.zeros((20000, ), dtype = np.uint16)
 			for i in range(0,20000):
@@ -277,11 +282,12 @@ class SSA_readout():
 				line2 = to_number(fifo1_word,16,8)
 				count[i] = (line2 << 8) | line1
 				if (i%1000 == 0): print "Reading BX #", i
-		sleep(0.1)
-		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
+		#### sleep(0.1)
+		#### mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		for s in range(0,120):
 			if (not (s+1) in striplist):
 				count[s] = 0
+		#print (time.time()-t)*1E3
 		return failed, count
 
 

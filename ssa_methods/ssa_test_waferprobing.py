@@ -68,6 +68,7 @@ class SSA_ProbeMeasurement():
 		self.test_routine_initialize(fo)
 		self.test_routine_power(fo,'','_Initialized')
 		self.test_routine_measure_bias(fo,'','_Reset')
+		self.test_routine_dacs(fo, '')
 		self.test_routine_calibrate(fo)
 		self.test_routine_power(fo,'','_Calibrated')
 		self.test_routine_measure_bias(fo,'','_Calibrated')
@@ -88,9 +89,9 @@ class SSA_ProbeMeasurement():
 		while self.runtest.is_active('Power') and wd < 3:
 			try:
 				[Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip] = self.pwr.get_power(display=True, return_all = True)
-				self.summary.set('V_DVDD'+mode, Vd, ' V', '',  runname)
-				self.summary.set('V_AVDD'+mode, Va, ' V', '',  runname)
-				self.summary.set('V_PVDD'+mode, Vp, ' V', '',  runname)
+				self.summary.set('V_DVDD'+mode, Vd, 'mV', '',  runname)
+				self.summary.set('V_AVDD'+mode, Va, 'mV', '',  runname)
+				self.summary.set('V_PVDD'+mode, Vp, 'mV', '',  runname)
 				self.summary.set('I_DVDD'+mode, Id, 'mA', '',  runname)
 				self.summary.set('I_AVDD'+mode, Ia, 'mA', '',  runname)
 				self.summary.set('I_PVDD'+mode, Ip, 'mA', '',  runname)
@@ -217,5 +218,56 @@ class SSA_ProbeMeasurement():
 				break
 			except:
 				print "X>  \tError in Bias_CALDAC test. Reiterating."
+				wd +=1
+		wd = 0
+
+
+#self.measure.scurve_trim(plot = plot, filename = file + '_Init')
+#self.config_file = filename + '_Configuration_Init.scv'
+#self.ssa.save_configuration(self.config_file, display=False)
+
+
+	def test_routine_analog(self, filename = 'default', runname = ''):
+		filename = self.summary.get_file_name(filename)
+		time_init = time.time()
+		wd = 0
+		while self.runtest.is_active('gain_offset_noise') and wd < 3 and wd < 3:
+			try:
+				#self.ssa.load_configuration(self.config_file, display = False)
+				self.measure.scurve_trim(method='expected', calpulse=50, plot=False,	iterations=3, compute_min_max=False, filename=False, countershift=0)
+
+
+				print "->  \tgain_offset_noise Time = %7.2f" % (time.time() - time_init); time_init = time.time();
+				break
+			except:
+				print "X>  \tError in gain_offset_noise test. Reiterating."
+				wd +=1
+
+
+
+
+		wd = 0
+		while self.runtest.is_active('gain_offset_noise') and wd < 3 and wd < 3:
+			try:
+				#self.ssa.load_configuration(self.config_file, display = False)
+				r1, r2, r3, r4 = self.measure.gain_offset_noise(calpulse = 50, ret_average = True, plot = True, use_stored_data = False, file = filename, filemode = 'a', runname = runname)
+				self.summary.set('FE_gain'          , r1, 'ThDAC/CalDAC', '',  runname)
+				self.summary.set('FE_offset'        , r2, 'ThDAC'       , '',  runname)
+				self.summary.set('FE_noise_scurve'  , r3, 'ThDAC'       , '',  runname)
+				self.summary.set('FE_scurve_issues' , r4, 'list'        , '',  runname)
+				print "->  \tgain_offset_noise Time = %7.2f" % (time.time() - time_init); time_init = time.time();
+				break
+			except:
+				print "X>  \tError in gain_offset_noise test. Reiterating."
+				wd +=1
+		wd = 0
+		while self.runtest.is_active('threshold_spread') and wd < 3:
+			try:
+				r1 = self.measure.threshold_spread(calpulse = 50, use_stored_data = True, plot = True, file = filename, filemode = 'a', runname = runname)
+				self.summary.set('threshold std' , r1, 'ThDAC', '',  runname)
+				print "->  \tthreshold_spread Time = %7.2f" % (time.time() - time_init); time_init = time.time();
+				break
+			except:
+				print "X>  \tError in threshold_spread test. Reiterating."
 				wd +=1
 		wd = 0

@@ -39,8 +39,9 @@ class ssa_fc7_com():
 	def send_trigger(self,duration = 0):
 		self.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
-	def open_shutter(self,duration = 0):
-		self.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
+	def open_shutter(self,duration = 0, repeat=1):
+		for i in range(repeat):
+			self.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
 	def send_test(self,duration = 0):
 		self.compose_fast_command(duration, resync_en = 0, l1a_en = 0, cal_pulse_en = 1, bc0_en = 0)
@@ -48,14 +49,16 @@ class ssa_fc7_com():
 	def orbit_reset(self,duration = 0):
 		self.compose_fast_command(duration, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 1)
 
-	def close_shutter(self,duration = 0):
-		self.compose_fast_command(duration, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 1)
+	def close_shutter(self,duration = 0, repeat=1):
+		for i in range(repeat):
+			self.compose_fast_command(duration, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 1)
 
 	def reset(self):
 		self.SendCommand_CTRL("global_reset")
 
-	def clear_counters(self,duration = 0):
-		self.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 1)
+	def clear_counters(self,duration = 0, repeat = 1):
+		for i in range(repeat):
+			self.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 1)
 
 	def write(self, p1, p2, p3 = 0):
 		cnt = 0

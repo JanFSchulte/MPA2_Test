@@ -121,12 +121,13 @@ class SSA_measurements():
 
 
 	###########################################################
-	def scurve_trim(self, filename = 'Chip0/', calpulse = 50, plot = True, iterations = 5, countershift = -4):
+	def scurve_trim(self, filename = 'Chip0/', calpulse = 50, method = 'center', iterations = 5, countershift = 0, compute_min_max = True, plot = True):
 		print "->  \tS-Curve Trimming"
-		data = self.scurves(mode = 'all', rdmode = 'fast', cal_list = [calpulse], trim_list = [0, 31], filename = filename, plot = False, countershift = countershift)
-		scurve_0 = data[0]; scurve_31 = data[1];
+		if(compute_min_max):
+			data = self.scurves(mode = 'all', rdmode = 'fast', cal_list = [calpulse], trim_list = [0, 31], filename = filename, plot = False, countershift = countershift)
+			scurve_0 = data[0]; scurve_31 = data[1];
 		scurve_init, scurve_trim = self.cal.trimming_scurves(
-			method = 'center',
+			method = method,
 			default_trimming = 15,
 			cal_ampl = calpulse,
 			iterations = iterations,
@@ -138,10 +139,11 @@ class SSA_measurements():
 			CSV.ArrayToCSV (array = scurve_init, filename = fo, transpose = True)
 			fo = "../SSA_Results/" + filename + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
 			CSV.ArrayToCSV (array = scurve_trim, filename = fo, transpose = True)
-			fo = "../SSA_Results/" + filename + "_scurve_" + "trim0" + "__cal_" + str(calpulse) + ".csv"
-			CSV.ArrayToCSV (array = scurve_0, filename = fo, transpose = True)
-			fo = "../SSA_Results/" + filename + "_scurve_" + "trim31" + "__cal_" + str(calpulse) + ".csv"
-			CSV.ArrayToCSV (array = scurve_31, filename = fo, transpose = True)
+			if(compute_min_max):
+				fo = "../SSA_Results/" + filename + "_scurve_" + "trim0" + "__cal_" + str(calpulse) + ".csv"
+				CSV.ArrayToCSV (array = scurve_0, filename = fo, transpose = True)
+				fo = "../SSA_Results/" + filename + "_scurve_" + "trim31" + "__cal_" + str(calpulse) + ".csv"
+				CSV.ArrayToCSV (array = scurve_31, filename = fo, transpose = True)
 		if plot:
 			self.scurve_trim_plot(filename = filename, calpulse = calpulse)
 		return scurve_trim, scurve_init
@@ -176,13 +178,10 @@ class SSA_measurements():
 		plt.plot(scurve_0,    'b', alpha = 0.5)
 		plt.plot(scurve_31,   'r', alpha = 0.5)
 		plt.plot(scurve_trim, 'y', alpha = 0.5)
-
 		f, axarr = plt.subplots(2, sharex=True)
 		axarr[0].plot(x, y)
 		axarr[0].set_title('Sharing X axis')
 		axarr[1].scatter(x, y)
-
-
 		plt.show()
 
 	###########################################################
