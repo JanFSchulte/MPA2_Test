@@ -32,7 +32,8 @@ class ssa_ctrl_strip:
 
 	def set_trimming(self, strip, value):
 		value = value & 0b11111
-		if(strip == 'all'): strip = 0
+		if(strip == 'all'):
+			strip = 0
 		self.I2C.strip_write("THTRIMMING", strip, value)
 
 	def get_trimming(self, strip):

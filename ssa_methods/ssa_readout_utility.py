@@ -252,7 +252,7 @@ class SSA_readout():
 		#t = time.time()
 		if(initialize):
 			self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
-			self.I2C.peri_write('AsyncRead_StartDel_LSB', (3 + shift) )
+			self.I2C.peri_write('AsyncRead_StartDel_LSB', (11 + shift) )
 
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
@@ -271,8 +271,6 @@ class SSA_readout():
 			count = self.fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 120)
 			if(119 in striplist): ## BUG IN SSA CHIP (STRIP 120 COUNTER READABLE ONLY VIA I2C)
 				count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
-				#count[118] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",119)
-			#count[117] = (self.I2C.strip_read("ReadCounter_MSB",118) << 8) | self.I2C.strip_read("ReadCounter_LSB",118)
 		else:
 			count = np.zeros((20000, ), dtype = np.uint16)
 			for i in range(0,20000):
