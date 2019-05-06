@@ -22,6 +22,7 @@ class SSA_ASIC:
 		self.pwr     = pwr
 		self.fc7     = FC7
 		self.generic_parameters = {}
+		self.cap = 52E-15
 
 	####### Initialize functions ###############
 

@@ -423,6 +423,7 @@ class SSA_measurements():
 			data = (0 - np.array(data)) + baseline
 		elif name in self.muxmap:
 			data = np.array(data)
+			baseline = 0
 		else:
 			return False
 		if plot:
@@ -439,7 +440,7 @@ class SSA_measurements():
 		if(eval_inl_dnl):
 			return DNLMAX, INLMAX, g, ofs
 		else:
-			return g, ofs
+			return g, ofs, baseline
 
 	###########################################################
 	def power_vs_occupancy(self, th = range(2,13), trim = False, plot = 1, print_file =1, filename = "pwr1", itr = 1000, rp= 1):
