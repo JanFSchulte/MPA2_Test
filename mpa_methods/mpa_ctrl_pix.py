@@ -50,10 +50,17 @@ class mpa_ctrl_pix:
 	def enable_dig_cal(self, r,p, pattern = 0b00000001):
 		self.I2C.pixel_write('ENFLAGS', r, p, 0x20)
 		self.I2C.pixel_write('DigPattern', r, p, pattern)
-	def load_trim(self, data_array):
-		for r in range(1,17):
-			for p in range(1,120):
-				self.I2C.pixel_write("TrimDAC",r,p,data_array[(r-1)*120+p])
+	def load_trim(self, trim_array):
+		count = 0
+		for r in range(0,16):
+			for p in range(0,118):
+				trim_val = trim_array[r*118+p]
+				if trim_val > -1 and trim_val < 32: self.I2C.pixel_write("TrimDAC",r+1,p+2, trim_val)
+				elif trim_val < 0: self.I2C.pixel_write("TrimDAC",r+1,p+2, 0); count += 1#print "Low Trim Row", r, "Pixel", p, "Value", trim_val
+				elif trim_val > 31: self.I2C.pixel_write("TrimDAC",r+1,p+2, 31); count += 1#print "High Trim Row", r, "Pixel", p, "Value", trim_val - 31
+				else: print r, p
+		return count
+
 	def reset_trim(self, value = 15):
 		self.I2C.pixel_write("TrimDAC",0,0,value)
 	def read_pixel_counter(self, row, pixel):
