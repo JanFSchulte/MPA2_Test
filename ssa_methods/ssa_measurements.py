@@ -12,6 +12,9 @@ import inspect
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+from scipy import stats
+from scipy import interpolate
 
 
 class SSA_measurements():
@@ -20,6 +23,47 @@ class SSA_measurements():
 		self.ssa = ssa; self.I2C = I2C; self.fc7 = fc7; self.utils = utils;
 		self.cal = cal; self.bias = biascal; self.muxmap = analog_mux_map; self.pwr = pwr;
 		self.__set_variables()
+
+	###########################################################
+	def scurve_trim_gain_noise(self,
+		charge_fc_trim = 2,             # Input charge in fC
+		charge_fc_test = 1,             # Input charge in fC
+		threshold_mv_trim = 'default',  # Threshold in mV
+		iterative_step_trim = 1,        # Iterative steps to acheive lower variability
+		caldac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
+		thrdac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
+		nevents = 1000,                 # Number of calibration pulses
+		plot = True,                    # Fast plot of the results
+		filename = '../SSA_Results/Chip0/Chip_0_'
+		):
+		scurves = {}
+		thstd, sc = self.scurve_trim(
+			charge_fc = charge_fc_trim,
+			threshold_mv = 'default',
+			caldac = caldac,
+			thrdac = thrdac,
+			nevents = nevents,
+			iterative_step = iterative_step_trim,
+			plot = False,
+			filename = filename,
+			return_scurves = True)
+		sc['h_0']  = sc[0];	sc['h_31'] = sc[1];
+		sc['h_trim'] = sc[-1];
+
+		sc['l_trim'] = self.scurves(
+			cal_ampl = cal_ampl,
+			nevents = nevents,
+			display = False,
+			plot = False,
+			filename = False)
+
+
+	###########################################################
+	##### def gain_offset_noise_eval(self,
+	##### 	filename = '../SSA_Results/Chip0/Chip_0_'
+	##### 	charge = [1,2]
+	##### 	):
+
 
 	###########################################################
 	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = 0):
@@ -66,7 +110,6 @@ class SSA_measurements():
 			c = next(color)
 			plt.plot(d, '-', color=c, lw=1, alpha = 1)
 		plt.show()
-
 
 	###########################################################
 	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', ret_average = True, filename = False, runname= '', plot = True, filemode = 'w', set_trim = False):
@@ -121,7 +164,88 @@ class SSA_measurements():
 
 
 	###########################################################
-	def scurve_trim(self, filename = 'Chip0/', calpulse = 50, method = 'center', iterations = 5, countershift = 0, compute_min_max = True, plot = True):
+	def scurve_trim(self,
+		charge_fc = 2,             # Input charge in fC
+		threshold_mv = 'default',  # Threshold in mV
+		caldac = 'default',        # 'default' | 'evaluate' | value [gain, offset]
+		thrdac = 'default',        # 'default' | 'evaluate' | value [gain, offset]
+		nevents = 1000,            # Number of calibration pulses
+		iterative_step = 3,        # Iterative steps to acheive lower variability
+		plot = True,               # Fast plot of the results
+		filename = '../SSA_Results/Chip0/Chip_0_',
+		return_scurves = False
+		):
+		std = self.cal.trimming_scurves_2(
+			charge_fc = charge_fc, threshold_mv = threshold_mv,	caldac = caldac,
+			thrdac = thrdac, nevents = nevents,	iterative_step = iterative_step,
+			filename = filename, return_scurves=return_scurves)
+		if(plot and isinstance(filename, str)):
+			self.scurve_trim_plot(filename = filename, charge = charge_fc)
+		return std
+
+	def scurve_trim_plot(self, filename = '../SSA_Results/Chip0/Chip_0_', charge = 2):
+		scurves = {}
+		fi = filename + "scurve_" + "_Q_" + str(charge) + "_Trim_0_.csv"
+		scurves['0'] = np.transpose( CSV.csv_to_array(filename = fi) )
+		fi = filename + "scurve_" + "_Q_" + str(charge) + "_Trim_31_.csv"
+		scurves['31'] = np.transpose( CSV.csv_to_array(filename = fi) )
+		fi = filename + "scurve_" + "_Q_" + str(charge) + "_Trim_Done_.csv"
+		scurves['trim'] = np.transpose( CSV.csv_to_array(filename = fi) )
+		c_thresholds = {}; cmin = np.inf; cmax = 0;
+		for i in scurves:
+			thround, p = self.cal.evaluate_scurve_thresholds(scurve = scurves[i], nevents = 1000)
+			c_thresholds[i] = np.array(p)[:,1]  #threshold per strip
+			cmin = np.min([np.min(c_thresholds[i]), cmin])
+			cmax = np.max([np.max(c_thresholds[i]), cmax])
+		bn = np.round(np.arange(cmin-7, cmax+5, 1)).astype(int)
+		bn = np.arange(cmin-7, cmax+5, 1)
+		gs = gridspec.GridSpec(2, 1, height_ratios=[2, 1])
+		fig = plt.figure(figsize=(18,18))
+		plt.style.use('seaborn-deep')
+		color=iter(sns.color_palette('deep')) #iter(cm.summer(np.linspace(0,1, len(scurves) )))
+		ax0 = plt.subplot(gs[1])
+		ax0.spines["top"].set_visible(False); ax0.spines["right"].set_visible(False)
+		ax0.get_xaxis().tick_bottom(); ax0.get_yaxis().tick_left()
+		plt.xticks(fontsize=32); plt.yticks(fontsize=32)
+		plt.xlim(min(bn), max(bn)); plt.ylim(0, 1100)
+		for i in scurves:
+			c=next(color)
+			plt.plot( scurves[i] , color = c)
+		ax1 = plt.subplot(gs[0])
+		plt.xticks(fontsize=32)
+		plt.yticks(fontsize=32)
+		plt.setp(ax1.get_xticklabels(), visible=False)
+		plt.xlim(min(bn), max(bn));
+		plt.ylim(0, 1)
+		ax1.spines["top"].set_visible(False); ax1.spines["right"].set_visible(False)
+		ax1.get_xaxis().tick_bottom(); ax1.get_yaxis().tick_left()
+		labels = ["Optimal trimming values", "Not trimmed: THDAC = MIN", "Not trimmed: THDAC = MAX"]
+		cnt = 0
+		stds = []
+		for i in scurves:
+			plt.hist(c_thresholds[i], density = True, bins = bn, alpha = 0.7, label = (labels[cnt]))
+			xt = plt.xticks()[0]
+			xmin, xmax = min(xt), max(xt)
+			lnspc = np.linspace(xmin, xmax, len(c_thresholds[i]))
+			m, s = stats.norm.fit(c_thresholds[i]) # get mean and standard deviation
+			stds.append(s)
+			pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
+			xnew = np.linspace(np.min(lnspc), np.max(lnspc), 1000, endpoint=True)
+			pdf_l = interpolate.spline(lnspc, pdf_g, xnew)
+			plt.plot(xnew, pdf_l, c = 'darkred', lw = 2) # plot i
+			cnt += 1
+		leg = ax1.legend(fontsize = 24, )
+		leg.get_frame().set_linewidth(0.0)
+		plt.show()
+
+
+#fpl = self.path + 'ANALYSIS/S-Curve_Threshold_Trimming'+self.pltname+'.png'
+#plt.savefig(fpl, bbox_inches="tight");
+#print("->  \tPlot saved in %s" % (fpl))
+#plt.show()
+#return stds
+
+	def scurve_trim_old(self, filename = 'Chip0/', calpulse = 50, method = 'center', iterations = 5, countershift = 0, compute_min_max = True, plot = True):
 		print "->  \tS-Curve Trimming"
 		if(compute_min_max):
 			data = self.scurves(mode = 'all', rdmode = 'fast', cal_list = [calpulse], trim_list = [0, 31], filename = filename, plot = False, countershift = countershift)
@@ -147,42 +271,6 @@ class SSA_measurements():
 		if plot:
 			self.scurve_trim_plot(filename = filename, calpulse = calpulse)
 		return scurve_trim, scurve_init
-
-	def scurve_trim_plot(self, filename = 'Chip0/', calpulse = 50):
-		fi = "../SSA_Results/" + filename + "_scurve_" + "trim15" + "__cal_" + str(calpulse) + ".csv"
-		scurve_init = CSV.csv_to_array(filename = fi)
-		scurve_init = np.transpose(scurve_init)
-		fi = "../SSA_Results/" + filename + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
-		scurve_trim = CSV.csv_to_array(filename = fi)
-		scurve_trim = np.transpose(scurve_trim)
-		fi = "../SSA_Results/" + filename + "_scurve_" + "trim0" + "__cal_" + str(calpulse) + ".csv"
-		scurve_0    = CSV.csv_to_array(filename = fi)
-		scurve_0    = np.transpose(scurve_0)
-		fi = "../SSA_Results/" + filename + "_scurve_" + "trim31" + "__cal_" + str(calpulse) + ".csv"
-		scurve_31   = CSV.csv_to_array(filename = fi)
-		scurve_31   = np.transpose(scurve_31)
-		plt.clf()
-		plt.figure(1)
-		plt.plot(scurve_init, 'b', alpha = 0.5)
-		plt.plot(scurve_trim, 'r', alpha = 0.5)
-		tmp, par_init = self.cal.evaluate_scurve_thresholds(scurve = scurve_init, nevents = 1000)
-		tmp, par = self.cal.evaluate_scurve_thresholds(scurve = scurve_trim, nevents = 1000)
-		plt.figure(2)
-		xplt = np.linspace(0,256, 2561)
-		for i in par_init:
-			plt.plot( xplt, f_errorfc(xplt, i[0], i[1], i[2]) , 'b', alpha = 0.5)
-		for i in par:
-			plt.plot( xplt, f_errorfc(xplt, i[0], i[1], i[2]) , 'r', alpha = 0.5)
-		plt.figure(3)
-		plt.axis([calpulse*1.15-30, calpulse*1.15+30, 0, 1010])
-		plt.plot(scurve_0,    'b', alpha = 0.5)
-		plt.plot(scurve_31,   'r', alpha = 0.5)
-		plt.plot(scurve_trim, 'y', alpha = 0.5)
-		f, axarr = plt.subplots(2, sharex=True)
-		axarr[0].plot(x, y)
-		axarr[0].set_title('Sharing X axis')
-		axarr[1].scatter(x, y)
-		plt.show()
 
 	###########################################################
 	def threshold_spread(self, calpulse = 50, file = '../SSA_results/Chip0/', runname = '', use_stored_data = False, plot = True, nevents=1000, speeduplevel = 2, filemode = 'w'):
@@ -217,6 +305,7 @@ class SSA_measurements():
 			plt.hist(thresholds)
 			plt.show()
 		return std
+
 
 	###########################################################
 	def gain_offset_noise(self, calpulse = 50, ret_average = True, plot = True, use_stored_data = False, file = 'TestLogs/Chip0', filemode = 'w', runname = '', nevents=1000, speeduplevel = 2):
@@ -360,21 +449,17 @@ class SSA_measurements():
 			tmp = np.array(tmp)
 			c = next(color)
 			pol.append( np.polynomial.Polynomial.fit(tmp[:,0], tmp[:,1], 3) )
-			#z = np.polyfit(tmp[:,0], tmp[:,1], 3)
-			#pol.append(np.poly1d(z))
 			plt.errorbar(
 				tmp[:,0], tmp[:,1]*inv*self.thdac_gain, fmt='o', yerr=tmp[:,2]*3, color=c, label = '               ',
 				mew = 0, elinewidth = 1, ecolor = c, markersize = 3, capthick=2, capsize = 2)
 			plt.legend(numpoints=1, loc=('lower right'), frameon=False)
 			data.append(tmp)
-		#return pol
 		roots = []
 		for p in pol:
 			r = p.roots()
 			roots.append( np.min( r[r > 0] ) )
 		injectPnt = np.mean(roots)
 		color=iter(sns.color_palette('deep'))
-		#return data
 		first = True
 		peakingTime = []
 		if(interpolate):
@@ -388,8 +473,6 @@ class SSA_measurements():
 				peakingTime.append( vl - injectPnt )
 				if(first):
 					vh = np.max( p(tm)*self.thdac_gain )
-					#plt.plot([vl]*2, [-vh, vh], '--r')
-					#plt.plot([injectPnt]*2, [-10, 10], '--r')
 					first = False
 		if(invert):
 			plt.ylim(-np.max(dmean*self.thdac_gain)-10, 0)
@@ -438,9 +521,9 @@ class SSA_measurements():
 			plt.show()
 		#return DNL, INL, x, data
 		if(eval_inl_dnl):
-			return DNLMAX, INLMAX, g, ofs
+			return [DNLMAX, INLMAX, g, ofs]
 		else:
-			return g, ofs, baseline
+			return [g*1E3, ofs*1E3, baseline*1E3]
 
 	###########################################################
 	def power_vs_occupancy(self, th = range(2,13), trim = False, plot = 1, print_file =1, filename = "pwr1", itr = 1000, rp= 1):

@@ -238,7 +238,14 @@ def Configure_TestPulse_MPA_SSA(delay_before_next_pulse, number_of_test_pulses):
    cnfg_fast_seu_ntriggers_to_skip               *trigger source 6: number of l1a to skip
 '''
 
-def Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 0, delay_before_next_pulse = 0, number_of_test_pulses = 0, enable_rst_L1 = 0, enable_initial_reset = 0, enable_L1 = 0):
+def Configure_TestPulse_SSA(
+	delay_after_fast_reset = 0,
+	delay_after_test_pulse = 0,
+	delay_before_next_pulse = 0,
+	number_of_test_pulses = 0,
+	enable_rst_L1 = 0,
+	enable_initial_reset = 0,
+	enable_L1 = 0):
 	fc7.write("cnfg_fast_initial_fast_reset_enable", (enable_rst_L1 or enable_initial_reset))
 	fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
 	fc7.write("cnfg_fast_delay_after_test_pulse", delay_after_test_pulse)
