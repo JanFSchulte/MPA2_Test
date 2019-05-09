@@ -17,6 +17,26 @@ class mpa_test_utility():
 		self.mpa = mpa;
 		self.I2C = I2C;
 		self.fc7 = fc7;
+	def shift(self, verbose = 0):
+		if verbose: print "Doing Shift Test"
+		self.I2C.peri_write("LFSR_data", 0b10101010)
+		checkI2C = self.I2C.peri_read("LFSR_data")
+		if verbose: print "Writing:", str(bin(checkI2C))
+		self.mpa.ctrl_base.activate_shift()
+		sleep(0.1)
+		send_test()
+		sleep(0.1)
+		send_trigger()
+		sleep(0.1)
+		check = read_regs(verbose = verbose)
+		OK = True
+		for i,C in enumerate(check):
+			if bin(C) != "0b10101010101010101010101010101010" and i < 50: OK = False
+			if bin(C) != "0b0" and i > 49: OK = False
+		if verbose:
+			if OK: print "Test Passed"
+			else: print "Test Failed"
+		return OK
 	def test_pp_digital(self, row, pixel):
 		self.I2C.pixel_write('ENFLAGS', row, pixel, 0x20)
 		sleep(0.001)

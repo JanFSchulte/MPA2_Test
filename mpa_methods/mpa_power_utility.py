@@ -29,7 +29,7 @@ class mpa_power_utility:
 	def off(self):
 		self.set_supply('off')
 
-	def set_supply(self, mode = 'on', d = 1.00, a = 1.25, p = 1.25, bg = 0.270, display = True):
+	def set_supply(self, mode = 'on', d = 1.00, a = 1.2, p = 1.2, bg = 0.270, display = True):
 		if(mode == 'on' or mode == 1):
 			sleep(0.0); self.mainpoweron()
 			sleep(0.1); self.set_pvdd(p);

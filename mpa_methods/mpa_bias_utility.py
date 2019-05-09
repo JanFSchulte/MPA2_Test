@@ -3,7 +3,6 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
-from myScripts.BasicMultimeter import *
 
 import time
 import sys
@@ -12,7 +11,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-class mpa_calibration():
+class mpa_bias_utility():
 	def __init__(self, mpa, I2C, fc7, multimeter, mpa_peri_reg_map, mpa_row_reg_map, mpa_pixel_reg_map):
 		self.mpa = mpa
 		self.I2C = I2C
@@ -93,18 +92,18 @@ class mpa_calibration():
 	def calibrate_chip(self, gnd_corr = 0, print_file = 1, filename = "test"):
 		inst = self.multimeter.init_keithley(avg = self.measure_avg, address = self.gpib_address)
 		data = np.zeros((5, 7), dtype = np.int16 )
-		self.ctrl_base.disable_test()
+		self.mpa.ctrl_base.disable_test()
 		for point in range(0,5):
 			calrowval = []
 			for block in range(0,7):
 				data[point, block] = self.calibrate_bias(point, block, self.DAC_val[point], self.exp_val[point], inst, gnd_corr)
-		self.ctrl_base.disable_test()
+		self.mpa.ctrl_base.disable_test()
 		if print_file: CSV.ArrayToCSV (data, str(filename) + ".csv"); print "Saved!"
 		return data
 	def measure_gnd(self):
 		inst = self.multimeter.init_keithley(avg = self.measure_avg, address = self.gpib_address)
 		sleep(1)
-		self.ctrl_base.disable_test()
+		self.mpa.ctrl_base.disable_test()
 		data = np.zeros((7, ), dtype=np.float)
 		for block in range(0,7):
 			test = "TEST" + str(block)
@@ -112,17 +111,17 @@ class mpa_calibration():
 			self.I2C.peri_write(test, 0b10000000)
 			sleep(1)
 			data[block] = self.multimeter.measure(inst)
-		self.ctrl_base.disable_test()
+		self.mpa.ctrl_base.disable_test()
 		print data
 		return np.mean(data)
 	def measure_bg(self):
 		inst = self.multimeter.init_keithley(avg = self.measure_avg, address = self.gpib_address)
 		sleep(1)
-		self.ctrl_base.disable_test()
-		I2C.peri_write('TESTMUX',0b10000000)
+		self.mpa.ctrl_base.disable_test()
+		self.I2C.peri_write('TESTMUX',0b10000000)
 		sleep(1)
 		data = self.multimeter.measure(inst)
-		self.ctrl_base.disable_test()
+		self.mpa.ctrl_base.disable_test()
 		print data
 		return data
 	def trimDAC_amplitude(self, value):
