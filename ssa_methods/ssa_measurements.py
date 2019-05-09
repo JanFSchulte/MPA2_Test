@@ -29,6 +29,7 @@ class SSA_measurements():
 		charge_fc_trim = 2,             # Input charge in fC
 		charge_fc_test = 1,             # Input charge in fC
 		threshold_mv_trim = 'default',  # Threshold in mV
+		threshold_mv_test = 'default',  # Threshold in mV
 		iterative_step_trim = 1,        # Iterative steps to acheive lower variability
 		caldac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
 		thrdac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
@@ -36,6 +37,7 @@ class SSA_measurements():
 		plot = True,                    # Fast plot of the results
 		filename = '../SSA_Results/Chip0/Chip_0_'
 		):
+		
 		scurves = {}
 		thstd, sc = self.scurve_trim(
 			charge_fc = charge_fc_trim,
@@ -47,15 +49,30 @@ class SSA_measurements():
 			plot = False,
 			filename = filename,
 			return_scurves = True)
-		sc['h_0']  = sc[0];	sc['h_31'] = sc[1];
-		sc['h_trim'] = sc[-1];
+		scurves['h_0']  = sc[0];
+		scurves['h_31'] = sc[1];
+		scurves['h_trim'] = sc[-1];
 
-		sc['l_trim'] = self.scurves(
-			cal_ampl = cal_ampl,
-			nevents = nevents,
-			display = False,
-			plot = False,
-			filename = False)
+		if(caldac=='evaluate'):  t_caldac = self.measure.dac_linearity(name='Bias_CALDAC', eval_inl_dnl=False, nbits=8, npoints=10, plot=False, runname='')
+		elif(caldac=='default'): t_caldac = self.cal.caldac
+		elif(isinstance(caldac, list)): t_caldac = caldac
+		else: return False
+
+		if(thrdac=='evaluate'):  t_thrdac = self.measure.dac_linearity(name='Bias_THDAC', eval_inl_dnl=False, nbits=8, npoints=10, plot=False, runname='')
+		elif(thrdac=='default'): t_thrdac = self.cal.thrdac
+		elif(isinstance(thrdac, list)): t_thrdac = thrdac
+		else: return False
+
+		if(threshold_mv_test == 'default'): t_threshold_mv = self.cal.fe_average_gain*np.float(charge_fc_test)
+		else: t_threshold_mv = threshold_mv_test
+		cal_ampl = self.cal.evaluate_caldac_ampl(charge_fc_test, t_caldac)
+		th_dac = self.cal.evaluate_thdac_ampl(t_threshold_mv, t_thrdac)
+
+		scurves['l_trim'] = self.cal.scurves(
+			cal_ampl = cal_ampl, nevents = nevents,
+			display = False, plot = False, speeduplevel = 2, countershift = 0,
+			filename = False, mode = 'all', rdmode = 'fast')
+		return sc
 
 
 	###########################################################

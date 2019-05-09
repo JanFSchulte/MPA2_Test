@@ -245,14 +245,15 @@ def Configure_TestPulse_SSA(
 	number_of_test_pulses = 0,
 	enable_rst_L1 = 0,
 	enable_initial_reset = 0,
-	enable_L1 = 0):
-	#fc7.write("cnfg_fast_backpressure_enable", 0)
+	enable_L1 = 0,
+	backpressure = 0):
+	fc7.write("cnfg_fast_backpressure_enable", backpressure)
 	fc7.write("cnfg_fast_initial_fast_reset_enable", (enable_rst_L1 or enable_initial_reset))
-	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 	fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
 	fc7.write("cnfg_fast_delay_after_test_pulse", delay_after_test_pulse)
 	fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
 	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", (enable_rst_L1 or enable_initial_reset))
+	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 	fc7.write("cnfg_fast_tp_fsm_l1a_en", enable_L1)
 	fc7.write("cnfg_fast_triggers_to_accept", number_of_test_pulses)
 	fc7.write("cnfg_fast_source", 6)

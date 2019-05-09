@@ -56,8 +56,9 @@ class SSA_cal_utility():
 		if(threshold_mv == 'default'): t_threshold_mv = self.fe_average_gain*np.float(charge_fc)
 		else: t_threshold_mv = threshold_mv
 
-		cal_ampl = int(np.round((((charge_fc*1E-15)/self.ssa.cap)-(t_caldac[1]*1E-3))/np.float(t_caldac[0]*1E-3)))
-		th_dac = (-t_threshold_mv-t_thrdac[1]+t_thrdac[2])/np.float(t_thrdac[0])
+		cal_ampl = self.evaluate_caldac_ampl(charge_fc, t_caldac)
+		th_dac = self.evaluate_thdac_ampl(t_threshold_mv, t_thrdac)
+
 		sc = []; th = []; cnt = 0;
 
 		for trimdac in [0, 31]:
@@ -114,136 +115,11 @@ class SSA_cal_utility():
 		else:
 			return np.std(ths)
 
-	#def eval_cal_ampl(self, ):
+	def evaluate_caldac_ampl(self, charge_fc, t_caldac):
+		return int(np.round((((charge_fc*1E-15)/self.ssa.cap)-(t_caldac[1]*1E-3))/np.float(t_caldac[0]*1E-3)))
 
-
-
-
-	def h(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2, countershift = 0, set_trim = False, d19c_firmware_issue_repeat = True, start_threshold = 0):
-		'''	cal_ampl  -> int |'baseline'  -> Calibration pulse charge (in CALDAC LSBs)
-			mode      -> 'all' | 'sbs'   -> All strips together or one by one
-			nevents   -> int number      -> Number of calibration pulses (default 1000)
-			striplist -> [list 1:120]    -> Select specific strip (default all)
-			rdmode    -> 'fast' | 'i2c'  -> Select if use fast readout or I2C readout
-			display   -> True | False    -> Display additional informations
-			plot      -> True | False    -> Plot S-Curve
-			filename  -> False | string  -> If not False the data is vritten in the file named by 'string'
-			filename2 -> 'string'        -> Additional string to complete the filename
-			msg       -> internal use
-		'''
-		self.fc7.reset()
-
-		evaluate_sc = True
-		evaluate_cn = 0
-		self.fc7.SendCommand_CTRL("stop_trigger")
-		while(evaluate_sc):
-			evaluate_cn += 1
-			time_init = time.time()
-			if(speeduplevel > 0):
-				utils.activate_I2C_chip()
-			# first go to the async mode
-			self.ssa.ctrl.activate_readout_async()
-			ermsg = ''
-			baseline = False
-			cal_ampl = [cal_ampl]
-			self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
-			Configure_TestPulse_SSA(50,50,500,1000,0,0,0)
-			cal_val = 50
-				# close shutter and clear counters
-			self.fc7.close_shutter(1)
-			self.fc7.clear_counters(1)
-			# init chip cal pulse
-			self.ssa.strip.set_cal_strips(mode = 'counter', strip = 'all')
-			self.ssa.ctrl.set_cal_pulse(amplitude = cal_val, duration = 15, delay = 'keep')
-			# init firmware cal pulse
-			#Configure_TestPulse_MPA_SSA(200, nevents)
-
-			# then let's try to measure the scurves
-			scurves = np.zeros((256,120), dtype=np.int)
-			threshold = start_threshold
-
-			while (threshold < 256):
-				time_cur = time.time()
-				#print((time_cur-time_init)*1E3)
-				#time_init = time_cur
-				strout = ""
-				error = False
-				#print "Setting the threshold to ", threshold, ", sending the test pulse and reading the counters"
-				strout += "threshold = " + str(threshold) + ".   "
-				self.ssa.ctrl.set_threshold(threshold); #sleep(0.05); # set the threshold
-
-				self.fc7.clear_counters(8, 5)
-				self.fc7.open_shutter(8, 5)
-				#Configure_TestPulse_SSA(50,50,500,1000,0,0,0)
-				#Configure_TestPulse_MPA(200, 200, 200, nevents, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
-
-				test = (self.fc7.read("stat_fast_fsm_state"))
-				self.fc7.SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
-				test = 1
-				t = time.time()
-				print "\n______________________________"
-
-				while (test):
-					test = (self.fc7.read("stat_fast_fsm_state"))
-					sleep(0.001)
-					print test,
-					if((not test) and (((time.time()-t)*1E3)<2) ): # D19C firmware issue
-						sleep(0.005)
-						test = self.fc7.read("stat_fast_fsm_state")
-						if(not test):
-							self.fc7.SendCommand_CTRL("start_trigger")
-							t = time.time()
-							test = 1
-
-
-				#print ((time.time()-t)*1E3)
-				self.fc7.close_shutter(8,5)
-
-				failed, scurves[threshold] = self.ssa.readout.read_counters_fast(striplist, shift = countershift, initialize = 0)
-
-				if (failed):
-					error = True; ermsg = '[Counters readout]';
-
-				if (error == True):
-					threshold = (threshold-1) if (threshold>0) else 0
-					#sleep(0.5)
-					continue
-				else:
-					strout += "Counters samples = 1->[" + str(scurves[threshold][0]) + "]  30->[" + str(scurves[threshold][29]) + "]  60->[" + str(scurves[threshold][59]) + "]  90->[" + str(scurves[threshold][89]) + "]  120->[" + str(scurves[threshold][119]) + "]"
-
-				if(speeduplevel >= 2 and threshold > 32):
-					if( (scurves[threshold-8: threshold ] == np.zeros((8,120), dtype=np.int)).all() ):
-						break
-
-				threshold = threshold + 1
-
-
-
-
-			if(np.sum(scurves[:,10:110] )<100):
-				if(evaluate_cn>4):
-					utils.print_error("-X\tError in S-Curve evaluation {:d}".format(np.sum(scurves[50:100,:])))
-					return False
-				utils.print_warning("-X\tIssue in S-Curve evaluation. Reiterating.. {:d}".format(np.sum(scurves[50:100,:])))
-			else: evaluate_sc = False
-		for i in range(120):
-			if(np.sum(scurves[:,i])==0):
-				utils.print_warning("X>\tScurve consant to 0 for strip {:d}".format(i))
-
-		#### print "\n\n" , (time.time()-time_init)
-		if(plot == True): plt.clf()
-		plt.ylim(0,3000); plt.xlim(0,150);
-		plt.plot(scurves)
-		if(plot == True): plt.show()
-		self.scurve_data     = scurves
-		self.scurve_nevents  = nevents
-		self.scurve_calpulse = cal_ampl
-		return scurves
-
-
-
-
-
+	def evaluate_thdac_ampl(self, t_threshold_mv, t_thrdac):
+		return (-t_threshold_mv-t_thrdac[1]+t_thrdac[2])/np.float(t_thrdac[0])
 
 	########################################Configure_TestPulse_SSA(50,50,500,1000,0,0,0)###################
 	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2, countershift = 0, set_trim = False, d19c_firmware_issue_repeat = True, start_threshold = 0):
@@ -261,13 +137,13 @@ class SSA_cal_utility():
 		#self.fc7.reset()
 		evaluate_sc = True
 		evaluate_cn = 0
-		self.fc7.SendCommand_CTRL("stop_trigger")
 		while(evaluate_sc):
 			evaluate_cn += 1
 			time_init = time.time()
-			if(speeduplevel > 0):
-				utils.activate_I2C_chip()
+			utils.activate_I2C_chip()
 			# first go to the async mode
+			self.fc7.SendCommand_CTRL("stop_trigger")
+			self.ssa.readout.cluster_data(initialize=True)
 			self.ssa.ctrl.activate_readout_async()
 			ermsg = ''
 			baseline = False
