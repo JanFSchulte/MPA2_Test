@@ -284,16 +284,19 @@ class SSA_cal_utility():
 				return False
 			if(rdmode == 'fast'):
 				self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
-			Configure_TestPulse_SSA(50,50,500,1000,0,0,0)
+			#Configure_TestPulse_MPA_SSA(200, nevents)# init firmware cal pulse
+			Configure_TestPulse_SSA(50,50,500,nevents,0,0,0)
+
 			for cal_val in  cal_ampl:
 				# close shutter and clear counters
-				self.fc7.close_shutter(1)
-				self.fc7.clear_counters(1)
+				self.fc7.close_shutter(8)
+				self.fc7.clear_counters(8)
 				# init chip cal pulse
 				self.ssa.strip.set_cal_strips(mode = 'counter', strip = 'all')
 				self.ssa.ctrl.set_cal_pulse(amplitude = cal_val, duration = 15, delay = 'keep')
-				# init firmware cal pulse
+
 				#Configure_TestPulse_MPA_SSA(200, nevents)
+				#Configure_TestPulse_SSA(50,50,500,1000,0,0,0)
 
 				# then let's try to measure the scurves
 				scurves = np.zeros((256,120), dtype=np.int)
@@ -301,13 +304,12 @@ class SSA_cal_utility():
 				utils.ShowPercent(0, 256, "Calculating S-Curves "+msg+" ")
 				while (threshold < 256):
 					time_cur = time.time()
-					#print((time_cur-time_init)*1E3)
-					#time_init = time_cur
 					strout = ""
 					error = False
 					#print "Setting the threshold to ", threshold, ", sending the test pulse and reading the counters"
 					strout += "threshold = " + str(threshold) + ".   "
-					self.ssa.ctrl.set_threshold(threshold); #sleep(0.05); # set the threshold
+					self.ssa.ctrl.set_threshold(threshold);  # set the threshold
+					#sleep(0.05);
 					if (not baseline and (mode == 'all')):	# provide cal pulse to all strips together
 						self.fc7.clear_counters(8, 5)
 						self.fc7.open_shutter(8, 5)
@@ -315,7 +317,6 @@ class SSA_cal_utility():
 						#Configure_TestPulse_MPA(200, 200, 200, nevents, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
 						self.fc7.SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
 						test = 1
-						print "__________________"
 						t = time.time()
 						while (test):
 							test = (self.fc7.read("stat_fast_fsm_state"))

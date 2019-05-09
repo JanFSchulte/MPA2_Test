@@ -30,6 +30,7 @@ class ssa_power_utility:
 		self.set_supply('off')
 
 	def set_supply(self, mode = 'on', d = 1.0, a = 1.2, p = 1.2, bg = 0.270, display = True):
+		utils.activate_I2C_chip()
 		if(mode == 'on' or mode == 1):
 			sleep(0.00); self.mainpoweron()
 			sleep(0.01); self.set_pvdd(p);
