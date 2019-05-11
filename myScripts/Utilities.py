@@ -127,9 +127,16 @@ class Utilities:
 		if(pr == 'print'):
 			print '->  \tEnabled I2C master for chips control'
 
-	def date_time(self):
-		st = datetime.now().strftime("%Y-%m-%d_%H:%M")
-		return st
+	def date_time(self, format='print'):
+		if(format == 'print'):
+			return datetime.now().strftime("%Y-%m-%d_%H-%M")
+		elif(format == 'csv'):
+			return datetime.now().strftime("%Y, %m, %d, %H, %M, %S")	
+		elif(format == 'array'):
+			return (datetime.now().strftime("%Y, %m, %d, %H, %M, %S")).split(', ')
+		else:
+			return datetime.now().strftime("%Y-%m-%d_%H-%M")
+
 
 	def print_error(self, text, logfile = False):
 		sys.stdout.write("\033[1;31m")

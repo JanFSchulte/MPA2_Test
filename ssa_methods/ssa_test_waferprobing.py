@@ -24,10 +24,12 @@ class SSA_ProbeMeasurement():
 		self.runtest = RunTest('default')
 		self.config_file = ''; self.dvdd = 1.05; self.pvdd = 1.20; self.avdd = 1.20; #for the offset of the board
 		self.filename = False
-		self.Configure(False, 'default')
+		self.Configure(runtest='default')
+		
 
-	def Configure(self, DIR = False, runtest = 'default'):
+	def Configure(self, DIR ='../SSA_Results/Wafer0/', runtest = 'default'):
 		self.DIR = DIR
+		self.dvdd_curr = self.dvdd
 		if(runtest == 'default'):
 			self.runtest.enable('Power')
 			self.runtest.enable('Initialize')
@@ -37,62 +39,67 @@ class SSA_ProbeMeasurement():
 			self.runtest.enable('Lateral_In')
 			self.runtest.enable('Cluster_Data')
 			self.runtest.enable('Pulse_Injection')
-			self.runtest.enable('Cluster_Data2')
-			self.runtest.enable('Memory_1')
-			self.runtest.enable('Memory_2')
-			self.runtest.enable('L1_data')
-			self.runtest.disable('memory_vs_voltage')
-			self.runtest.enable('threshold_trimming')
-			self.runtest.enable('noise_baseline')
-			self.runtest.enable('gain_offset_noise')
-			self.runtest.enable('threshold_spread')
-			self.runtest.enable('Bias_THDAC')
-			self.runtest.enable('Bias_CALDAC')
+			self.runtest.enable('L1_Data')
+			self.runtest.enable('Memory')
+			self.runtest.disable('noise_baseline')
+			self.runtest.enable('trim_gain_offset_noise')
+			self.runtest.enable('DACs')
 			self.runtest.enable('Configuration')
 		else:
 			self.runtest = runtest
 
 	def Run(self, chipinfo=''):
+
+		## Setup log files #####################
 		time_init = time.time()
-		fo = self.DIR
-		#if(fo):
-		#	dir = fo[:fo.rindex(os.path.sep)]
-		#if not os.path.exists(dir):
-		#	os.makedirs(dir)
-		# Enable supply and initialise
+		version = 0
+		while(True):
+			fo = (self.DIR + "/Chip_{c:s}_v{v:d}/timetag.log".format(c=str(chipinfo), v=version))
+			if(os.path.isfile(fo)):
+				version += 1
+			else:
+				curdir = fo[:fo.rindex(os.path.sep)]
+				if not os.path.exists(curdir):
+					os.makedirs(curdir)
+				fp = open(fo, 'w')
+				fp.write( utils.date_time('csv') + '\n')
+				fp.close()
+				break
+		utils.print_info("->\tThe log files are located in {:s}/ \n".format(curdir))
+		fo = curdir + "/Test_"
+		
+		## Main test routine ##################
 		self.pwr.set_supply(mode='on', display=False, d=self.dvdd, a=self.avdd, p=self.pvdd)
 		time.sleep(0.5)
 		self.pwr.reset(False, 0)
-		self.test_routine_power(fo,'','_Reset')
+		self.test_routine_power(        filename=fo, mode='_Reset')
 		self.pwr.reset(False, 1)
-		self.test_routine_power(fo,'','_Enabled')
-		self.test_routine_initialize(fo)
-		self.test_routine_power(fo,'','_Initialized')
-		self.test_routine_measure_bias(fo,'','_Reset')
-		self.test_routine_dacs(fo, '')
-		self.test_routine_calibrate(fo)
-		self.test_routine_power(fo,'','_Calibrated')
-		self.test_routine_measure_bias(fo,'','_Calibrated')
-		self.test_routine_digital(fo, '')
-		self.test_routine_dacs(fo, '')
-		self.test_routine_analog(fo, '')
+		self.test_routine_power(        filename=fo, mode='_Enabled')
+		self.test_routine_initialize(   filename=fo)
+		self.test_routine_power(        filename=fo, mode='_Initialized')
+		self.test_routine_measure_bias( filename=fo, mode='_Reset')
+		self.test_routine_calibrate(    filename=fo)
+		self.test_routine_power(        filename=fo, mode='_Calibrated')
+		self.test_routine_measure_bias( filename=fo, mode='_Calibrated')
+		self.test_routine_dacs(         filename=fo)
+		self.test_routine_analog(       filename=fo)
+		self.test_routine_stub_data(    filename=fo)
+		self.test_routine_save_configuration(filename=fo)
+		self.test_routine_L1_data(      filename=fo, vlist=[self.dvdd,1.2])
 
+		## Save summary ######################
+		self.summary.save(directory=self.DIR, filename=("Chip_{c:s}_v{v:d}/".format(c=str(chipinfo), v=version)), runname='')
 		self.summary.display()
+		self.ssa.pwr.off(display=False)
 
-		self.ssa.pwr.off()
-
-		#self.test_routine_analog(filename = fo, runname = runname)
-		#self.test_routine_dacs(filename = fo, runname = runname)
-		#self.summary.display(runname)
-		#self.summary.save(fo, runname)
-		#self.ssa.init(reset_board = True, reset_chip = True)
-		#self.ssa.load_configuration(self.config_file, display = False)
-		#self.ssa.init(reset_board = True, reset_chip = False, display = False)
 
 
 	def test_routine_power(self, filename = 'default', runname = '', mode = ''):
+		filename = self.summary.get_file_name(filename)
+		time_init = time.time()
 		wd = 0
-		while self.runtest.is_active('Power') and wd < 3:
+		en = self.runtest.is_active('Power') 
+		while (en and wd < 3):
 			try:
 				[Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip] = self.pwr.get_power(display=True, return_all = True)
 				self.summary.set('V_DVDD'+mode, Vd, 'mV', '',  runname)
@@ -103,73 +110,86 @@ class SSA_ProbeMeasurement():
 				self.summary.set('I_PVDD'+mode, Ip, 'mA', '',  runname)
 				break
 			except:
-				print "X>  \tError in Power test. Reiterating."
+				utils.print_warning("X>\tpower measurements error. Reiterating...")
 				wd +=1
 
 	def test_routine_initialize(self, filename = 'default', runname = ''):
+		filename = self.summary.get_file_name(filename)
+		time_init = time.time()
 		wd = 0
-		while self.runtest.is_active('Initialize') and wd < 3:
+		en = self.runtest.is_active('Initialize')
+		while (en and wd < 3):
 			try:
 				r1 = self.ssa.init(reset_board = True, reset_chip = True)
 				self.summary.set('Initialize', str(r1), '', '',  runname)
 				break
 			except:
-				print "X>  \tError in Initializing SSA. Reiterating."
+				utils.print_warning("X>\tInitializing SSA error. Reiterating...")
 				wd +=1
 
 	def test_routine_calibrate(self, filename = 'default', runname = ''):
+		filename = self.summary.get_file_name(filename)
+		time_init = time.time()
 		wd = 0
-		while self.runtest.is_active('Calibrate') and wd < 3:
+		en = self.runtest.is_active('Calibrate') 
+		while (en and wd < 3):
 			try:
 				r1 = self.biascal.calibrate_to_nominals(measure=False)
 				self.summary.set('init', r1, '', '',  runname)
 				break
 			except:
-				print "X>  \tError in Initializing SSA. Reiterating."
+				utils.print_warning("X>\tBias Calibration error. Reiterating...")
 				wd +=1
 
 	def test_routine_measure_bias(self, filename = 'default', runname = '', mode = ''):
 		filename = self.summary.get_file_name(filename)
+		time_init = time.time()
 		wd = 0
-		while self.runtest.is_active('Bias') and wd < 3:
+		en = self.runtest.is_active('Bias') 
+		while (en and wd < 3):
 			try:
 				r1 = self.biascal.measure_bias(return_data=True)
 				for i in r1:
 					self.summary.set( i[0]+mode, i[1], 'mV', '',  runname)
 				break
 			except:
+				utils.print_warning("X>\tBias measurements error. Reiterating...")
 				print "X>  \tError in Bias test. Reiterating."
 				wd +=1
-		wd = 0
 
-	def test_routine_get_calibration(self, filename = 'default', runname = ''):
-		while self.runtest.is_active('Configuration') and wd < 3:
-			try:
-				self.ssa.save_configuration('../SSA_Results/' + filename + '_Configuration_' + str(runname) + '.scv', display=False)
-				break
-			except:
-				print "X>  \tError in reading Config regs. Reiterating."
-				wd +=1
-		wd = 0
 
-	def test_routine_digital(self, filename = 'default', runname = '', shift = [0,0,0,0,0,0,0]):
+	def test_routine_save_configuration(self, filename = 'default', runname = ''):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		wd = 0
-		while self.runtest.is_active('alignment') and wd < 3:
+		en = self.runtest.is_active('Configuration')
+		while (en and wd < 3):
+			try:
+				self.ssa.save_configuration(filename + 'configuration' + str(runname) + '.scv', display=False)
+				break
+			except:
+				utils.print_warning("X>\tConfig registers save error. Reiterating...")
+				wd +=1
+
+
+	def test_routine_stub_data(self, filename = 'default', runname = ''):
+		filename = self.summary.get_file_name(filename)
+		time_init = time.time()
+		wd = 0
+		en = self.runtest.is_active('alignment')
+		while (en and wd < 3):
 			try:
 				self.fc7.reset(); time.sleep(0.1)
 				r1,r2,r3,r4 = self.ssa.alignment_all(display = False)
 				self.summary.set('alignment_cluster_data', r2, '', '',  runname)
 				self.summary.set('alignment_lateral_input', r3, '', '',  runname)
-				if(r1 and r2 and r3 and r4):
-					utils.print_good("->\tAlignment test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 				break
 			except:
 				utils.print_warning("X>\tAlignment test error. Reiterating...")
 				wd +=1
 		wd = 0
-		while self.runtest.is_active('Cluster_Data') and wd < 3:
+		en = self.runtest.is_active('Cluster_Data')
+		while (en and wd < 3):
 			try:
 				r1 = self.test.cluster_data(mode = 'digital', nstrips=8, shift='default', display=False, file=filename, filemode='a', runname=runname)
 				self.summary.set('ClusterData_DigitalPulses',  r1, '%', '',  runname)
@@ -179,7 +199,8 @@ class SSA_ProbeMeasurement():
 				utils.print_warning("X>\tCluster Data with Digital Pulses test error. Reiterating...")
 				wd +=1
 		wd = 0
-		while self.runtest.is_active('Cluster_Data') and wd < 3:
+		en = self.runtest.is_active('Pulse_Injection')
+		while (en and wd < 3):
 			try:
 				r1 = self.test.cluster_data(mode = 'analog', nstrips=8, shift='default', display=False, file=filename, filemode='a', runname=runname)
 				self.summary.set('ClusterData_ChargeInjection',  r1, '%', '',  runname)
@@ -188,25 +209,67 @@ class SSA_ProbeMeasurement():
 			except:
 				utils.print_warning("X>\tCluster Data with Charge Injection test error. Reiterating...")
 				wd +=1
+
+
+	def test_routine_L1_data(self, vlist = [1.0, 1.2], filename = '../SSA_Results/Chip0/Chip_0', runname = '', shift = [0,0,0,0,0,0,0]):
+		filename = self.summary.get_file_name(filename)
+		time_init = time.time()
 		wd = 0
-		while self.runtest.is_active('L1_data') and wd < 3:
+		memtest = False
+		en = self.runtest.is_active('Memory') 
+		while (en and wd < 3):
 			try:
-				#self.fc7.reset(); time.sleep(0.1)
-				r1, r2 = self.test.l1_data_basic(mode = 'digital', shift = shift[5], file = filename, filemode = 'a', runname = runname)
-				self.summary.set('L1_data',    r1, '%', '',  runname)
-				self.summary.set('HIP_flags',  r2, '%', '',  runname)
-				print "->  \tl1_data_basic Time = %7.2f" % (time.time() - time_init); time_init = time.time();
+				memtest= True
+				memres = {}
+				for v in vlist:
+					if(v != self.dvdd_curr):
+						self.pwr.set_dvdd(v)
+						self.dvdd_curr = v
+						self.ssa.init(display=0)
+					r1, r2 = self.test.memory(
+						memory = [1,2], runname = str(v)+'V',
+						latency = 199, display = 1, 
+						file = filename, filemode = 'a')
+					memres[v] = r1
+					self.summary.set('Memory-1_{:s}V'.format(str(v)), r1, '%', '',  runname)
+					self.summary.set('Memory-2_{:s}V'.format(str(v)), r2, '%', '',  runname)
 				break
 			except:
-				print "X>  \tError in l1_data_basic test. Reiterating."
+				utils.print_warning("X>\tMemory test error. Reiterating...")
 				wd +=1
-		wd = 0
+		wd  = 0
+		en = self.runtest.is_active('L1_Data')
+		while (en and wd < 3):
+			try:
+				if(not memtest): 
+					for v in vlist: memres[v]=100
+				self.summary.set('L1_data',   0, '%', '',  runname)
+				self.summary.set('HIP_flags', 0, '%', '',  runname)
+				for v in vlist:
+					if(memres[v]==100):
+						if(v != self.dvdd_curr):
+							self.pwr.set_dvdd(v)
+							self.dvdd_curr
+							self.ssa.init(display=0)
+						r1, r2 = self.test.l1_data_basic(
+							mode = 'digital', runname =  str(v)+'V',
+							shift = shift[5], filemode = 'a',
+							file = filename)
+						self.summary.set('L1_data',   r1, '%', '',  runname)
+						self.summary.set('HIP_flags', r2, '%', '',  runname)
+						break
+				break
+			except:
+				utils.print_warning("X>\tL1_Data test error. Reiterating...")
+				wd +=1
+
 
 	def test_routine_dacs(self, filename, runname = ''):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		wd = 0
-		while self.runtest.is_active('Bias_THDAC') and wd < 3:
+		en = self.runtest.is_active('Bias_THDAC')
+		while (en and wd < 3):
 			try:
 				self.thdac = self.measure.dac_linearity(name = 'Bias_THDAC', eval_inl_dnl = False, nbits = 8, npoints = 10, filename = filename, plot = False, filemode = 'a', runname = runname)
 				self.summary.set('Bias_THDAC_GAIN'    , self.thdac[0], '', '',  runname)
@@ -216,7 +279,8 @@ class SSA_ProbeMeasurement():
 				utils.print_warning("X>\tBias_THDAC test error. Reiterating...")
 				wd +=1
 		wd = 0
-		while self.runtest.is_active('Bias_CALDAC') and wd < 3:
+		en = self.runtest.is_active('Bias_CALDAC')
+		while (en and wd < 3):
 			try:
 				self.caldac = self.measure.dac_linearity(name = 'Bias_CALDAC', eval_inl_dnl = False, nbits = 8, npoints = 10, filename = filename, plot = False, filemode = 'a', runname = runname)
 				self.summary.set('Bias_CALDAC_GAIN'    , self.caldac[0], '', '',  runname)
@@ -232,49 +296,43 @@ class SSA_ProbeMeasurement():
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		wd = 0
-
-
-		while self.runtest.is_active('threshold_trimming') and wd < 3:
+		en = self.runtest.is_active('trim_gain_offset_noise') 
+		while (en and wd < 3):
 			try:
-				r1 = self.measure.scurve_trim(
-						charge_fc = 2,             # Input charge in fC
-						threshold_mv = 'default',  # Threshold in mV
-						caldac = self.caldac,      # 'default' | 'evaluate' | value [gain, offset]
-						thrdac = self.thdac,       # 'default' | 'evaluate' | value [gain, offset]
-						nevents = 1000,            # Number of calibration pulses
-						iterative_step = 2,        # Iterative steps to acheive lower variability
-						plot = False,              # Fast plot of the results
-						filename = filename)
-				self.summary.set('ClusterData_ChargeInjection',  r1, '%', '',  runname)
-				if(r1): utils.print_good( "->\tScurve trimming successfull. Std = {std:3.2f}lsb ({t:7.2f}s)".format(std=r1, t=(time.time()-time_init))); time_init = time.time();
-				else:   utils.print_error("->\tScurve trimming error. ({t:7.2f}s)".format(t=(time.time()-time_init))); time_init = time.time();
+				rp = self.measure.scurve_trim_gain_noise(
+					charge_fc_trim = 2.0,           # Input charge in fC
+					charge_fc_test = 0.8,           # Input charge in fC
+					threshold_mv_trim = 'default',  # Threshold in mV
+					threshold_mv_test = 'default',  # Threshold in mV
+					iterative_step_trim = 1,        # Iterative steps to acheive lower variability
+					caldac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
+					thrdac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
+					nevents = 1000,                 # Number of calibration pulses
+					plot = True,                    # Fast plot of the results
+					filename = filename)
+
+				if(rp): 
+					utils.print_good( "->\tScurve trimming successfull. (Std={std:3.2f}lsb)".format(std=rp[1]));
+					utils.print_good( "->\tScurve noise evaluation successfull. ({std:3.2f}lsb)".format(std=rp[6]));
+					utils.print_good( "->\tScurve Gain and Offset evaluation successfull. g={g:3.2f} ofs=({of:3.2f})".format(g=rp[7], of=rp[8])); 
+					utils.print_log(  "->\tAnalog test time = {t:7.2f}s".format(t=(time.time()-time_init))); time_init = time.time();
+				else:   
+					utils.print_error( "->\tScurve trimming error.")
+					utils.print_error( "->\tScurve noise evaluation error.")
+					utils.print_error( "->\tScurve Gain and Offset evaluation error.")
+
+				self.summary.set("threshold_std_init",  rp[0], '', '', runname)
+				self.summary.set("threshold_std_trim",  rp[1], '', '', runname) 
+				self.summary.set("threshold_std_test",  rp[2], '', '', runname)   
+				self.summary.set("threshold_mean_trim", rp[3], '', '', runname)   
+				self.summary.set("threshold_mean_test", rp[4], '', '', runname) 
+				self.summary.set("noise_mean_trim",     rp[5], '', '', runname)
+				self.summary.set("noise_mean_test",     rp[6], '', '', runname)  
+				self.summary.set("fe_gain_mean",        rp[7], '', '', runname)  
+				self.summary.set("fe_offs_mean",        rp[8], '', '', runname)       
 				break
 			except:
-				utils.print_warning("X>\tScurve trimming test error. Reiterating...")
+				utils.print_warning("X>\tScurve measures test error. Reiterating...")
 				wd +=1
 		wd = 0
 
-		# while self.runtest.is_active('gain_offset_noise') and wd < 3 and wd < 3:
-		# 	try:
-		# 		#self.ssa.load_configuration(self.config_file, display = False)
-		# 		r1, r2, r3, r4 = self.measure.gain_offset_noise(calpulse = 50, ret_average = True, plot = True, use_stored_data = False, file = filename, filemode = 'a', runname = runname)
-		# 		self.summary.set('FE_gain'          , r1, 'ThDAC/CalDAC', '',  runname)
-		# 		self.summary.set('FE_offset'        , r2, 'ThDAC'       , '',  runname)
-		# 		self.summary.set('FE_noise_scurve'  , r3, 'ThDAC'       , '',  runname)
-		# 		self.summary.set('FE_scurve_issues' , r4, 'list'        , '',  runname)
-		# 		print "->  \tgain_offset_noise Time = %7.2f" % (time.time() - time_init); time_init = time.time();
-		# 		break
-		# 	except:
-		# 		print "X>  \tError in gain_offset_noise test. Reiterating."
-		# 		wd +=1
-		# wd = 0
-		# while self.runtest.is_active('threshold_spread') and wd < 3:
-		# 	try:
-		# 		r1 = self.measure.threshold_spread(calpulse = 50, use_stored_data = True, plot = True, file = filename, filemode = 'a', runname = runname)
-		# 		self.summary.set('threshold std' , r1, 'ThDAC', '',  runname)
-		# 		print "->  \tthreshold_spread Time = %7.2f" % (time.time() - time_init); time_init = time.time();
-		# 		break
-		# 	except:
-		# 		print "X>  \tError in threshold_spread test. Reiterating."
-		# 		wd +=1
-		# wd = 0

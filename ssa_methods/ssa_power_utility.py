@@ -23,11 +23,11 @@ class ssa_power_utility:
 		elif (value == 'external' or value == 1):
 			self.fc7.write("cnfg_clock_ext_clk_en", 1)
 
-	def on(self):
-		self.set_supply('on')
+	def on(self, display=True):
+		self.set_supply(mode='on',  display=display)
 
-	def off(self):
-		self.set_supply('off')
+	def off(self, display=True):
+		self.set_supply(mode='off', display=display)
 
 	def set_supply(self, mode = 'on', d = 1.0, a = 1.2, p = 1.2, bg = 0.270, display = True):
 		utils.activate_I2C_chip()

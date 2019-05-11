@@ -77,6 +77,9 @@ class SSA_ASIC:
 			if(display): utils.print_error("->  \tImpossible to complete phase tuning")
 		sleep(0.2); self.ctrl.activate_readout_normal()
 		sleep(0.1); self.ctrl.activate_readout_normal()
+		self.ctrl.set_sampling_deskewing_coarse(value = 0)
+		self.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
+		self.ctrl.set_cal_pulse_delay(0)
 		if(display):
 			utils.print_info("->  \tActivated normal readout mode");
 			sys.stdout.write("->  \tReady!                  \r")
@@ -96,8 +99,11 @@ class SSA_ASIC:
 		r1 = self.init(reset_board = True, reset_chip = False, display = display)
 		r2 = self.alignment_cluster_data_word()
 		r3, r4 = self.alignment_lateral_input()
-		if(not(r1 and r2 and r3 and r4)):
-			utils.print_error("X>\tAlignment error.")
+		rpst = "initialize={:0b}, stub-data={:0b}, left={:0b}, right={:0b}".format(r1,r2,r3,r4)
+		if(r1 and r2 and r3 and r4):
+			utils.print_good("->\tSSA alignment successfull (" + rpst+ ")")  
+		else:
+			utils.print_error("->\tSSA alignment error (" + rpst + ")") 
 		return r1,r2,r3,r4
 
 	def alignment_cluster_data_phase(self):
@@ -127,19 +133,19 @@ class SSA_ASIC:
 					if(display): print(rp[-1])
 					if(rp[-4:] == rp[-5:-1]):
 						if(map(float, rp[-1]) == map(float, tv)):
-							utils.print_info('->\tCluster-data word alignment {m:s} successfull ({r:d})'.format(m=mode, r=self.readout.cl_shift[mode]))
+							utils.print_info('->\tCluster-data word alignment {m:7s} successfull ({r:d})'.format(m=mode, r=self.readout.cl_shift[mode]))
 							self.generic_parameters['cl_word_alignment_{m:s}'.format(m=mode)] = True
 							status[mode] = True
 							ext = True
 							break
-				if(ext): break
+				if(ext): break 
 		if(not status['digital']):
 			utils.print_error('->\tCluster-data word alignment digital injection error')
 			self.generic_parameters['cl_word_alignment_{m:s}'.format(m='digital')] = True
 		if(not status['analog']):
 			utils.print_error('->\tCluster-data word alignment analog injection error')
 			self.generic_parameters['cl_word_alignment_{m:s}'.format(m='analog')] = True
-		print self.readout.cl_shift
+		#print self.readout.cl_shift
 		return (status['digital'] and status['analog'])
 
 

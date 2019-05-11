@@ -77,7 +77,7 @@ class SSA_cal_utility():
 			utils.print_info("->\tThreshold Trimming: ThDAC={:2d}         -> mean(th)={:5.3f} std(th)={:5.3f} taget={:5.3f}".format(trimdac, np.mean(ths), np.std(ths), th_dac))
 			cnt += 1
 			if( isinstance(filename, str) ):
-				fo = filename + "scurve_" + "_Q_" + str(charge_fc) + "_Trim_" + str(trimdac) + "_.csv"
+				fo = (filename + "frontend_Q_{c:1.3f}_scurve_trim-{t:0d}_.csv".format(c=charge_fc, t=trimdac))
 				CSV.ArrayToCSV (array = scv, filename = fo, transpose = True)
 				print("->\tScurve data saved in {:s}".format(fo))
 
@@ -104,14 +104,14 @@ class SSA_cal_utility():
 			trimming_new = trimming_prev + correction
 			trimming_prev = trimming_new
 			self.set_trimming(np.array(np.round(trimming_new), dtype=int), range(1,121), display=False)
-			ths_test.append(ths)
+			ths_test.append(np.std(ths))
 
 		if( isinstance(filename, str) ):
-			fo = filename + "scurve_" + "_Q_" + str(charge_fc) + "_Trim_Done_.csv"
+			fo = (filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc))
 			CSV.ArrayToCSV (array = sc[-1], filename = fo, transpose = True)
 			print("->\tScurve data saved in {:s}".format(fo))
 		if(return_scurves):
-			return np.std(ths), sc
+			return (th+ths_test), sc
 		else:
 			return np.std(ths)
 
@@ -194,7 +194,11 @@ class SSA_cal_utility():
 						self.fc7.SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
 						test = 1
 						t = time.time()
+						timeout = 500
 						while (test):
+							timeout-=1
+							if(timeout<=0): 
+								test=0; break
 							test = (self.fc7.read("stat_fast_fsm_state"))
 							sleep(0.001)
 							#print test,

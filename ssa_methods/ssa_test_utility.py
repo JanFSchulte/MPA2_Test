@@ -23,7 +23,7 @@ class SSA_test_utility():
 
 
 	def cluster_data(self, mode = "digital",  nstrips = 8, min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = False):
-		fo = open("../SSA_Results/" + file + "_Test_ClusterData2_" + mode + ".csv", filemode)
+		fo = open(file + "readout_cluster-data_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = '';
 		utils.activate_I2C_chip()
 		SendCommand_CTRL("stop_trigger")
@@ -111,7 +111,7 @@ class SSA_test_utility():
 
 
 	def cluster_data_basic(self, mode = "digital", nruns = 5, shift = 'default', shiftL = 0, display=False, lateral = True, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
-		fo = open("../SSA_Results/" + file + "_Test_ClusterData_" + mode + ".csv", filemode)
+		fo = open(file + "readout_cluster-data-basic_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = ''; stlateralout = '';
 		#print "->  \tRemember to call test.lateral_input_phase_tuning() before to run this test"
 		utils.activate_I2C_chip()
@@ -214,8 +214,8 @@ class SSA_test_utility():
 	#		print( bin(a) + '  ' + bin(b))
 
 
-	def l1_data_basic(self, mode = "digital", nruns = 1, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
-		fo = open("../SSA_Results/" + file + "_Test_L1_" + mode + ".csv", filemode)
+	def l1_data_basic(self, mode = "digital", nruns = 1, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = ''):
+		fo = open(file + "readout_L1-data_" + mode + ".csv", filemode)
 		counter = [[0,0],[0,0]]
 		utils.activate_I2C_chip()
 		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
@@ -277,17 +277,18 @@ class SSA_test_utility():
 		result = [ (1.0 - float(counter[0][1])/float(counter[0][0]))*100.0  ,  (1.0 - float(counter[1][1])/float(counter[1][0]))*100.0  ]
 		#return "%5.2f%%" % (result)
 		if(result[0] == 100 and result[1] == 100):
-			utils.print_good("->\L1 data test scan with {mode:s} injection -> 100%".format(mode=mode))
+			utils.print_good("->\tL1 data test scan with {mode:s} injection -> 100%".format(mode=mode))
 		else:
 			utils.print_error("->\tCluster data test scan with {mode:s} injection -> {res0:5.3f}% hit - {res1:5.3f}% HIP flags".format(mode=mode, res0=result[0], res1=result[1]))
 		return result
 
 
 
-	def memory(self, memory = 1, delay = [10], shift = 0, latency = 199, display = 1, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+	def memory(self, memory = [1,2], delay = [10], shift = 0, latency = 199, display = 1, file = '../SSA_Results/Chip0/Chip_0', filemode = 'w', runname = '1.2V'):
 		utils.activate_I2C_chip()
-		HIP = memory-1
-		fo = open("../SSA_Results/" + file + "_Test_Memory_" + str(memory) + ".csv", filemode)
+		if(isinstance(memory, int)):
+			if(memory in [1,2]): HIPrun = [memory-1]
+		else: HIPrun = [0,1]
 		#self.ssa.init(reset_board = False, reset_chip = False, display = False)
 		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
@@ -296,46 +297,58 @@ class SSA_test_utility():
 		self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 1)
 		self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 		self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-		errlist = []
+		errlist = []; efflist = [];
 		cnt = [0, 0, 0]
-		for d in delay:
-			Configure_TestPulse(
-				delay_after_fast_reset = 512 + d,
-				delay_after_test_pulse = (latency+3+shift),
-				delay_before_next_pulse = 200,
-				number_of_test_pulses = 1)
-			for strip in range(1,121):
-				if HIP: self.ssa.inject.digital_pulse(hit_list = [strip], hip_list = [strip], initialise = False)
-				else:   self.ssa.inject.digital_pulse(hit_list = [strip], hip_list = [], initialise = False)
-				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(latency = latency, initialise = False, multi = False)
-				while(l1hitlist == [strip-1]):
+		for HIP in HIPrun:
+			for d in delay:
+				Configure_TestPulse(
+					delay_after_fast_reset = 512 + d,
+					delay_after_test_pulse = (latency+3+shift),
+					delay_before_next_pulse = 200,
+					number_of_test_pulses = 1)
+				for strip in range(1,121):
+					if HIP: self.ssa.inject.digital_pulse(hit_list = [strip], hip_list = [strip], initialise = False)
+					else:   self.ssa.inject.digital_pulse(hit_list = [strip], hip_list = [], initialise = False)
 					L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(latency = latency, initialise = False, multi = False)
-					if cnt[2] > 3: break;
-					cnt[2] += 1
-				dstr = "expected: [L1 =  1][BX =%3d][HIT =%3s][HIP =%3d]\t  |  found: [L1 =%3d][BX =%3d][HIT =%3s][HIP =%3s]" % (
-						(d+1)%16, strip, HIP,     L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
-				#if(((L1_counter != 1) or (BX_counter != (d+1)%16)) ):
-				#	print "\tCounter Error -> " + dstr + "                                  "
-				error = False
-				if not HIP:
-					if(len(l1hitlist) != 1): error = True
-					elif (l1hitlist[0] != strip): error = True
+					while(l1hitlist == [strip-1]):
+						L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(latency = latency, initialise = False, multi = False)
+						if cnt[2] > 3: break;
+						cnt[2] += 1
+					dstr = "expected: [L1 =  1][BX =%3d][HIT =%3s][HIP =%3d]\t  |  found: [L1 =%3d][BX =%3d][HIT =%3s][HIP =%3s]" % (
+							(d+1)%16, strip, HIP,     L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
+					#if(((L1_counter != 1) or (BX_counter != (d+1)%16)) ):
+					#	print "\tCounter Error -> " + dstr + "                                  "
+					error = False
+					if not HIP:
+						if(len(l1hitlist) != 1): error = True
+						elif (l1hitlist[0] != strip): error = True
+					else:
+						if(len(hiplist) != 1): error = True
+						elif (hiplist[0] != 1): error = True
+					if(error):
+						cnt[1] += 1
+						errlist.append([[strip], l1hitlist])
+						if(display >= 1):
+							print "\tMemory Error  -> " + dstr + "                                  "
+					elif(display >= 2):
+						print "\tOk            -> " + dstr + "                                  "
+					cnt[0] += 1
+					utils.ShowPercent(strip, 120, "Running Memory test")
+				eff = ((1-(cnt[1]/float(cnt[0])))*100 )
+				efflist.append(eff)
+				fo = open(file + "memory.csv", 'a')
+				fo.write("\n{:8s}, {:0d}, {:0d}, {:7.3f} , {:s} ,".format(runname, (HIP+1), d, eff, (', '.join(map(str, errlist))) ))
+				fo.close()
+				strprint = ("->\tMemory {:0d} test scan ({:1s}) -> {:5.3f}%".format((HIP+1), runname, eff))
+				if(eff==100):
+					utils.print_good(strprint)
 				else:
-					if(len(hiplist) != 1): error = True
-					elif (hiplist[0] != 1): error = True
-				if(error):
-					cnt[1] += 1
-					errlist.append([[strip], l1hitlist])
-					if(display >= 1):
-						print "\tMemory Error  -> " + dstr + "                                  "
-				elif(display >= 2):
-					print "\tOk            -> " + dstr + "                                  "
-				cnt[0] += 1
-		eff = ((1-(cnt[1]/float(cnt[0])))*100 )
-		fo.write( "\n%s ; %7.2f%% ; %s ;" % (runname, eff, '; '.join(map(str, errlist)) ))
-		fo.close()
+					utils.print_error(strprint)
+
 		self.memerrlist = errlist
-		return eff
+		return efflist
+
+
 
 	def memory_vs_voltage(self, memory = 1, step = 0.005, start = 1.25, stop = 0.9, latency = 200, shift = 0, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
 		utils.activate_I2C_chip()
