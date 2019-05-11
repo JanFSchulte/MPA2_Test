@@ -37,8 +37,8 @@ class SSA_measurements():
 		plot = True,                    # Fast plot of the results
 		filename = '../SSA_Results/Chip0/Chip_0_'
 		):
-		
-		scurves = {}
+
+		scurves = {}; fo = [];
 		thstd, sc = self.scurve_trim(
 			charge_fc = charge_fc_trim,
 			threshold_mv = 'default',
@@ -72,7 +72,13 @@ class SSA_measurements():
 			cal_ampl = cal_ampl, nevents = nevents,
 			display = False, plot = False, speeduplevel = 2, countershift = 0,
 			filename = False, mode = 'all', rdmode = 'fast')
-		return sc
+
+		fo.append(filename + "scurve_" + "_Q_" + str(charge_fc_trim) + "_Trim_Done_.csv")
+		fo.append(filename + "scurve_" + "_Q_" + str(charge_fc_test) + "_Trim_Done_.csv")
+		CSV.ArrayToCSV (array = scurves['l_trim'], filename = fo2, transpose = True)
+		print("->\tScurve data saved in {:s}".format(fo2))
+
+		return scurves
 
 
 	###########################################################
@@ -127,6 +133,58 @@ class SSA_measurements():
 			c = next(color)
 			plt.plot(d, '-', color=c, lw=1, alpha = 1)
 		plt.show()
+
+	###########################################################
+	def FE_Gain_Noise_Std__Calculate(input_files, output_file, nevents=1000):
+		thresholds = {}; noise = {};
+		thmean = {}; sigmamean = {}; tmp = [];
+		calpulses = []; scurve_table = {}; runlist = {}
+		files_list = input_files
+		if(len(files_list) == 0): return ['er']*7
+		print('->  \tSorting Informations')
+		for f in files_list:
+			cfl = re.findall( '\W?Q_(\d+)' , f )
+			cal = np.int( cfl[0] )
+			if not cal in calpulses:
+				calpulses.append(cal)
+				scurve = CSV.csv_to_array( f )
+				scurve_table[str(cal)] = scurve
+		calpulses.sort()
+		print('->\tLoading S-Curves data completed')
+		CSV.array_to_csv( calpulses,  output_file+'_S-Curve__cal_values.csv')
+		print('->\tFitting courves for Threshold-Spread and Noise')
+		for cal in calpulses:
+			c_thresholds = []; c_noise = [];
+			c_thmean = []; c_sigmamean = [];
+			s = np.transpose(scurve_table[str(cal)])
+			thround, p = self.cal.evaluate_scurve_thresholds(scurve = s, nevents = nevents)
+			c_thresholds.append( np.array(p)[:,1] )#threshold per strip
+			c_thmean.append( np.mean( np.array(p)[:,1] ) ) #threshold mean
+			c_noise.append( np.array(p)[:,2] ) #noise per strip
+			c_sigmamean.append( np.mean( np.array(p)[:,2] ) ) #noise mean
+			thresholds[str(cal)] = np.array(c_thresholds, dtype = float)
+			noise[str(cal)] = np.array(c_noise, dtype = float)
+			thmean[str(cal)] = np.array(c_thmean, dtype = float)
+			sigmamean[str(cal)] = np.array(c_sigmamean, dtype = float)
+			CSV.array_to_csv(c_thresholds, output_file + '_S-Curve_Threshold_Q_'+str(cal)+'.csv')
+			CSV.array_to_csv(c_noise,      output_file + '_S-Curve_Noise_Q_'+str(cal)+'.csv')
+			CSV.array_to_csv(c_thmean,     output_file + '_S-Curve_Threshold_Mean_Q_'+str(cal)+'.csv')
+			CSV.array_to_csv(c_sigmamean,  output_file + '_S-Curve_Noise_Mean_Q_'+str(cal)+'.csv')
+		print('->\tEvaluating Front-End Gain')
+		gains    = np.zeros([120]);
+		offsets  = np.zeros([120]);
+		for s in range(0,120):
+			ths = np.array( [np.array( thresholds[k] , dtype = float)[ : , s ] for k in thresholds if k in list(map(str, calpulses))] )
+			self.ths = ths
+			par, cov = curve_fit( f= f_line,  xdata = calpulses, ydata = ths[:, i], p0 = [0, 0])
+			gains[s] = par[0]
+			offsets[s] = par[1]
+			gainmean = np.average(gains)
+		CSV.array_to_csv(gains,    output_file + '_S-Curve_Gain.csv')
+		CSV.array_to_csv(gainmean, output_file + '_S-Curve_Gain_Mean.csv')
+		CSV.array_to_csv(offsets,  output_file + '_S-Curve_Offset.csv')
+		return calpulses, thresholds, noise, thmean, sigmamean, gains, gainmean, offsets
+
 
 	###########################################################
 	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', ret_average = True, filename = False, runname= '', plot = True, filemode = 'w', set_trim = False):
