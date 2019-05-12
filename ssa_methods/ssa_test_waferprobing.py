@@ -70,27 +70,26 @@ class SSA_ProbeMeasurement():
 		
 		## Main test routine ##################
 		self.pwr.set_supply(mode='on', display=False, d=self.dvdd, a=self.avdd, p=self.pvdd)
-		time.sleep(0.5)
 		self.pwr.reset(False, 0)
-		self.test_routine_power(        filename=fo, mode='_Reset')
+		self.test_routine_power(        filename=fo, mode='reset')      
 		self.pwr.reset(False, 1)
-		self.test_routine_power(        filename=fo, mode='_Enabled')
+		self.test_routine_power(        filename=fo, mode='startup')
 		self.test_routine_initialize(   filename=fo)
-		self.test_routine_power(        filename=fo, mode='_Initialized')
-		self.test_routine_measure_bias( filename=fo, mode='_Reset')
-		self.test_routine_calibrate(    filename=fo)
-		self.test_routine_power(        filename=fo, mode='_Calibrated')
-		self.test_routine_measure_bias( filename=fo, mode='_Calibrated')
-		self.test_routine_dacs(         filename=fo)
-		self.test_routine_analog(       filename=fo)
+		self.test_routine_power(        filename=fo, mode='uncalibrated')
+#		self.test_routine_measure_bias( filename=fo, mode='uncalibrated')
+#		self.test_routine_calibrate(    filename=fo)
+#		self.test_routine_power(        filename=fo, mode='calibrated')
+#		self.test_routine_measure_bias( filename=fo, mode='calibrated')
+#		self.test_routine_dacs(         filename=fo)
+#		self.test_routine_analog(       filename=fo)
 		self.test_routine_stub_data(    filename=fo)
-		self.test_routine_save_configuration(filename=fo)
+		self.test_routine_save_config   (filename=fo)
 		self.test_routine_L1_data(      filename=fo, vlist=[self.dvdd,1.2])
 
 		## Save summary ######################
 		self.summary.save(directory=self.DIR, filename=("Chip_{c:s}_v{v:d}/".format(c=str(chipinfo), v=version)), runname='')
 		self.summary.display()
-		self.ssa.pwr.off(display=False)
+#		self.ssa.pwr.off(display=False)
 
 
 
@@ -101,13 +100,10 @@ class SSA_ProbeMeasurement():
 		en = self.runtest.is_active('Power') 
 		while (en and wd < 3):
 			try:
-				[Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip] = self.pwr.get_power(display=True, return_all = True)
-				self.summary.set('V_DVDD'+mode, Vd, 'mV', '',  runname)
-				self.summary.set('V_AVDD'+mode, Va, 'mV', '',  runname)
-				self.summary.set('V_PVDD'+mode, Vp, 'mV', '',  runname)
-				self.summary.set('I_DVDD'+mode, Id, 'mA', '',  runname)
-				self.summary.set('I_AVDD'+mode, Ia, 'mA', '',  runname)
-				self.summary.set('I_PVDD'+mode, Ip, 'mA', '',  runname)
+				[Id, Ia, Ip] = self.pwr.test_power(display=True)
+				self.summary.set('I_DVDD_'+mode, Id, 'mA', '',  runname)
+				self.summary.set('I_AVDD_'+mode, Ia, 'mA', '',  runname)
+				self.summary.set('I_PVDD_'+mode, Ip, 'mA', '',  runname)
 				break
 			except:
 				utils.print_warning("X>\tpower measurements error. Reiterating...")
@@ -150,7 +146,7 @@ class SSA_ProbeMeasurement():
 			try:
 				r1 = self.biascal.measure_bias(return_data=True)
 				for i in r1:
-					self.summary.set( i[0]+mode, i[1], 'mV', '',  runname)
+					self.summary.set( i[0]+'_'+mode, i[1], 'mV', '',  runname)
 				break
 			except:
 				utils.print_warning("X>\tBias measurements error. Reiterating...")
@@ -158,7 +154,7 @@ class SSA_ProbeMeasurement():
 				wd +=1
 
 
-	def test_routine_save_configuration(self, filename = 'default', runname = ''):
+	def test_routine_save_config(self, filename = 'default', runname = ''):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		wd = 0
@@ -166,6 +162,7 @@ class SSA_ProbeMeasurement():
 		while (en and wd < 3):
 			try:
 				self.ssa.save_configuration(filename + 'configuration' + str(runname) + '.scv', display=False)
+				utils.print_good("->\tConfig registers readout via I2C and saved corrrectly.")
 				break
 			except:
 				utils.print_warning("X>\tConfig registers save error. Reiterating...")

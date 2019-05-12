@@ -37,17 +37,59 @@ class ssa_power_utility:
 			sleep(0.20); self.set_dvdd(d);
 			sleep(0.00); self.set_avdd(a);
 			sleep(0.10); self.set_vbf(bg)
-			sleep(2.00); self.reset()
-			sleep(0.50); self.get_power(display = display)
+			sleep(2.00); self.reset(display=display)
+			sleep(0.10)
+			if(display):
+				sleep(0.4); self.get_power(display = True)
 		elif(mode == 'off' or mode == 0):
 			sleep(0.00); self.set_vbf(0)
 			sleep(0.10); self.set_avdd(0);
 			sleep(0.00); self.set_dvdd(0);
 			sleep(0.10); self.set_pvdd(0)
 			sleep(0.10); self.mainpoweroff()
-			sleep(0.10); self.get_power(display = display)
+			if(display):
+				sleep(0.10); self.get_power(display = True)
 
+	def test_power(self, state = 'operation', display=True):
+		if(state=='off'):      #power off
+			d_limit = [ 0.0, 1.0]
+			a_limit = [ 0.0, 1.0]
+			p_limit = [ 0.0, 1.0]
+		elif(state=='reset'):  #with reset_b = 0
+			d_limit = [ 5.0, 15.0]
+			a_limit = [18.0, 28.0]
+			p_limit = [ 0.0,  8.0]
+		elif(state=='startup'):   #enable after reset
+			d_limit = [18.0, 35.0]
+			a_limit = [18.0, 28.0]
+			p_limit = [ 0.0,  8.0]
+		elif(state=='uncalibrated'): #configured
+			d_limit = [18.0, 35.0]
+			a_limit = [18.0, 28.0]
+			p_limit = [10.0, 40.0]
+		elif(state=='calibrated'):  #configured and calibrated 
+			d_limit = [18.0, 35.0]
+			a_limit = [18.0, 28.0]
+			p_limit = [10.0, 40.0]
+		else: 
+			d_limit = [ 5.0, 35.0]
+			a_limit = [18.0, 28.0]
+			p_limit = [ 1.0, 40.0]
+		[Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip] = self.get_power(display=False, return_all=True)
+		if(display):
+			dstr = "  \tP_dig:{:7.3f}mW [V={:5.3f}V - I={:5.3f}mA]".format(Pd, Vd, Id)
+			astr = "  \tP_ana:{:7.3f}mW [V={:5.3f}V - I={:5.3f}mA]".format(Pa, Va, Ia)
+			pstr = "  \tP_pad:{:7.3f}mW [V={:5.3f}V - I={:5.3f}mA]".format(Pp, Vp, Ip)
+			utils.print_info("->\tPower measurement (chip in '{:s}' mode)".format(state))
+			if(Id>d_limit[0] and Id<d_limit[1]): utils.print_good(dstr)
+			else: utils.print_error(dstr)
+			if(Ia>a_limit[0] and Ia<a_limit[1]): utils.print_good(astr)
+			else: utils.print_error(astr)
+			if(Ip>p_limit[0] and Ip<p_limit[1]): utils.print_good(pstr)
+			else: utils.print_error(pstr)
+		return [Id, Ia, Ip]
 
+		
 	def get_power(self, display = True, return_all = False):
 		Pd, Vd, Id = self.get_power_digital(display, False, True)
 		Pa, Va, Ia = self.get_power_analog(display, False, True)

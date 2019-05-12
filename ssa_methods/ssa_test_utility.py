@@ -81,27 +81,35 @@ class SSA_test_utility():
 			stprev = utils.cl2str(prev)
 			sthits = utils.cl2str(cl_hits)
 			#dstr = stexpected + ';    ' + stfound + '; ' + ';    ' + sthits + ';    ' + "                                            "
-			dstr = "->       REF:" + stexpected + ';         OUT:' + stfound + '; ' + ";                                            "
+			dstr = "->       REF:" + stexpected + ',         OUT:' + stfound + ', ' + ",                                            "
 			if (err[0]):
-				erlog = "Cluster-Data-Error;   " + dstr
+				erlog = "Cluster-Data-Error,   " + dstr
 				cnt['cl_err'] += 1
 				if stop_on_error:
-					fo.write(runname + ' ; ' + erlog + ' \n')
+					fo.write(runname + ', ' + erlog + ' \n')
 					print '\t' + erlog
 					return 100*(1-cnt['cl_err']/float(cnt['cl_sum']))
 			else:
 				if(display == True):
 					print   "\tPassed                " + dstr
 			prev = r
+			
+			cl_centroids.extend([0]*(8-len(cl_centroids)))
+			r.extend([0]*(8-len(r)))
+			savestr = "{:s}, REF, {:s}, OUT, {:s}".format(runname, ', '.join(map(str, cl_centroids)),  ', '.join(map(str, r)) )
 			if True in err:
-				fo.write(runname + ' ; ' + erlog + ' \n')
+				fo.write('ER' + ', ' + savestr + ' \n')
 				print '\t' + erlog
+			else:
+				fo.write('OK' + ', ' + savestr + ' \n')
 			cnt['cl_sum'] += 1;
 			if(mode == 'digital'):  utils.ShowPercent(cnt['cl_sum'], nruns, "Running clusters test based on digital test pulses")
 			elif(mode == 'analog'): utils.ShowPercent(cnt['cl_sum'], nruns, "Running clusters test based on analog test pulses")
 		utils.ShowPercent(nruns, nruns, "Done                                                      ")
 		fo.close()
 		rt = 100*(1-cnt['cl_err']/float(cnt['cl_sum']))
+		fo = open(file + "readout_cluster-data_summary" + mode + ".csv", 'a')
+		fo.write("->\tCluster data test with {mode:s} injection -> {res:5.3f}%".format(mode=mode, res=rt))
 		if(rt == 100):
 			utils.print_good("->\tCluster data test with {mode:s} injection -> 100%".format(mode=mode))
 		else:
@@ -318,6 +326,11 @@ class SSA_test_utility():
 							(d+1)%16, strip, HIP,     L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
 					#if(((L1_counter != 1) or (BX_counter != (d+1)%16)) ):
 					#	print "\tCounter Error -> " + dstr + "                                  "
+					
+					shitlist = l1hitlist + [' ']*(120-len(l1hitlist))
+					shiplist = hiplist   + [' ']*(120-len(l1hitlist))
+					sstr = "REF, {:d}, {:d}, {:d}, {:d}, OUT, {:d}, {:d}, {:s}, {:s}".format(
+						1, (d+1)%16, strip, HIP, L1_counter, BX_counter, ', '.join(map(str,shitlist)), ', '.join(map(str,shiplist)) )				
 					error = False
 					if not HIP:
 						if(len(l1hitlist) != 1): error = True
@@ -332,11 +345,18 @@ class SSA_test_utility():
 							print "\tMemory Error  -> " + dstr + "                                  "
 					elif(display >= 2):
 						print "\tOk            -> " + dstr + "                                  "
+					
+					fo = open(file + "memory_log_{:s}.csv".format(runname), 'a')
+					if (error):
+						fo.write('ER' + ', ' + sstr + ' \n')
+					else:
+						fo.write('OK' + ', ' + sstr + ' \n')
+					fo.close()
 					cnt[0] += 1
 					utils.ShowPercent(strip, 120, "Running Memory test")
 				eff = ((1-(cnt[1]/float(cnt[0])))*100 )
 				efflist.append(eff)
-				fo = open(file + "memory.csv", 'a')
+				fo = open(file + "memory_summary.csv", 'a')
 				fo.write("\n{:8s}, {:0d}, {:0d}, {:7.3f} , {:s} ,".format(runname, (HIP+1), d, eff, (', '.join(map(str, errlist))) ))
 				fo.close()
 				strprint = ("->\tMemory {:0d} test scan ({:1s}) -> {:5.3f}%".format((HIP+1), runname, eff))

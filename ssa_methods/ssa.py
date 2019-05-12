@@ -44,6 +44,7 @@ class SSA_ASIC:
 
 	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
 		self.ctrl.save_configuration(file = file, display = display)
+		utils.print_log("->\tConfig registers saved in {:s}.".format(file))
 
 	def load_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
 		self.ctrl.load_configuration(file = file, display = display)
