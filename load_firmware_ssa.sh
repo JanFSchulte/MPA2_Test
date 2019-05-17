@@ -45,8 +45,13 @@ else
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_12.bin -f ~/D19C/bitfiles/SEU/SEU_SSA_12.bit
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_11.bit -f ~/Desktop/SSA_SEU_11.bit
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_7.bin  
-	./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_11.bin 
-	#./bin/fc7-d19c.exe  -i $IP -n  MPA_SEU_L1_9.bin -f /home/acaratel/D19C/MPA_Test/fw_bitfiles/MPA_SEU_L1_9.bit
+	#./bin/fc7-d19c.exe  -i $IP -n  MPA_SEU_L1_9.bin -f ~/D19C/MPA_Test/fw_bitfiles/MPA_SEU_L1_9.bit
+	# USE SSA_SEU_11.bin for SSA tests on carrier board
+	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_11.bin 
+	# USE d19c_ssa_none_16052019.bin for SSA tests on wafer (swapped signals on probe card)
+	#./bin/fc7-d19c.exe  -i $IP -n  d19c_ssa_none_16052019_v2.bin -f ~/MPA_Test/fw_bitfiles/d19c_ssa_none_16052019_v2.bit
+	#./bin/fc7-d19c.exe  -i $IP -n  d19c_ssa_none_16052019_v2.bin
+	./bin/fc7-d19c.exe  -i $IP -n  d19c_ssa_none_17052019.bin -f ~/MPA_Test/fw_bitfiles/d19c_ssa_none_17052019.bit
 
 fi
 

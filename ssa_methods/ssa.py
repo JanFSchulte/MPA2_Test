@@ -49,7 +49,7 @@ class SSA_ASIC:
 	def load_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
 		self.ctrl.load_configuration(file = file, display = display)
 
-	def init(self, reset_board = False, reset_chip = False, slvs_current = 0b111, edge = "negative", display = True, read_current = False):
+	def init(self, reset_board = False, reset_chip = False, slvs_current = 0b111, edge = "rising", display = True, read_current = False):
 		self.generic_parameters['cl_word_alignment'] = False
 		if(display):
 			sys.stdout.write("->  \tInitialising..\r")
@@ -102,9 +102,9 @@ class SSA_ASIC:
 		r3, r4 = self.alignment_lateral_input()
 		rpst = "initialize={:0b}, stub-data={:0b}, left={:0b}, right={:0b}".format(r1,r2,r3,r4)
 		if(r1 and r2 and r3 and r4):
-			utils.print_good("->\tSSA alignment successfull (" + rpst+ ")")  
+			utils.print_good("->\tSSA alignment successfull (" + rpst+ ")")
 		else:
-			utils.print_error("->\tSSA alignment error (" + rpst + ")") 
+			utils.print_error("->\tSSA alignment error (" + rpst + ")")
 		return r1,r2,r3,r4
 
 	def alignment_cluster_data_phase(self):
@@ -139,7 +139,7 @@ class SSA_ASIC:
 							status[mode] = True
 							ext = True
 							break
-				if(ext): break 
+				if(ext): break
 		if(not status['digital']):
 			utils.print_error('->\tCluster-data word alignment digital injection error')
 			self.generic_parameters['cl_word_alignment_{m:s}'.format(m='digital')] = True

@@ -22,7 +22,7 @@ class SSA_test_utility():
 		self.striplist = []
 
 
-	def cluster_data(self, mode = "digital",  nstrips = 8, min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = False):
+	def cluster_data(self, mode = "digital",  nstrips = 8, min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = False):
 		fo = open(file + "readout_cluster-data_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = '';
 		utils.activate_I2C_chip()
@@ -93,7 +93,7 @@ class SSA_test_utility():
 				if(display == True):
 					print   "\tPassed                " + dstr
 			prev = r
-			
+
 			cl_centroids.extend([0]*(8-len(cl_centroids)))
 			r.extend([0]*(8-len(r)))
 			savestr = "{:s}, REF, {:s}, OUT, {:s}".format(runname, ', '.join(map(str, cl_centroids)),  ', '.join(map(str, r)) )
@@ -118,7 +118,7 @@ class SSA_test_utility():
 
 
 
-	def cluster_data_basic(self, mode = "digital", nruns = 5, shift = 'default', shiftL = 0, display=False, lateral = True, init = False, hfi = True, file = 'TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
+	def cluster_data_basic(self, mode = "digital", nruns = 5, shift = 'default', shiftL = 0, display=False, lateral = True, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
 		fo = open(file + "readout_cluster-data-basic_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = ''; stlateralout = '';
 		#print "->  \tRemember to call test.lateral_input_phase_tuning() before to run this test"
@@ -206,7 +206,7 @@ class SSA_test_utility():
 		rt = [100*(1-cnt['cl_err']/float(cnt['cl_sum'])) , 100*(1-cnt['li_err']/float(cnt['li_sum'])) , 100*(1-cnt['lo_err']/float(cnt['lo_sum'])) ]
 		return rt
 
-	def lateral_input_phase_tuning(self, display = False, timeout = 256*3, delay = 4, shift = 'default', init = False, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+	def lateral_input_phase_tuning(self, display = False, timeout = 256*3, delay = 4, shift = 'default', init = False, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = ''):
 		return self.ssa.alignment_cluster_data_word(display = display, timeout = timeout, delay = delay, shift = shift, init = init, file = file, filemode = filemode, runname = runname)
 
 
@@ -231,7 +231,9 @@ class SSA_test_utility():
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
 		if(mode == "analog"): shift += 2
 		L1_counter_init, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = True, shift = shift, latency = latency, multi = False)
-		if(L1_counter_init < 0): return 'error'
+		if(L1_counter_init < 0):
+			print(str(L1_counter_init))
+			return 'error'
 		l1hitlistprev = []
 		hiplistprev = []
 		for H in range(0,2):
@@ -326,11 +328,11 @@ class SSA_test_utility():
 							(d+1)%16, strip, HIP,     L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
 					#if(((L1_counter != 1) or (BX_counter != (d+1)%16)) ):
 					#	print "\tCounter Error -> " + dstr + "                                  "
-					
+
 					shitlist = l1hitlist + [' ']*(120-len(l1hitlist))
 					shiplist = hiplist   + [' ']*(120-len(l1hitlist))
 					sstr = "REF, {:d}, {:d}, {:d}, {:d}, OUT, {:d}, {:d}, {:s}, {:s}".format(
-						1, (d+1)%16, strip, HIP, L1_counter, BX_counter, ', '.join(map(str,shitlist)), ', '.join(map(str,shiplist)) )				
+						1, (d+1)%16, strip, HIP, L1_counter, BX_counter, ', '.join(map(str,shitlist)), ', '.join(map(str,shiplist)) )
 					error = False
 					if not HIP:
 						if(len(l1hitlist) != 1): error = True
@@ -345,7 +347,7 @@ class SSA_test_utility():
 							print "\tMemory Error  -> " + dstr + "                                  "
 					elif(display >= 2):
 						print "\tOk            -> " + dstr + "                                  "
-					
+
 					fo = open(file + "memory_log_{:s}.csv".format(runname), 'a')
 					if (error):
 						fo.write('ER' + ', ' + sstr + ' \n')
@@ -370,7 +372,7 @@ class SSA_test_utility():
 
 
 
-	def memory_vs_voltage(self, memory = 1, step = 0.005, start = 1.25, stop = 0.9, latency = 200, shift = 0, file = 'TestLogs/Chip-0', filemode = 'w', runname = ''):
+	def memory_vs_voltage(self, memory = 1, step = 0.005, start = 1.25, stop = 0.9, latency = 200, shift = 0, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = ''):
 		utils.activate_I2C_chip()
 		fo = open("../SSA_Results/" + file + "_Test_Memory-Supply_" + str(memory) + ".csv", filemode)
 		fo.write("\n    RUN ; DVDD;       EFFICIENCY;    ERROR LIST; \n")
@@ -583,6 +585,11 @@ class SSA_test_utility():
 			I.append([nclusters, Id, Ia, Ip])
 			print("->\tN Clusters %5.1f  -> Current = %7.3f - %7.3f - %7.3f" % (nclusters/2.0, Id, Ia, Ip ))
 		return I
+
+	def shift(self, pattern = 0b00011000):
+		self.ssa.ctrl.activate_readout_shift()
+		self.ssa.ctrl.set_shift_pattern_all(pattern)
+		self.ssa.readout.all_lines(trigger = True, configure = True, cluster = True, l1data = False, lateral = False)
 
 
 '''

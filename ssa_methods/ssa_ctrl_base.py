@@ -121,7 +121,7 @@ class ssa_ctrl_base:
 			return True
 
 
-	def init_slvs(self, current = 0b100):
+	def init_slvs(self, current = 0b111):
 		self.I2C.peri_write('SLVS_pad_current', current)
 		r = self.I2C.peri_read('SLVS_pad_current')
 		if (self.I2C.peri_read("SLVS_pad_current") != (current & 0b111) ):
@@ -164,7 +164,10 @@ class ssa_ctrl_base:
 
 	def phase_tuning(self):
 		self.activate_readout_shift()
-		self.set_shift_pattern_all(128)
+		if(self.fc7.invert):
+			self.set_shift_pattern_all(0b01111111) #128 #0b01111111
+		else:
+			self.set_shift_pattern_all(128) #128 #0b01111111
 		time.sleep(0.01)
 		self.set_lateral_lines_alignament()
 		time.sleep(0.01)
@@ -191,10 +194,12 @@ class ssa_ctrl_base:
 	def set_t1_sampling_edge(self, edge):
 		if edge == "rising" or edge == "positive":
 			self.I2C.peri_write('EdgeSel_T1', 1)
+			utils.print_info("->  \tT1 sampling edge set to rising")
 		elif edge == "falling" or edge == "negative":
 			self.I2C.peri_write('EdgeSel_T1', 0)
+			utils.print_info("->  \tT1 sampling edge set to falling")
 		else:
-			print "Error! The edge name is wrong"
+			print("Error! The edge name is wrong")
 
 
 	def activate_readout_normal(self, mipadapterdisable = 0):

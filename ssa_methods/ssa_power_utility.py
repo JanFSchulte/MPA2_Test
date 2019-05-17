@@ -51,6 +51,7 @@ class ssa_power_utility:
 				sleep(0.10); self.get_power(display = True)
 
 	def test_power(self, state = 'operation', display=True):
+		good = True
 		if(state=='off'):      #power off
 			d_limit = [ 0.0, 1.0]
 			a_limit = [ 0.0, 1.0]
@@ -81,13 +82,22 @@ class ssa_power_utility:
 			astr = "  \tP_ana:{:7.3f}mW [V={:5.3f}V - I={:5.3f}mA]".format(Pa, Va, Ia)
 			pstr = "  \tP_pad:{:7.3f}mW [V={:5.3f}V - I={:5.3f}mA]".format(Pp, Vp, Ip)
 			utils.print_info("->\tPower measurement (chip in '{:s}' mode)".format(state))
-			if(Id>d_limit[0] and Id<d_limit[1]): utils.print_good(dstr)
-			else: utils.print_error(dstr)
-			if(Ia>a_limit[0] and Ia<a_limit[1]): utils.print_good(astr)
-			else: utils.print_error(astr)
-			if(Ip>p_limit[0] and Ip<p_limit[1]): utils.print_good(pstr)
-			else: utils.print_error(pstr)
-		return [Id, Ia, Ip]
+			if(Id>d_limit[0] and Id<d_limit[1]): 
+				utils.print_good(dstr)
+			else: 
+				utils.print_error(dstr)
+				good = False
+			if(Ia>a_limit[0] and Ia<a_limit[1]): 
+				utils.print_good(astr)
+			else: 
+				utils.print_error(astr)
+				good = False
+			if(Ip>p_limit[0] and Ip<p_limit[1]): 
+				utils.print_good(pstr)
+			else: 
+				utils.print_error(pstr)
+				good = False
+		return [good, Id, Ia, Ip]
 
 		
 	def get_power(self, display = True, return_all = False):
