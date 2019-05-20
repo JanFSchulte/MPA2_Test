@@ -43,9 +43,17 @@ class Utilities:
 		def __repr__(self):
 			return "{:6.1f}".format(self)
 
-	def set_log_files(logfile, errorlog):
+	def set_log_files(self, logfile, errorlog):
+		if(self.logfile): self.logfile.close()
+		if(self.errorlog): self.errorlog.close()
 		self.logfile = open(logfile, "w")
 		self.errorlog = open(errorlog, "w")
+
+	def close_log_files(self):
+		if(self.logfile): self.logfile.close()
+		if(self.errorlog): self.errorlog.close()
+		self.logfile = False
+		self.errorlog = False
 
 	def reverse_bit_order(self, n, width = 32):
 		b = '{:0{width}b}'.format(n, width=width)
@@ -131,7 +139,7 @@ class Utilities:
 		if(format == 'print'):
 			return datetime.now().strftime("%Y-%m-%d_%H-%M")
 		elif(format == 'csv'):
-			return datetime.now().strftime("%Y, %m, %d, %H, %M, %S")	
+			return datetime.now().strftime("%Y, %m, %d, %H, %M, %S")
 		elif(format == 'array'):
 			return (datetime.now().strftime("%Y, %m, %d, %H, %M, %S")).split(', ')
 		else:

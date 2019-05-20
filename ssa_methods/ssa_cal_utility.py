@@ -34,7 +34,7 @@ class SSA_cal_utility():
 
 	def trimming_scurves_2(self,
 		charge_fc = 2,             # Input charge in fC
-		threshold_mv = 'default',  # Threshold in mV
+		threshold_mv = 'mean',     # Threshold in mV
 		caldac = 'default',        # 'default' | 'evaluate' | value [gain, offset]
 		thrdac = 'default',        # 'default' | 'evaluate' | value [gain, offset]
 		nevents = 1000,            # Number of calibration pulses
@@ -53,12 +53,8 @@ class SSA_cal_utility():
 		elif(isinstance(thrdac, list)): t_thrdac = thrdac
 		else: return False
 
-		if(threshold_mv == 'default'): t_threshold_mv = self.fe_average_gain*np.float(charge_fc)
-		else: t_threshold_mv = threshold_mv
-
 		cal_ampl = self.evaluate_caldac_ampl(charge_fc, t_caldac)
-		th_dac = self.evaluate_thdac_ampl(t_threshold_mv, t_thrdac)
-
+		utils.print_log("->\tCALDAC value for trimming = {:d}".format(cal_ampl))
 		sc = []; th = []; cnt = 0;
 
 		for trimdac in [0, 31]:
@@ -74,15 +70,25 @@ class SSA_cal_utility():
 			sc.append(scv)
 			ths, pars = self.evaluate_scurve_thresholds(scv)
 			th.append( ths )
-			utils.print_info("->\tThreshold Trimming: ThDAC={:2d}         -> mean(th)={:5.3f} std(th)={:5.3f} taget={:5.3f}".format(trimdac, np.mean(ths), np.std(ths), th_dac))
+			utils.print_info("->\tThreshold Trimming: ThDAC={:2d}         -> mean(th)={:5.3f} std(th)={:5.3f}".format(trimdac, np.mean(ths), np.std(ths)))
 			cnt += 1
 			if( isinstance(filename, str) ):
 				fo = (filename + "frontend_Q_{c:1.3f}_scurve_trim-{t:0d}_.csv".format(c=charge_fc, t=trimdac))
 				CSV.ArrayToCSV (array = scv, filename = fo, transpose = True)
-				print("->\tScurve data saved in {:s}".format(fo))
+				utils.print_log("->\tScurve data saved in {:s}".format(fo))
 
 		ths_test = []
 		ratios = (th[1]-th[0])/32.0 # ratios array
+
+		if(threshold_mv == 'default'):
+			t_threshold_mv = self.fe_average_gain*np.float(charge_fc)
+			th_dac = self.evaluate_thdac_ampl(t_threshold_mv, t_thrdac)
+		elif(threshold_mv == 'mean'):
+			th_dac = np.mean( [np.mean(th[0]), np.mean(th[1])] )
+		else:
+			t_threshold_mv = threshold_mv
+			th_dac = self.evaluate_thdac_ampl(t_threshold_mv, t_thrdac)
+
 		trimming = (np.array([th_dac]*120)-th[0])/ratios #trimming array
 		self.set_trimming(np.array(np.round(trimming), dtype=int), range(1,121), display=False)
 		trimming_prev = trimming
@@ -109,7 +115,7 @@ class SSA_cal_utility():
 		if( isinstance(filename, str) ):
 			fo = (filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc))
 			CSV.ArrayToCSV (array = sc[-1], filename = fo, transpose = True)
-			print("->\tScurve data saved in {:s}".format(fo))
+			utils.print_log("->\tScurve data saved in {:s}".format(fo))
 		if(return_scurves):
 			return (th+ths_test), sc
 		else:
@@ -157,6 +163,7 @@ class SSA_cal_utility():
 					self.set_trimming(31, striplist, display=False)
 					sleep(0.001)
 			elif not isinstance(cal_ampl, list):
+				utils.print_error("-> ssa_cal_utility/scurves wrong cal_alpl parameter")
 				return False
 			if(rdmode == 'fast'):
 				self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
@@ -197,7 +204,7 @@ class SSA_cal_utility():
 						timeout = 500
 						while (test):
 							timeout-=1
-							if(timeout<=0): 
+							if(timeout<=0):
 								test=0; break
 							test = (self.fc7.read("stat_fast_fsm_state"))
 							sleep(0.001)
@@ -281,7 +288,7 @@ class SSA_cal_utility():
 				if( isinstance(filename, str) ):
 					fo = "../SSA_Results/" + filename + "_scurve_" + filename2 + "__cal_" + str(cal_val) + ".csv"
 					CSV.ArrayToCSV (array = scurves, filename = fo, transpose = True)
-					print "->  \tData saved in" + fo
+					utils.print_log( "->  \tData saved in" + fo)
 
 			if(np.sum(scurves[:,10:110] )<100):
 				if(evaluate_cn>4):
@@ -350,7 +357,7 @@ class SSA_cal_utility():
 		else: return False
 		# evaluate initial S-Curves
 		if(display>=2):
-			print self.set_trimming('keep', display = False)
+			utils.print_log( self.set_trimming('keep', display = False) )
 		scurve_init = self.scurves(
 			cal_ampl = calval,
 			nevents = nevents,
@@ -457,7 +464,7 @@ class SSA_cal_utility():
 					self.ssa.strip.set_trimming( i+1, default_trimming[i])
 				#print('Setting strip' + str(i+1) + '  with value' +str(default_trimming[i]))
 			if(display):
-				print "->  \tTrimming: Applied trimming array" % (default_trimming)
+				utils.print_log("->  \tTrimming: Applied trimming array" % (default_trimming))
 			self.scurve_trimming = 'trimmed'
 		elif(isinstance(default_trimming, int)):
 			if(default_trimming<0): default_trimming = 0
@@ -465,7 +472,7 @@ class SSA_cal_utility():
 			if(striprange == 'all'):
 				self.ssa.strip.set_trimming('all', default_trimming)
 				if(display):
-					print "->  \tTrimming: Applied value %d to all channels" % (default_trimming)
+					utils.print_log("->  \tTrimming: Applied value %d to all channels" % (default_trimming))
 				if(default_trimming == 0):
 					self.scurve_trimming = 'zeros'
 				else:
@@ -474,7 +481,7 @@ class SSA_cal_utility():
 				for i in striprange:
 					self.ssa.strip.set_trimming(i, default_trimming)
 					if(display):
-						print "->  \tTrimming: Applied value %d to channel %d" % (default_trimming, i)
+						utils.print_log("->  \tTrimming: Applied value %d to channel %d" % (default_trimming, i))
 		elif(default_trimming != False and default_trimming != 'keep'):
 			self.scurve_trimming = 'none'
 			error(1)
@@ -544,11 +551,14 @@ class SSA_cal_utility():
 		if( np.size(np.where( curve > (nevents-1) )) < 1):
 			#print "Fitting Zeros " + errmsg
 			return erret
-
 		# get read of the noise peack
-		while ( not ((sct[0] == nevents) and (sct[1] == nevents)) ):
-			sct = sct[ np.argmax(sct)+1 : ]
-
+		try:
+			while ( not ((sct[0] in range(nevents-10, nevents+10)) and (sct[1] in range(nevents-10, nevents+10))) ):
+				sct = sct[ np.argmax(sct)+1 : ]
+		except:
+			utils.print_error("->\tssa_cal_utility/_scurve_fit_errorfunction -> scurve error")
+			utils.print_log(sct)
+			utils.print_log(curve)
 		for i in range(0, len(curve)-len(sct)):
 			sct = np.insert(sct, 0, nevents)
 
@@ -558,7 +568,7 @@ class SSA_cal_utility():
 		elif(isinstance(expected, int) or isinstance(expected, float)):
 			par_guess = expected
 		else:
-			print "Fitting failed " + errmsg
+			utils.print_error("Fitting failed " + errmsg)
 			return erret
 
 		while(err == True and itr < reiterate):
@@ -575,7 +585,7 @@ class SSA_cal_utility():
 			else:
 				err = False
 		if(err):
-			print "Fitting failed " + errmsg
+			utils.print_error("Fitting failed " + errmsg)
 			return erret
 		else:
 			# readd number of th points removed by the noise cleaning
@@ -588,7 +598,7 @@ class SSA_cal_utility():
 		guess_sigma = np.size( np.where(curve > 10) )/6.0
 		errret = [np.inf, np.inf, np.inf]
 		if(guess_mean == 0 or guess_sigma == 0 ):
-			print "Fitting zeros " + errmsg
+			utils.print_error("Fitting zeros " + errmsg)
 			return errret
 		err = True; itr = 0;
 		while(err == True and itr < reiterate):
@@ -603,7 +613,7 @@ class SSA_cal_utility():
 			else:
 				err = False
 		if(err):
-			print "Fitting failed " + errmsg
+			utils.print_error("Fitting failed " + errmsg)
 			return errret
 		else:
 			return par

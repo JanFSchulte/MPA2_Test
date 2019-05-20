@@ -4,3 +4,4 @@ from BasicD19c import *
 from SelectBoardIp import *
 from FileParse import *
 from BasicADC import *
+from wafer_proabing_machine_control import * 

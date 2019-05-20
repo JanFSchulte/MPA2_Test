@@ -29,8 +29,7 @@ class SSA_measurements():
 	def scurve_trim_gain_noise(self,
 		charge_fc_trim = 2.0,             # Input charge in fC
 		charge_fc_test = 1.0,             # Input charge in fC
-		threshold_mv_trim = 'default',  # Threshold in mV
-		threshold_mv_test = 'default',  # Threshold in mV
+		threshold_mv_trim = 'mean',  # Threshold in mV
 		iterative_step_trim = 1,        # Iterative steps to acheive lower variability
 		caldac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
 		thrdac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
@@ -42,7 +41,7 @@ class SSA_measurements():
 		scurves = {}; fo = [];
 		thstd, sc = self.scurve_trim(
 			charge_fc = charge_fc_trim,
-			threshold_mv = 'default',
+			threshold_mv = threshold_mv_trim,
 			caldac = caldac,
 			thrdac = thrdac,
 			nevents = nevents,
@@ -64,10 +63,7 @@ class SSA_measurements():
 		elif(isinstance(thrdac, list)): t_thrdac = thrdac
 		else: return False
 
-		if(threshold_mv_test == 'default'): t_threshold_mv = self.cal.fe_average_gain*np.float(charge_fc_test)
-		else: t_threshold_mv = threshold_mv_test
 		cal_ampl = self.cal.evaluate_caldac_ampl(charge_fc_test, t_caldac)
-		th_dac = self.cal.evaluate_thdac_ampl(t_threshold_mv, t_thrdac)
 
 		scurves['l_trim'] = self.cal.scurves(
 			cal_ampl = cal_ampl, nevents = nevents,
@@ -77,11 +73,11 @@ class SSA_measurements():
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_trim))
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_test))
 		CSV.ArrayToCSV (array = scurves['l_trim'], filename = fo[1], transpose = True)
-		print("->\tScurve data saved in {:s}".format(fo[1]))
-		
+		utils.print_log("->\tScurve data saved in {:s}".format(fo[1]))
+
 		rp = self.FE_Gain_Noise_Std__Calculate(
-			input_files = fo, 
-			output_file = (filename), 
+			input_files = fo,
+			output_file = (filename),
 			nevents=nevents)
 
 		calpulses, thresholds, noise, thmean, sigmamean, gains, offsets = rp
@@ -158,7 +154,7 @@ class SSA_measurements():
 		calpulses = []; scurve_table = {}; runlist = {}
 		files_list = input_files
 		if(len(files_list) == 0): return ['er']*7
-		print('->  \tSorting Informations')
+		utils.print_log('->  \tSorting Informations')
 		for f in files_list:
 			cfl = re.findall( '\W?Q_(\d+\.\d+)' , f )
 			cal = np.float( cfl[0] )
@@ -167,9 +163,9 @@ class SSA_measurements():
 				scurve = CSV.csv_to_array( f )
 				scurve_table[str(cal)] = scurve
 		calpulses.sort()
-		print('->\tLoading S-Curves data completed')
+		utils.print_log('->\tLoading S-Curves data completed')
 		CSV.array_to_csv( calpulses,  output_file+'frontend_cal_values.csv')
-		print('->\tFitting courves for Threshold-Spread and Noise')
+		utils.print_log('->\tFitting courves for Threshold-Spread and Noise')
 		for cal in calpulses:
 			c_thresholds = []; c_noise = [];
 			c_thmean = []; c_sigmamean = [];
@@ -187,17 +183,21 @@ class SSA_measurements():
 			CSV.array_to_csv(c_noise,      (output_file + 'frontend_Q-{:1.3f}_noise.csv'.format(cal)))
 			CSV.array_to_csv(c_thmean,     (output_file + 'frontend_Q-{:1.3f}_threshold-mean.csv'.format(cal)))
 			CSV.array_to_csv(c_sigmamean,  (output_file + 'frontend_Q-{:1.3f}_noise-mean.csv'.format(cal)))
-		print('->\tEvaluating Front-End Gain')
+		utils.print_log('->\tEvaluating Front-End Gain')
 		gains    = np.zeros([120]);
 		offsets  = np.zeros([120]);
 		for strip in range(0,120):
 			ths = np.array( [thresholds[k][0][strip] for k in thresholds if k in list(map(str, calpulses))] )
 			self.ths = ths
-			par, cov = curve_fit( f= f_line,  xdata = calpulses, ydata = ths, p0 = [0, 0])
-			gains[strip] = par[0]
-			offsets[strip] = par[1]
+			if(len(calpulses)==2):
+				gains[strip]   = np.float(ths[1]-ths[0])/np.float(calpulses[1]-calpulses[0])
+				offsets[strip] = np.float(ths[1])-gains[strip]*np.float(calpulses[1])
+			else:
+				par, cov = curve_fit( f= f_line,  xdata = calpulses, ydata = ths, p0 = [0, 0])
+				gains[strip] = par[0]
+				offsets[strip] = par[1]
 		gainmean = np.average(gains)
-		
+
 		CSV.array_to_csv(gains,      output_file + 'frontend_gain.csv')
 		CSV.array_to_csv([gainmean], output_file + 'frontend_gain-mean.csv')
 		CSV.array_to_csv(offsets,    output_file + 'frontend_offset.csv')
@@ -370,7 +370,7 @@ class SSA_measurements():
 
 	###########################################################
 	def threshold_spread(self, calpulse = 50, file = '../SSA_results/Chip0/', runname = '', use_stored_data = False, plot = True, nevents=1000, speeduplevel = 2, filemode = 'w'):
-		print "->  \tthreshold Spread Measurement"
+		utils.print_log( "->  \tthreshold Spread Measurement")
 		fi = "../SSA_Results/" + file + "_" + str(runname) + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
 		print fi
 		if(use_stored_data):
@@ -405,7 +405,7 @@ class SSA_measurements():
 
 	###########################################################
 	def gain_offset_noise(self, calpulse = 50, ret_average = True, plot = True, use_stored_data = False, file = 'TestLogs/Chip0', filemode = 'w', runname = '', nevents=1000, speeduplevel = 2):
-		print "->  \tSCurve Gain, Offset and Noise Measurement"
+		utils.print_log("->  \tSCurve Gain, Offset and Noise Measurement")
 		utils.activate_I2C_chip()
 		callist = [calpulse-20, calpulse, calpulse+20]
 		thresholds = []; sigmas = [];
@@ -503,7 +503,7 @@ class SSA_measurements():
 		CSV.ArrayToCSV (array = data2, filename = (fo+'_std.csv'), transpose = False)
 		CSV.ArrayToCSV (array = raw,   filename = (fo+'_raw.csv'), transpose = False)
 		CSV.ArrayToCSV (array = np.array([timeresolution]),  filename = (fo+'_dllres.csv'), transpose = False)
-		print "->  \tData saved in" + fo
+		utils.print_log("->  \tData saved in" + fo)
 		if(plot):
 			self.shaper_pulse_plot(filename = filename, runname = runname)
 		#return pmean, tm, charge
@@ -645,7 +645,7 @@ class SSA_measurements():
 				data[nitr, 0] = th[i]
 				data[nitr, 1] = np.average(cnt)
 				data[nitr, 2] = self.pwr.get_power_digital(display = False)
-				print '->  \tth = %3d | pwr = %7.3f | ncl = %8.5f | itr = %3d' % (data[nitr, 0], data[nitr, 2], data[nitr, 1], nitr)
+				utils.print_log('->  \tth = %3d | pwr = %7.3f | ncl = %8.5f | itr = %3d' % (data[nitr, 0], data[nitr, 2], data[nitr, 1], nitr))
 				nitr += 1
 		self.ssa.ctrl.set_threshold(100)
 		if print_file:

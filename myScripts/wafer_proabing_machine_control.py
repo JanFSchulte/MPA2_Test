@@ -6,19 +6,22 @@ import os
 import random
 import time
 # from mpa_methods import ProbeCardTest
-from ssa_methods import ssa_test_waferprobing
+from ssa_methods.ssa_test_waferprobing import *
 
 
 class AUTOPROBER:
 
-    def __init__(self, name, chip='MPA'):
+    def __init__(self, wafer, name, chip='MPA', dryRun = True):
         self.name = name
+        self.wafer = wafer
         self.ProbeStation = Gpib.Gpib(1, 22)
         time.sleep(0.1)
         self.ProbeStation.write("*RST")
         time.sleep(0.1)
         self.ConnToPS()
-	self.chip = chip
+        self.dryRun = dryRun
+        self.chip = chip
+        self.DieNumber = 0
 
     def colprint(self, text):
         sys.stdout.write("\033[1;34m")
@@ -67,9 +70,14 @@ class AUTOPROBER:
         time.sleep(0.25)
 
     def NEWCHIPMSR(self, inf):
-	if  (self.chip == 'MPA'):  PCM = ChipMeasurement(  self.name + "_" + self.DieNumber)
-	elif(self.chip == 'SSA'):  PCM = SSA_Measurements( self.name + "_" + self.DieNumber)
-	return PCM.RUN(inf) 
+        if  (self.chip == 'MPA'):
+            PCM = ChipMeasurement(  self.name + "_" + self.DieNumber)
+        elif(self.chip == 'SSA'):
+            PCM = SSA_Measurements(
+                tag = (self.name+"_"+str(self.DieNumber)),
+                runtest = 'default',
+                directory = '../SSA_Results/Wafer_' + str(self.wafer) )
+        return PCM.RUN(inf)
 
     def NEXT(self, N):
         self.ProbeStation.write("GetDieDataAsNum")
@@ -125,4 +133,3 @@ class AUTOPROBER:
 #if __name__ == '__main__': # TEST
 #    AutoProbe = AUTOPROBER("ChipN")
 #    AutoProbe.MSR_ALL(N=88)
-

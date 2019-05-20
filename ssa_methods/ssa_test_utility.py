@@ -308,8 +308,8 @@ class SSA_test_utility():
 		self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 		self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
 		errlist = []; efflist = [];
-		cnt = [0, 0, 0]
 		for HIP in HIPrun:
+			cnt = [0, 0, 0]
 			for d in delay:
 				Configure_TestPulse(
 					delay_after_fast_reset = 512 + d,

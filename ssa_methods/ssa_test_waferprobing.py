@@ -6,6 +6,7 @@ from myScripts.Utilities import *
 from ssa_methods.ssa_logs_utility import *
 from collections import OrderedDict
 from ssa_methods.main import *
+import traceback
 
 import time
 import sys
@@ -66,6 +67,7 @@ class SSA_Measurements():
 				break
 		utils.print_info("->\tThe log files are located in {:s}/ \n".format(curdir))
 		fo = curdir + "/Test_"
+		utils.set_log_files(curdir+'/OperationLog.txt',curdir+'/ErrorLog.txt')
 
 		## Main test routine ##################
 		self.pwr.set_supply(mode='on', display=False, d=self.dvdd, a=self.avdd, p=self.pvdd)
@@ -89,6 +91,7 @@ class SSA_Measurements():
 		self.summary.save(directory=self.DIR, filename=("Chip_{c:s}_v{v:d}/".format(c=str(chip_info), v=version)), runname='')
 		self.summary.display()
 		self.ssa.pwr.off(display=False)
+		utils.close_log_files()
 		return self.test_good
 
 
@@ -135,7 +138,7 @@ class SSA_Measurements():
 		while (en and wd < 3):
 			try:
 				r1 = self.biascal.calibrate_to_nominals(measure=False)
-				self.summary.set('init', r1, '', '',  runname)
+				self.summary.set('Calibration', r1, '', '',  runname)
 				break
 			except:
 				utils.print_warning("X>\tBias Calibration error. Reiterating...")
@@ -241,29 +244,32 @@ class SSA_Measurements():
 						memory = [1,2], runname = str(v)+'V',
 						latency = 199, display = 1,
 						file = filename, filemode = 'a')
-					memres[v] = r1
+					memres[v] = [r1, r2]
 					self.summary.set('Memory-1_{:s}V'.format(str(v)), r1, '%', '',  runname)
 					self.summary.set('Memory-2_{:s}V'.format(str(v)), r2, '%', '',  runname)
 					if(r1<90): self.test_good = False
 					if(r2<90): self.test_good = False
 				break
-			except:
+			except Exception, error:
 				utils.print_warning("X>\tMemory test error. Reiterating...")
+				exc_info = sys.exc_info()
+				utils.print_warning("----------------------")
+				print Exception, error
+				traceback.print_exception(*exc_info)
+				utils.print_warning("----------------------")
 				wd +=1;
 				if(wd>=3): self.test_good = False
 		wd  = 0
 		en = self.runtest.is_active('L1_Data')
 		while (en and wd < 3):
 			try:
-				if(not memtest):
-					for v in vlist: memres[v]=100
 				self.summary.set('L1_data',   0, '%', '',  runname)
 				self.summary.set('HIP_flags', 0, '%', '',  runname)
 				for v in vlist:
-					if(memres[v]==100):
+					if(memres[v]==[100,100]):
+						print("->\tL1 data test will run ad DVDD={:1.3f}V".format(v))
 						if(v != self.dvdd_curr):
 							self.pwr.set_dvdd(v)
-							self.dvdd_curr
 							self.ssa.init(display=0)
 						r1, r2 = self.test.l1_data_basic(
 							mode = 'digital', runname =  str(v)+'V',
@@ -275,8 +281,13 @@ class SSA_Measurements():
 						if(r2<90): self.test_good = False
 						break
 				break
-			except:
+			except Exception, error:
+				exc_info = sys.exc_info()
 				utils.print_warning("X>\tL1_Data test error. Reiterating...")
+				utils.print_warning("----------------------")
+				print Exception, error
+				traceback.print_exception(*exc_info)
+				utils.print_warning("----------------------")
 				wd +=1;
 				if(wd>=3): self.test_good = False
 
@@ -285,19 +296,24 @@ class SSA_Measurements():
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		wd = 0
-		en = self.runtest.is_active('Bias_THDAC')
+		en = self.runtest.is_active('DACs')
 		while (en and wd < 3):
 			try:
 				self.thdac = self.measure.dac_linearity(name = 'Bias_THDAC', eval_inl_dnl = False, nbits = 8, npoints = 10, filename = filename, plot = False, filemode = 'a', runname = runname)
 				self.summary.set('Bias_THDAC_GAIN'    , self.thdac[0], '', '',  runname)
 				self.summary.set('Bias_THDAC_OFFS'    , self.thdac[1], '', '',  runname)
 				break
-			except:
+			except Exception, error:
+				exc_info = sys.exc_info()
 				utils.print_warning("X>\tBias_THDAC test error. Reiterating...")
+				utils.print_warning("----------------------")
+				print Exception, error
+				traceback.print_exception(*exc_info)
+				utils.print_warning("----------------------")
 				wd +=1;
 				if(wd>=3): self.test_good = False
 		wd = 0
-		en = self.runtest.is_active('Bias_CALDAC')
+		en = self.runtest.is_active('DACs')
 		while (en and wd < 3):
 			try:
 				self.caldac = self.measure.dac_linearity(name = 'Bias_CALDAC', eval_inl_dnl = False, nbits = 8, npoints = 10, filename = filename, plot = False, filemode = 'a', runname = runname)
@@ -311,28 +327,29 @@ class SSA_Measurements():
 		wd = 0
 
 
-	def test_routine_analog(self, filename, runname = ''):
+	def test_routine_analog(self, filename='../SSA_Results/Chip0/', runname = ''):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		wd = 0
+		if(self.thdac == False or self.caldac == False):
+			self.test_routine_dacs(filename=filename)
 		en = self.runtest.is_active('trim_gain_offset_noise')
 		while (en and wd < 3):
 			try:
 				rp = self.measure.scurve_trim_gain_noise(
-					charge_fc_trim = 2.0,           # Input charge in fC
-					charge_fc_test = 0.8,           # Input charge in fC
-					threshold_mv_trim = 'default',  # Threshold in mV
-					threshold_mv_test = 'default',  # Threshold in mV
+					charge_fc_trim = 2.5,           # Input charge in fC
+					charge_fc_test = 1.2,           # Input charge in fC
+					threshold_mv_trim = 'mean',  # Threshold in mV
 					iterative_step_trim = 1,        # Iterative steps to acheive lower variability
-					caldac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
-					thrdac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
+					caldac = self.caldac,           # 'default' | 'evaluate' | value [gain, offset]
+					thrdac = self.thdac,            # 'default' | 'evaluate' | value [gain, offset]
 					nevents = 1000,                 # Number of calibration pulses
-					plot = True,                    # Fast plot of the results
+					plot = False,                    # Fast plot of the results
 					filename = filename)
 
 				if(rp):
-					utils.print_good( "->\tScurve trimming successfull. (Std={std:3.2f}lsb)".format(std=rp[1]));
-					utils.print_good( "->\tScurve noise evaluation successfull. ({std:3.2f}lsb)".format(std=rp[6]));
+					utils.print_good( "->\tScurve trimming successfull. (Std = [trim->{:3.2f}lsb, test->{:3.2f}lsb])".format(rp[1], rp[2]));
+					utils.print_good( "->\tScurve noise evaluation successfull. (noise = [trim->{:3.2f}lsb, test->{:3.2f}lsb])".format(rp[5], rp[6]));
 					utils.print_good( "->\tScurve Gain and Offset evaluation successfull. g={g:3.2f} ofs=({of:3.2f})".format(g=rp[7], of=rp[8]));
 					utils.print_log(  "->\tAnalog test time = {t:7.2f}s".format(t=(time.time()-time_init))); time_init = time.time();
 				else:
@@ -340,18 +357,23 @@ class SSA_Measurements():
 					utils.print_error( "->\tScurve noise evaluation error.")
 					utils.print_error( "->\tScurve Gain and Offset evaluation error.")
 
-				self.summary.set("threshold_std_init",  rp[0], '', '', runname)
-				self.summary.set("threshold_std_trim",  rp[1], '', '', runname)
-				self.summary.set("threshold_std_test",  rp[2], '', '', runname)
-				self.summary.set("threshold_mean_trim", rp[3], '', '', runname)
-				self.summary.set("threshold_mean_test", rp[4], '', '', runname)
-				self.summary.set("noise_mean_trim",     rp[5], '', '', runname)
-				self.summary.set("noise_mean_test",     rp[6], '', '', runname)
-				self.summary.set("fe_gain_mean",        rp[7], '', '', runname)
-				self.summary.set("fe_offs_mean",        rp[8], '', '', runname)
+				self.summary.set("threshold_std_init",  str(rp[0]), '', '', runname)
+				self.summary.set("threshold_std_trim",  str(rp[1]), '', '', runname)
+				self.summary.set("threshold_std_test",  str(rp[2]), '', '', runname)
+				self.summary.set("threshold_mean_trim", str(rp[3]), '', '', runname)
+				self.summary.set("threshold_mean_test", str(rp[4]), '', '', runname)
+				self.summary.set("noise_mean_trim",     str(rp[5]), '', '', runname)
+				self.summary.set("noise_mean_test",     str(rp[6]), '', '', runname)
+				self.summary.set("fe_gain_mean",        str(rp[7]), '', '', runname)
+				self.summary.set("fe_offs_mean",        str(rp[8]), '', '', runname)
 				break
-			except:
+			except Exception, error:
+				exc_info = sys.exc_info()
 				utils.print_warning("X>\tScurve measures test error. Reiterating...")
+				utils.print_warning("----------------------")
+				print Exception, error
+				traceback.print_exception(*exc_info)
+				utils.print_warning("----------------------")
 				wd +=1;
 				if(wd>=3): self.test_good = False
 		wd = 0
@@ -368,3 +390,5 @@ class SSA_Measurements():
 		self.dvdd = 1.05; #for the offset of the board
 		self.pvdd = 1.20;
 		self.avdd = 1.20;
+		self.thdac = False
+		self.caldac = False
