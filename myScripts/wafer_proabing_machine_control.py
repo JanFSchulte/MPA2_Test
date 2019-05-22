@@ -11,7 +11,7 @@ from ssa_methods.ssa_test_waferprobing import *
 
 class AUTOPROBER:
 
-    def __init__(self, wafer, name, chip='MPA', dryRun = True):
+    def __init__(self, wafer, name, chip='MPA', dryRun = False, exclude = [1,2,3,4,5]):
         self.name = name
         self.wafer = wafer
         self.ProbeStation = Gpib.Gpib(1, 22)
@@ -22,6 +22,7 @@ class AUTOPROBER:
         self.dryRun = dryRun
         self.chip = chip
         self.DieNumber = 0
+        self.exclude = exclude
 
     def colprint(self, text):
         sys.stdout.write("\033[1;34m")
@@ -62,9 +63,9 @@ class AUTOPROBER:
         self.colprint("Increasing overtravel: " + self.ProbeStation.read(100))
         time.sleep(0.25)
         # go over bad chips
-        for C in self.BadChips:
-            ChipStatus = self.PROBESPECIFIC(C[0],C[1])
-            print ChipStatus
+        #for C in self.BadChips:
+        #    ChipStatus = self.PROBESPECIFIC(C[0],C[1])
+        #    print ChipStatus
         self.ProbeStation.write("SetChuckHeight O V Y 0")
         self.colprint("Resetting overtravel: " + self.ProbeStation.read(100))
         time.sleep(0.25)
@@ -88,17 +89,34 @@ class AUTOPROBER:
         self.DieR = Dparse[2]
         self.DieC = Dparse[3]
         self.colprint("ON DIE #" + self.DieNumber)
-        #self.ProbeStation.write("MoveChuck 0 -40 R Y") #Change position of probing respect first Run
-        #self.ProbeStation.read(100)
-        self.ProbeStation.write("MoveChuckContact")
-        self.colprint("going into contact: " + self.ProbeStation.read(100))
-        time.sleep(0.5)
-        self.ProbeStation.write("ReadChuckPosition")
-        inf = "Chip #"+self.DieNumber + " Col " + self.DieC + ", Row " + self.DieR + " POS = " + self.ProbeStation.read(100)
-        GoodNess = self.NEWCHIPMSR(inf)
-        self.ProbeStation.write("MoveChuckSeparation")
-        self.colprint("coming out of contact: " + self.ProbeStation.read(100))
-        time.sleep(0.25)
+        if( int(self.DieNumber) in self.exclude):
+            self.colprint("DIE EXCLUDED #" + self.DieNumber + " Moving to next")
+            GoodNess = True
+        else:
+            #self.ProbeStation.write("MoveChuck 0 -40 R Y") #Change position of probing respect first Run
+            #self.ProbeStation.read(100)
+            if(not self.dryRun):
+                self.ProbeStation.write("MoveChuckContact")
+                self.colprint("going into contact: " + self.ProbeStation.read(100))
+            time.sleep(0.5)
+            self.ProbeStation.write("ReadChuckPosition")
+            inf = "Chip #"+self.DieNumber + " Col " + self.DieC + ", Row " + self.DieR + " POS = " + self.ProbeStation.read(100)
+            if(not self.dryRun):
+                GoodNess = self.NEWCHIPMSR(inf)
+                self.ProbeStation.write("MoveChuckSeparation")
+                self.colprint("coming out of contact: " + self.ProbeStation.read(100))
+                time.sleep(0.25)
+                if(not GoodNess):
+                    self.colprint("Test failed, trying again: ")
+                    self.ProbeStation.write("MoveChuckContact")
+                    self.colprint("going into contact: " + self.ProbeStation.read(100))
+                    GoodNess = self.NEWCHIPMSR(inf)
+                    self.ProbeStation.write("MoveChuckSeparation")
+                    self.colprint("coming out of contact: " + self.ProbeStation.read(100))
+                    time.sleep(0.25)
+            else:
+                time.sleep(1)
+                GoodNess = False
         if not int(self.DieNumber) == N:
             self.ProbeStation.write("StepNextDie")
             self.ProbeStation.read(100)

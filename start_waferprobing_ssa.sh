@@ -37,7 +37,7 @@ echo "from d19cScripts import *"    >  LaunchPy.py
 echo "from myScripts import *"      >> LaunchPy.py
 echo "from ssa_methods import *"    >> LaunchPy.py
 echo "AP = AUTOPROBER('$1', 'N' , 'SSA')"  >> LaunchPy.py
-echo "AP.MSR_ALL(88)"             >> LaunchPy.py
+echo "AP.MSR_ALL(90)"             >> LaunchPy.py
 
 cp ./myScripts/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
 

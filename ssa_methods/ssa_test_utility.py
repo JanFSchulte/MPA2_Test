@@ -87,11 +87,11 @@ class SSA_test_utility():
 				cnt['cl_err'] += 1
 				if stop_on_error:
 					fo.write(runname + ', ' + erlog + ' \n')
-					print '\t' + erlog
+					utils.print_log('\t' + erlog)
 					return 100*(1-cnt['cl_err']/float(cnt['cl_sum']))
 			else:
 				if(display == True):
-					print   "\tPassed                " + dstr
+					utils.print_log(   "\tPassed                " + dstr)
 			prev = r
 
 			cl_centroids.extend([0]*(8-len(cl_centroids)))
@@ -99,7 +99,7 @@ class SSA_test_utility():
 			savestr = "{:s}, REF, {:s}, OUT, {:s}".format(runname, ', '.join(map(str, cl_centroids)),  ', '.join(map(str, r)) )
 			if True in err:
 				fo.write('ER' + ', ' + savestr + ' \n')
-				print '\t' + erlog
+				utils.print_log( '\t' + erlog)
 			else:
 				fo.write('OK' + ', ' + savestr + ' \n')
 			cnt['cl_sum'] += 1;
@@ -277,10 +277,10 @@ class SSA_test_utility():
 				if (err[H]):
 					counter[H][1] += 1
 					fo.write(runname + ' ; ' + fstr + ' \n')
-					print "\tError -> " + dstr + "                                  "
+					utils.print_log( "\tError -> " + dstr + "                                  ")
 				else:
 					if(display == True):
-						print "\tOk    -> " + dstr + "                                  "
+						utils.print_log( "\tOk    -> " + dstr + "                                  ")
 				if(display): utils.ShowPercent(counter[0], 240, "")
 				else: utils.ShowPercent(counter[0][0]+counter[1][0], 240, "Running L1 test")
 		fo.close()

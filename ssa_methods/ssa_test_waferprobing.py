@@ -122,7 +122,7 @@ class SSA_Measurements():
 		while (en and wd < 3):
 			try:
 				r1 = self.ssa.init(reset_board = True, reset_chip = True)
-				self.summary.set('Initialize', str(r1), '', '',  runname)
+				self.summary.set('Initialize', int(r1), '', '',  runname)
 				if(not r1): self.test_good = False
 				break
 			except:
@@ -138,7 +138,7 @@ class SSA_Measurements():
 		while (en and wd < 3):
 			try:
 				r1 = self.biascal.calibrate_to_nominals(measure=False)
-				self.summary.set('Calibration', r1, '', '',  runname)
+				self.summary.set('Calibration', int(r1), '', '',  runname)
 				break
 			except:
 				utils.print_warning("X>\tBias Calibration error. Reiterating...")
@@ -170,7 +170,7 @@ class SSA_Measurements():
 		en = self.runtest.is_active('Configuration')
 		while (en and wd < 3):
 			try:
-				self.ssa.save_configuration(filename + 'configuration' + str(runname) + '.scv', display=False)
+				self.ssa.save_configuration(filename + 'configuration' + str(runname) + '.csv', display=False)
 				utils.print_good("->\tConfig registers readout via I2C and saved corrrectly.")
 				break
 			except:
@@ -188,13 +188,18 @@ class SSA_Measurements():
 			try:
 				self.fc7.reset(); time.sleep(0.1)
 				r1,r2,r3,r4 = self.ssa.alignment_all(display = False)
-				self.summary.set('alignment_cluster_data',  r2, '', '',  runname)
-				self.summary.set('alignment_lateral_left',  r3, '', '',  runname)
-				self.summary.set('alignment_lateral_right', r3, '', '',  runname)
+				self.summary.set('alignment_cluster_data',  int(r2), '', '',  runname)
+				self.summary.set('alignment_lateral_left',  int(r3), '', '',  runname)
+				self.summary.set('alignment_lateral_right', int(r4), '', '',  runname)
 				if(not r2): self.test_good = False
 				break
-			except:
+			except  Exception, error:
 				utils.print_warning("X>\tAlignment test error. Reiterating...")
+				exc_info = sys.exc_info()
+				utils.print_warning("----------------------")
+				print Exception, error
+				traceback.print_exception(*exc_info)
+				utils.print_warning("----------------------")
 				wd +=1;
 				if(wd>=3): self.test_good = False
 		wd = 0
@@ -206,8 +211,13 @@ class SSA_Measurements():
 				utils.print_good("->\tCluster Data with Digital Pulses test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 				if(r1<90): self.test_good = False
 				break
-			except:
+			except  Exception, error:
 				utils.print_warning("X>\tCluster Data with Digital Pulses test error. Reiterating...")
+				exc_info = sys.exc_info()
+				utils.print_warning("----------------------")
+				print Exception, error
+				traceback.print_exception(*exc_info)
+				utils.print_warning("----------------------")
 				wd +=1;
 				if(wd>=3): self.test_good = False
 		wd = 0
@@ -216,11 +226,16 @@ class SSA_Measurements():
 			try:
 				r1 = self.test.cluster_data(mode = 'analog', nstrips=8, shift='default', display=False, file=filename, filemode='a', runname=runname)
 				self.summary.set('ClusterData_ChargeInjection',  r1, '%', '',  runname)
-				utils.print_good("->\tCluster Data with ChargeInjection test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
+				#utils.print_good("->\tCluster Data with ChargeInjection test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 				if(r1<90): self.test_good = False
 				break
-			except:
+			except Exception, error:
 				utils.print_warning("X>\tCluster Data with Charge Injection test error. Reiterating...")
+				exc_info = sys.exc_info()
+				utils.print_warning("----------------------")
+				print Exception, error
+				traceback.print_exception(*exc_info)
+				utils.print_warning("----------------------")
 				wd +=1;
 				if(wd>=3): self.test_good = False
 
@@ -245,8 +260,8 @@ class SSA_Measurements():
 						latency = 199, display = 1,
 						file = filename, filemode = 'a')
 					memres[v] = [r1, r2]
-					self.summary.set('Memory-1_{:s}V'.format(str(v)), r1, '%', '',  runname)
-					self.summary.set('Memory-2_{:s}V'.format(str(v)), r2, '%', '',  runname)
+					self.summary.set('Memory1_{:d}V'.format(int(v*1000)), r1, '%', '',  runname)
+					self.summary.set('Memory2_{:d}V'.format(int(v*1000)), r2, '%', '',  runname)
 					if(r1<90): self.test_good = False
 					if(r2<90): self.test_good = False
 				break

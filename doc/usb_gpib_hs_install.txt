@@ -39,11 +39,20 @@ sudo chown acaratel /dev/usb_gpib
 11. try to run in python:
 python
 import Gpib
-inst = Gpib.Gpib(0,16) # Device address 16
-inst.write("*IDN?")
-inst.read(100) # read 100 bytes
+inst1 = Gpib.Gpib(0,16) # Device address 16
+inst2 = Gpib.Gpib(1,22) # Device address 16
+inst1.write("*IDN?")
+inst1.read(100) # read 100 bytes
+inst2.write("*IDN?")
+inst2.read(100) # read 100 bytes
+
 
 In case of problems try to consult the article for Raspberry... https://xdevs.com/guide/ni_gpib_rpi/
+
+
+
+./start_waferprobing_ssa.sh  'W1B'
+
 
 
 
