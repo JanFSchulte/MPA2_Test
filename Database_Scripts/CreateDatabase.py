@@ -39,7 +39,7 @@ class CreateDatabase():
 		mydb.close()
 
 	def killDB(self):
-		
+
 		mydb = mysql.connector.connect(
 		  host="localhost",
 		  user="root",
@@ -71,7 +71,7 @@ class CreateDatabase():
 
 		array = CSV.csv_to_array(self.pathLogfile + 'Chip_N_1_v0/Logfile.csv')
 		names = array[:,1]
-		
+
 		for i in names:
 			sql_query = "ALTER TABLE %s ADD COLUMN %s DOUBLE(10,4)" %(tablename, i)
 			mycursor.execute(sql_query)
@@ -97,18 +97,18 @@ class CreateDatabase():
 		)
 
 		mycursor = mydb.cursor()
-		
+
 		for z in range(1,91):
 
 			k=1
-			if(os.path.isfile(self.pathLogfile + 'Chip_N_'+str(z)+'_v'+str(k)+'/Logfile.csv')): continue
+			if(os.path.isfile(self.pathLogfile + 'Chip_N_'+str(z)+'_v'+str(k)+'/Logfile.csv')): pass
 			else: k=0
 
 			array = CSV.csv_to_array(self.pathLogfile + 'Chip_N_'+str(z)+'_v'+str(k)+'/Logfile.csv')
 			names = array[:,1]
 			values = array[:,2]
 			snames = []
-			
+
 			for n in names:
 				snames.append(n.strip())
 
