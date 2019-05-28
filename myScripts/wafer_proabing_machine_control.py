@@ -11,7 +11,7 @@ from ssa_methods.ssa_test_waferprobing import *
 
 class AUTOPROBER:
 
-    def __init__(self, wafer, name, chip='MPA', dryRun = False, exclude = [1,2,3,4,5]):
+    def __init__(self, wafer, name, chip='MPA', dryRun = False, exclude = range(0,53)):
         self.name = name
         self.wafer = wafer
         self.ProbeStation = Gpib.Gpib(1, 22)

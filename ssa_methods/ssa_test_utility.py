@@ -42,7 +42,12 @@ class SSA_test_utility():
 			self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', cal_pulse_amplitude = 255, threshold = [50, 100])
 		else:
 			return False
+		time.sleep(0.01)
 		self.ssa.readout.cluster_data(initialize = True)
+		time.sleep(0.01)
+		self.ssa.inject.digital_pulse(hit_list = [], initialise = False)
+		self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
+		time.sleep(0.01)
 		cnt = {'cl_sum': 0, 'cl_err' : 0};
 		for i in range(0,nruns):
 			#clrange = np.array( random.sample(range(1, 60), nstrips)) * 2
@@ -107,10 +112,10 @@ class SSA_test_utility():
 			elif(mode == 'analog'): utils.ShowPercent(cnt['cl_sum'], nruns, "Running clusters test based on analog test pulses")
 		utils.ShowPercent(nruns, nruns, "Done                                                      ")
 		fo.close()
-		rt = 100*(1-cnt['cl_err']/float(cnt['cl_sum']))
+		rt = 100.0*(1.0-float(cnt['cl_err'])/float(cnt['cl_sum']))
 		fo = open(file + "readout_cluster-data_summary" + mode + ".csv", 'a')
 		fo.write("->\tCluster data test with {mode:s} injection -> {res:5.3f}%".format(mode=mode, res=rt))
-		if(rt == 100):
+		if(rt == 100.0):
 			utils.print_good("->\tCluster data test with {mode:s} injection -> 100%".format(mode=mode))
 		else:
 			utils.print_error("->\tCluster data test with {mode:s} injection -> {res:5.3f}%".format(mode=mode, res=rt))

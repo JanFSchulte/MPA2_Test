@@ -127,10 +127,10 @@ class ssa_calibration():
 		self.ssa.ctrl.set_output_mux('highimpedence')
 		print ""
 		print "DAC "+name+'['+str(nbits)+'-bit]:'
-		print "->       GAIN = %6.3f mV/cnt" % (g*1000.0)
-		print "->     OFFSET = %6.3f mV"     % (ofs*1000.0)
-		print "->    INL MAX = %6.3f cnts"   % (inl_max)
-		print "->    DNL INL = %6.3f cnts"   % (dnl_max)
+		print "->\tGAIN    = {:6.3f} mV/cnt".format(g*1000.0)
+		print "->\tOFFSET  = {:6.3f} mV    ".format(ofs*1000.0)
+		print "->\tINL MAX = {:6.3f} cnts  ".format(inl_max)
+		print "->\tDNL INL = {:6.3f} cnts  ".format(dnl_max)
 		print ""
 		if(plot):
 			plt.clf()
@@ -180,14 +180,17 @@ class ssa_calibration():
 			else:
 				data[i] = self.pcbadc.measure('SSA', average)
 			utils.ShowPercent(x[i], fullscale-1, "Measuring "+name+" linearity                         ")
+		utils.ShowPercent(1,1,"Measuring "+name+" linearity                         ")
 		if( isinstance(filename, str) ):
 			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_Caracteristics_" + name + filename2
 			CSV.ArrayToCSV (array = data, filename = fo + ".csv", transpose = True)
 		g, ofs, sigma = utils.linear_fit(x, data)
 		self.ssa.ctrl.set_output_mux('highimpedence')
-		print "DAC "+name+'['+str(nbits)+'-bit]:'
-		print "->       GAIN = %6.3f mV/cnt" % (g*1000.0)
-		print "->     OFFSET = %6.3f mV"     % (ofs*1000.0)
+		#print "DAC "+name+'['+str(nbits)+'-bit]:'
+		utils.print_good("->\tGain({:12s}) = {:9.3f} mV/cnt".format(name, g*1000.0))
+		utils.print_good("->\tOffs({:12s}) = {:9.3f} mV    ".format(name, ofs*1000.0))
+
+
 		if(plot):
 			plt.clf()
 			plt.plot(x, data, '-x')
