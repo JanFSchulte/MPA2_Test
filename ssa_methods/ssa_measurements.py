@@ -79,7 +79,8 @@ class SSA_measurements():
 			input_files = fo,
 			output_file = (filename),
 			nevents=nevents,
-			thdac_gain = np.abs(t_thrdac[0]) )
+			thdac_gain = np.abs(t_thrdac[0]),
+			plot = False )
 
 		calpulses, thresholds, noise, thmean, sigmamean, gains, gains_mVfC, offsets = rp
 		threshold_std_init  = np.std(thstd[0])
@@ -155,13 +156,16 @@ class SSA_measurements():
 		thmean = {}; sigmamean = {}; tmp = [];
 		calpulses = []; scurve_table = {}; runlist = {}
 		files_list = input_files
-		if(thdac_gain == 'default'):		
+		if(thdac_gain == 'default'):
 			t_thrdac = self.cal.thrdac
 		elif(isinstance(thdac_gain, float) or isinstance(thdac_gain, int)):
 			t_thrdac = thdac_gain
 		else: return False
 		if(len(files_list) == 0): return ['er']*7
 		utils.print_log('->  \tSorting Informations')
+		if plot:
+			plt.figure()
+			color=iter(sns.color_palette('deep'))
 		for f in files_list:
 			cfl = re.findall( '\W?Q_(\d+\.\d+)' , f )
 			cal = np.float( cfl[0] )
@@ -190,6 +194,9 @@ class SSA_measurements():
 			CSV.array_to_csv(c_noise,      (output_file + 'frontend_Q-{:1.3f}_noise.csv'.format(cal)))
 			CSV.array_to_csv(c_thmean,     (output_file + 'frontend_Q-{:1.3f}_threshold-mean.csv'.format(cal)))
 			CSV.array_to_csv(c_sigmamean,  (output_file + 'frontend_Q-{:1.3f}_noise-mean.csv'.format(cal)))
+			if(plot):
+				c = next(color)
+				plt.plot(s, '-', color=c, lw=1, alpha = 1)
 		self.thresholds = thresholds
 		utils.print_log('->\tEvaluating Front-End Gain')
 		gains = np.zeros([120]);

@@ -144,5 +144,3 @@ H1.Draw("colsame")
 Notch.Draw("same")
 H.Draw("textsame")
 C.Print("WaferMap.png")
-
-
