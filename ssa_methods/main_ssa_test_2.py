@@ -15,6 +15,14 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
+'''
+It run most of tests on the SSA ASIC in ~2min.
+This class is used in th ewafer probing mpl_toolkits
+
+Example:
+ssa_main_measure = SSA_Measurements()
+ssa_main_measure.RUN()
+'''
 
 class SSA_Measurements():
 

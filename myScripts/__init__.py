@@ -5,4 +5,4 @@ from SelectBoardIp import *
 from FileParse import *
 from BasicADC import *
 from wafer_proabing_machine_control import *
-from PlotWaferMap import *
+from wafer_plot import *

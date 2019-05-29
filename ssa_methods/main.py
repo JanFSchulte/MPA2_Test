@@ -5,7 +5,7 @@ from ssa_methods.ssa_test_utility import *
 from ssa_methods.ssa_readout_utility import *
 from ssa_methods.ssa_inject_utility import *
 from ssa_methods.ssa_measurements import *
-from ssa_methods.ssa_test_top import *
+from ssa_methods.main_ssa_test_1 import *
 from ssa_methods.ssa_test_xray import *
 from ssa_methods.ssa_analise_utility import *
 from ssa_methods.ssa_fc7_com import *

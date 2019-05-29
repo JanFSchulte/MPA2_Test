@@ -8,10 +8,21 @@ import time
 # from mpa_methods import ProbeCardTest
 from ssa_methods.ssa_test_waferprobing import *
 
+'''
+It runs the automatic wafer probing procedure
+
+Example:
+AP = AUTOPROBER(
+    wafer='WaferName',
+    name='TestName' ,
+    chip=['SSA'|'SSA'],
+    exclude=[])
+AP.MSR_ALL()
+'''
 
 class AUTOPROBER:
 
-    def __init__(self, wafer, name, chip='MPA', dryRun = False, exclude = range(0,53)):
+    def __init__(self, wafer, name, chip='MPA', dryRun = False, exclude = []):
         self.name = name
         self.wafer = wafer
         self.ProbeStation = Gpib.Gpib(1, 22)
@@ -42,7 +53,11 @@ class AUTOPROBER:
         self.colprint("Initial Chuck Position: " + self.ProbeStation.read(100))
         time.sleep(0.25)
 
-    def MSR_ALL(self, N=88):
+    def MSR_ALL(self, N='default'):
+        if(N=='default'):
+            if(self.chip='SSA'): nchips = 90
+            elif(self.chip='MPA'): nchips = 88
+        else: nchips = N
         self.DieNumber = 0
         self.DieR = 0
         self.DieC = 0
@@ -50,7 +65,7 @@ class AUTOPROBER:
         self.BadChips = []
         # first pass at all chips
         while self.KeepOnStepping:
-            ChipStatus = self.NEXT(N)
+            ChipStatus = self.NEXT(nchips)
             print ChipStatus
             if ChipStatus == 0:
                 badR = self.DieR
