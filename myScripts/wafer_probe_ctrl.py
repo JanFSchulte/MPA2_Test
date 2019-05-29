@@ -55,8 +55,8 @@ class AUTOPROBER:
 
     def MSR_ALL(self, N='default'):
         if(N=='default'):
-            if(self.chip='SSA'): nchips = 90
-            elif(self.chip='MPA'): nchips = 88
+            if(self.chip=='SSA'): nchips = 90
+            elif(self.chip=='MPA'): nchips = 88
         else: nchips = N
         self.DieNumber = 0
         self.DieR = 0
