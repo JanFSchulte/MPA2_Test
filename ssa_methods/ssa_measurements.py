@@ -34,7 +34,7 @@ class SSA_measurements():
 		caldac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
 		thrdac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
 		nevents = 1000,                 # Number of calibration pulses
-		plot = True,                    # Fast plot of the results
+		plot = False,                    # Fast plot of the results
 		filename = '../SSA_Results/Chip0/Chip_0_'
 		):
 
@@ -46,7 +46,7 @@ class SSA_measurements():
 			thrdac = thrdac,
 			nevents = nevents,
 			iterative_step = iterative_step_trim,
-			plot = False,
+			plot = plot,
 			filename = filename,
 			return_scurves = True)
 		scurves['h_0']  = sc[0];
@@ -78,9 +78,11 @@ class SSA_measurements():
 		rp = self.FE_Gain_Noise_Std__Calculate(
 			input_files = fo,
 			output_file = (filename),
-			nevents=nevents)
+			nevents=nevents,
+			thdac_gain = np.abs(t_thrdac[0]),
+			plot = False )
 
-		calpulses, thresholds, noise, thmean, sigmamean, gains, offsets = rp
+		calpulses, thresholds, noise, thmean, sigmamean, gains, gains_mVfC, offsets = rp
 		threshold_std_init  = np.std(thstd[0])
 		threshold_std_trim  = np.std(thresholds[str(charge_fc_trim)])
 		threshold_std_test  = np.std(thresholds[str(charge_fc_test)])
@@ -89,9 +91,10 @@ class SSA_measurements():
 		noise_mean_trim     = np.mean(noise[str(charge_fc_trim)])
 		noise_mean_test     = np.mean(noise[str(charge_fc_test)])
 		fe_gain_mean        = np.mean(gains)
+		fe_gain_mVfC_mean   = np.mean(gains_mVfC)
 		fe_offs_mean        = np.mean(offsets)
 
-		return threshold_std_init, threshold_std_trim, threshold_std_test, threshold_mean_trim, threshold_mean_test, noise_mean_trim, noise_mean_test, fe_gain_mean, fe_offs_mean
+		return threshold_std_init, threshold_std_trim, threshold_std_test, threshold_mean_trim, threshold_mean_test, noise_mean_trim, noise_mean_test, fe_gain_mean, fe_gain_mVfC_mean, fe_offs_mean
 
 
 	###########################################################
@@ -148,13 +151,21 @@ class SSA_measurements():
 		plt.show()
 
 	###########################################################
-	def FE_Gain_Noise_Std__Calculate(self, input_files, output_file, nevents=1000):
+	def FE_Gain_Noise_Std__Calculate(self, input_files, output_file, nevents=1000, thdac_gain = 'default'):
 		thresholds = {}; noise = {};
 		thmean = {}; sigmamean = {}; tmp = [];
 		calpulses = []; scurve_table = {}; runlist = {}
 		files_list = input_files
+		if(thdac_gain == 'default'):
+			t_thrdac = self.cal.thrdac
+		elif(isinstance(thdac_gain, float) or isinstance(thdac_gain, int)):
+			t_thrdac = thdac_gain
+		else: return False
 		if(len(files_list) == 0): return ['er']*7
 		utils.print_log('->  \tSorting Informations')
+		if plot:
+			plt.figure()
+			color=iter(sns.color_palette('deep'))
 		for f in files_list:
 			cfl = re.findall( '\W?Q_(\d+\.\d+)' , f )
 			cal = np.float( cfl[0] )
@@ -171,7 +182,7 @@ class SSA_measurements():
 			c_thmean = []; c_sigmamean = [];
 			s = np.transpose(scurve_table[str(cal)])
 			thround, p = self.cal.evaluate_scurve_thresholds(scurve = s, nevents = nevents)
-			c_thresholds.append( np.array(p)[:,1] )#threshold per strip
+			c_thresholds.append( np.array(p)[:,1] ) #threshold per strip not rounded
 			c_thmean.append( np.mean( np.array(p)[:,1] ) ) #threshold mean
 			c_noise.append( np.array(p)[:,2] ) #noise per strip
 			c_sigmamean.append( np.mean( np.array(p)[:,2] ) ) #noise mean
@@ -183,12 +194,18 @@ class SSA_measurements():
 			CSV.array_to_csv(c_noise,      (output_file + 'frontend_Q-{:1.3f}_noise.csv'.format(cal)))
 			CSV.array_to_csv(c_thmean,     (output_file + 'frontend_Q-{:1.3f}_threshold-mean.csv'.format(cal)))
 			CSV.array_to_csv(c_sigmamean,  (output_file + 'frontend_Q-{:1.3f}_noise-mean.csv'.format(cal)))
+			if(plot):
+				c = next(color)
+				plt.plot(s, '-', color=c, lw=1, alpha = 1)
+		self.thresholds = thresholds
 		utils.print_log('->\tEvaluating Front-End Gain')
-		gains    = np.zeros([120]);
-		offsets  = np.zeros([120]);
+		gains = np.zeros([120]);
+		gains_mV_fC = np.zeros([120]);
+		offsets = np.zeros([120]);
 		for strip in range(0,120):
-			ths = np.array( [thresholds[k][0][strip] for k in thresholds if k in list(map(str, calpulses))] )
+			ths = np.array( [thresholds[k][0][strip] for k in list(map(str, calpulses)) if k in thresholds] )
 			self.ths = ths
+			self.calpulses = calpulses
 			if(len(calpulses)==2):
 				gains[strip]   = np.float(ths[1]-ths[0])/np.float(calpulses[1]-calpulses[0])
 				offsets[strip] = np.float(ths[1])-gains[strip]*np.float(calpulses[1])
@@ -196,13 +213,16 @@ class SSA_measurements():
 				par, cov = curve_fit( f= f_line,  xdata = calpulses, ydata = ths, p0 = [0, 0])
 				gains[strip] = par[0]
 				offsets[strip] = par[1]
+			gains_mV_fC[strip] = np.abs(t_thrdac)*gains[strip]
+
 		gainmean = np.average(gains)
 
-		CSV.array_to_csv(gains,      output_file + 'frontend_gain.csv')
-		CSV.array_to_csv([gainmean], output_file + 'frontend_gain-mean.csv')
-		CSV.array_to_csv(offsets,    output_file + 'frontend_offset.csv')
+		CSV.array_to_csv(gains,       output_file + 'frontend_gain.csv')
+		CSV.array_to_csv(gains_mV_fC, output_file + 'frontend_gain_mVfC.csv')
+		CSV.array_to_csv([gainmean],  output_file + 'frontend_gain-mean.csv')
+		CSV.array_to_csv(offsets,     output_file + 'frontend_offset.csv')
 
-		return calpulses, thresholds, noise, thmean, sigmamean, gains, offsets
+		return calpulses, thresholds, noise, thmean, sigmamean, gains, gains_mV_fC, offsets
 
 
 
@@ -279,13 +299,13 @@ class SSA_measurements():
 			self.scurve_trim_plot(filename = filename, charge = charge_fc)
 		return std
 
-	def scurve_trim_plot(self, filename = '../SSA_Results/Chip0/Chip_0_', charge = 2):
+	def scurve_trim_plot(self, filename = '../SSA_Results/Chip0/Chip_0_', charge = []):
 		scurves = {}
-		fi = filename + "scurve_" + "_Q_" + str(charge) + "_Trim_0_.csv"
+		fi = (filename + "frontend_Q_{c:1.3f}_scurve_trim-{t:0d}_.csv".format(c=charge, t=0))
 		scurves['0'] = np.transpose( CSV.csv_to_array(filename = fi) )
-		fi = filename + "scurve_" + "_Q_" + str(charge) + "_Trim_31_.csv"
+		fi = (filename + "frontend_Q_{c:1.3f}_scurve_trim-{t:0d}_.csv".format(c=charge, t=31))
 		scurves['31'] = np.transpose( CSV.csv_to_array(filename = fi) )
-		fi = filename + "scurve_" + "_Q_" + str(charge) + "_Trim_Done_.csv"
+		fi = (filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge))
 		scurves['trim'] = np.transpose( CSV.csv_to_array(filename = fi) )
 		c_thresholds = {}; cmin = np.inf; cmax = 0;
 		for i in scurves:
@@ -318,8 +338,10 @@ class SSA_measurements():
 		labels = ["Optimal trimming values", "Not trimmed: THDAC = MIN", "Not trimmed: THDAC = MAX"]
 		cnt = 0
 		stds = []
+		color=iter(sns.color_palette('deep'))
 		for i in scurves:
-			plt.hist(c_thresholds[i], density = True, bins = bn, alpha = 0.7, label = (labels[cnt]))
+			c=next(color)
+			plt.hist(c_thresholds[i], density = True, bins = bn, alpha = 0.7, color = c, label = (labels[cnt]))
 			xt = plt.xticks()[0]
 			xmin, xmax = min(xt), max(xt)
 			lnspc = np.linspace(xmin, xmax, len(c_thresholds[i]))

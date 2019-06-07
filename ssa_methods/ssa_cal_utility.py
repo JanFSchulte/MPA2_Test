@@ -547,13 +547,14 @@ class SSA_cal_utility():
 		sct = curve;
 		err = True;	itr = 0;
 		erret = (-1, [-1, -1, -1])
+		ckr = range(nevents, nevents+1)
 
 		if( np.size(np.where( curve > (nevents-1) )) < 1):
 			#print "Fitting Zeros " + errmsg
 			return erret
 		# get read of the noise peack
 		try:
-			while ( not ((sct[0] in range(nevents-10, nevents+10)) and (sct[1] in range(nevents-10, nevents+10))) ):
+			while ( not ((sct[0] in ckr) and (sct[1] in ckr) and (sct[2] in ckr) and (sct[3] in ckr) and (sct[4] in ckr) and (sct[5] in ckr) ) ):
 				sct = sct[ np.argmax(sct)+1 : ]
 		except:
 			utils.print_error("->\tssa_cal_utility/_scurve_fit_errorfunction -> scurve error")

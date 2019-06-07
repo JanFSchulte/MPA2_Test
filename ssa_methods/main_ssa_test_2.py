@@ -15,6 +15,14 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
+'''
+It run most of tests on the SSA ASIC in ~2min.
+This class is used in th ewafer probing mpl_toolkits
+
+Example:
+ssa_main_measure = SSA_Measurements()
+ssa_main_measure.RUN()
+'''
 
 class SSA_Measurements():
 
@@ -206,10 +214,10 @@ class SSA_Measurements():
 		en = self.runtest.is_active('Cluster_Data')
 		while (en and wd < 3):
 			try:
-				r1 = self.test.cluster_data(mode = 'digital', nstrips=8, shift='default', display=False, file=filename, filemode='a', runname=runname)
+				r1 = self.test.cluster_data(mode = 'digital', nstrips=8, nruns = 1000, shift='default', display=False, file=filename, filemode='a', runname=runname)
 				self.summary.set('ClusterData_DigitalPulses',  r1, '%', '',  runname)
 				utils.print_good("->\tCluster Data with Digital Pulses test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
-				if(r1<90): self.test_good = False
+				if(r1<100.0): self.test_good = False
 				break
 			except  Exception, error:
 				utils.print_warning("X>\tCluster Data with Digital Pulses test error. Reiterating...")
@@ -224,10 +232,10 @@ class SSA_Measurements():
 		en = self.runtest.is_active('Pulse_Injection')
 		while (en and wd < 3):
 			try:
-				r1 = self.test.cluster_data(mode = 'analog', nstrips=8, shift='default', display=False, file=filename, filemode='a', runname=runname)
+				r1 = self.test.cluster_data(mode = 'analog', nstrips=8, nruns = 1000, shift='default', display=False, file=filename, filemode='a', runname=runname)
 				self.summary.set('ClusterData_ChargeInjection',  r1, '%', '',  runname)
 				#utils.print_good("->\tCluster Data with ChargeInjection test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
-				if(r1<90): self.test_good = False
+				if(r1<100.0): self.test_good = False
 				break
 			except Exception, error:
 				utils.print_warning("X>\tCluster Data with Charge Injection test error. Reiterating...")
@@ -262,8 +270,8 @@ class SSA_Measurements():
 					memres[v] = [r1, r2]
 					self.summary.set('Memory1_{:d}V'.format(int(v*1000)), r1, '%', '',  runname)
 					self.summary.set('Memory2_{:d}V'.format(int(v*1000)), r2, '%', '',  runname)
-					if(r1<90): self.test_good = False
-					if(r2<90): self.test_good = False
+					if(r1<100): self.test_good = False
+					if(r2<100): self.test_good = False
 				break
 			except Exception, error:
 				utils.print_warning("X>\tMemory test error. Reiterating...")
@@ -292,8 +300,8 @@ class SSA_Measurements():
 							file = filename)
 						self.summary.set('L1_data',   r1, '%', '',  runname)
 						self.summary.set('HIP_flags', r2, '%', '',  runname)
-						if(r1<90): self.test_good = False
-						if(r2<90): self.test_good = False
+						if(r1<100): self.test_good = False
+						if(r2<100): self.test_good = False
 						break
 				break
 			except Exception, error:
@@ -328,7 +336,6 @@ class SSA_Measurements():
 				wd +=1;
 				if(wd>=3): self.test_good = False
 		wd = 0
-		en = self.runtest.is_active('DACs')
 		while (en and wd < 3):
 			try:
 				self.caldac = self.measure.dac_linearity(name = 'Bias_CALDAC', eval_inl_dnl = False, nbits = 8, npoints = 10, filename = filename, plot = False, filemode = 'a', runname = runname)
@@ -363,24 +370,25 @@ class SSA_Measurements():
 					filename = filename)
 
 				if(rp):
-					utils.print_good( "->\tScurve trimming successfull. (Std = [trim->{:3.2f}lsb, test->{:3.2f}lsb])".format(rp[1], rp[2]));
-					utils.print_good( "->\tScurve noise evaluation successfull. (noise = [trim->{:3.2f}lsb, test->{:3.2f}lsb])".format(rp[5], rp[6]));
-					utils.print_good( "->\tScurve Gain and Offset evaluation successfull. g={g:3.2f} ofs=({of:3.2f})".format(g=rp[7], of=rp[8]));
-					utils.print_log(  "->\tAnalog test time = {t:7.2f}s".format(t=(time.time()-time_init))); time_init = time.time();
+					utils.print_good( "->\tScurve FE Trim Std: {:7.3f} cnt (L)    {:7.3f} cnt (H)".format(rp[1], rp[2]));
+					utils.print_good( "->\tScurve FE Noise:    {:7.3f} cnt (L)    {:7.3f} cnt (H)".format(rp[5], rp[6]));
+					utils.print_good( "->\tScurve FE Gain:     {:7.3f} mV/fC".format(rp[8]));
+					utils.print_good( "->\tScurve FE Offset:   {:7.3f} mV".format(rp[9]));
+					utils.print_log(  "->\tAnalog test time:   {:7.2f} s".format((time.time()-time_init))); time_init = time.time();
 				else:
 					utils.print_error( "->\tScurve trimming error.")
 					utils.print_error( "->\tScurve noise evaluation error.")
 					utils.print_error( "->\tScurve Gain and Offset evaluation error.")
 
-				self.summary.set("threshold_std_init",  str(rp[0]), '', '', runname)
-				self.summary.set("threshold_std_trim",  str(rp[1]), '', '', runname)
-				self.summary.set("threshold_std_test",  str(rp[2]), '', '', runname)
-				self.summary.set("threshold_mean_trim", str(rp[3]), '', '', runname)
-				self.summary.set("threshold_mean_test", str(rp[4]), '', '', runname)
-				self.summary.set("noise_mean_trim",     str(rp[5]), '', '', runname)
-				self.summary.set("noise_mean_test",     str(rp[6]), '', '', runname)
-				self.summary.set("fe_gain_mean",        str(rp[7]), '', '', runname)
-				self.summary.set("fe_offs_mean",        str(rp[8]), '', '', runname)
+				self.summary.set("threshold_std_init",  str(rp[0]), 'cnt_thdac', '', runname)
+				self.summary.set("threshold_std_trim",  str(rp[1]), 'cnt_thdac', '', runname)
+				self.summary.set("threshold_std_test",  str(rp[2]), 'cnt_thdac', '', runname)
+				self.summary.set("threshold_mean_trim", str(rp[3]), 'cnt_thdac', '', runname)
+				self.summary.set("threshold_mean_test", str(rp[4]), 'cnt_thdac', '', runname)
+				self.summary.set("noise_mean_trim",     str(rp[5]), 'cnt_thdac', '', runname)
+				self.summary.set("noise_mean_test",     str(rp[6]), 'cnt_thdac', '', runname)
+				self.summary.set("fe_gain_mean",        str(rp[8]), 'mV/fC'    , '', runname)
+				self.summary.set("fe_offs_mean",        str(rp[9]), 'mV'       , '', runname)
 				break
 			except Exception, error:
 				exc_info = sys.exc_info()
