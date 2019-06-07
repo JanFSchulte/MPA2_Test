@@ -1,5 +1,5 @@
 ,,
-I_DVDD_reset,5,15
+I_DVDD_reset,5,10
 I_AVDD_reset,10,25
 I_PVDD_reset,0,8
 I_DVDD_startup,20,30
@@ -8,7 +8,7 @@ I_PVDD_startup,0,8
 Initialize,1,1
 I_DVDD_uncalibrated,20,30
 I_AVDD_uncalibrated,20,30
-I_PVDD_uncalibrated,30,40
+I_PVDD_uncalibrated,20,40
 GND_uncalibrated,0,8
 VBG_uncalibrated,260,280
 Bias_BOOSTERBASELINE_uncalibrated,500,650
@@ -24,7 +24,7 @@ Bias_CALDAC_uncalibrated,0,200
 Calibration,1.000,1
 I_DVDD_calibrated,20,30
 I_AVDD_calibrated,10,30
-I_PVDD_calibrated,30,40
+I_PVDD_calibrated,20,40
 GND_calibrated,0,8
 VBG_calibrated,260,280
 Bias_BOOSTERBASELINE_calibrated,550,650
@@ -48,7 +48,7 @@ threshold_mean_trim,50,100
 threshold_mean_test,20,70
 noise_mean_trim,0,2
 noise_mean_test,0,2
-fe_gain_mean,55,70
+fe_gain_mean,45,70
 fe_offs_mean,-10,10
 alignment_cluster_data,1,1
 alignment_lateral_left,1,1

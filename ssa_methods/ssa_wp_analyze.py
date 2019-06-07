@@ -5,15 +5,16 @@ from myScripts.wafer_plot import *
 
 '''
 sa = ssa_wp_analyze()
-sa.import_data()
-sa.plot_wafer('all')
+sa.import_data('Wafer_W4', verboselevel=1)
+sa.plot_wafer('all-m')
+self = sa
 '''
 
 class ssa_wp_analyze():
     def __init__(self):
         pass
 
-    def import_data(self, wafername = 'Wafer_W3_v3', folder = '../SSA_Results/'):
+    def import_data(self, wafername = 'Wafer_W3_v3', folder = '../SSA_Results/WaferMap/', verboselevel = 0):
         summary = CSV.csv_to_array(folder+'/'+wafername+'/GlobalSummary.csv', noheader=True)
         expvect = CSV.csv_to_array('ssa_methods/Configuration/expected_values.csv')
         for version in range(8,0,-1):
@@ -41,9 +42,13 @@ class ssa_wp_analyze():
             tmp = []
             chipn = 0;
             for i in summary[:, cnt]:
-                if( (i>=inst[1]) and (i<=inst[2])):
+                if( (float(i)>=inst[1]) and (float(i)<=inst[2])):
                     tmp.append(1)
+                    if(verboselevel>=2):
+                        print("->\tchip="+str(cnt)+"  "+str(inst[0])+"  value="+str(i)+"  range=["+str(inst[1])+","+str(inst[2])+"]")
                 else:
+                    if(verboselevel>=1):
+                        print("X>\tchip="+str(cnt)+"  "+str(inst[0])+"  value="+str(i)+"  range=["+str(inst[1])+","+str(inst[2])+"]")
                     self.chipsum['all'][chipn] = 0
                     if(  inst[0] in ['Memory1_1050V', 'Memory2_1050V', 'L1_data']):
                         self.chipsum['memory_1V0'][chipn] = 0
