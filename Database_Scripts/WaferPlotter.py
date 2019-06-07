@@ -1,5 +1,5 @@
 import ROOT
-from ROOT import *
+# from ROOT import *
 
 def OldPlotWafer(A, name, title):
 
@@ -11,11 +11,9 @@ def OldPlotWafer(A, name, title):
 	Y.SetNdivisions(0)
 	X.SetLabelSize(0)
 	X.SetNdivisions(0)
-
 	H.SetBinContent(H.GetBin(6,10), A[0])
 	H.SetBinContent(H.GetBin(7,10), A[1])
 	H.SetBinContent(H.GetBin(8,10), A[2])
-
 	H.SetBinContent(H.GetBin(10,9), A[3])
 	H.SetBinContent(H.GetBin(9,9), A[4])
 	H.SetBinContent(H.GetBin(8,9), A[5])
@@ -24,7 +22,6 @@ def OldPlotWafer(A, name, title):
 	H.SetBinContent(H.GetBin(5,9), A[8])
 	H.SetBinContent(H.GetBin(4,9), A[9])
 	H.SetBinContent(H.GetBin(3,9), A[10])
-
 	H.SetBinContent(H.GetBin(2,8), A[11])
 	H.SetBinContent(H.GetBin(3,8), A[12])
 	H.SetBinContent(H.GetBin(4,8), A[13])
@@ -35,7 +32,6 @@ def OldPlotWafer(A, name, title):
 	H.SetBinContent(H.GetBin(9,8), A[18])
 	H.SetBinContent(H.GetBin(10,8), A[19])
 	H.SetBinContent(H.GetBin(11,8), A[20])
-
 	H.SetBinContent(H.GetBin(12,7), A[21])
 	H.SetBinContent(H.GetBin(11,7), A[22])
 	H.SetBinContent(H.GetBin(10,7), A[23])
@@ -47,7 +43,6 @@ def OldPlotWafer(A, name, title):
 	H.SetBinContent(H.GetBin(4,7), A[29])
 	H.SetBinContent(H.GetBin(3,7), A[30])
 	H.SetBinContent(H.GetBin(2,7), A[31])
-
 	H.SetBinContent(H.GetBin(1,6), A[32])
 	H.SetBinContent(H.GetBin(2,6), A[33])
 	H.SetBinContent(H.GetBin(3,6), A[34])
@@ -60,7 +55,6 @@ def OldPlotWafer(A, name, title):
 	H.SetBinContent(H.GetBin(10,6), A[41])
 	H.SetBinContent(H.GetBin(11,6), A[42])
 	H.SetBinContent(H.GetBin(12,6), A[43])
-
 	H.SetBinContent(H.GetBin(12,5), A[44])
 	H.SetBinContent(H.GetBin(11,5), A[45])
 	H.SetBinContent(H.GetBin(10,5), A[46])
@@ -73,7 +67,6 @@ def OldPlotWafer(A, name, title):
 	H.SetBinContent(H.GetBin(3,5), A[53])
 	H.SetBinContent(H.GetBin(2,5), A[54])
 	H.SetBinContent(H.GetBin(1,5), A[55])
-
 	H.SetBinContent(H.GetBin(2,4), A[56])
 	H.SetBinContent(H.GetBin(3,4), A[57])
 	H.SetBinContent(H.GetBin(4,4), A[58])
@@ -85,18 +78,17 @@ def OldPlotWafer(A, name, title):
 	H.SetBinContent(H.GetBin(10,4), A[64])
 	H.SetBinContent(H.GetBin(11,4), A[65])
 	H.SetBinContent(H.GetBin(12,4), A[66])
-
 	H.SetBinContent(H.GetBin(11,3), A[67])
 	H.SetBinContent(H.GetBin(10,3), A[68])
 	H.SetBinContent(H.GetBin(9,3), A[69])
 	H.SetBinContent(H.GetBin(8,3), A[70])
 	H.SetBinContent(H.GetBin(7,3), A[71])
 	H.SetBinContent(H.GetBin(6,3), A[72])
-	H.SetBinContent(H.GetBin(5,3), A[73])
+# 	H.SetBinContent(H.GetBiB = [0.1,1.,0.1,1.,0.1,0.1,0.1,0.1,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,0.1,0.1,1.,0.1,1.,1.,0.1,1.,1.,1.,1.,1.,1.,1.,0.1,1.,1.,0.1,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,0.1,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,0.1,1.,1.]
+# n(5,3), A[73])
 	H.SetBinContent(H.GetBin(4,3), A[74])
 	H.SetBinContent(H.GetBin(3,3), A[75])
 	H.SetBinContent(H.GetBin(2,3), A[76])
-
 	H.SetBinContent(H.GetBin(3,2), A[77])
 	H.SetBinContent(H.GetBin(4,2), A[78])
 	H.SetBinContent(H.GetBin(5,2), A[79])
@@ -105,23 +97,21 @@ def OldPlotWafer(A, name, title):
 	H.SetBinContent(H.GetBin(8,2), A[82])
 	H.SetBinContent(H.GetBin(9,2), A[83])
 	H.SetBinContent(H.GetBin(10,2), A[84])
-
 	H.SetBinContent(H.GetBin(8,1), A[85])
 	H.SetBinContent(H.GetBin(7,1), A[86])
 	H.SetBinContent(H.GetBin(6,1), A[87])
-
 	return H
 
 
 A = []
 for i in range(88):
 	A.append(i+1)
-print A
+print (A)
 
 B = [0.1,1.,0.1,1.,0.1,0.1,0.1,0.1,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,0.1,0.1,1.,0.1,1.,1.,0.1,1.,1.,1.,1.,1.,1.,1.,0.1,1.,1.,0.1,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,0.1,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,0.1,1.,1.]
 
 
-H = PlotWafer(A, "test", "")
+H = OldPlotWafer(A, "test", "")
 H1 = PlotWafer(B, "Quality", "Chip Quality, Wafer: N6T903-09A3")
 
 Wafer = TEllipse(5.95, 5, 6.3, 5.25)
