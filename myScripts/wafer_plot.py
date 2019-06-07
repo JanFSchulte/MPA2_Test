@@ -6,8 +6,6 @@ from pylab import *
 import matplotlib.gridspec as gridspec
 import matplotlib.cm as cm
 from itertools import product
-from wafer_map import wm_app
-from wafer_map import gen_fake_data
 from matplotlib.patches import Ellipse
 
 '''

@@ -5,9 +5,8 @@ from myScripts.wafer_plot import *
 
 '''
 sa = ssa_wp_analyze()
-sa.import_data('Wafer_W4', verboselevel=1)
+sa.import_data('Wafer_W4_v3', verboselevel=0, folder = '../SSA_Results/')
 sa.plot_wafer('all-m')
-self = sa
 '''
 
 class ssa_wp_analyze():
