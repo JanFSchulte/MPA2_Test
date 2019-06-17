@@ -7,6 +7,8 @@ import matplotlib.gridspec as gridspec
 import matplotlib.cm as cm
 from itertools import product
 from matplotlib.patches import Ellipse
+import matplotlib as mpl
+
 
 '''
 Example:
@@ -19,7 +21,7 @@ class waferplot():
     def __init__(self, wafermap='default'):
         self.set_wafer_map(wafermap)
 
-    def plot(self, results, label='Percent'):
+    def plot_wafer(self, results, label='Percent', minv='min', maxv='max', reverse=0):
         ncol = np.shape(self.mask)[0]
         nrow = np.shape(self.mask)[1]
         data = iter( self.adapt_vector(results))
@@ -29,7 +31,10 @@ class waferplot():
                 if(self.mask[x,y]):
                     d = data.next()
                     wfmap[x,y] = d
-        cmap = plt.cm.RdYlGn
+        if(reverse):
+            cmap = plt.cm.RdYlGn.reversed()
+        else:
+            cmap = plt.cm.RdYlGn
         cmap.set_bad(color='white')
         wfmap = np.ma.masked_where(self.mask==0, wfmap)
         fig = plt.figure(figsize=(10,10))
@@ -40,6 +45,14 @@ class waferplot():
         ax.spines["right"].set_visible(False)
         plt.axis('off')
         #cbar.set_label(label, rotation=270)
+        if(isinstance(minv, str)):
+            minval = wfmap.min()
+        else:
+            minval = minv
+        if(isinstance(maxv, str)):
+            maxval = wfmap.max()
+        else:
+            maxval = maxv
         waferedge = Ellipse(
             ((nrow-1.5)/2.0, (ncol-0.5)/2.0),
             nrow+1, ncol+1 ,
@@ -48,13 +61,32 @@ class waferplot():
         waferimg = ax.imshow(
             wfmap,interpolation='none',
             aspect=(nrow/float(ncol)),
-            vmin=wfmap.min(), vmax=wfmap.max(),
+            vmin=minval, vmax=maxval,
             cmap=cmap)
         #p = ax.pcolor(X/(2*np.pi), Y/(2*np.pi), Z, cmap=cm.RdBu, vmin=abs(Z).min(), vmax=abs(Z).max())
         fig.colorbar(waferimg, fraction=0.046/2, pad=0.04, label=label)
         ax.add_patch(waferedge)
-        plt.show()
 
+
+    def plot_data(self, results, label='Percent', minv='min', maxv='max', reverse=0, newfigure=1):
+        data =  self.adapt_vector(results)
+        if(reverse): cmap = plt.cm.RdYlGn.reversed()
+        else: cmap = plt.cm.RdYlGn
+        if(newfigure):
+            fig = plt.figure(figsize=(10,10))
+            ax = fig.add_subplot(1, 1, 1)
+        #ax.spines["top"].set_visible(False)
+        #ax.spines["right"].set_visible(False)
+        #plt.axis('off')
+        plt.xticks(range(0, len(data), 5), fontsize=16)
+        plt.yticks(fontsize=16)
+        plt.ylabel(label, fontsize=16)
+        plt.xlabel('Chip', fontsize=16)
+        if(isinstance(minv, str)): minval = np.min(data)
+        else: minval = minv
+        if(isinstance(maxv, str)): maxval = np.max(data)
+        else: maxval = maxv
+        plt.plot(data, 'or' )
 
     def set_wafer_map(self, map='default'):
         if(map=='default'):
@@ -99,3 +131,17 @@ class waferplot():
         vout.extend( vin[d[7] : d[8]] )
         vout.extend( vin[d[8] : d[9]][::-1] )
         return vout
+
+    def reverse_colourmap(cmap, name = 'mycmapr'):
+        reverse = []
+        k = []
+        for key in cmap._segmentdata:
+            k.append(key)
+            channel = cmap._segmentdata[key]
+            data = []
+            for t in channel:
+                data.append((1-t[0],t[2],t[1]))
+            reverse.append(sorted(data))
+        LinearL = dict(zip(k,reverse))
+        my_cmap_r = mpl.colors.LinearSegmentedColormap(name, LinearL)
+        return my_cmap_r
