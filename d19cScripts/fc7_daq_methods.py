@@ -279,6 +279,7 @@ def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, dela
   fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
   fc7.write("cnfg_fast_delay_after_test_pulse", delay_after_test_pulse)
   fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
+  #fc7.write("cnfg_fast_tp_fsm_shutter_en", enable_shut)
   fc7.write("cnfg_fast_tp_fsm_fast_reset_en", enable_rst) #enable_rst_L1
   fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
   fc7.write("cnfg_fast_tp_fsm_l1a_en", enable_L1)

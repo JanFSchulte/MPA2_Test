@@ -442,15 +442,15 @@ def read_I2C (chip, address, timeout = 0.001):
 	read_data = ReadChipDataNEW()
 	return read_data
 
-def align_out(verbose = 1):
-	fc7.write("ctrl_phy_phase_tune_again", 1)
-	timeout_max = 5
-	timeout = 0
-	while(fc7.read("stat_phy_phase_tuning_done") == 0):
-		sleep(0.1)
-		if (timeout == timeout_max):
-			timeout = 0
-			if (verbose): print "Waiting for the phase tuning"
-			fc7.write("ctrl_phy_phase_tune_again", 1)
-		else:
-			timeout += 1
+#def align_out(verbose = 1):
+#	fc7.write("ctrl_phy_phase_tune_again", 1)
+#	timeout_max = 5
+#	timeout = 0
+#	while(fc7.read("stat_phy_phase_tuning_done") == 0):
+#		sleep(0.1)
+#		if (timeout == timeout_max):
+#			timeout = 0
+#			if (verbose): print "Waiting for the phase tuning"
+#			fc7.write("ctrl_phy_phase_tune_again", 1)
+#		else:
+#			timeout += 1
