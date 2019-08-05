@@ -25,7 +25,7 @@ class mpa_bias_utility():
 		self.DAC_val = [15, 15, 15, 15, 15]
 		self.exp_val = [0.082, 0.082, 0.108, 0.082, 0.082]
 		self.cal_precision = 0.05
-		self.measure_avg = 10
+		self.measure_avg = 1
 		self.set_gpib_address(16)
 	def set_gpib_address(self, address):
 		self.gpib_address = address
@@ -42,7 +42,7 @@ class mpa_bias_utility():
 		print "DAC: ", DAC
 		for i in range(0, 1 << bit, step):
 			self.I2C.peri_write(DAC, i)
-			sleep(0.1)
+			#sleep(0.1)
 			data[i] = self.multimeter.measure(inst)
 			if (i % 10 == 0):
 				print "Done point ", i, " of ", 1 << bit
@@ -70,11 +70,11 @@ class mpa_bias_utility():
 		self.I2C.peri_write('TESTMUX',0b00000001 << block)
 		self.I2C.peri_write(test, 0b00000001 << point)
 		self.I2C.peri_write(DAC, 0)
-		sleep(0.1)
+		#sleep(0.1)
 		off_val = self.multimeter.measure(inst)
-		sleep(0.1)
+		#sleep(0.1)
 		self.I2C.peri_write(DAC, DAC_val)
-		sleep(0.1)
+		#sleep(0.1)
 		act_val = self.multimeter.measure(inst)
 		LSB = (act_val - off_val) / DAC_val
 		DAC_new_val = DAC_val- int(round((act_val - exp_val - gnd_corr)/LSB))
@@ -102,14 +102,13 @@ class mpa_bias_utility():
 		return data
 	def measure_gnd(self):
 		inst = self.multimeter.init_keithley(avg = self.measure_avg, address = self.gpib_address)
-		sleep(1)
 		self.mpa.ctrl_base.disable_test()
 		data = np.zeros((7, ), dtype=np.float)
 		for block in range(0,7):
 			test = "TEST" + str(block)
 			self.I2C.peri_write('TESTMUX',0b00000001 << block)
 			self.I2C.peri_write(test, 0b10000000)
-			sleep(1)
+			#sleep(0.1)
 			data[block] = self.multimeter.measure(inst)
 		self.mpa.ctrl_base.disable_test()
 		print data

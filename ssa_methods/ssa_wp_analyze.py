@@ -162,7 +162,7 @@ class ssa_wp_analyze():
 
 
 sa = ssa_wp_analyze() # Create object
-sa.plot_stats('Wafer_W4') # Plot main set of statistics about the selected wafer
+#sa.plot_stats('Wafer_W4') # Plot main set of statistics about the selected wafer
 
 
 #sa.plot_wafer_scale('I_DVDD_calibrated', 'mA', 'min', 'max', reverse=1)

@@ -164,18 +164,18 @@ class mpa_test_utility():
 				for i in range(0, n_pulse):
 					self.fc7.send_test()
 					nst, pos, Z, bend = read_stubs()
-					for centr in pos[8:14,0]:
+					for centr in pos[6:14,0]:
 						if (centr == val): check += 1
-					for centr in pos[8:14,1]:
+					for centr in pos[6:14,1]:
 						if (centr == val): check += 1
 				line_check[count_line, count_val ] = check
 				count_val += 1
 			count_line += 1
 		return line_check
-	def strip_in_scan(self, n_pulse = 10, probe = 0, print_file = 0, filename =  "../cernbox/MPA_Results/strip_in_scan"):
+	def strip_in_scan(self, n_pulse = 1, edge = "falling", probe = 0, print_file = 0, filename =  "../cernbox/MPA_Results/strip_in_scan"):
 		t0 = time.time()
 		self.mpa.ctrl_base.activate_ss()
-		data_array = np.zeros((16, 8 ), dtype = np.float16 )
+		data_array = np.zeros((8, 8 ), dtype = np.float16 )
 		if probe:
 			self.I2C.peri_write("InSetting_0",0)
 			self.I2C.peri_write("InSetting_1",1)
@@ -186,18 +186,15 @@ class mpa_test_utility():
 			self.I2C.peri_write("InSetting_6",6)
 			self.I2C.peri_write("InSetting_7",7)
 			self.I2C.peri_write("InSetting_8",8)
-		sleep(1)
+		sleep(0.1)
 		for i in range(0,8):
 			latency = (i  << 3)
-			edge = 255
 			print "Testing Latency ", i
-			temp = self.strip_in_test(n_pulse = n_pulse, latency = latency , edge = edge)
+			if (edge == "falling" ): temp = self.strip_in_test(n_pulse = n_pulse, latency = latency , edge = 0)
+			elif (edge == "rising" ): temp = self.strip_in_test(n_pulse = n_pulse, latency = latency , edge = 255)
+			else: print "edge not recognized"; return
 			for line in range(0,8):
-				data_array[i*2, line ] = np.average(temp[line])/(n_pulse*8)
-			edge = 0
-			temp = self.strip_in_test(n_pulse = n_pulse, latency = latency , edge = edge)
-			for line in range(0,8):
-				data_array[i*2+1, line ] = np.average(temp[line])/(n_pulse*8)
+				data_array[i, line ] = np.average(temp[line])/(n_pulse*8)
 		if print_file:
 			CSV.ArrayToCSV (data_array, str(filename) + "_npulse_" + str(n_pulse) + ".csv")
 		t1 = time.time()

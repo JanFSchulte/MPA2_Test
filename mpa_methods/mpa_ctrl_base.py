@@ -95,11 +95,11 @@ class mpa_ctrl_base:
 # Sampling edge control
 	def set_sampling_edge(self, edge):
 		if edge == "rising" or edge == "positive":
-			sleep(0.1); self.I2C.peri_write('EdgeSelT1Raw', 0b11)
-			sleep(0.1); self.I2C.peri_write('EdgeSelTrig', 0b11111111)
+			self.I2C.peri_write('EdgeSelT1Raw', 0b11)
+			self.I2C.peri_write('EdgeSelTrig', 0b11111111)
 		elif edge == "falling" or edge == "negative":
-			sleep(0.1); self.I2C.peri_write('EdgeSelT1Raw', 0)
-			sleep(0.1); self.I2C.peri_write('EdgeSelTrig', 0)
+			self.I2C.peri_write('EdgeSelT1Raw', 0)
+			self.I2C.peri_write('EdgeSelTrig', 0)
 		else:
 			print "Error! The edge name is wrong"
 # Output Pad mapping
@@ -126,8 +126,8 @@ class mpa_ctrl_base:
 	def align_out_all(self, verbose = 1):
 		self.I2C.peri_write("ReadoutMode", 2)
 		self.I2C.peri_write("LFSR_data", 0b10100000)
-		sleep(1)
-		TuneMPA()
+		sleep(0.1)
+		return TuneMPA()
 		#self.I2C.peri_write("ReadoutMode", 0)
 
 

@@ -311,3 +311,46 @@ class mpa_cal_utility():
 		t1 = time.time()
 		print "Trimming Elapsed Time: " + str(t1 - t0)
 		return scurve, th, noise, trim, count
+
+# scurve, th, noise, trim, count = cal.trimming_new()
+	def trimming_probe(self, ref = 250, low = 120, req = 90, high = 60, second_step = 1, nominal_ref = 150, nominal_req = 40, trim_ampl = -1, rbr = 0, plot = 1):
+		t0 = time.time()
+		if trim_ampl > -1:
+			for block in range(0,7):
+				self.I2C.peri_write("C"+str(block), trim_ampl)
+		else: trim_ampl = int(self.I2C.peri_read("C"+str(0)))
+		trm_LSB = round(((0.172-0.048)/32.0*trim_ampl+0.048)/32.0*1000.0,2)
+		print "Trimming LSB", trm_LSB, "mV, code:", trim_ampl
+		print "Trimming DAC MIN scurve..."
+		self.mpa.ctrl_pix.reset_trim(0)
+		scurveL, thL, noiseL = self.s_curve( n_pulse = 1000, s_type = "CAL", rbr = rbr, ref_val = ref, row = range(1,17), step = 1, start = 0, stop = 200, pulse_delay = 500, extract_val = low, extract = 1, plot = plot, print_file =0 )
+		print "Trimming DAC MAX scurve..."
+		self.mpa.ctrl_pix.reset_trim(31)
+		scurveH, thH, noiseH = self.s_curve( n_pulse = 1000, s_type = "CAL", rbr = rbr, ref_val = ref, row = range(1,17), step = 1, start = 0, stop = 150, pulse_delay = 500, extract_val = high, extract = 1, plot = plot, print_file =0 )
+		thL = np.array(thL); thH = np.array(thH);
+		trimLSB =(thH-thL)/32
+		trim = np.round((req - thL*1.0)/trimLSB)
+		trim = trim.astype(int)
+		if np.size(trim) == 1888:
+			count = self.mpa.ctrl_pix.load_trim(trim)
+			print "Trimmed scurve..."
+			print "Not Trimmerable Pixel", count
+			scurveT, thT, noiseT = self.s_curve( n_pulse = 1000, s_type = "CAL", rbr = rbr, ref_val = nominal_ref, row = range(1,17), step = 1, start = 0, stop = 100, pulse_delay = 500, extract_val = nominal_req, extract = 1, plot = plot, print_file =0 )
+		else:
+			print "Error"
+		if second_step:
+			# Incremental second step?
+			thT = np.array(thT);
+			trim_incr = np.round((nominal_req - thT)/trimLSB)
+			trim_incr = trim_incr.astype(int)
+			trim = trim + trim_incr
+			if np.size(trim) == 1888:
+				count = self.mpa.ctrl_pix.load_trim(trim)
+				print "Nominal scurve..."
+				print "Not Trimmerable Pixel", count
+				scurve, th, noise = self.s_curve( n_pulse = 1000, s_type = "CAL", rbr = rbr, ref_val = nominal_ref, row = range(1,17), step = 1, start = 0, stop = 100, pulse_delay = 500, extract_val = nominal_req, extract = 1, plot = plot, print_file =0 )
+			else:
+				print "Error"
+		t1 = time.time()
+		print "Trimming Elapsed Time: " + str(t1 - t0)
+		return scurve, th, noise, trim, count

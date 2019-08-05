@@ -68,3 +68,23 @@ class MPA_ASIC:
 		return rt
 	def init_all(self):
 		self.init(reset_board = True, reset_chip = False)
+
+	def init_probe(self, reset_chip = True, slvs_current = 0b001, edge = "negative"):
+		sys.stdout.write("->  \tInitialising..\r")
+		sys.stdout.flush()
+		if(reset_chip):
+			self.ctrl_base.reset(display=False)
+		utils.activate_I2C_chip()
+		sys.stdout.write("->  \tTuning sampling phases..\r")
+		sys.stdout.flush()
+		self.ctrl_base.set_sampling_edge(edge);
+		self.ctrl_base.init_slvs(slvs_current);
+		rt = self.ctrl_base.align_out_all()
+		if (not rt):
+			print "->  \tRepeating alignment..."
+			rt = self.ctrl_base.align_out_all()
+		self.ctrl_base.activate_sync()
+		print "->  \tInitialised SLVS pads and sampling edges"
+		print "->  \tSampling phases tuned"
+		print "->  \tActivated normal readout mode"
+		return rt
