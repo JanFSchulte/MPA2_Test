@@ -33,28 +33,27 @@ class mpa_bias_utility():
 		self.multimeterinst = self.multimeter.init_keithley(avg = self.measure_avg, address = self.gpib_address)
 		self.initialised = True
 		return self.multimeterinst
-	def DAC_linearity(self, block, point, bit, inst, step = 1, plot = 1):
+	def DAC_linearity(self, block, point, bit, inst, step = 1, plot = 1, verbose = 1):
 		DAC = self.nameDAC[point] + str(block)
 		test = "TEST" + str(block)
 		self.I2C.peri_write('TESTMUX',0b00000001 << block)
 		self.I2C.peri_write(test, 0b00000001 << point)
 		data = np.zeros(1 << bit, dtype=np.float)
-		print "DAC: ", DAC
+		if verbose: print "DAC: ", DAC
 		for i in range(0, 1 << bit, step):
 			self.I2C.peri_write(DAC, i)
-			#sleep(0.1)
 			data[i] = self.multimeter.measure(inst)
 			if (i % 10 == 0):
-				print "Done point ", i, " of ", 1 << bit
+				if verbose: print "Done point ", i, " of ", 1 << bit
 		if plot:
 			plt.plot(range(0,1 << bit), data,'o')
 			plt.xlabel('DAC voltage [LSB]'); plt.ylabel('DAC value [mV]'); plt.show()
 		return data
-	def measure_DAC_testblocks(self, point, bit, step = 1, plot = 1,print_file = 0, filename = "../cernbox/MPA_Results/DAC_"):
+	def measure_DAC_testblocks(self, point, bit, step = 1, plot = 1,print_file = 0, filename = "../cernbox/MPA_Results/DAC_", verbose = 1):
 		inst = self.multimeter.init_keithley(avg = self.measure_avg, address = self.gpib_address)
 		data = np.zeros((7, 1 << bit), dtype=np.float)
 		for i in range(0,7):
-			data[i] = self.DAC_linearity(i, point, bit, inst, step, 0)
+			data[i] = self.DAC_linearity(block = i, point = point, bit = bit, inst = inst,step = step, plot = 0, verbose = verbose)
 			if plot: plt.plot(range(0,1 << bit), data[i, :],'o', label = "Test Block #" + str(i))
 		if plot: plt.xlabel('DAC voltage [LSB]'); plt.ylabel('DAC value [mV]');plt.legend(); plt.show()
 		if print_file: CSV.ArrayToCSV (data, str(filename) + "_TP" + str(point) + ".csv")
@@ -111,7 +110,7 @@ class mpa_bias_utility():
 			#sleep(0.1)
 			data[block] = self.multimeter.measure(inst)
 		self.mpa.ctrl_base.disable_test()
-		print data
+		print "Measured Analog Ground:", np.mean(data)
 		return np.mean(data)
 	def measure_bg(self):
 		inst = self.multimeter.init_keithley(avg = self.measure_avg, address = self.gpib_address)

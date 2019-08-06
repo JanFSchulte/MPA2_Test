@@ -29,22 +29,22 @@ class mpa_power_utility:
 	def off(self):
 		self.set_supply('off')
 
-	def set_supply(self, mode = 'on', d = 1.00, a = 1.2, p = 1.2, bg = 0.270, display = True):
+	def set_supply(self, mode = 'on', d = 1.00, a = 1.2, p = 1.2, bg = 0.270, measure = True, display = True):
 		if(mode == 'on' or mode == 1):
 			sleep(0.0); self.mainpoweron()
 			sleep(0.1); self.set_pvdd(p);
-			sleep(2.0); self.set_dvdd(d);
+			sleep(0.1); self.set_dvdd(d);
 			sleep(0.1); self.set_avdd(a);
 			sleep(0.1); self.set_vbf(bg)
-			sleep(1.0); self.reset()
+			sleep(0.1); self.reset()
+			sleep(2)
 		elif(mode == 'off' or mode == 0):
 			sleep(0.0); self.set_vbf(0)
 			sleep(0.1); self.set_avdd(0);
 			sleep(0.1); self.set_dvdd(0);
-			sleep(3.0); self.set_pvdd(0)
-			sleep(0.5); self.mainpoweroff()
-		sleep(1); self.get_power(display = display)
-
+			sleep(0.1); self.set_pvdd(0)
+			sleep(0.1); self.mainpoweroff()
+		if measure:  self.get_power(display = display)
 
 	def get_power(self, display = True, return_all = False):
 		Pd, Vd, Id = self.get_power_digital(display, False, True)

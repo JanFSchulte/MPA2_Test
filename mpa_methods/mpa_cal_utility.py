@@ -151,7 +151,7 @@ class mpa_cal_utility():
 		while (cur_val < stop): # Temoporary: need to add clear counter fast command
 			if s_type == "CAL":	self.mpa.ctrl_base.set_calibration(cur_val)
 			elif s_type == "THR":	self.mpa.ctrl_base.set_threshold(cur_val)
-			self.utils.ShowPercent(count, (stop-start)/step, "")
+			#self.utils.ShowPercent(count, (stop-start)/step, "")
 			if rbr:
 				for r in row:
 					self.mpa.inject.send_pulses_fast(n_pulse, r, 0, cur_val)
