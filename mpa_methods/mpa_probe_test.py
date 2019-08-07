@@ -20,6 +20,8 @@ class mpa_probe_test:
 		self.DIR = DIR
 		self.GlobalSummary = []
 		self.LogFile = open(self.DIR+"/LogFile.txt", "w")
+		self.Legend = ["Chip_N", "I/O pwr reset" , "Digital pwr reset", "Analog pwr reset", "I/O pwr " , "Digital pwr ", "Analog pwr ", "Shift Test", "Ground Value", "Bias Average Cal", "Gain", "Threshold LSB", "Calibration LSB", "Noise [Cal LSB]", "Threshold Spread [Cal LSB]", "Pixel test", "Strip input test", "Memory @ 1.2 test", "Memory @ 1.0 test"]
+		self.LogFileCSV = open(self.DIR+"/LogFile.txt", "w")
 		self.GeneralLogFile = open(self.DIR+"/../LogFile.txt", "a")
 		self.colprint("Creating new chip measurement: "+self.DIR)
 		self.Flag = 1
@@ -48,7 +50,8 @@ class mpa_probe_test:
 	def RUN(self, chipinfo):
 		self.colprint(chipinfo)
 		self.colprint_general(chipinfo)
-		self.GlobalSummary = [int(chipinfo)]
+		self.GlobalSummary = [-1000]*19
+		self.GlobalSummary[0] = int(chipinfo)
 		self.start = time.time()
 		try:
 			self.mpa.pwr.set_supply(mode = 'on', d = 1.00, a = 1.2, p = 1.2, bg = 0.270, measure = False, display = False)
@@ -56,13 +59,13 @@ class mpa_probe_test:
 			PowerStatus = self.power_on_check(leakage = 1)
 			self.colprint(PowerStatus)
 			self.colprint_general(PowerStatus)
-			PST1 = self.PVALS[0]; self.GlobalSummary.append(PST1); DP1  = self.PVALS[1]; self.GlobalSummary.append(DP1); AN1  = self.PVALS[2]; self.GlobalSummary.append(AN1)
+			PST1 = self.PVALS[0]; self.GlobalSummary[1] = PST1; DP1  = self.PVALS[1]; self.GlobalSummary[2] = DP1; AN1  = self.PVALS[2]; self.GlobalSummary[3] = AN1
 			self.colprint("Enabling MPA")
 			self.mpa.pwr._enable()
 			PowerStatus = self.power_on_check(leakage = 0)
 			self.colprint(PowerStatus)
 			self.colprint_general(PowerStatus)
-			PST2 = self.PVALS[0]; self.GlobalSummary.append(PST2); DP2  = self.PVALS[1]; self.GlobalSummary.append(DP2); AN2  = self.PVALS[2]; self.GlobalSummary.append(AN2)
+			PST2 = self.PVALS[0]; self.GlobalSummary[4] = PST2; DP2  = self.PVALS[1]; self.GlobalSummary[5] = DP2; AN2  = self.PVALS[2]; self.GlobalSummary[6] = AN2
 			self.mpa.init_probe()
 			#PowerStatus = self.power_on_check(leakage = 0)
 			#self.colprint_general(PowerStatus)
@@ -74,10 +77,10 @@ class mpa_probe_test:
 				CVwriter.writerow(DigP)
 			if self.test.shift(verbose = 0):
 				self.colprint("Shift Test Passed")
-				self.GlobalSummary.append(1)
+				self.GlobalSummary[7] = 1
 			else:
 				self.colprint("Shift Test Failed")
-				self.GlobalSummary.append(0)
+				self.GlobalSummary[7] = 0
 			self.analog_measurement()
 			self.digital_test()
 			self.colprint("DONE!")
@@ -85,9 +88,19 @@ class mpa_probe_test:
 			self.colprint("WE MESSED UP!!!")
 			self.Flag = 0
 		self.mpa.pwr.set_supply(mode = 'off', measure = False)
-		with open(self.DIR+'/../GlobalSummary.csv', 'a') as csvfile:
-			CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
-			CVwriter.writerow(self.GlobalSummary)
+		if (os.path.isfile(self.DIR+'/../GlobalSummary.csv')):
+			with open(self.DIR+'/../GlobalSummary.csv', 'a') as csvfile:
+				CVwriter = csv.writer(csvfile, delimiter=',',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
+				CVwriter.writerow(self.GlobalSummary)
+		else:
+			with open(self.DIR+'/../GlobalSummary.csv', 'w') as csvfile:
+				CVwriter = csv.writer(csvfile, delimiter=',',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
+				CVwriter.writerow(self.Legend)
+				CVwriter.writerow(self.GlobalSummary)
+		with open(self.DIR+'/LogFile.csv', 'w') as csvfile:
+			CVwriter = csv.writer(csvfile, delimiter=',',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
+			for i in range(0,19):
+				CVwriter.writerow([self.Legend[i], self.GlobalSummary[i]])
 		self.end = time.time()
 		self.colprint("TOTAL TIME:")
 		self.colprint(str(round(self.end - self.start)) + "sec")
@@ -111,8 +124,8 @@ class mpa_probe_test:
 			self.colprint(message)
 			self.colprint_general(message)
 			cal = self.bias.calibrate_chip(gnd_corr = gnd, print_file = 1, filename = self.DIR+"/bias_calibration")
-			self.GlobalSummary.append(round(np.mean(gnd),3))
-			self.GlobalSummary.append(round(np.mean(cal),1))
+			self.GlobalSummary[8] = round(np.mean(gnd),3)
+			self.GlobalSummary[9] = round(np.mean(cal),1)
 			message = "Average Analog Bias: " + str(round(np.mean(cal),1))
 			self.colprint(message)
 			self.colprint_general(message)
@@ -136,11 +149,11 @@ class mpa_probe_test:
 			data_array,cal_A, noise_A, trim, pix_out = self.cal.trimming_probe(ref = th_H, low = cal_H - self.high_cl_ofs, req = cal_H, high = cal_H + self.high_cl_ofs, nominal_ref = th_T, nominal_req = cal_T, trim_ampl = self.trim_amplitude, rbr = 0, plot = plot)
 			scurve, cal_B, noise_B  = self.cal.s_curve( n_pulse = 1000, s_type = "CAL", rbr = 0, ref_val = th_L, row = range(1,17), step = 1, start = 0, stop = 100, pulse_delay = 500, extract_val = cal_L, extract = 1, plot = plot, print_file = 1, filename = self.DIR+ "/Scurve15")
 			gain = (th_T-th_L)/(np.mean(cal_A[1:1920]) - np.mean(cal_B[1:1920])) * thLSB / calLSB # Average
-			self.colprint("The average gain is: " + str(round(gain,1))); self.GlobalSummary.append(round(gain,1))
-			self.colprint("The thLSB is: " + str(round(thLSB,3))); self.GlobalSummary.append(round(thLSB,3))
-			self.colprint("The calLSB is: " + str(round(calLSB,3))); self.GlobalSummary.append(round(calLSB,3))
-			self.colprint("The noise is: " + str(round(np.mean(noise_B[1:1919]),2))); self.GlobalSummary.append(round(np.mean(noise_B[1:1919]),2))
-			self.colprint("The threshold spread is: " + str(round(np.std(cal_B[1:1919]),2))); self.GlobalSummary.append(round(np.std(cal_B[1:1919]),2))
+			self.colprint("The average gain is: " + str(round(gain,1))); self.GlobalSummary[10] = round(gain,1)
+			self.colprint("The thLSB is: " + str(round(thLSB,3))); self.GlobalSummary[11] = round(thLSB,3)
+			self.colprint("The calLSB is: " + str(round(calLSB,3)));  self.GlobalSummary[12] = round(calLSB,3)
+			self.colprint("The noise is: " + str(round(np.mean(noise_B[1:1919]),2))); self.GlobalSummary[13] = round(np.mean(noise_B[1:1919]),2)
+			self.colprint("The threshold spread is: " + str(round(np.std(cal_B[1:1919]),2))); self.GlobalSummary[14] = round(np.std(cal_B[1:1919]),2)
 			self.colprint_general("successfull!")
 			with open(self.DIR+'/AnalogMeasurement.csv', 'wb') as csvfile:
 				CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -163,7 +176,7 @@ class mpa_probe_test:
 			anapix.append(self.test.analog_pixel_test(print_log=0, verbose = 0))
 			BadPixA = self.GetActualBadPixels(anapix)
 		else: BadPixA = anapix[0]
-		self.colprint(str(size(BadPixA)) + " << Bad Pixels (Ana)"); self.GlobalSummary.append(size(BadPixA))
+		self.colprint(str(size(BadPixA)) + " << Bad Pixels (Ana)"); self.GlobalSummary[15] = size(BadPixA)
 		self.colprint_general(str(size(BadPixA)) + " << Bad Pixels (Ana)")
 		Analog = 1
 		if (BadPixA == []): Analog = 0
@@ -193,7 +206,7 @@ class mpa_probe_test:
 				self.colprint("Strip Input scan failed")
 				self.colprint_general("Strip Input scan failed")
 				StripIn = 1
-		self.GlobalSummary.append(good_si)
+		self.GlobalSummary[16] = StripIn
 		## MEMORY Test
 		self.colprint("Memory test at 1.2 V")
 		self.colprint_general("Memory test at 1.2 V")
@@ -207,8 +220,8 @@ class mpa_probe_test:
 			self.colprint_general("Memory test at 1.0 V")
 			Mem10 = self.memory_test(105)
 		# Digital Summary filename
-		self.GlobalSummary.append(Mem12)
-		self.GlobalSummary.append(Mem10)
+		self.GlobalSummary[17] = Mem12
+		self.GlobalSummary[18] = Mem10
 		with open(self.DIR+'/DigitalSummary.csv', 'wb') as csvfile:
 			CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			DigitalFlags = [Analog, StripIn, Mem12, Mem10]
