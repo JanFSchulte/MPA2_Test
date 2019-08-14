@@ -6,7 +6,7 @@ import os
 import random
 import time
 # from mpa_methods import ProbeCardTest
-from ssa_methods.ssa_test_waferprobing import *
+from ssa_methods.main_ssa_test_2 import *
 
 '''
 It runs the automatic wafer probing procedure
@@ -87,7 +87,7 @@ class AUTOPROBER:
 
     def NEWCHIPMSR(self, inf):
         if  (self.chip == 'MPA'):
-            PCM = ChipMeasurement(  self.name + "_" + self.DieNumber)
+            PCM = mpa_probe_test(  self.name + "_" + self.DieNumber)
         elif(self.chip == 'SSA'):
             PCM = SSA_Measurements(
                 tag = (self.name+"_"+str(self.DieNumber)),
