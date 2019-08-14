@@ -32,7 +32,7 @@ fi
 ping -c 1 -W 1 $IP; rep=$?
 
 if ! (( $rep == 0 )); then
-	printf   '\n->  SSA Testbench unrichable. Verify connectivity\n'
+	printf   '\n->  SSA Testbench unreachable. Verify connectivity\n'
 
 else
 	printf '\n->  SSA Testbench correctly found on %s\n' "$IP"

@@ -207,7 +207,7 @@ class ssa_ctrl_base:
 		self.I2C.peri_write('ReadoutMode',val)
 		if (self.I2C.peri_read("ReadoutMode") != val):
 			print "Error! I2C did not work properly"
-			exit(1)
+			#exit(1)
 
 
 	def activate_readout_async(self, ssa_first_counter_delay = 8, correction = 0):
@@ -218,7 +218,7 @@ class ssa_ctrl_base:
 		# check the value
 		if (self.I2C.peri_read("AsyncRead_StartDel_LSB") != ssa_first_counter_delay & 0xff):
 			print "Error! I2C did not work properly"
-			error(1)
+			#error(1)
 		# ssa set delay of the counters
 		fwdel = ssa_first_counter_delay + 24 + correction
 		if(fwdel >= 255):

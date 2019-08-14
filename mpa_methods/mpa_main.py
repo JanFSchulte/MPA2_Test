@@ -4,7 +4,7 @@ from mpa_methods.mpa_power_utility import *
 from mpa_methods.mpa_cal_utility import *
 from mpa_methods.mpa_test_utility import *
 from mpa_methods.mpa_fc7_com import *
-from mpa_methods.mpa_probe_test import *
+#from mpa_methods.mpa_probe_test import *
 from myScripts.BasicMultimeter import *
 
 FC7   = mpa_fc7_com(fc7)
@@ -22,7 +22,7 @@ except ImportError:
 	bias = False
 	print "- Impossible to access GPIB instruments"
 
-probe = mpa_probe_test("../TEST/", mpa, I2C, fc7, cal, test, bias)
+#probe = mpa_probe_test("../MPA_Results/TEST", mpa, I2C, fc7, cal, test, bias)
 
 #measure     = SSA_measurements(ssa, I2C, FC7, cal, analog_mux_map, pwr, biascal)
 #toptest     = SSA_test_top(ssa, I2C, FC7, cal, biascal, pwr, test, measure)

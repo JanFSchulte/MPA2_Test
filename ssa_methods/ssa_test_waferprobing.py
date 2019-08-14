@@ -15,14 +15,6 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-'''
-It run most of tests on the SSA ASIC in ~2min.
-This class is used in th ewafer probing mpl_toolkits
-
-Example:
-ssa_main_measure = SSA_Measurements()
-ssa_main_measure.RUN()
-'''
 
 class SSA_Measurements():
 
@@ -59,6 +51,7 @@ class SSA_Measurements():
 		## Setup log files #####################
 		if(chip=='default'): chip_info = self.tag
 		else: chip_info = chip
+		self.total_time = time.time()
 		time_init = time.time()
 		version = 0
 		while(True):
@@ -100,6 +93,7 @@ class SSA_Measurements():
 		self.summary.display()
 		self.ssa.pwr.off(display=False)
 		utils.close_log_files()
+		utils.print_log(  "=>\tTOTAL TIME:   {:7.2f} s".format((time.time()-self.total_time)))
 		return self.test_good
 
 
@@ -194,12 +188,14 @@ class SSA_Measurements():
 		en = self.runtest.is_active('alignment')
 		while (en and wd < 3):
 			try:
-				self.fc7.reset(); time.sleep(0.1)
-				r1,r2,r3,r4 = self.ssa.alignment_all(display = False)
-				self.summary.set('alignment_cluster_data',  int(r2), '', '',  runname)
-				self.summary.set('alignment_lateral_left',  int(r3), '', '',  runname)
-				self.summary.set('alignment_lateral_right', int(r4), '', '',  runname)
-				if(not r2): self.test_good = False
+				for it in range(3):
+					self.fc7.reset(); time.sleep(0.1)
+					r1,r2,r3,r4 = self.ssa.alignment_all(display = False)
+					self.summary.set('alignment_cluster_data',  int(r2), '', '',  runname)
+					self.summary.set('alignment_lateral_left',  int(r3), '', '',  runname)
+					self.summary.set('alignment_lateral_right', int(r4), '', '',  runname)
+					if(r2): break
+					elif(it==2): self.test_good = False
 				break
 			except  Exception, error:
 				utils.print_warning("X>\tAlignment test error. Reiterating...")
@@ -214,10 +210,12 @@ class SSA_Measurements():
 		en = self.runtest.is_active('Cluster_Data')
 		while (en and wd < 3):
 			try:
-				r1 = self.test.cluster_data(mode = 'digital', nstrips=8, nruns = 1000, shift='default', display=False, file=filename, filemode='a', runname=runname)
+				r1 = self.test.cluster_data(mode = 'digital', nstrips=8, nruns = 100, shift='default', display=False, file=filename, filemode='a', runname=runname)
 				self.summary.set('ClusterData_DigitalPulses',  r1, '%', '',  runname)
-				utils.print_good("->\tCluster Data with Digital Pulses test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
-				if(r1<100.0): self.test_good = False
+				if(r1<100.0):
+					self.test_good = False
+				else:
+					utils.print_good("->\tCluster Data with Digital Pulses test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 				break
 			except  Exception, error:
 				utils.print_warning("X>\tCluster Data with Digital Pulses test error. Reiterating...")
@@ -234,8 +232,10 @@ class SSA_Measurements():
 			try:
 				r1 = self.test.cluster_data(mode = 'analog', nstrips=8, nruns = 100, shift='default', display=False, file=filename, filemode='a', runname=runname)
 				self.summary.set('ClusterData_ChargeInjection',  r1, '%', '',  runname)
-				utils.print_good("->\tCluster Data with ChargeInjection test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
-				if(r1<100.0): self.test_good = False
+				if(r1<100.0):
+					self.test_good = False
+				else:
+					utils.print_good("->\tCluster Data with ChargeInjection test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 				break
 			except Exception, error:
 				utils.print_warning("X>\tCluster Data with Charge Injection test error. Reiterating...")
@@ -252,7 +252,6 @@ class SSA_Measurements():
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		wd = 0
-		memtest = False
 		en = self.runtest.is_active('Memory')
 		while (en and wd < 3):
 			try:
@@ -270,8 +269,9 @@ class SSA_Measurements():
 					memres[v] = [r1, r2]
 					self.summary.set('Memory1_{:d}V'.format(int(v*1000)), r1, '%', '',  runname)
 					self.summary.set('Memory2_{:d}V'.format(int(v*1000)), r2, '%', '',  runname)
-					if(r1<100): self.test_good = False
-					if(r2<100): self.test_good = False
+					if((r1<100) or (r2<100)):
+						if(v >= 1.2):
+							self.test_good = False
 				break
 			except Exception, error:
 				utils.print_warning("X>\tMemory test error. Reiterating...")
@@ -281,28 +281,30 @@ class SSA_Measurements():
 				traceback.print_exception(*exc_info)
 				utils.print_warning("----------------------")
 				wd +=1;
-				if(wd>=3): self.test_good = False
+				if(wd>=3):
+					self.test_good = False
 		wd  = 0
 		en = self.runtest.is_active('L1_Data')
 		while (en and wd < 3):
 			try:
 				self.summary.set('L1_data',   0, '%', '',  runname)
 				self.summary.set('HIP_flags', 0, '%', '',  runname)
-				for v in vlist:
-					if(memres[v]==[100,100]):
-						print("->\tL1 data test will run ad DVDD={:1.3f}V".format(v))
-						if(v != self.dvdd_curr):
-							self.pwr.set_dvdd(v)
-							self.ssa.init(display=0)
-						r1, r2 = self.test.l1_data_basic(
-							mode = 'digital', runname =  str(v)+'V',
-							shift = shift[5], filemode = 'a',
-							file = filename)
-						self.summary.set('L1_data',   r1, '%', '',  runname)
-						self.summary.set('HIP_flags', r2, '%', '',  runname)
-						if(r1<100): self.test_good = False
-						if(r2<100): self.test_good = False
-						break
+				v = vlist[-1]
+				if(v != self.dvdd_curr):
+					self.pwr.set_dvdd(v)
+					self.ssa.init(display=0)
+				if(memres[v] == [100, 100]):
+					r1, r2 = self.test.l1_data_basic(
+						mode = 'digital', runname =  str(v)+'V',
+						shift = shift[5], filemode = 'a',
+						file = filename)
+				else:
+					r1 = 0
+					r2 = 0
+				self.summary.set('L1_data',   r1, '%', '',  runname)
+				self.summary.set('HIP_flags', r2, '%', '',  runname)
+				if(r1<100): self.test_good = False
+				if(r2<100): self.test_good = False
 				break
 			except Exception, error:
 				exc_info = sys.exc_info()
@@ -365,7 +367,7 @@ class SSA_Measurements():
 					iterative_step_trim = 1,        # Iterative steps to acheive lower variability
 					caldac = self.caldac,           # 'default' | 'evaluate' | value [gain, offset]
 					thrdac = self.thdac,            # 'default' | 'evaluate' | value [gain, offset]
-					nevents = 100,                 # Number of calibration pulses
+					nevents = 1000,                 # Number of calibration pulses
 					plot = False,                    # Fast plot of the results
 					filename = filename)
 

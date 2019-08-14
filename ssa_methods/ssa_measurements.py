@@ -151,7 +151,7 @@ class SSA_measurements():
 		plt.show()
 
 	###########################################################
-	def FE_Gain_Noise_Std__Calculate(self, input_files, output_file, nevents=1000, thdac_gain = 'default'):
+	def FE_Gain_Noise_Std__Calculate(self, input_files, output_file, nevents=1000, thdac_gain = 'default', plot = False):
 		thresholds = {}; noise = {};
 		thmean = {}; sigmamean = {}; tmp = [];
 		calpulses = []; scurve_table = {}; runlist = {}

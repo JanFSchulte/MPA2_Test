@@ -1,15 +1,28 @@
 #
+import os
 import csv
-import numpy
+import numpy as np
 import time
 import sys
 from d19cScripts import *
 from myScripts import *
+from mpa_methods.mpa_main import *
 import time
 
 class mpa_probe_test:
-	def __init__(self, DIR, mpa, I2C, fc7, cal, test, bias):
+	def __init__(self, DIR):
 		# Classes
+		self.DIR = DIR
+		exists = False
+		version = 0
+		while not exists:
+			if not os.path.exists(self.DIR+"_v"+str(version)):
+				print self.DIR
+				self.DIR = self.DIR+"_v"+str(version)
+				os.makedirs(self.DIR)
+				exists = True
+			version += 1
+		print self.DIR + "<<< USING THIS"
 		self.mpa = mpa;
 		self.I2C = I2C;
 		self.fc7 = fc7;
@@ -17,7 +30,6 @@ class mpa_probe_test:
 		self.test = test;
 		self.bias = bias;
 		# Variables
-		self.DIR = DIR
 		self.GlobalSummary = []
 		self.LogFile = open(self.DIR+"/LogFile.txt", "w")
 		self.Legend = ["Chip_N", "I/O pwr reset" , "Digital pwr reset", "Analog pwr reset", "I/O pwr " , "Digital pwr ", "Analog pwr ", "Shift Test", "Ground Value", "Bias Average Cal", "Gain", "Threshold LSB", "Calibration LSB", "Noise [Cal LSB]", "Threshold Spread [Cal LSB]", "Pixel test", "Strip input test", "Memory @ 1.2 test", "Memory @ 1.0 test"]
@@ -47,47 +59,58 @@ class mpa_probe_test:
 		self.trim_amplitude = 20
 		# Digital Paramters
 		self.signal_integrity_limit = 0.99
-	def RUN(self, chipinfo):
+
+
+	def RUN(self, chipinfo, N = 99):
 		self.colprint(chipinfo)
 		self.colprint_general(chipinfo)
 		self.GlobalSummary = [-1000]*19
-		self.GlobalSummary[0] = int(chipinfo)
+		self.GlobalSummary[0] = N
 		self.start = time.time()
+		PowerFlag1 = 1
+		PowerFlag2 = 1
 		try:
 			self.mpa.pwr.set_supply(mode = 'on', d = 1.00, a = 1.2, p = 1.2, bg = 0.270, measure = False, display = False)
 			self.mpa.pwr._disable()
-			PowerStatus = self.power_on_check(leakage = 1)
+			PowerStatus, PowerFlag1 = self.power_on_check(leakage = 1)
 			self.colprint(PowerStatus)
 			self.colprint_general(PowerStatus)
-			PST1 = self.PVALS[0]; self.GlobalSummary[1] = PST1; DP1  = self.PVALS[1]; self.GlobalSummary[2] = DP1; AN1  = self.PVALS[2]; self.GlobalSummary[3] = AN1
-			self.colprint("Enabling MPA")
-			self.mpa.pwr._enable()
-			PowerStatus = self.power_on_check(leakage = 0)
-			self.colprint(PowerStatus)
-			self.colprint_general(PowerStatus)
-			PST2 = self.PVALS[0]; self.GlobalSummary[4] = PST2; DP2  = self.PVALS[1]; self.GlobalSummary[5] = DP2; AN2  = self.PVALS[2]; self.GlobalSummary[6] = AN2
-			self.mpa.init_probe()
-			#PowerStatus = self.power_on_check(leakage = 0)
-			#self.colprint_general(PowerStatus)
-			#PST3 = self.PVALS[0]; DP3  = self.PVALS[1]; AN3  = self.PVALS[2]
-			with open(self.DIR+'/PowerMeasurement.csv', 'wb') as csvfile:
-				CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
-				#DigP = [DP1, DP2, DP3, AN1, AN2, AN3, PST1, PST2, PST3]
-				DigP = [DP1, DP2, AN1, AN2, PST1, PST2]
-				CVwriter.writerow(DigP)
-			if self.test.shift(verbose = 0):
-				self.colprint("Shift Test Passed")
-				self.GlobalSummary[7] = 1
-			else:
-				self.colprint("Shift Test Failed")
-				self.GlobalSummary[7] = 0
-			self.analog_measurement()
-			self.digital_test()
-			self.colprint("DONE!")
+			if PowerFlag1:
+				PST1 = self.PVALS[0]; self.GlobalSummary[1] = PST1; DP1  = self.PVALS[1]; self.GlobalSummary[2] = DP1; AN1  = self.PVALS[2]; self.GlobalSummary[3] = AN1
+				self.colprint("Enabling MPA")
+				self.mpa.pwr._enable()
+				PowerStatus, PowerFlag2 = self.power_on_check(leakage = 0)
+				self.colprint(PowerStatus)
+				self.colprint_general(PowerStatus)
+				if PowerFlag2:
+					PST2 = self.PVALS[0]; self.GlobalSummary[4] = PST2; DP2  = self.PVALS[1]; self.GlobalSummary[5] = DP2; AN2  = self.PVALS[2]; self.GlobalSummary[6] = AN2
+					self.mpa.init_probe()
+					with open(self.DIR+'/PowerMeasurement.csv', 'wb') as csvfile:
+						CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
+						DigP = [DP1, DP2, AN1, AN2, PST1, PST2]
+						CVwriter.writerow(DigP)
+					if self.test.shift(verbose = 0):
+						self.colprint("Shift Test Passed")
+						self.GlobalSummary[7] = 1
+					else:
+						self.colprint("Shift Test Failed")
+						self.GlobalSummary[7] = 0
+					self.analog_measurement()
+					self.digital_test()
+					self.colprint("DONE!")
 		except:
 			self.colprint("WE MESSED UP!!!")
+			sys.stdout.write("\033[1;31m")
+			print("WE MESSED UP!!!")
+			sys.stdout.write("\033[0;0m")
 			self.Flag = 0
 		self.mpa.pwr.set_supply(mode = 'off', measure = False)
+		if (PowerFlag1 == 0) or (PowerFlag2 == 0):
+			self.colprint("Power Error")
+			self.colprint_general("Power Error")
+			sys.stdout.write("\033[1;31m")
+			print("Power Error!!!")
+			sys.stdout.write("\033[0;0m")
 		if (os.path.isfile(self.DIR+'/../GlobalSummary.csv')):
 			with open(self.DIR+'/../GlobalSummary.csv', 'a') as csvfile:
 				CVwriter = csv.writer(csvfile, delimiter=',',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -106,10 +129,9 @@ class mpa_probe_test:
 		self.colprint(str(round(self.end - self.start)) + "sec")
 		self.colprint_general("TOTAL TIME:")
 		self.colprint_general(str(round(self.end - self.start)) + "sec")
-		self.LogFile.close()
 		return self.Flag
 	def colprint(self, text):
-		sys.stdout.write("\033[1;31m")
+		sys.stdout.write("\033[1;34m")
 		print(str(text))
 		sys.stdout.write("\033[0;0m")
 		self.LogFile.write(str(text)+"\n")
@@ -176,15 +198,16 @@ class mpa_probe_test:
 			anapix.append(self.test.analog_pixel_test(print_log=0, verbose = 0))
 			BadPixA = self.GetActualBadPixels(anapix)
 		else: BadPixA = anapix[0]
-		self.colprint(str(size(BadPixA)) + " << Bad Pixels (Ana)"); self.GlobalSummary[15] = size(BadPixA)
-		self.colprint_general(str(size(BadPixA)) + " << Bad Pixels (Ana)")
+		self.colprint(str(np.size(BadPixA)) + " << Bad Pixels (Ana)")
+		self.GlobalSummary[15] = np.size(BadPixA)
+		self.colprint_general(str(np.size(BadPixA)) + " << Bad Pixels (Ana)")
 		Analog = 1
 		if (BadPixA == []): Analog = 0
 		with open(self.DIR+'/BadPixelsA.csv', 'wb') as csvfile:
 			CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			for i in BadPixA: CVwriter.writerow(i)
 		# Input Strip Test:
-		strip_in = self.test.strip_in_scan(print_file = 1, filename = self.DIR + "/striptest", probe=0, verbose = 0)
+		strip_in = self.test.strip_in_scan(print_file = 1, filename = self.DIR + "/striptest", probe=1, verbose = 0)
 		good_si = 0
 		for i in range(0,8):
 			if (strip_in[i,:].all() > self.signal_integrity_limit): good_si = 1
@@ -194,7 +217,7 @@ class mpa_probe_test:
 			StripIn = 0
 		else:
 			self.colprint("Changing edge")
-			strip_in = self.test.strip_in_scan(print_file = 1, edge = "rising", filename = self.DIR + "/striptest", probe=0, verbose = 0)
+			strip_in = self.test.strip_in_scan(print_file = 1, edge = "rising", filename = self.DIR + "/striptest", probe=1, verbose = 0)
 			good_si = 0
 			for i in range(0,8):
 				if (strip_in[i,:].all() > self.signal_integrity_limit): good_si = 1
@@ -228,7 +251,7 @@ class mpa_probe_test:
 			CVwriter.writerow(DigitalFlags)
 
 	def memory_test(self, voltage):
-		self.mpa.pwr.set_dvdd(voltage/10)
+		self.mpa.pwr.set_dvdd(voltage/100.0)
 		self.mpa.init_probe()
 		bad_pix, error, stuck, i2c_issue, missing = self.test.mem_test(print_log=1, filename = self.DIR + "/LogMemTest_" + str(voltage) + ".txt", verbose = 0)
 		mempix = []
@@ -269,21 +292,22 @@ class mpa_probe_test:
 		self.PVALS = ["0","0","0"]
 		self.colprint("Checking Power-On...")
 		PowerMessage = ""
+		flag = 1
 		self.PVALS[0] = self.mpa.pwr.get_power_pads()
 		self.PVALS[1] = self.mpa.pwr.get_power_digital()
 		self.PVALS[2] = self.mpa.pwr.get_power_analog()
-		if (self.PVALS[0] > self.current_limit_pads_high): return "Pad power too high! ("+str(self.PVALS[0])+")"
-		elif (self.PVALS[0] < self.current_limit_pads_low): return "Pad power too low! ("+str(self.PVALS[0])+")"
+		if (self.PVALS[0] > self.current_limit_pads_high): PowerMessage += "Pad power too high! ("+str(self.PVALS[0])+")"; flag = 0
+		elif (self.PVALS[0] < self.current_limit_pads_low): PowerMessage += "Pad power too low! ("+str(self.PVALS[0])+")"; flag = 0
 		else: PowerMessage += "Pad power OK! ("+str(self.PVALS[0])+")  "
 		if leakage:
-			if (self.PVALS[1] > self.current_limit_digital_high_leakage): return "Digital power too high! ("+str(self.PVALS[1])+")"
-			elif (self.PVALS[1] < self.current_limit_digital_low_leakage):  return "Digital power too low!  ("+str(self.PVALS[1])+")"
+			if (self.PVALS[1] > self.current_limit_digital_high_leakage): PowerMessage += "Digital power too high! ("+str(self.PVALS[1])+")"; flag = 0
+			elif (self.PVALS[1] < self.current_limit_digital_low_leakage):  PowerMessage += "Digital power too low!  ("+str(self.PVALS[1])+")"; flag = 0
 			else: PowerMessage += "Digital power OK! ("+str(self.PVALS[1])+")  "
 		else:
-			if (self.PVALS[1] > self.current_limit_digital_high): return "Digital power too high! ("+str(self.PVALS[1])+")"
-			elif (self.PVALS[1] < self.current_limit_digital_low):  return "Digital power too low!  ("+str(self.PVALS[1])+")"
+			if (self.PVALS[1] > self.current_limit_digital_high): PowerMessage += "Digital power too high! ("+str(self.PVALS[1])+")"; flag = 0
+			elif (self.PVALS[1] < self.current_limit_digital_low):  PowerMessage += "Digital power too low!  ("+str(self.PVALS[1])+")"; flag = 0
 			else: PowerMessage += "Digital power OK! ("+str(self.PVALS[1])+")  "
-		if (self.PVALS[2] > self.current_limit_analog_high): return "Analog power too high! ("+str(self.PVALS[2])+")"
-		elif (self.PVALS[2] < self.current_limit_analog_low):  return "Analog power too low!  ("+str(self.PVALS[2])+")"
+		if (self.PVALS[2] > self.current_limit_analog_high): PowerMessage += "Analog power too high! ("+str(self.PVALS[2])+")"; flag = 0
+		elif (self.PVALS[2] < self.current_limit_analog_low):  PowerMessage += "Analog power too low!  ("+str(self.PVALS[2])+")"; flag = 0
 		else: PowerMessage += "Analog power OK! ("+str(self.PVALS[2])+")  "
-		return PowerMessage
+		return PowerMessage, flag
