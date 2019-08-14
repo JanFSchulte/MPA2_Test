@@ -95,19 +95,20 @@ class ssa_wp_analyze():
         self.plot_data(
             dlist=['I_DVDD_calibrated','I_AVDD_calibrated','I_PVDD_calibrated'],
             unit = 'mA', minv=15, maxv=60, npoints=10, reverse=0, show=0)
-        self.plot_data(
-            dlist=['noise_mean_trim',  'noise_mean_test'],
-            unit = r'${ThDAC_{LSB}}$', minv=0, maxv=2.0, npoints=9, reverse=0, show=0)
         self.plot_wafer_scale(
-            property='noise_mean_trim', unit=r'${ThDAC_{LSB}}$', minv=0.9, maxv=2, reverse=1, show = 0)
+            property='noise_mean_trim', unit=r'${ThDAC_{LSB}}$', minv=1.0, maxv=2.5, reverse=1, show = 0)
+        self.plot_wafer_scale(
+            property='noise_mean_test', unit=r'${ThDAC_{LSB}}$', minv=1.0, maxv=2.5, reverse=1, show = 0)
         self.plot_data(
             dlist=['noise_mean_trim',  'noise_mean_test'],
             unit = r'${ThDAC_{LSB}}$', minv=0, maxv=1.8, npoints=9, reverse=0, show=0,
             datalabels = [r'Average FE noise for 2.0 fC input charge', r'Average FE noise for 0.8 fC input charge'])
         self.plot_data(
             dlist=['threshold_std_init', 'threshold_std_trim',  'threshold_std_test'] ,
-            unit = r'${ThDAC_{LSB}}$', minv=0, maxv=5.0, npoints=12, reverse=0, show=0,
+            unit = r'${ThDAC_{LSB}}$', minv=0, maxv=5.0, npoints=11, reverse=0, show=0,
             datalabels = [r'$\sigma_{Th}$ - not calibrated', r'$\sigma_{Th}$ - trim at 2 fC - meas at 2 fC', r'$\sigma_{Th}$ - trim at 2.0 fC - meas at 0.8 fC'])
+        self.plot_wafer_scale(
+            property='threshold_std_trim', unit=r'percent', minv=0, maxv=2, reverse=1, show = 0)
         self.plot_data(
             dlist=['Bias_THDAC_GAIN'] ,
             unit = r'$mV/\overline{ThDAC_{LSB}}$', minv=-2.5, maxv=-1.5, npoints=11, reverse=0, show=0,
@@ -116,7 +117,23 @@ class ssa_wp_analyze():
             dlist=['fe_gain_mean' ] ,
             unit = r'$mV/fC$', minv=40, maxv=70, npoints=10, reverse=0, show=0,
             datalabels = [r'$\overline{G_{FE}}$'])
-
+        self.plot_wafer_scale(
+            property='ClusterData_DigitalPulses', unit=r'percent', minv=0, maxv=100, reverse=0, show = 0)
+        self.plot_data(
+            dlist=['ClusterData_DigitalPulses'],
+            unit = 'Fraction of passed tests', minv=0, maxv=100, npoints=11, reverse=0, show=0)
+        self.plot_data(
+            dlist=['Memory1_1200V' , 'Memory2_1200V', 'Memory1_1050V' , 'Memory2_1050V' ],
+            unit = 'Fraction of passed tests', minv=0, maxv=110, npoints=12, reverse=0, show=0, dimension=[10,7],
+            datalabels = ['1.2 V Memory L1' , '1.2 V Memory HIP', '1.0 V Memory L1' , '1.0 V Memory HIP'])
+        self.plot_wafer_scale(
+            property='Memory1_1200V', unit=r'percent', minv=0, maxv=100, reverse=0, show = 0)
+        self.plot_wafer_scale(
+            property='Memory1_1050V', unit=r'percent', minv=0, maxv=100, reverse=0, show = 0)
+        self.plot_wafer_scale(
+            property='Memory2_1200V', unit=r'percent', minv=0, maxv=100, reverse=0, show = 0)
+        self.plot_wafer_scale(
+            property='Memory2_1050V', unit=r'percent', minv=0, maxv=100, reverse=0, show = 0)
 
     def plot_wafer_pass_fail(self, mode = 'all-m', unit=''):
         #self.results = np.array(np.random.poisson(3, 90))
@@ -132,8 +149,8 @@ class ssa_wp_analyze():
         if(show):
             plt.show()
 
-    def plot_data(self, dlist=['I_DVDD_calibrated','I_AVDD_calibrated','I_PVDD_calibrated'], unit = 'mA', minv='0', maxv='max', npoints=9, reverse=0, datalabels='auto', show=1):
-        fig = plt.figure(figsize=(10,10))
+    def plot_data(self, dlist=['I_DVDD_calibrated','I_AVDD_calibrated','I_PVDD_calibrated'], unit = 'mA', minv='0', maxv='max', npoints=9, reverse=0, datalabels='auto', show=1, dimension=[10,10]):
+        fig = plt.figure(figsize=(dimension[0],dimension[1]))
         ax = fig.add_subplot(1, 1, 1)
         plt.xticks(range(0, len(self.measured['I_DVDD_reset'])+1, 5), fontsize=16)
         plt.ylabel(unit, fontsize=16)
@@ -162,7 +179,7 @@ class ssa_wp_analyze():
 
 
 sa = ssa_wp_analyze() # Create object
-sa.plot_stats('Wafer_W4') # Plot main set of statistics about the selected wafer
+#sa.plot_stats('Wafer_W4') # Plot main set of statistics about the selected wafer
 
 
 #sa.plot_wafer_scale('I_DVDD_calibrated', 'mA', 'min', 'max', reverse=1)
