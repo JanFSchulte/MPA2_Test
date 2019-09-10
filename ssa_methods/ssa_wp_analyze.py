@@ -4,7 +4,7 @@ You can use:
 >   sa.plot_stats('WaferName') # Plot main set of statistics about the selected wafer
 OR
 >   sa = ssa_wp_analyze()
->   sa.import_data('Wafer_W4', verboselevel=0, folder = '../SSA_Results/WaferMap/')
+>   sa.import_data('Wafer_W4', verboselevel=0)
 >   sa.plot_wafer_scale('VAL', 'unit', 'min', 'max', reverse=1)
 
 Possible values for 'VAL':
@@ -31,14 +31,23 @@ import matplotlib.pyplot as plt
 
 class ssa_wp_analyze():
 
-    def __init__(self):
-        pass
-
-    def import_data(self, wafername = 'Wafer_W3_v3', folder = '../SSA_Results/WaferMap/', verboselevel = 0):
+    def __init__(self, folder = '../SSA_Results/WaferProbing/', display=False):
         self.folder = folder
+        if(display):
+            print("->\tAvailable wafers info:")
+            for wp in os.listdir(self.folder):
+                print("  \t-  "+wp)
+
+    def import_data(self, wafername = 'Wafer_W3_v3', verboselevel = 0):
         self.wafer = wafername
-        summary = CSV.csv_to_array(folder+'/'+wafername+'/GlobalSummary.csv', noheader=True)
-        expvect = CSV.csv_to_array('ssa_methods/Configuration/expected_values.csv')
+        try:
+            summary = CSV.csv_to_array(self.folder+'/'+wafername+'/GlobalSummary.csv', noheader=True)
+            expvect = CSV.csv_to_array('ssa_methods/Configuration/expected_values.csv')
+        except:
+            print("x>  \tMissing log files. Skipping directory " + wafername)
+            return False
+        if not os.path.exists(self.folder+'/'+wafername+'/plots'):
+            os.makedirs(self.folder+'/'+wafername+'/plots')
         for version in range(8,0,-1):
             strm = "_v{:d}".format(version)
             v1 = [i for (i,v) in enumerate(summary[:,0]) if strm in v]
@@ -50,7 +59,7 @@ class ssa_wp_analyze():
         self.chipsum = {
             'memory_1V0': np.ones(len(summary)),
             'memory_1V2': np.ones(len(summary)),
-            'stub'      : np.ones(len(summary)),
+            'digital'   : np.ones(len(summary)),
             'analog'    : np.ones(len(summary)),
             'all'       : np.ones(len(summary)),
             'all-m'     : np.ones(len(summary)),
@@ -71,25 +80,30 @@ class ssa_wp_analyze():
                     if(verboselevel>=1):
                         print("X>\tchip="+str(chipn)+"  "+str(inst[0])+"  value="+str(i)+"  range=["+str(inst[1])+","+str(inst[2])+"]")
                     self.chipsum['all'][chipn] = 0
-                    if(  inst[0] in ['Memory1_1050V', 'Memory2_1050V', 'L1_data']):
+                    if(  inst[0] in ['Memory1_1050V', 'Memory2_1050V']):
                         self.chipsum['memory_1V0'][chipn] = 0
-                    elif(inst[0] in ['Memory2_1200V', 'Memory2_1200V', 'HIP_flags']):
+                    elif(inst[0] in ['Memory1_1200V', 'Memory2_1200V']):
                         self.chipsum['memory_1V2'][chipn] = 0
                     elif(inst[0] in ['ClusterData_DigitalPulses', 'ClusterData_ChargeInjection',
-                                     'alignment_cluster_data', 'alignment_lateral_left, alignment_lateral_right']):
-                        self.chipsum['stub'][chipn] = 0
+                                     'alignment_cluster_data', 'alignment_lateral_left, alignment_lateral_right', 'L1_data']):
+                        self.chipsum['digital'][chipn] = 0
                     else:
                         self.chipsum['analog'][chipn] = 0
                     #print chipn, inst, i
                     tmp.append(0)
-                    self.chipsum['all-m']    = np.logical_and( self.chipsum['analog'], self.chipsum['stub'] )
-                    self.chipsum['all-m1v0'] = np.logical_and( self.chipsum['analog'], self.chipsum['stub'], self.chipsum['memory_1V2'])
+                    self.chipsum['all-m']    = np.logical_and( self.chipsum['analog'], self.chipsum['digital'] )
+                    self.chipsum['all-m1v0'] = np.logical_and( self.chipsum['analog'], self.chipsum['digital'], self.chipsum['memory_1V2'])
                 chipn += 1
             self.results[ inst[0] ] = tmp
             cnt += 1
+            fy = open(self.folder+"/"+wafername+"/yield.csv", 'w')
+            for cs in self.chipsum:
+                fy.write("{:s}, {:7.3f}, \n".format(cs, 100.0*sum(self.chipsum[cs])/90.0 ))
+            fy.close()
+        return True
 
     def plot_stats(self, wafer = 'Wafer_W4'):
-        self.import_data(wafer, verboselevel=0, folder = '../SSA_Results/WaferMap/')
+        #self.import_data(wafer, verboselevel=0)
         self.plot_wafer_scale(
             property='I_DVDD_calibrated', unit=r'mA', minv=20, maxv=40, reverse=1, show = 0)
         self.plot_data(
@@ -177,8 +191,29 @@ class ssa_wp_analyze():
         if(show):
             plt.show()
 
+def analyze_all_wafers(plot=False):
+    sa = ssa_wp_analyze()
+    fy = open(sa.folder+"/yield.csv", 'w')
+    first = True
+    for wp in os.listdir(sa.folder):
+        rt = sa.import_data(wp, verboselevel=0)
+        if(rt):
+            print("Running chip " + wp)
+            if(first):
+                fy.write("Wafer, ")
+                for cs in sa.chipsum:
+                    fy.write("{:s}, ".format(cs))
+                first = False
+            fy.write(" \n{:s}, ".format(wp))
+            for cs in sa.chipsum:
+                fy.write("{:7.3f}, ".format(100.0*sum(sa.chipsum[cs])/90.0 ))
+            if(plot):
+                sa.plot_stats()
+    fy.close()
 
-sa = ssa_wp_analyze() # Create object
+#   sa = ssa_wp_analyze()
+#   sa.import_data("Wafer_N2XM21_11B5")
+#sa = ssa_wp_analyze() # Create object
 #sa.plot_stats('Wafer_W4') # Plot main set of statistics about the selected wafer
 
 

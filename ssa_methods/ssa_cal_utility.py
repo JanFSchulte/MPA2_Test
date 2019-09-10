@@ -168,7 +168,7 @@ class SSA_cal_utility():
 			if(rdmode == 'fast'):
 				self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
 			#Configure_TestPulse_MPA_SSA(200, nevents)# init firmware cal pulse
-			Configure_TestPulse_SSA(50,50,500,nevents,0,0,0)
+			Configure_TestPulse_SSA(50,50,1000,nevents,0,0,0)
 
 			for cal_val in  cal_ampl:
 				# close shutter and clear counters
@@ -1044,6 +1044,42 @@ class SSA_cal_utility():
 			plt.plot(latency, thlist, 'o')
 			plt.show()
 		return latency, thlist
+
+
+#	ssa_cal.simple_map(threshold=100)
+	def simple_map(self, cal_ampl = 250, nevents = 1000, threshold = 60, rdmode = 'fast', striplist = range(1,121),countershift = 0):
+		utils.activate_I2C_chip()
+		self.fc7.SendCommand_CTRL("stop_trigger")
+		self.ssa.readout.cluster_data(initialize=True)
+		self.ssa.ctrl.activate_readout_async()
+		if(rdmode == 'fast'):
+			self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
+		Configure_TestPulse_SSA(50,50,500,nevents,0,0,0)
+		self.fc7.close_shutter(8)
+		self.fc7.clear_counters(8)
+		self.ssa.strip.set_cal_strips(mode = 'counter', strip = 'all')
+		self.ssa.ctrl.set_cal_pulse(amplitude = cal_ampl, duration = 15, delay = 'keep')
+		data = np.zeros(120, dtype=np.int)
+		self.ssa.ctrl.set_threshold(threshold);  # set the threshold
+		self.fc7.clear_counters(8, 5)
+		self.fc7.open_shutter(8, 5)
+		self.fc7.SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
+		sleep(0.1)
+		self.fc7.close_shutter(8,5)
+		if(rdmode == 'fast'):
+			failed, data = self.ssa.readout.read_counters_fast(striplist, shift = countershift, initialize = 0)
+		elif(rdmode == 'i2c'):
+			failed, data = self.ssa.readout.read_counters_i2c(striplist)
+		else:
+			failed = True
+		plt.clf()
+		plt.ylim(0,max(data)); plt.xlim(0,121);
+		plt.bar(range(0,120), data)
+		plt.show()
+		return data
+
+
+
 
 	###########################################################
 	def __set_variables(self):

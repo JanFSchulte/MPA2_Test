@@ -316,7 +316,20 @@ class ssa_power_utility:
 		utils.print_enable(True)
 		if(display): utils.print_log( '->  \tSSA enabled ')
 
-
+	def set_vbg(self, chip = 'SSA', targetvoltage = 0.280):
+		val = 0x37 if (chip == 'SSA') else 0x36
+		utils.print_enable(False)
+		if (targetvoltage > 0.5):
+			targetvoltage = 0.5
+		Vc2 = 4095/1.5
+		setvoltage = int(round(targetvoltage * Vc2))
+		setvoltage = setvoltage << 4
+		Configure_MPA_SSA_I2C_Master(1, 2)
+		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
+		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, val, setvoltage)  # tx to DAC C
+		utils.activate_I2C_chip()
+		utils.print_enable(True)
+		
 	def __initialise_constants(self):
 		self.pcbwrite = 0;
 		self.pcbread = 1;

@@ -124,6 +124,7 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
    cnfg_fast_tp_fsm_shutter_en		40012009    00000080     1     1 *trigger source 6: enable open-close shutter signals
    cnfg_fast_seu_ntriggers_to_skip	4001200A    ffffffff     1     1 *trigger source 6: number of l1a to skip
 * Physical Interface Abstraction Layer
+   cnfg_phy_slvs_ssa_first_counter_del  40013000    0000ff00	 1     1
    cnfg_phy_slvs_raw_mode_en		40013000    00000001     1     1 *1 - outputs 20000 clock cycles of the raw data from the stub lines, 0 - outputs parsed counters for the MPA/SSA chips
    cnfg_phy_cic_2s_spars		40013000    00000002     1     1 *enable 2s sparsified
    cnfg_phy_cic_clock_en		40013000    00000004     1     1 *enable cic clock

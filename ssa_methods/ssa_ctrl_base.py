@@ -3,6 +3,7 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
+from d19cScripts.phase_tuning_control import *
 
 import time
 import sys
@@ -145,7 +146,6 @@ class ssa_ctrl_base:
 		self.I2C.strip_write("DigCalibPattern_L", 0, 0)
 		self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 
-
 	def __do_phase_tuning(self):
 		cnt = 0; done = True
 		#print self.fc7.read("stat_phy_phase_tuning_done")
@@ -161,18 +161,22 @@ class ssa_ctrl_base:
 			done = False
 		return  done
 
-
-	def phase_tuning(self):
+	def phase_tuning(self, method = 'new'):
 		self.activate_readout_shift()
 		if(self.fc7.invert):
-			self.set_shift_pattern_all(0b01111111) #128 #0b01111111
+			self.set_shift_pattern_all(0b01111111)
+		elif(method == 'old'):
+			self.set_shift_pattern_all(0b10000000)
 		else:
-			self.set_shift_pattern_all(128) #128 #0b01111111
+			self.set_shift_pattern_all(0b10100000)
+
 		time.sleep(0.01)
 		self.set_lateral_lines_alignament()
 		time.sleep(0.01)
-		#rt = self.__do_phase_tuning()
-		rt = self.align_out()
+		if(method == 'old' or self.fc7.invert):
+			rt = self.align_out()
+		else:
+			rt = self.TuneSSA(0b10100000)
 		self.I2C.peri_write('OutPattern7/FIFOconfig', 7)
 		self.reset_pattern_injection()
 		self.activate_readout_normal()
@@ -191,6 +195,15 @@ class ssa_ctrl_base:
 				return False
 		return True
 
+	def TuneSSA(self, pattern=0b10100000):
+		state = True
+		for line in range(1,9):
+			TuneLine(line, np.array([pattern]),1,True,False)
+			if CheckLineDone(0,0,line) != 1:
+				print "Failed tuning line ", line
+				state = False
+		return state
+
 	def set_t1_sampling_edge(self, edge):
 		if edge == "rising" or edge == "positive":
 			self.I2C.peri_write('EdgeSel_T1', 1)
@@ -207,7 +220,7 @@ class ssa_ctrl_base:
 		self.I2C.peri_write('ReadoutMode',val)
 		if (self.I2C.peri_read("ReadoutMode") != val):
 			print "Error! I2C did not work properly"
-			exit(1)
+			#exit(1)
 
 
 	def activate_readout_async(self, ssa_first_counter_delay = 8, correction = 0):
@@ -218,7 +231,7 @@ class ssa_ctrl_base:
 		# check the value
 		if (self.I2C.peri_read("AsyncRead_StartDel_LSB") != ssa_first_counter_delay & 0xff):
 			print "Error! I2C did not work properly"
-			error(1)
+			#error(1)
 		# ssa set delay of the counters
 		fwdel = ssa_first_counter_delay + 24 + correction
 		if(fwdel >= 255):

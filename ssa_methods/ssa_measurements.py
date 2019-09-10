@@ -105,13 +105,13 @@ class SSA_measurements():
 
 
 	###########################################################
-	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = 0):
-		data = self.scurves_measure(cal_list = cal_list, trim_list = trim_list, mode = mode, rdmode = rdmode, filename = filename, runname = runname, plot = plot, nevents = nevents, speeduplevel = speeduplevel, countershift = countershift)
+	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = 0, d19c_firmware_issue_repeat=1):
+		data = self.scurves_measure(cal_list = cal_list, trim_list = trim_list, mode = mode, rdmode = rdmode, filename = filename, runname = runname, plot = plot, nevents = nevents, speeduplevel = speeduplevel, countershift = countershift, d19c_firmware_issue_repeat=d19c_firmware_issue_repeat)
 		if(plot):
 			self.scurves_plot(data)
 		return data
 
-	def scurves_measure(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = 0):
+	def scurves_measure(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = 0, d19c_firmware_issue_repeat=1):
 		plt.clf()
 		data = []
 		if(isinstance(filename, str)):
@@ -120,12 +120,12 @@ class SSA_measurements():
 			fo = False
 		for cal in cal_list:
 			if(trim_list == 'keep'):
-				d = self.cal.scurves(cal_ampl = cal, nevents = nevents,filename = fo, mode = mode, rdmode = rdmode,filename2 = 'trim',countershift = countershift, speeduplevel = speeduplevel,plot = False, msg = "CAL = " + str(cal))
+				d = self.cal.scurves(cal_ampl = cal, nevents = nevents,filename = fo, mode = mode, rdmode = rdmode,filename2 = 'trim',countershift = countershift, speeduplevel = speeduplevel,plot = False, msg = "CAL = " + str(cal), d19c_firmware_issue_repeat=d19c_firmware_issue_repeat)
 				data.append(d)
 			else:
 				for trim in trim_list:
 					t = self.cal.set_trimming(trim, 'all', False)
-					d = self.cal.scurves(cal_ampl = cal, nevents = nevents,filename = fo, mode = mode, rdmode = rdmode,filename2 = 'trim'+str(trim), countershift = countershift, speeduplevel = speeduplevel,plot = False, msg = "[CAL=" + str(cal) +"][TRIM="+str(trim)+']')
+					d = self.cal.scurves(cal_ampl = cal, nevents = nevents,filename = fo, mode = mode, rdmode = rdmode,filename2 = 'trim'+str(trim), countershift = countershift, speeduplevel = speeduplevel,plot = False, msg = "[CAL=" + str(cal) +"][TRIM="+str(trim)+']', d19c_firmware_issue_repeat=d19c_firmware_issue_repeat)
 					data.append(d)
 		return data
 
@@ -143,7 +143,7 @@ class SSA_measurements():
 		plt.ylabel("Counter value", fontsize=16)
 		plt.xlabel('Threshold', fontsize=16)
 		color=iter(sns.color_palette('husl'))
-		plt.ylim(0, 1001)
+		plt.ylim(0, 2000)
 		plt.xlim(10, 200)
 		for d in data:
 			c = next(color)

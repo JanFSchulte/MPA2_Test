@@ -214,7 +214,7 @@ class SSA_Measurements():
 		en = self.runtest.is_active('Cluster_Data')
 		while (en and wd < 3):
 			try:
-				r1 = self.test.cluster_data(mode = 'digital', nstrips=8, nruns = 1000, shift='default', display=False, file=filename, filemode='a', runname=runname)
+				r1 = self.test.cluster_data(mode = 'digital', nstrips=8, nruns = 100, shift='default', display=False, file=filename, filemode='a', runname=runname)
 				self.summary.set('ClusterData_DigitalPulses',  r1, '%', '',  runname)
 				utils.print_good("->\tCluster Data with Digital Pulses test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 				if(r1<100.0): self.test_good = False
@@ -232,7 +232,7 @@ class SSA_Measurements():
 		en = self.runtest.is_active('Pulse_Injection')
 		while (en and wd < 3):
 			try:
-				r1 = self.test.cluster_data(mode = 'analog', nstrips=8, nruns = 1000, shift='default', display=False, file=filename, filemode='a', runname=runname)
+				r1 = self.test.cluster_data(mode = 'analog', nstrips=8, nruns = 100, shift='default', display=False, file=filename, filemode='a', runname=runname)
 				self.summary.set('ClusterData_ChargeInjection',  r1, '%', '',  runname)
 				#utils.print_good("->\tCluster Data with ChargeInjection test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 				if(r1<100.0): self.test_good = False

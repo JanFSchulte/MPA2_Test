@@ -34,7 +34,7 @@ class ssa_calibration():
 		self.par_list = [
 			self.Parameter("Analog Ground Interal ", "GND",                   0.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Bandgap Voltage       ", "VBG",                   0.3, -1, -1, 'set_dont_calibrate'),
-			self.Parameter("Bandgap Voltage       ", "Bias_BOOSTERBASELINE",  0.6, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("Booster baseline      ", "Bias_BOOSTERBASELINE",  0.6, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Booster Feedback Bias ", "Bias_D5BFEED",         82.0, -1, -1, 'set_calibrate'),
 			self.Parameter("Preamplifier Bias     ", "Bias_D5PREAMP",        82.0, -1, -1, 'set_calibrate'),
 			self.Parameter("TRIM DAC range        ", "Bias_D5TDR",          115.0, -1, -1, 'set_calibrate'),
@@ -86,7 +86,10 @@ class ssa_calibration():
 		for par in self.par_list:
 			value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
 			voltage = voltage*1E3
-			utils.print_log( "->  \t" + par.full_name + ": " + (" [%3d] %7.3f mV") % (value, voltage) )
+			if(par.docalibrate == 'set_calibrate'):
+				utils.print_log( "->  \t" + par.full_name + ": " + (" [{:3d}] {:7.3f} mV  (nominal = {:7.3f})".format(value, voltage, par.nominal) ))
+			else:
+				utils.print_log( "->  \t" + par.full_name + ": " + (" [{:3d}] {:7.3f} mV".format(value, voltage) ))
 			par.curr_value = voltage
 		self.ssa.ctrl.set_output_mux('highimpedence')
 		if return_data:
