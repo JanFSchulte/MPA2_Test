@@ -13,12 +13,13 @@ from ssa_methods.ssa_inject_utility import *
 
 class SSA_ASIC:
 
-	def __init__(self, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
+	def __init__(self, index, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
+		self.index   = index
 		self.i2c     = I2C
 		self.ctrl    = ssa_ctrl_base(I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
 		self.strip   = ssa_ctrl_strip(I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
 		self.inject  = SSA_inject(I2C, FC7, self.ctrl, self.strip)
-		self.readout = SSA_readout(I2C, FC7, self.ctrl, self.strip)
+		self.readout = SSA_readout(index, I2C, FC7, self.ctrl, self.strip)
 		self.pwr     = pwr
 		self.fc7     = FC7
 		self.generic_parameters = {}
@@ -201,7 +202,7 @@ class SSA_ASIC:
 			fo.write(str(runname) + ' ; ' + str(alined_left) + " ; " + str(alined_right) + ' \n')
 			fo.close()
 		return [alined_left, alined_right]
-		
+
 
 	def cl_word_aligned(self):
 		if ('cl_word_alignment_digital' in self.generic_parameters) and ('cl_word_alignment_analog' in self.generic_parameters):

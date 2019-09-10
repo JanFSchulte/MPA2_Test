@@ -401,15 +401,15 @@ class SSA_Measurements():
 				if(wd>=3): self.test_good = False
 		wd = 0
 
-	def _init(self):
-		self.ssa = ssa;
-		self.I2C = ssa_i2c;
-		self.fc7 = ssa.fc7;
-		self.cal = ssa_cal;
-		self.pwr = ssa_pwr;
-		self.biascal = ssa_biascal;
-		self.test = ssa_test;
-		self.measure = ssa_measure;
+	def _init(self, chip = ssa0):
+		self.ssa = chip;
+		self.I2C = chip.i2c;
+		self.fc7 = chip.chip.fc7;
+		self.cal = chip.cal;
+		self.pwr = chip.pwr;
+		self.biascal = chip.biascal;
+		self.test = chip.test;
+		self.measure = chip.measure;
 		self.dvdd = 1.05; #for the offset of the board
 		self.pvdd = 1.20;
 		self.avdd = 1.20;

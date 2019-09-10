@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 
 class SSA_readout():
 
-	def __init__(self, I2C, FC7, ssactrl, ssastrip):
+	def __init__(self, index, I2C, FC7, ssactrl, ssastrip):
+		self.index = index
 		self.I2C = I2C;	self.fc7 = FC7;self.ctrl = ssactrl;
 		self.strip = ssastrip; self.utils = utils;
 		self.ofs_initialised = False;  self.ofs = [0]*6;

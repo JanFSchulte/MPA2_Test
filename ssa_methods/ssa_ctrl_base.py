@@ -4,7 +4,7 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from d19cScripts.phase_tuning_control import *
-
+import random
 import time
 import sys
 import inspect
@@ -257,6 +257,17 @@ class ssa_ctrl_base:
 		self.I2C.peri_write('OutPattern6',line6)
 		self.I2C.peri_write('OutPattern7/FIFOconfig',line7)
 
+	def test_i2c_control(self):
+		d = []; r = [];
+		for i in range(5):
+			d.append(random.randint(0,255))
+			self.I2C.peri_write('OutPattern{:0}'.format(i), d[-1])
+		for i in range(5):
+			r.append(self.I2C.peri_read('OutPattern{:0}'.format(i)))
+		if(d==r):
+			utils.print_good("->\tI2C control check passed" + ' expected=['+','.join(map(str, d))+']'  + ' found=['+','.join(map(str, r))+']')
+		else:
+			utils.print_error("->\tI2C control check failed" + ' expected=['+','.join(map(str, d))+']'  + ' found=['+','.join(map(str, r))+']')
 
 	def set_async_delay(self, value):
 		msb = (value & 0xFF00) >> 8

@@ -415,10 +415,12 @@ def SetMainSlaveMap(verbose = 1):
 	# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
 	i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA", "MPA0")
 	i2c_slave_map[1].SetValues(0b0100000, 2, 1, 1, 1, 0, "SSA", "SSA0")
+	i2c_slave_map[2].SetValues(0b0100001, 2, 1, 1, 1, 0, "SSA1", "SSA1")
+
 
 	# updating the slave id table
 	if verbose: print "---> Updating the Slave ID Map"
-	for slave_id in range(2):
+	for slave_id in range(3):
 		fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 		if verbose: print "Writing","cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", hex(EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 
@@ -433,19 +435,23 @@ def activate_I2C_chip(frequency = 0, verbose = 1):
 
 def write_I2C (chip, address, data, frequency = 0):
 	MPA = 0
-	SSA = 1
+	SSA0 = 1
+	SSA1 = 2
 	command_type = 0
 	read = 1
 	write = 0
 	readback = 0
 	if (chip == 'MPA'):
 		SendCommand_I2C  (command_type, 0, MPA, 0, write, address, data, readback)
-	elif (chip == 'SSA'):
-		SendCommand_I2C  (command_type, 0, SSA, 0, write, address, data, readback)
+	elif (chip == 'SSA' or chip == 'SSA0'):
+		SendCommand_I2C  (command_type, 0, SSA0, 0, write, address, data, readback)
+	elif (chip == 'SSA1'):
+		SendCommand_I2C  (command_type, 0, SSA1, 0, write, address, data, readback)
 
 def read_I2C (chip, address, timeout = 0.001):
 	MPA = 0
-	SSA = 1
+	SSA0 = 1
+	SSA1 = 2
 	command_type = 0
 	read = 1
 	write = 0
@@ -453,8 +459,10 @@ def read_I2C (chip, address, timeout = 0.001):
 	data = 0
 	if (chip == 'MPA'):
 		SendCommand_I2C(command_type, 0, MPA, 0, read, address, data, readback)
-	elif (chip == 'SSA'):
-		SendCommand_I2C(command_type, 0, SSA, 0, read, address, data, readback)
+	elif (chip == 'SSA' or chip == 'SSA0'):
+		SendCommand_I2C(command_type, 0, SSA0, 0, read, address, data, readback)
+	elif (chip == 'SSA1'):
+		SendCommand_I2C(command_type, 0, SSA1, 0, read, address, data, readback)
 	sleep(timeout)
 	read_data = ReadChipDataNEW()
 	return read_data
