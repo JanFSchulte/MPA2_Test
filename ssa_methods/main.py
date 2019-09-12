@@ -21,33 +21,37 @@ except ImportError:
 	multimeter = False
 	print "- Impossible to access GPIB instruments"
 
+FC7 = ssa_fc7_com(fc7)
+
 class SSAwp:
-	def __init__(self, index = 0):
+
+	def __init__(self, index = 0, address = 0):
 		self.index   = index
-		self.FC7     = ssa_fc7_com(fc7)
-		self.i2c     = ssa_i2c_conf(index=index)
-		self.pwr     = ssa_power_utility(self.i2c, self.FC7)
-		self.chip    = SSA_ASIC(index, self.i2c, self.FC7, self.pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
-		self.cal     = SSA_cal_utility(self.chip, self.i2c, self.FC7)
+		FC7.set_chip_id(index, address)
+		self.i2c     = ssa_i2c_conf(index=index, address=address)
+		self.pwr     = ssa_power_utility(self.i2c, FC7)
+		self.chip    = SSA_ASIC(index, self.i2c, FC7, self.pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+		self.cal     = SSA_cal_utility(self.chip, self.i2c, FC7)
 		self.pcbadc  = onboard_adc()
-		self.biascal = ssa_calibration(self.chip, self.i2c, self.FC7, multimeter, self.pcbadc, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
-		self.measure = SSA_measurements(self.chip, self.i2c, self.FC7, self.cal, analog_mux_map, self.pwr, self.biascal)
-		self.seuutil = SSA_SEU_utilities(self.chip, self.i2c, self.FC7, self.pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
-		self.test    = SSA_test_utility(self.chip, self.i2c, self.FC7, self.cal, self.pwr, self.seuutil)
-		self.toptest = SSA_test_top(self.chip, self.i2c, self.FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
-		self.xray    = SSA_test_xray(self.toptest, self.chip, self.i2c, self.FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
+		self.biascal = ssa_calibration(self.chip, self.i2c, FC7, multimeter, self.pcbadc, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+		self.measure = SSA_measurements(self.chip, self.i2c, FC7, self.cal, analog_mux_map, self.pwr, self.biascal)
+		self.seuutil = SSA_SEU_utilities(self.chip, self.i2c, FC7, self.pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+		self.test    = SSA_test_utility(self.chip, self.i2c, FC7, self.cal, self.pwr, self.seuutil)
+		self.toptest = SSA_test_top(self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
+		self.xray    = SSA_test_xray(self.toptest, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
 		self.anl     = SSA_Analise_Test_results(self.toptest, self.test, self.measure, self.biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
-		self.seu     = SSA_SEU(self.chip, self.seuutil, self.i2c, self.FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
+		self.seu     = SSA_SEU(self.chip, self.seuutil, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
 		self.init    = self.chip.init
-		self.reset   = self.chip.reset
 		self.resync  = self.chip.resync
-		self.enable  = self.chip.enable
-		self.disable = self.chip.disable
 		self.debug   = self.chip.debug
 
-ssa0 = SSAwp(0)
-ssa1 = SSAwp(1)
-ssa = ssa0
+	def enable(self):  FC7.enable_chip(self.index)
+	def disable(self): FC7.disable_chip(self.index)
+	def reset(self):   FC7.reset_chip(self.index)
+
+ssa0 = SSAwp(0, 0b001)
+ssa1 = SSAwp(1, 0b111)
+ssa  = ssa0
 
 def reset_fc7():
 	FC7.write("ctrl_command_global_reset", 1);

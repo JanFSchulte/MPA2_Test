@@ -22,6 +22,8 @@ class ssa_fc7_com():
 	def __init__(self, fc7_if):
 		self.fc7 = fc7_if
 		self.set_invert(False)
+		self.chip_adr = [0,0]
+		self.enable = [1,1]
 
 	def compose_fast_command(self, duration = 0, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 0):
 		encode_resync = fc7AddrTable.getItem("ctrl_fast_signal_fast_reset").shiftDataToMask(resync_en)
@@ -30,7 +32,6 @@ class ssa_fc7_com():
 		encode_bc0 = fc7AddrTable.getItem("ctrl_fast_signal_orbit_reset").shiftDataToMask(bc0_en)
 		encode_duration = fc7AddrTable.getItem("ctrl_fast_signal_duration").shiftDataToMask(duration)
 		self.write("ctrl_fast", encode_resync + encode_l1a + encode_cal_pulse + encode_bc0 + encode_duration)
-
 
 	def set_invert(self, mode=False):
 		self.invert = mode
@@ -64,6 +65,35 @@ class ssa_fc7_com():
 	def clear_counters(self,duration = 0, repeat = 1):
 		for i in range(repeat):
 			self.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 1)
+
+	def set_chip_id(self, index = 0, address = 0):
+		self.chip_adr[index] = int('{:03b}'.format(address & 0b111)[::-1], 2)
+		self._write_id_enable()
+		#print("->\tChip 0 address set to: {:2d}".format(self.chip_adr[0] & 0b111))
+		#print("->\tChip 1 address set to: {:2d}".format(self.chip_adr[1] & 0b111))
+
+	def disable_chip(self, index = 0):
+		self.enable[index] = 0
+		self._write_id_enable()
+
+	def enable_chip(self, index = 0):
+		self.enable[index] = 1
+		self._write_id_enable()
+
+	def reset_chip(self, index = 0):
+		self.disable_chip()
+		time.sleep(0.5)
+		self.enable_chip()
+
+	def _write_id_enable(self):
+		val = ((self.chip_adr[1] & 0b111) << 5) | ((self.chip_adr[0] & 0b111) << 1)
+		val = val | ((self.enable[1] & 0b1) << 4)  | ((self.enable[0] & 0b1) << 0)
+		time.sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2, verbose=0);
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(0, 0, 0, 0, 0x02, verbose=0); # route to 2nd PCF8574
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(1, 0, 0, 0, val, verbose=0);  # set reset bit
+		time.sleep(0.01);
+		print(bin(val))
+		activate_I2C_chip(verbose=0)
 
 	def write(self, p1, p2, p3 = 0):
 		cnt = 0

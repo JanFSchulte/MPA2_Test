@@ -26,12 +26,13 @@ ssa_main_measure.RUN()
 
 class SSA_Measurements():
 
-	def __init__(self, tag="ChipN_0", runtest='default', directory='../SSA_Results/Wafer0/'):
-		self._init()
-		self.summary = results()
-		self.runtest = RunTest('default')
-		self.tag = tag
-		self.Configure(directory=directory, runtest=runtest)
+	def __init__(self, tag="ChipN_0", runtest='default', directory='../SSA_Results/Wafer0/', chip = ssa):
+		if(chip):
+			self._init(chip)
+			self.summary = results()
+			self.runtest = RunTest('default')
+			self.tag = tag
+			self.Configure(directory=directory, runtest=runtest)
 
 	def Configure(self, directory = '../SSA_Results/Wafer0/', runtest = 'default'):
 		self.DIR = directory
@@ -401,7 +402,7 @@ class SSA_Measurements():
 				if(wd>=3): self.test_good = False
 		wd = 0
 
-	def _init(self, chip = ssa0):
+	def _init(self, chip):
 		self.ssa = chip;
 		self.I2C = chip.i2c;
 		self.fc7 = chip.chip.fc7;

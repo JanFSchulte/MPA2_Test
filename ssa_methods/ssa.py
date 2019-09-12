@@ -28,16 +28,16 @@ class SSA_ASIC:
 	####### Initialize functions ###############
 
 	def reset(self, display=True):
-		self.ctrl.reset(display = display)
+		self.fc7.reset_chip(self.index)
 
 	def resync(self):
 		self.ctrl.resync()
 
 	def disable(self, display=True):
-		self.pwr._disable_ssa(display = display)
+		self.fc7.disable_chip(self.index)
 
 	def enable(self, display=True):
-		self.pwr._enable_ssa(display = display)
+		self.fc7.enable_chip(self.index)
 
 	def debug(self, value = True):
 		self.i2c.set_debug_mode(value)

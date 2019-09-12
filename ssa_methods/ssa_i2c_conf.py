@@ -5,8 +5,9 @@ from myScripts.Utilities import *
 
 class ssa_i2c_conf:
 
-	def __init__(self, index = 0):
+	def __init__(self, index = 0, address = 0):
 		self.chip_adr = "SSA{:0d}".format(index)
+		self.i2c_address = address
 		self.ssa_peri_reg_map = ssa_peri_reg_map
 		self.ssa_strip_reg_map = ssa_strip_reg_map
 		self.freq = 0

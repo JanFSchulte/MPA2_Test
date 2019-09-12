@@ -22,6 +22,7 @@ class ssa_ctrl_base:
 		self.pwr = pwr
 		self.dll_chargepump = 0b00;
 		self.bias_dl_enable = False
+		self.r = []
 
 
 	def resync(self):
@@ -257,18 +258,6 @@ class ssa_ctrl_base:
 		self.I2C.peri_write('OutPattern6',line6)
 		self.I2C.peri_write('OutPattern7/FIFOconfig',line7)
 
-	def test_i2c_control(self):
-		d = []; r = [];
-		for i in range(5):
-			d.append(random.randint(0,255))
-			self.I2C.peri_write('OutPattern{:0}'.format(i), d[-1])
-		for i in range(5):
-			r.append(self.I2C.peri_read('OutPattern{:0}'.format(i)))
-		if(d==r):
-			utils.print_good("->\tI2C control check passed" + ' expected=['+','.join(map(str, d))+']'  + ' found=['+','.join(map(str, r))+']')
-		else:
-			utils.print_error("->\tI2C control check failed" + ' expected=['+','.join(map(str, d))+']'  + ' found=['+','.join(map(str, r))+']')
-
 	def set_async_delay(self, value):
 		msb = (value & 0xFF00) >> 8
 		lsb = (value & 0x00FF) >> 0
@@ -445,10 +434,19 @@ class ssa_ctrl_base:
 		self.I2C.peri_write('L1-Latency_LSB', (latency & 0x00ff) >> 0)
 		time.sleep(0.001)
 
-
-
-
-
+	def test_i2c_control(self, readonly=0):
+		r = [];
+		if(not readonly):
+			self.d = [];
+			for i in range(5):
+				self.d.append(random.randint(0,255))
+				self.I2C.peri_write('OutPattern{:0}'.format(i), self.d[-1])
+		for i in range(5):
+			r.append(self.I2C.peri_read('OutPattern{:0}'.format(i)))
+		if(self.d==r):
+			utils.print_good("->\tI2C control check passed" + ' expected=['+','.join(map(str, self.d))+']'  + ' found=['+','.join(map(str, r))+']')
+		else:
+			utils.print_error("->\tI2C control check failed" + ' expected=['+','.join(map(str, self.d))+']'  + ' found=['+','.join(map(str, r))+']')
 
 
 

@@ -413,9 +413,9 @@ def SetMainSlaveMap(verbose = 1):
 	#i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
 	# set the values
 	# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
-	i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA", "MPA0")
-	i2c_slave_map[1].SetValues(0b0100000, 2, 1, 1, 1, 0, "SSA", "SSA0")
-	i2c_slave_map[2].SetValues(0b0100001, 2, 1, 1, 1, 0, "SSA1", "SSA1")
+	i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA",  "MPA0")
+	i2c_slave_map[1].SetValues(0b0100001, 2, 1, 1, 1, 0, "SSA",  "SSA0")
+	i2c_slave_map[2].SetValues(0b0100111, 2, 1, 1, 1, 0, "SSA1", "SSA1")
 
 
 	# updating the slave id table
@@ -441,12 +441,15 @@ def write_I2C (chip, address, data, frequency = 0):
 	read = 1
 	write = 0
 	readback = 0
+
 	if (chip == 'MPA'):
 		SendCommand_I2C  (command_type, 0, MPA, 0, write, address, data, readback)
 	elif (chip == 'SSA' or chip == 'SSA0'):
 		SendCommand_I2C  (command_type, 0, SSA0, 0, write, address, data, readback)
+		print('w i2c on ssa0 adr ' + str(bin(i2c_slave_map[SSA0].i2c_address)) )
 	elif (chip == 'SSA1'):
 		SendCommand_I2C  (command_type, 0, SSA1, 0, write, address, data, readback)
+		print('w i2c on ssa1 adr ' + str(bin(i2c_slave_map[SSA1].i2c_address)) )
 
 def read_I2C (chip, address, timeout = 0.001):
 	MPA = 0
@@ -461,8 +464,10 @@ def read_I2C (chip, address, timeout = 0.001):
 		SendCommand_I2C(command_type, 0, MPA, 0, read, address, data, readback)
 	elif (chip == 'SSA' or chip == 'SSA0'):
 		SendCommand_I2C(command_type, 0, SSA0, 0, read, address, data, readback)
+		print('r i2c on ssa0 adr ' + str(bin(i2c_slave_map[SSA0].i2c_address)) )
 	elif (chip == 'SSA1'):
 		SendCommand_I2C(command_type, 0, SSA1, 0, read, address, data, readback)
+		print('r i2c on ssa1 adr ' + str(bin(i2c_slave_map[SSA1].i2c_address)) )
 	sleep(timeout)
 	read_data = ReadChipDataNEW()
 	return read_data
