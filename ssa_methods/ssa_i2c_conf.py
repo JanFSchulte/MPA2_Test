@@ -13,6 +13,7 @@ class ssa_i2c_conf:
 		self.freq = 0
 		self.debug = False
 		self.readback = False
+		self.delay = 0.001
 
 	def set_debug_mode(self, value = True, display = 0):
 		self.debug = value
@@ -48,7 +49,7 @@ class ssa_i2c_conf:
 				else:
 					base = ssa_peri_reg_map[register]
 					adr  = (base & 0x0fff) | 0b0001000000000000
-					rep  = write_I2C(self.chip_adr, adr, data, self.freq)
+					rep  = self.__write_I2C(self.chip_adr, adr, data, self.freq)
 				if(self.readback):
 					rep = self.peri_read(register)
 					if(rep != data):
@@ -73,10 +74,10 @@ class ssa_i2c_conf:
 				else:
 					base = ssa_peri_reg_map[register]
 					adr  = (base & 0xfff) | 0b0001000000000000
-					rep  = read_I2C(self.chip_adr, adr, timeout)
+					rep  = self.__read_I2C(self.chip_adr, adr, timeout)
 					if rep is None:
 						utils.activate_I2C_chip()
-						rep  = read_I2C(self.chip_adr, adr, timeout)
+						rep  = self.__read_I2C(self.chip_adr, adr, timeout)
 					if rep is None:
 						rep = False
 				break
@@ -99,7 +100,7 @@ class ssa_i2c_conf:
 					strip_id = strip if (strip is not 'all') else 0b00000000
 					base = ssa_strip_reg_map[register]
 					adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
-					rep  = write_I2C(self.chip_adr, adr, data, self.freq)
+					rep  = self.__write_I2C(self.chip_adr, adr, data, self.freq)
 				if(self.readback):
 					tmp = strip_id if (strip_id != 0) else 50
 					rep = self.strip_read(register, tmp)
@@ -126,7 +127,7 @@ class ssa_i2c_conf:
 					strip_id = strip if (strip is not 'all') else 0b00000000
 					base = ssa_strip_reg_map[register]
 					adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
-					rep  = read_I2C(self.chip_adr, adr, timeout)
+					rep  = self.__read_I2C(self.chip_adr, adr, timeout)
 				break
 			except:
 				print '=>  \tTB Communication error - I2C-Strip-read'
@@ -134,3 +135,11 @@ class ssa_i2c_conf:
 				cnt += 1
 				rep = False
 		return rep
+
+	def __read_I2C(self, a, b, c):
+		time.sleep(self.delay)
+		return read_I2C(a,b,c)
+
+	def __write_I2C(self, a, b, c, d):
+		time.sleep(self.delay)
+		return write_I2C(a,b,c,d)

@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 class ssa_ctrl_base:
 
-	def __init__(self, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
+	def __init__(self, index, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
 		self.ssa_strip_reg_map = ssa_strip_reg_map;
 		self.analog_mux_map = analog_mux_map;
 		self.ssa_peri_reg_map = ssa_peri_reg_map;
@@ -22,7 +22,12 @@ class ssa_ctrl_base:
 		self.pwr = pwr
 		self.dll_chargepump = 0b00;
 		self.bias_dl_enable = False
+		self.index = index
 		self.r = []
+
+	def setup_readout_chip_id(self):
+		self.fc7.write("cnfg_phy_slvs_chip_switch", self.index)
+		print("Setting readout to chip {:d}".format(self.index))
 
 
 	def resync(self):
@@ -148,7 +153,9 @@ class ssa_ctrl_base:
 		self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 
 	def __do_phase_tuning(self):
+		self.setup_readout_chip_id()
 		cnt = 0; done = True
+		self.setup_readout_chip_id()
 		#print self.fc7.read("stat_phy_phase_tuning_done")
 		self.fc7.write("ctrl_phy_phase_tune_again", 1)
 		#print self.fc7.read("stat_phy_phase_tuning_done")
@@ -163,6 +170,7 @@ class ssa_ctrl_base:
 		return  done
 
 	def phase_tuning(self, method = 'new'):
+		self.setup_readout_chip_id()
 		self.activate_readout_shift()
 		if(self.fc7.invert):
 			self.set_shift_pattern_all(0b01111111)
@@ -184,6 +192,7 @@ class ssa_ctrl_base:
 		return rt
 
 	def align_out(self):
+		self.setup_readout_chip_id()
 		fc7.write("ctrl_phy_phase_tune_again", 1)
 		timeout_max = 3
 		timeout = 0
@@ -225,6 +234,7 @@ class ssa_ctrl_base:
 
 
 	def activate_readout_async(self, ssa_first_counter_delay = 8, correction = 0):
+		self.setup_readout_chip_id()
 		self.I2C.peri_write('ReadoutMode',0b01)
 		# write to the I2C
 		self.I2C.peri_write("AsyncRead_StartDel_MSB", ((ssa_first_counter_delay >> 8) & 0x01))
@@ -369,11 +379,13 @@ class ssa_ctrl_base:
 
 
 	def set_lateral_data_phase(self, left, right):
+		self.setup_readout_chip_id()
 		self.fc7.write("ctrl_phy_ssa_gen_lateral_phase_1", right)
 		self.fc7.write("ctrl_phy_ssa_gen_lateral_phase_2", left)
 
 
 	def set_lateral_data(self, left, right):
+		self.setup_readout_chip_id()
 		self.fc7.write("cnfg_phy_SSA_gen_right_lateral_data_format", right)
 		self.fc7.write("cnfg_phy_SSA_gen_left_lateral_data_format", left)
 
@@ -392,6 +404,7 @@ class ssa_ctrl_base:
 			return r
 
 	def write_fuses(self, val = 0, pulse = True, display = False, confirm = False):
+		self.setup_readout_chip_id()
 		d0 = (val >>  0) & 0xFF
 		d1 = (val >>  8) & 0xFF
 		d2 = (val >> 16) & 0xFF

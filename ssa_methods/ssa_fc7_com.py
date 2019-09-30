@@ -92,7 +92,7 @@ class ssa_fc7_com():
 		time.sleep(0.01); Send_MPA_SSA_I2C_Command(0, 0, 0, 0, 0x02, verbose=0); # route to 2nd PCF8574
 		time.sleep(0.01); Send_MPA_SSA_I2C_Command(1, 0, 0, 0, val, verbose=0);  # set reset bit
 		time.sleep(0.01);
-		print(bin(val))
+		#print(bin(val))
 		activate_I2C_chip(verbose=0)
 
 	def write(self, p1, p2, p3 = 0):

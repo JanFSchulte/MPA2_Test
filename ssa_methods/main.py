@@ -44,6 +44,8 @@ class SSAwp:
 		self.init    = self.chip.init
 		self.resync  = self.chip.resync
 		self.debug   = self.chip.debug
+		self.inject  = self.chip.inject
+		self.readout = self.chip.readout
 
 	def enable(self):  FC7.enable_chip(self.index)
 	def disable(self): FC7.disable_chip(self.index)
