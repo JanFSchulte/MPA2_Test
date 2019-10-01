@@ -128,7 +128,7 @@ class SSA_cal_utility():
 		return (-t_threshold_mv-t_thrdac[1]+t_thrdac[2])/np.float(t_thrdac[0])
 
 	########################################Configure_TestPulse_SSA(50,50,500,1000,0,0,0)###################
-	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2, countershift = 0, set_trim = False, d19c_firmware_issue_repeat = True, start_threshold = 0):
+	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2, countershift = 0, set_trim = False, d19c_firmware_issue_repeat = 0, start_threshold = 0):
 		'''	cal_ampl  -> int |'baseline'  -> Calibration pulse charge (in CALDAC LSBs)
 			mode      -> 'all' | 'sbs'   -> All strips together or one by one
 			nevents   -> int number      -> Number of calibration pulses (default 1000)

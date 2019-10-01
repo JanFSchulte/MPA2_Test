@@ -14,6 +14,7 @@ from ssa_methods.ssa_seu_utility import *
 from ssa_methods.ssa_test_seu import *
 from myScripts.BasicADC import *
 from ssa_wp_analyze import *
+from ssa_methods.main_ssa_test_2 import *
 
 try:
 	multimeter = keithley_multimeter()
@@ -46,6 +47,7 @@ class SSAwp:
 		self.debug   = self.chip.debug
 		self.inject  = self.chip.inject
 		self.readout = self.chip.readout
+		self.main_test = SSA_Measurements_All(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
 
 	def enable(self):  FC7.enable_chip(self.index)
 	def disable(self): FC7.disable_chip(self.index)

@@ -35,9 +35,10 @@ class SSA_measurements():
 		thrdac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
 		nevents = 1000,                 # Number of calibration pulses
 		plot = False,                    # Fast plot of the results
-		filename = '../SSA_Results/Chip0/Chip_0_'
+		filename = '../SSA_Results/temp/Chip_0_'
 		):
-
+		charge_fc_trim= np.float(charge_fc_trim)
+		charge_fc_test= np.float(charge_fc_test)
 		scurves = {}; fo = [];
 		thstd, sc = self.scurve_trim(
 			charge_fc = charge_fc_trim,
@@ -105,13 +106,13 @@ class SSA_measurements():
 
 
 	###########################################################
-	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = 0, d19c_firmware_issue_repeat=1):
+	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = 0, d19c_firmware_issue_repeat=0):
 		data = self.scurves_measure(cal_list = cal_list, trim_list = trim_list, mode = mode, rdmode = rdmode, filename = filename, runname = runname, plot = plot, nevents = nevents, speeduplevel = speeduplevel, countershift = countershift, d19c_firmware_issue_repeat=d19c_firmware_issue_repeat)
 		if(plot):
 			self.scurves_plot(data)
 		return data
 
-	def scurves_measure(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = 0, d19c_firmware_issue_repeat=1):
+	def scurves_measure(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = 0, d19c_firmware_issue_repeat=0):
 		plt.clf()
 		data = []
 		if(isinstance(filename, str)):
@@ -151,7 +152,7 @@ class SSA_measurements():
 		plt.show()
 
 	###########################################################
-	def FE_Gain_Noise_Std__Calculate(self, input_files, output_file, nevents=1000, thdac_gain = 'default'):
+	def FE_Gain_Noise_Std__Calculate(self, input_files, output_file, nevents=1000, thdac_gain = 'default', plot=False):
 		thresholds = {}; noise = {};
 		thmean = {}; sigmamean = {}; tmp = [];
 		calpulses = []; scurve_table = {}; runlist = {}
