@@ -24,6 +24,7 @@ class ssa_fc7_com():
 		self.set_invert(False)
 		self.chip_adr = [0,0]
 		self.enable = [1,1]
+		self.update_active_readout_chip()
 
 	def compose_fast_command(self, duration = 0, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 0):
 		encode_resync = fc7AddrTable.getItem("ctrl_fast_signal_fast_reset").shiftDataToMask(resync_en)
@@ -32,6 +33,20 @@ class ssa_fc7_com():
 		encode_bc0 = fc7AddrTable.getItem("ctrl_fast_signal_orbit_reset").shiftDataToMask(bc0_en)
 		encode_duration = fc7AddrTable.getItem("ctrl_fast_signal_duration").shiftDataToMask(duration)
 		self.write("ctrl_fast", encode_resync + encode_l1a + encode_cal_pulse + encode_bc0 + encode_duration)
+
+	def update_active_readout_chip(self):
+		self.active_chip = self.read("cnfg_phy_slvs_chip_switch")
+		return self.active_chip
+
+	def get_active_readout_chip(self):
+		return self.active_chip
+
+	def set_active_readout_chip(self, ID):
+		if(ID != self.active_chip):
+			self.write("cnfg_phy_slvs_chip_switch", ID)
+			self.update_active_readout_chip()
+			print("->\tReadout switched to SSA-{:d}".format(ID))
+		return self.active_chip
 
 	def set_invert(self, mode=False):
 		self.invert = mode

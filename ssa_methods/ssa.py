@@ -56,7 +56,7 @@ class SSA_ASIC:
 			sys.stdout.write("->  \tInitialising..\r")
 			sys.stdout.flush()
 		if(reset_board):
-			fc7.write("ctrl_command_global_reset", 1)
+			self.fc7.write("ctrl_command_global_reset", 1)
 			sleep(0.3);
 			if(display): utils.print_info("->  \tReset FC7 Firmware")
 		if(reset_chip):
@@ -112,7 +112,7 @@ class SSA_ASIC:
 		return self.ctrl.phase_tuning()
 
 	def alignment_cluster_data_word(self, display=False):
-		tv = [10,20,30,40,50,60,70,80]
+		tv = [10,20,30,40,50,60,70]
 		self.ctrl.set_lateral_data(left=0, right=0)
 		status = {'digital':False, 'analog':False}
 		for mode in ['digital', 'analog']:
@@ -160,7 +160,7 @@ class SSA_ASIC:
 		if (init): self.init(reset_board = False, reset_chip = False, display = False)
 		self.readout.cluster_data(initialize = True)
 		alined_left  = False; alined_right = False; cnt = 0;
-		fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay)
+		self.fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay)
 		self.inject.digital_pulse([100, 121, 124], initialise = True)
 		#self.ctrl.set_lateral_data(0b00001001, 0)
 		while ((alined_left == False) and (cnt < timeout)):

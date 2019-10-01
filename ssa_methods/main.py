@@ -69,5 +69,20 @@ def ssa_on():
 	sleep(0.1);  ssa_pwr.set_clock_source('internal')
 	sleep(0.1);  ssa.init(reset_board = True, reset_chip = True, display = True)
 
+def align_2xSSA():
+	ssa0.chip.ctrl.activate_readout_shift()
+	ssa1.chip.ctrl.activate_readout_shift()
+	ssa0.chip.ctrl.set_shift_pattern_all(0b10000000)
+	ssa1.chip.ctrl.set_shift_pattern_all(0b10000000)
+	rt = ssa0.chip.ctrl.align_out()
+	ssa0.chip.ctrl.I2C.peri_write('OutPattern7/FIFOconfig', 7)
+	ssa0.chip.ctrl.reset_pattern_injection()
+	ssa0.chip.ctrl.activate_readout_normal()
+	ssa1.chip.ctrl.I2C.peri_write('OutPattern7/FIFOconfig', 7)
+	ssa1.chip.ctrl.reset_pattern_injection()
+	ssa1.chip.ctrl.activate_readout_normal()
+	if(rt): utils.print_good( "->\tPhase alignment successfull")
+	else:   utils.print_error("->\tPhase alignment error")
+
 
 #utils.activate_I2C_chip()

@@ -26,9 +26,7 @@ class ssa_ctrl_base:
 		self.r = []
 
 	def setup_readout_chip_id(self):
-		self.fc7.write("cnfg_phy_slvs_chip_switch", self.index)
-		print("Setting readout to chip {:d}".format(self.index))
-
+		self.fc7.set_active_readout_chip(self.index)
 
 	def resync(self):
 		SendCommand_CTRL("fast_fast_reset");
@@ -192,12 +190,12 @@ class ssa_ctrl_base:
 		return rt
 
 	def align_out(self):
-		self.setup_readout_chip_id()
-		fc7.write("ctrl_phy_phase_tune_again", 1)
+		#self.setup_readout_chip_id()
+		self.fc7.write("ctrl_phy_phase_tune_again", 1)
 		timeout_max = 3
 		timeout = 0
 		sleep(0.1)
-		while(fc7.read("stat_phy_phase_tuning_done") == 0):
+		while(self.fc7.read("stat_phy_phase_tuning_done") == 0):
 			sleep(0.1)
 			utils.print_warning("->\tWaiting for the phase tuning")
 			timeout+=1
@@ -206,6 +204,7 @@ class ssa_ctrl_base:
 		return True
 
 	def TuneSSA(self, pattern=0b10100000):
+		self.setup_readout_chip_id()
 		state = True
 		for line in range(1,9):
 			TuneLine(line, np.array([pattern]),1,True,False)

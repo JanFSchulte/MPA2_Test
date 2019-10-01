@@ -94,6 +94,8 @@ class SSA_readout():
 		if(display_pattern):
 			ctmp = np.array(data[0]).astype(bool).astype(int)
 			print "[%5s]" % '|'.join(map(str, ctmp))
+		if(self.index==1): # 2xSSA test board has inverted lines for chip 1
+			coordinates.sort()
 		if return_as_pattern:
 			ctmp = np.zeros([8,40])
 			for i in range(0,8):
