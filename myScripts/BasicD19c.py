@@ -68,7 +68,7 @@ def read_regs( verbose =  1 ):
 			print "--->", '%10s' % bin(to_number(reverse_mask(word),32,24)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),8,0)).lstrip('-0b').zfill(8)
 	return mpa_stub_data
 
-def read_stubs(raw = 0):
+def read_stubs(raw = 0, fast = 0):
 	status = fc7.read("stat_slvs_debug_general")
 	mpa_stub_data = fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
 	stubs = np.zeros((5,40), dtype = np.uint8)
@@ -92,6 +92,23 @@ def read_stubs(raw = 0):
 
 	if raw:
 		return stubs
+	elif fast:
+		for i in range(0,39):
+			if ((stubs[0,i] & 0b10000000) == 128):
+				j = i+1
+				nst[cycle]   = ((stubs[1,i] & 0b10000000) >> 5) | ((stubs[2,i] & 0b10000000) >> 6) | ((stubs[3,i] & 0b10000000) >> 7)
+				pos[cycle,0] = ((stubs[4,i] & 0b10000000) << 0) | ((stubs[0,i] & 0b01000000) << 0) | ((stubs[1,i] & 0b01000000) >> 1) | ((stubs[2,i] & 0b01000000) >> 2) | ((stubs[3,i] & 0b01000000) >> 3) | ((stubs[4,i] & 0b01000000) >> 4) | ((stubs[0,i] & 0b00100000) >> 4) | ((stubs[1,i] & 0b00100000) >> 5)
+				pos[cycle,1] = ((stubs[4,i] & 0b00010000) << 3) | ((stubs[0,i] & 0b00001000) << 3) | ((stubs[1,i] & 0b00001000) << 2) | ((stubs[2,i] & 0b00001000) << 1) | ((stubs[3,i] & 0b00001000) << 0) | ((stubs[4,i] & 0b00001000) >> 1) | ((stubs[0,i] & 0b00000100) >> 1) | ((stubs[1,i] & 0b00000100) >> 2)
+				pos[cycle,2] = ((stubs[4,i] & 0b00000010) << 6) | ((stubs[0,i] & 0b00000001) << 6) | ((stubs[1,i] & 0b00000001) << 5) | ((stubs[2,i] & 0b00000001) << 4) | ((stubs[3,i] & 0b00000001) << 3) | ((stubs[4,i] & 0b00000001) << 3) | ((stubs[1,j] & 0b10000000) >> 6) | ((stubs[2,j] & 0b10000000) >> 7)
+				pos[cycle,3] = ((stubs[0,j] & 0b00100000) << 2) | ((stubs[1,j] & 0b00100000) << 1) | ((stubs[2,j] & 0b00100000) << 0) | ((stubs[3,j] & 0b00100000) >> 1) | ((stubs[4,j] & 0b00100000) >> 2) | ((stubs[0,j] & 0b00010000) >> 2) | ((stubs[1,j] & 0b00010000) >> 3) | ((stubs[2,j] & 0b00010000) >> 4)
+				pos[cycle,4] = ((stubs[0,j] & 0b00000100) << 5) | ((stubs[1,j] & 0b00000100) << 4) | ((stubs[2,j] & 0b00000100) << 3) | ((stubs[3,j] & 0b00000100) << 2) | ((stubs[4,j] & 0b00000100) << 1) | ((stubs[0,j] & 0b00000010) << 1) | ((stubs[1,j] & 0b00000010) << 0) | ((stubs[2,j] & 0b00000010) >> 1)
+				row[cycle,0] = ((stubs[0,i] & 0b00010000) >> 1) | ((stubs[1,i] & 0b00010000) >> 2) | ((stubs[2,i] & 0b00010000) >> 3) | ((stubs[3,i] & 0b00010000) >> 4)
+				row[cycle,1] = ((stubs[0,i] & 0b00000010) << 2) | ((stubs[1,i] & 0b00000010) << 1) | ((stubs[2,i] & 0b00000010) << 0) | ((stubs[3,i] & 0b00000010) >> 1)
+				row[cycle,2] = ((stubs[1,j] & 0b01000000) >> 3) | ((stubs[2,j] & 0b01000000) >> 4) | ((stubs[3,j] & 0b01000000) >> 5) | ((stubs[4,j] & 0b01000000) >> 6)
+				row[cycle,3] = ((stubs[1,j] & 0b00001000) >> 0) | ((stubs[2,j] & 0b00001000) >> 1) | ((stubs[3,j] & 0b00001000) >> 2) | ((stubs[4,j] & 0b00001000) >> 3)
+				row[cycle,4] = ((stubs[1,j] & 0b00000001) << 3) | ((stubs[2,j] & 0b00000001) << 2) | ((stubs[3,j] & 0b00000001) << 1) | ((stubs[4,j] & 0b00000001) << 0)
+				cycle += 1
+		return nst,  pos, row, cur
 	else:
 		for i in range(0,39):
 			if ((stubs[0,i] & 0b10000000) == 128):
@@ -442,15 +459,15 @@ def read_I2C (chip, address, timeout = 0.001):
 	read_data = ReadChipDataNEW()
 	return read_data
 
-def align_out(verbose = 1):
-	fc7.write("ctrl_phy_phase_tune_again", 1)
-	timeout_max = 5
-	timeout = 0
-	while(fc7.read("stat_phy_phase_tuning_done") == 0):
-		sleep(0.1)
-		if (timeout == timeout_max):
-			timeout = 0
-			if (verbose): print "Waiting for the phase tuning"
-			fc7.write("ctrl_phy_phase_tune_again", 1)
-		else:
-			timeout += 1
+#def align_out(verbose = 1):
+#	fc7.write("ctrl_phy_phase_tune_again", 1)
+#	timeout_max = 5
+#	timeout = 0
+#	while(fc7.read("stat_phy_phase_tuning_done") == 0):
+#		sleep(0.1)
+#		if (timeout == timeout_max):
+#			timeout = 0
+#			if (verbose): print "Waiting for the phase tuning"
+#			fc7.write("ctrl_phy_phase_tune_again", 1)
+#		else:
+#			timeout += 1

@@ -34,11 +34,26 @@ class curstate():
 class Utilities:
 
 	def __init__(self):
+		self.logfile = False
+		self.errorlog = False
+		self.generic_parameters = {}
 		p = []
 
 	class cl_clustdispl(float):
 		def __repr__(self):
 			return "{:6.1f}".format(self)
+
+	def set_log_files(self, logfile, errorlog):
+		if(self.logfile): self.logfile.close()
+		if(self.errorlog): self.errorlog.close()
+		self.logfile = open(logfile, "w")
+		self.errorlog = open(errorlog, "w")
+
+	def close_log_files(self):
+		if(self.logfile): self.logfile.close()
+		if(self.errorlog): self.errorlog.close()
+		self.logfile = False
+		self.errorlog = False
 
 	def reverse_bit_order(self, n, width = 32):
 		b = '{:0{width}b}'.format(n, width=width)
@@ -120,9 +135,52 @@ class Utilities:
 		if(pr == 'print'):
 			print '->  \tEnabled I2C master for chips control'
 
-	def date_time(self):
-		st = datetime.now().strftime("%Y-%m-%d_%H:%M")
-		return st
+	def date_time(self, format='print'):
+		if(format == 'print'):
+			return datetime.now().strftime("%Y-%m-%d_%H-%M")
+		elif(format == 'csv'):
+			return datetime.now().strftime("%Y, %m, %d, %H, %M, %S")
+		elif(format == 'array'):
+			return (datetime.now().strftime("%Y, %m, %d, %H, %M, %S")).split(', ')
+		else:
+			return datetime.now().strftime("%Y-%m-%d_%H-%M")
+
+
+	def print_error(self, text, logfile = False):
+		sys.stdout.write("\033[1;31m")
+		print(str(text))
+		sys.stdout.write("\033[0;0m")
+		if(self.logfile):
+			self.logfile.write(str(text)+"\n")
+		if(self.errorlog):
+			self.errorlog.write(str(text)+"\n")
+
+
+	def print_warning(self, text, logfile = False):
+		sys.stdout.write("\033[1;33m")
+		print(str(text))
+		sys.stdout.write("\033[0;0m")
+		if(self.logfile):
+			self.logfile.write(str(text)+"\n")
+
+	def print_info(self, text, logfile = False):
+		sys.stdout.write("\033[1;34m")
+		print(str(text))
+		sys.stdout.write("\033[0;0m")
+		if(self.logfile):
+			self.logfile.write(str(text)+"\n")
+
+	def print_good(self, text, logfile = False):
+		sys.stdout.write("\033[1;32m")
+		print(str(text))
+		sys.stdout.write("\033[0;0m")
+		if(self.logfile):
+			self.logfile.write(str(text)+"\n")
+
+	def print_log(self, text, logfile = False):
+		print(str(text))
+		if(self.logfile):
+			self.logfile.write(str(text)+"\n")
 
 def print_method(name):
 	lines = inspect.getsourcelines(name)

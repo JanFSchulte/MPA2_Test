@@ -30,7 +30,7 @@ class ssa_calibration():
 		self.ssa_peri_reg_map = ssa_peri_reg_map;  self.ssa_strip_reg_map = ssa_strip_reg_map;
 		self.analog_mux_map = analog_mux_map;  self.initialised = False; self.minst = 0;
 		self.SetMode('MULTIMETER');
-		self.set_gpib_address(12);
+		self.set_gpib_address(16);
 		self.par_list = [
 			self.Parameter("Analog Ground Interal ", "GND",                   0.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Bandgap Voltage       ", "VBG",                   0.3, -1, -1, 'set_dont_calibrate'),
@@ -57,22 +57,27 @@ class ssa_calibration():
 		self.initialised = True
 
 
-	def calibrate_to_nominals(self):
-		if(not self.initialised and (self.mode == 'MULTIMETER')):
-			self.__initialise()
-		for par in self.par_list:
-			if(par.docalibrate == 'set_calibrate'):
-				value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
-				voltage = voltage*1E3
-				print par.full_name, ": "
-				print "\tCheck the initial value: "
-				print ("\t\t DAC: %4d\t V: %8.3f mV") % (value, voltage)
-				print "\tTune the value (", par.nominal, "):"
-				best_dac = self.__tune_parameter(self.minst, par.par_name, par.nominal)
-				par.best_dac = best_dac
-		print "\n\nSummary of tuning (tuned values):"
-		self.measure_bias()
-		self.ssa.ctrl.set_output_mux('highimpedence')
+	def calibrate_to_nominals(self, measure = True):
+		try:
+			if(not self.initialised and (self.mode == 'MULTIMETER')):
+				self.__initialise()
+			for par in self.par_list:
+				if(par.docalibrate == 'set_calibrate'):
+					value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
+					voltage = voltage*1E3
+					utils.print_log( par.full_name, ": " )
+					utils.print_log( "\tCheck the initial value: ")
+					utils.print_log( ("\t\t DAC: %4d\t V: %8.3f mV") % (value, voltage) )
+					utils.print_log( "\tTune the value (" + str( par.nominal ) + "):" )
+					best_dac = self.__tune_parameter(self.minst, par.par_name, par.nominal)
+					par.best_dac = best_dac
+			print "\n\nSummary of tuning (tuned values):"
+			if(measure):
+				self.measure_bias()
+			self.ssa.ctrl.set_output_mux('highimpedence')
+			return True
+		except:
+			return False
 
 
 	def measure_bias(self, return_data = False):
@@ -81,7 +86,7 @@ class ssa_calibration():
 		for par in self.par_list:
 			value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
 			voltage = voltage*1E3
-			print "->  \t" + par.full_name + ": " + (" [%3d] %7.3f mV") % (value, voltage)
+			utils.print_log( "->  \t" + par.full_name + ": " + (" [%3d] %7.3f mV") % (value, voltage) )
 			par.curr_value = voltage
 		self.ssa.ctrl.set_output_mux('highimpedence')
 		if return_data:
@@ -122,10 +127,10 @@ class ssa_calibration():
 		self.ssa.ctrl.set_output_mux('highimpedence')
 		print ""
 		print "DAC "+name+'['+str(nbits)+'-bit]:'
-		print "->       GAIN = %6.3f mV/cnt" % (g*1000.0)
-		print "->     OFFSET = %6.3f mV"     % (ofs*1000.0)
-		print "->    INL MAX = %6.3f cnts"   % (inl_max)
-		print "->    DNL INL = %6.3f cnts"   % (dnl_max)
+		print "->\tGAIN    = {:6.3f} mV/cnt".format(g*1000.0)
+		print "->\tOFFSET  = {:6.3f} mV    ".format(ofs*1000.0)
+		print "->\tINL MAX = {:6.3f} cnts  ".format(inl_max)
+		print "->\tDNL INL = {:6.3f} cnts  ".format(dnl_max)
 		print ""
 		if(plot):
 			plt.clf()
@@ -152,6 +157,54 @@ class ssa_calibration():
 			fo.write( "\n%s ; %s10.3f ; %s10.3f ; %s10.3f ;" % (runname, g, ofs, sigma) )
 			fo.close()
 		return  nlin_params, nlin_data, fit_params, raw
+
+
+
+	def measure_dac_gain_offset(self, name='Bias_THDAC', nbits=8, npoints = 10, filename = False, filename2 = "", plot = True, average = 5, runname = '', filemode = 'w'):
+		# ['Bias_D5BFEED'] ['Bias_D5PREAMP']['Bias_D5TDR']['Bias_D5ALLV']['Bias_D5ALLI']
+		# ['Bias_CALDAC']['Bias_BOOSTERBASELINE']['Bias_THDAC']['Bias_THDACHIGH']['Bias_D5DAC8']
+		if(not self.initialised and (self.mode == 'MULTIMETER')):
+			self.__initialise()
+		if(not name in self.analog_mux_map):
+			print "->  \tInvalid DAC name"
+			return False
+		fullscale = 2**nbits
+		self.ssa.ctrl.set_output_mux(name)
+		x = np.linspace(0,fullscale, npoints, dtype=int, endpoint=False)
+		data = np.zeros(len(x), dtype=np.float);
+		for i in range(len(x)):
+			self.I2C.peri_write(name, x[i])
+			sleep(0.1)
+			if(self.mode == 'MULTIMETER'):
+				data[i] = self.multimeter.measure(self.minst)
+			else:
+				data[i] = self.pcbadc.measure('SSA', average)
+			utils.ShowPercent(x[i], fullscale-1, "Measuring "+name+" linearity                         ")
+		utils.ShowPercent(1,1,"Measuring "+name+" linearity                         ")
+		if( isinstance(filename, str) ):
+			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_Caracteristics_" + name + filename2
+			CSV.ArrayToCSV (array = data, filename = fo + ".csv", transpose = True)
+		g, ofs, sigma = utils.linear_fit(x, data)
+		self.ssa.ctrl.set_output_mux('highimpedence')
+		#print "DAC "+name+'['+str(nbits)+'-bit]:'
+		utils.print_good("->\tGain({:12s}) = {:9.3f} mV/cnt".format(name, g*1000.0))
+		utils.print_good("->\tOffs({:12s}) = {:9.3f} mV    ".format(name, ofs*1000.0))
+
+
+		if(plot):
+			plt.clf()
+			plt.plot(x, data, '-x')
+		raw = [x, data]
+		if( isinstance(filename, str) ):
+			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_DNL_INL_" + name + filename2 + '.csv'
+			CSV.ArrayToCSV (array = np.array([data, dnl, inl]), filename = fo + ".csv", transpose = True)
+			fo = open("../SSA_Results/" + filename + "_Parameters_" + name + filename2 + '.csv', filemode)
+			fo.write( "\n%s ; %s10.3f ; %s10.3f ; %s10.3f ;" % (runname, g, ofs, sigma) )
+			fo.close()
+		return  g, ofs, raw
+
+
+
 
 
 	def _dac_dnl_inl(self, data, nbits, plot = True):
@@ -224,7 +277,7 @@ class ssa_calibration():
 		if (nominal == -1):return
 		dac_value, voltage = self.get_value_and_voltage(name, inst)
 		voltage = voltage*1E3
-		print "\t\t\tdac: ", dac_value, " voltage: ", voltage
+		utils.print_log( "\t\t\tdac: ", str(dac_value) + " voltage: " + str(voltage) )
 		best_dac_value = dac_value
 		best_voltage_diff = abs(voltage-nominal)
 		start_value = dac_value
@@ -239,7 +292,7 @@ class ssa_calibration():
 			self._d5_value(str(name), 'w', dac_value)
 			dac_value, voltage = self.get_value_and_voltage(name, inst)
 			voltage *= 1E3
-			print "\t\t\tdac: ", dac_value, " voltage: ", voltage
+			utils.print_log( "\t\t\tdac: " + str(dac_value) + " voltage: " + str(voltage) )
 			current_voltage_diff = abs(voltage-nominal)
 			if current_voltage_diff < best_voltage_diff:
 				best_voltage_diff = current_voltage_diff
@@ -261,5 +314,5 @@ class ssa_calibration():
 			prev_voltage_diff = current_voltage_diff  # update the voltage diff
 		self._d5_value(str(name), 'w', best_dac_value) # verify the value
 		dac_value, voltage = self.get_value_and_voltage(name, inst)
-		print "\t\tBest Set: ", dac_value, 1E3*voltage
+		utils.print_log( "\t\tBest Set: " + str(dac_value) + "  " + str(1E3*voltage) )
 		return best_dac_value

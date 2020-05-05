@@ -15,8 +15,11 @@ class CSVutility:
 			df.columns = columns
 		df.to_csv(filename)
 
-	def csv_to_array(self, filename):
-		temp = pd.read_csv(filename)
+	def csv_to_array(self, filename, noheader = False):
+		if(noheader):
+			temp = pd.read_csv(filename, header=None)
+		else:
+			temp = pd.read_csv(filename)
 		array = np.array(temp)
 		return array
 

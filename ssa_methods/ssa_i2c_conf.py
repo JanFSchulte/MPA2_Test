@@ -73,7 +73,7 @@ class ssa_i2c_conf:
 					adr  = (base & 0xfff) | 0b0001000000000000
 					rep  = read_I2C('SSA', adr, timeout)
 					if rep is None:
-						utils.activate_I2C_chip('print')
+						utils.activate_I2C_chip()
 						rep  = read_I2C('SSA', adr, timeout)
 					if rep is None:
 						rep = False

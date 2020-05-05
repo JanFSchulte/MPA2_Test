@@ -1,0 +1,14 @@
+./start_ssa.sh (finds IP of SSA and starts python)
+
+ssa_biascal.calibrate_to_nominals() (chooses the right config values for all 9 DACs on the chip periphery and 3 measured signals)
+
+ssa_biascal.measure_bias() (spits out the config values and measured voltages on each of the 9 DACs and 3 measured signals)
+
+ssa_measure.scurve_trim() (starts with minimum and maximum TrimDAC values and narrows down to the minmum STD DEV and plots it)
+
+ssa.pwr.off() (powers off the chip)
+ssa.pwr.on() (powers on the chip)
+
+./load_firmware_ssa (loads the FC7 firmware)
+
+ssa.fc7.reset() (resets the fpga)

@@ -23,27 +23,81 @@ class ssa_power_utility:
 		elif (value == 'external' or value == 1):
 			self.fc7.write("cnfg_clock_ext_clk_en", 1)
 
-	def on(self):
-		self.set_supply('on')
+	def on(self, display=True):
+		self.set_supply(mode='on',  display=display)
 
-	def off(self):
-		self.set_supply('off')
+	def off(self, display=True):
+		self.set_supply(mode='off', display=display)
 
-	def set_supply(self, mode = 'on', d = 1.2, a = 1.25, p = 1.25, bg = 0.270, display = True):
+	def set_supply(self, mode = 'on', d = 1.0, a = 1.2, p = 1.2, bg = 0.270, display = True):
+		utils.activate_I2C_chip()
 		if(mode == 'on' or mode == 1):
 			sleep(0.00); self.mainpoweron()
 			sleep(0.01); self.set_pvdd(p);
 			sleep(0.20); self.set_dvdd(d);
 			sleep(0.00); self.set_avdd(a);
 			sleep(0.10); self.set_vbf(bg)
-			sleep(0.10); self.reset()
+			sleep(2.00); self.reset(display=display)
+			sleep(0.10)
+			if(display):
+				sleep(0.4); self.get_power(display = True)
 		elif(mode == 'off' or mode == 0):
 			sleep(0.00); self.set_vbf(0)
 			sleep(0.10); self.set_avdd(0);
 			sleep(0.00); self.set_dvdd(0);
 			sleep(0.10); self.set_pvdd(0)
 			sleep(0.10); self.mainpoweroff()
-		sleep(0.1); self.get_power(display = display)
+			if(display):
+				sleep(0.10); self.get_power(display = True)
+
+	def test_power(self, state = 'operation', display=True):
+		good = True
+		if(state=='off'):      #power off
+			d_limit = [ 0.0, 1.0]
+			a_limit = [ 0.0, 1.0]
+			p_limit = [ 0.0, 1.0]
+		elif(state=='reset'):  #with reset_b = 0
+			d_limit = [ 5.0, 15.0]
+			a_limit = [18.0, 28.0]
+			p_limit = [ 0.0,  8.0]
+		elif(state=='startup'):   #enable after reset
+			d_limit = [18.0, 35.0]
+			a_limit = [18.0, 28.0]
+			p_limit = [ 0.0,  8.0]
+		elif(state=='uncalibrated'): #configured
+			d_limit = [18.0, 35.0]
+			a_limit = [18.0, 28.0]
+			p_limit = [10.0, 40.0]
+		elif(state=='calibrated'):  #configured and calibrated
+			d_limit = [18.0, 35.0]
+			a_limit = [18.0, 28.0]
+			p_limit = [10.0, 40.0]
+		else:
+			d_limit = [ 5.0, 35.0]
+			a_limit = [18.0, 28.0]
+			p_limit = [ 1.0, 40.0]
+		[Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip] = self.get_power(display=False, return_all=True)
+		if(display):
+			dstr = "  \tP_dig:{:7.3f}mW [V={:5.3f}V - I={:5.3f}mA]".format(Pd, Vd, Id)
+			astr = "  \tP_ana:{:7.3f}mW [V={:5.3f}V - I={:5.3f}mA]".format(Pa, Va, Ia)
+			pstr = "  \tP_pad:{:7.3f}mW [V={:5.3f}V - I={:5.3f}mA]".format(Pp, Vp, Ip)
+			utils.print_info("->\tPower measurement (chip in '{:s}' mode)".format(state))
+			if(Id>d_limit[0] and Id<d_limit[1]):
+				utils.print_good(dstr)
+			else:
+				utils.print_error(dstr)
+				good = False
+			if(Ia>a_limit[0] and Ia<a_limit[1]):
+				utils.print_good(astr)
+			else:
+				utils.print_error(astr)
+				good = False
+			if(Ip>p_limit[0] and Ip<p_limit[1]):
+				utils.print_good(pstr)
+			else:
+				utils.print_error(pstr)
+				good = False
+		return [good, Id, Ia, Ip]
 
 
 	def get_power(self, display = True, return_all = False):
@@ -51,7 +105,7 @@ class ssa_power_utility:
 		Pa, Va, Ia = self.get_power_analog(display, False, True)
 		Pp, Vp, Ip = self.get_power_pads(display, False, True)
 		if(display):
-			print '->  \tTotal: %7.3fmW  [             I=%7.3fmA]' % (Pd+Pa+Pp, Id+Ia+Ip )
+			utils.print_log('->  \tTotal: %7.3fmW  [             I=%7.3fmA]' % (Pd+Pa+Pp, Id+Ia+Ip ))
 		utils.activate_I2C_chip()
 		if not return_all:
 			return [Pd,Pa,Pp]
@@ -62,7 +116,7 @@ class ssa_power_utility:
 		t1 = time.time()
 		t0 = t1
 		while(t1<(t0+duration)):
-			print("____________________________________________________\n")
+			utils.print_log("____________________________________________________\n")
 			self.get_power(display = True)
 			t1 = time.time()
 
@@ -81,7 +135,7 @@ class ssa_power_utility:
 		if i2cact: utils.activate_I2C_chip()
 		utils.print_enable(True)
 		if(display):
-			print '->  \tP_dig: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret)
+			utils.print_log( '->  \tP_dig: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret))
 		self.state.dvdd = pret
 		if rtv1:
 			return pret, vret, iret
@@ -104,7 +158,7 @@ class ssa_power_utility:
 		if i2cact: utils.activate_I2C_chip()
 		utils.print_enable(True)
 		if(display):
-			print '->  \tP_ana: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret)
+			utils.print_log( '->  \tP_ana: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret))
 		self.state.avdd = pret
 		if rtv1:
 			return pret, vret, iret
@@ -127,7 +181,7 @@ class ssa_power_utility:
 		if i2cact: utils.activate_I2C_chip()
 		utils.print_enable(True)
 		if(display):
-			print '->  \tP_pad: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret)
+			utils.print_log( '->  \tP_pad: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret))
 		self.state.pvdd = pret
 		if rtv1:
 			return pret, vret, iret
@@ -214,7 +268,7 @@ class ssa_power_utility:
 
 	def resync(self):
 		SendCommand_CTRL("fast_fast_reset");
-		print '->  \tSent Re-Sync command'
+		utils.print_log( '->  \tSent Re-Sync command')
 		sleep(0.001)
 
 
@@ -226,19 +280,19 @@ class ssa_power_utility:
 			sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0);  # drop reset bit
 			sleep(0.10); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1);  # set reset bit
 			if(display):
-				print '->  \tSent Hard-Reset pulse '
+				utils.print_log( '->  \tSent Hard-Reset pulse ')
 		else:
 			sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, int(mode));  # drop reset bit
 			if(display):
-				print '->  \tSSA Enabled ' if mode == 1 else '->  \tSSA Disabled '
+				utils.print_log( '->  \tSSA Enabled ' if mode == 1 else '->  \tSSA Disabled ')
 		sleep(0.01);
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
 		if(display):
 			if(mode == 'auto'):
-				print '->  \tSent Hard-Reset pulse '
+				utils.print_log( '->  \tSent Hard-Reset pulse ')
 			else:
-				print '->  \tSSA Enabled ' if mode == 1 else '->  \tSSA Disabled '
+				utils.print_log( '->  \tSSA Enabled ' if mode == 1 else '->  \tSSA Disabled ')
 
 
 
@@ -250,7 +304,7 @@ class ssa_power_utility:
 		sleep(0.01);
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
-		if(display): print '->  \tSSA disabled '
+		if(display): utils.print_log( '->  \tSSA disabled ')
 
 	def _enable_ssa(self, display=True):
 		utils.print_enable(False)
@@ -260,7 +314,7 @@ class ssa_power_utility:
 		sleep(0.01);
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
-		if(display): print '->  \tSSA enabled '
+		if(display): utils.print_log( '->  \tSSA enabled ')
 
 
 	def __initialise_constants(self):

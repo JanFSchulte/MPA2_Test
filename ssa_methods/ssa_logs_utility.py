@@ -32,9 +32,9 @@ class results():
 		self.d[name] = self.logpar(name, value, unit, descr, run)
 
 	def update(self, runname = 'Run-0'):
-		self.summary[0] = '\n%16s ; %24s ; %10s ; %16s ; %24s\n'  % ('RunName', 'Test', 'Results', 'Unit', 'Description' )
-		self.summary[1] = '\n%24s   %10s %1s %24s\n'  % ('Test', 'Results', 'Unit', '' )
-		self.summary[2] = '\n%16s ; ' % (runname)
+		self.summary[0] = '\n%s, %s, %s, %s, %s\n'  % ('RunName', 'Test', 'Results', 'Unit', 'Description' )
+		self.summary[1] = '\n%32s   %12s %4s %24s\n'  % ('Test', 'Results', 'Unit', '' )
+		self.summary[2] = ''
 		for i in self.d:
 			if (isinstance(self.d[i].value, bool)):
 				temp = 'True' if self.d[i].value else 'False'
@@ -46,25 +46,37 @@ class results():
 				temp = str(self.d[i].value)
 			else:
 				temp = 'conversion error'
-			self.summary[0] += '%16s ; %24s ; %10s ; %4s ; %24s\n'  % (self.d[i].run,   self.d[i].name,   temp,  self.d[i].unit,  self.d[i].descr)
-			self.summary[1] += '%24s : %10s %4s %24s\n'  % (self.d[i].name,   temp,  self.d[i].unit,  self.d[i].descr)
-			self.summary[2] += '%16s ; ' % (temp)
+			self.summary[0] += '%s, %s, %s, %s, %s\n'  % (self.d[i].run,   self.d[i].name,   temp,  self.d[i].unit,  self.d[i].descr)
+			self.summary[1] += '%32s : %12s %4s %24s\n'  % (self.d[i].name,   temp,  self.d[i].unit,  self.d[i].descr)
+			self.summary[2] += '%s, ' % (temp)
+		self.summary[2] += '\n'
 
 	def display(self, runname = 'Run-0'):
+		utils.print_info("\n___________________________________________________")
+		utils.print_info("Test summary:")
 		self.update(runname = runname)
-		print self.summary[1]
+		utils.print_log(self.summary[1])
 
-	def save(self, filename = 'default', runname = 'Run-0'):
+	def save(self, directory='../SSA_Results/Chip0/', filename='default', runname=''):
+		utils.print_info("\n___________________________________________________")
+		utils.print_info("Saving summary:")
 		self.update(runname = runname)
-		filename1 = '../SSA_Results/' + self.get_file_name(filename) + "_Log.log"
-		filename2 = '../SSA_Results/' + self.get_file_name(filename) + "_GlobalLog.csv"
-		fo1 = open(filename1, 'a'); fo2 = open(filename2, 'a');
-		fo1.write( self.summary[0]); fo2.write( self.summary[2]);
-		fo1.close(); fo2.close()
+		fn = (directory+'/'+self.get_file_name(filename)+"Logfile.csv"    )
+		fo = open(fn, 'w');  fo.write(self.summary[0]);  fo.close();
+		utils.print_log("->\tLog saved in {:s}".format(fn))
+
+		fn =  (directory+'/'+self.get_file_name(filename)+"Summary.csv")
+		fo = open(fn, 'w');  fo.write(self.summary[2]);  fo.close();
+		utils.print_log("->\tSummary saved in {:s}".format(fn))
+
+		fn = (directory+'/'+"GlobalSummary.csv")
+		fo = open( fn, 'a'); fo.write("{:s}, {:s},".format(filename, runname) + self.summary[2]);  fo.close();
+		utils.print_log("->\tGlobal summary saved in {:s}".format(fn))
+
 
 	def get_file_name(self, filename):
 		if(filename == 'default' or not isinstance(filename, str) ):
-			fo = "../SSA_Results/X-Ray/" + utils.date_time() + '_X-Ray_'
+			fo = '../SSA_Results/Chip0/' + utils.date_time() + '_'
 		else:
 			fo = filename
 		return fo
@@ -92,7 +104,8 @@ class RunTest():
 		else:
 			r = self.test[name]
 			if(r):
-				print "------- Running test: " + str(name)
+				utils.print_info("\n___________________________________________________")
+				utils.print_info("Running test: {:s}\n".format(name))
 			return r
 
 	def __del__(self):

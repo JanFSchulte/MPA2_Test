@@ -1,8 +1,7 @@
-
 ##################################
 # This file includes utilities for analog measurements,
-# Do not use directly those methods.
-# The function included in this file are used by <<ssa_measurements.py>>
+## DO NOT USE DIRECTLY THE FUNCTIONS IN THIS FILE
+## USE INSTEAD THE FUNCTIONS IN "ssa_measuremtens.py"
 ##################################
 
 from d19cScripts.fc7_daq_methods import *
@@ -24,14 +23,112 @@ import inspect
 import random
 import numpy as np
 
+## DO NOT USE DIRECTLY THE FUNCTIONS IN THIS FILE
+## USE INSTEAD THE FUNCTIONS IN "ssa_measuremtens.py"
+
 class SSA_cal_utility():
 
 	def __init__(self, ssa, I2C, fc7):
 		self.ssa = ssa; self.I2C = I2C;	self.fc7 = fc7;
 		self.__set_variables()
 
-	###########################################################
-	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2, countershift = 1, set_trim = False):
+	def trimming_scurves_2(self,
+		charge_fc = 2,             # Input charge in fC
+		threshold_mv = 'mean',     # Threshold in mV
+		caldac = 'default',        # 'default' | 'evaluate' | value [gain, offset]
+		thrdac = 'default',        # 'default' | 'evaluate' | value [gain, offset]
+		nevents = 1000,            # Number of calibration pulses
+		iterative_step = 3,        # Iterative steps to acheive lower variability
+		filename = False,
+		return_scurves = False
+		):
+
+		if(caldac=='evaluate'):  t_caldac = self.measure.dac_linearity(name='Bias_CALDAC', eval_inl_dnl=False, nbits=8, npoints=10, plot=False, runname='')
+		elif(caldac=='default'): t_caldac = self.caldac
+		elif(isinstance(caldac, list)): t_caldac = caldac
+		else: return False
+
+		if(thrdac=='evaluate'):  t_thrdac = self.measure.dac_linearity(name='Bias_THDAC', eval_inl_dnl=False, nbits=8, npoints=10, plot=False, runname='')
+		elif(thrdac=='default'): t_thrdac = self.thrdac
+		elif(isinstance(thrdac, list)): t_thrdac = thrdac
+		else: return False
+
+		cal_ampl = self.evaluate_caldac_ampl(charge_fc, t_caldac)
+		utils.print_log("->\tCALDAC value for trimming = {:d}".format(cal_ampl))
+		sc = []; th = []; cnt = 0;
+
+		for trimdac in [0, 31]:
+			thtmp = np.zeros(120)
+			self.set_trimming(int(trimdac), display=False)
+			evaluate_sc = True
+			scv = self.scurves(
+				cal_ampl = cal_ampl,
+				nevents = nevents,
+				display = False,
+				plot = False,
+				filename = False)
+			sc.append(scv)
+			ths, pars = self.evaluate_scurve_thresholds(scv)
+			th.append( ths )
+			utils.print_info("->\tThreshold Trimming: ThDAC={:2d}         -> mean(th)={:5.3f} std(th)={:5.3f}".format(trimdac, np.mean(ths), np.std(ths)))
+			cnt += 1
+			if( isinstance(filename, str) ):
+				fo = (filename + "frontend_Q_{c:1.3f}_scurve_trim-{t:0d}_.csv".format(c=charge_fc, t=trimdac))
+				CSV.ArrayToCSV (array = scv, filename = fo, transpose = True)
+				utils.print_log("->\tScurve data saved in {:s}".format(fo))
+
+		ths_test = []
+		ratios = (th[1]-th[0])/32.0 # ratios array
+
+		if(threshold_mv == 'default'):
+			t_threshold_mv = self.fe_average_gain*np.float(charge_fc)
+			th_dac = self.evaluate_thdac_ampl(t_threshold_mv, t_thrdac)
+		elif(threshold_mv == 'mean'):
+			th_dac = np.mean( [np.mean(th[0]), np.mean(th[1])] )
+		else:
+			t_threshold_mv = threshold_mv
+			th_dac = self.evaluate_thdac_ampl(t_threshold_mv, t_thrdac)
+
+		trimming = (np.array([th_dac]*120)-th[0])/ratios #trimming array
+		self.set_trimming(np.array(np.round(trimming), dtype=int), range(1,121), display=False)
+		trimming_prev = trimming
+
+		for i in range(iterative_step):
+			thtmp = np.zeros(120)
+			scv = self.scurves(
+				cal_ampl = cal_ampl,
+				nevents = nevents,
+				display = False,
+				plot = False,
+				filename = False)
+			sc.append(scv)
+			ths, pars = self.evaluate_scurve_thresholds(scv)
+			th.append( ths )
+			utils.print_info("->\tThreshold Trimming: Trim iteration {:1d} -> mean(th)={:5.3f} std(th)={:5.3f} taget={:5.3f}".format(i, np.mean(ths), np.std(ths), th_dac))
+			ratios = ratios*np.sqrt(2)
+			correction = ((np.array([th_dac]*120)-ths)/ ratios )
+			trimming_new = trimming_prev + correction
+			trimming_prev = trimming_new
+			self.set_trimming(np.array(np.round(trimming_new), dtype=int), range(1,121), display=False)
+			ths_test.append(np.std(ths))
+
+		if( isinstance(filename, str) ):
+			fo = (filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc))
+			CSV.ArrayToCSV (array = sc[-1], filename = fo, transpose = True)
+			utils.print_log("->\tScurve data saved in {:s}".format(fo))
+		if(return_scurves):
+			return (th+ths_test), sc
+		else:
+			return np.std(ths)
+
+	def evaluate_caldac_ampl(self, charge_fc, t_caldac):
+		return int(np.round((((charge_fc*1E-15)/self.ssa.cap)-(t_caldac[1]*1E-3))/np.float(t_caldac[0]*1E-3)))
+
+	def evaluate_thdac_ampl(self, t_threshold_mv, t_thrdac):
+		return (-t_threshold_mv-t_thrdac[1]+t_thrdac[2])/np.float(t_thrdac[0])
+
+	########################################Configure_TestPulse_SSA(50,50,500,1000,0,0,0)###################
+	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2, countershift = 0, set_trim = False, d19c_firmware_issue_repeat = True, start_threshold = 0):
 		'''	cal_ampl  -> int |'baseline'  -> Calibration pulse charge (in CALDAC LSBs)
 			mode      -> 'all' | 'sbs'   -> All strips together or one by one
 			nevents   -> int number      -> Number of calibration pulses (default 1000)
@@ -43,233 +140,299 @@ class SSA_cal_utility():
 			filename2 -> 'string'        -> Additional string to complete the filename
 			msg       -> internal use
 		'''
-		if(speeduplevel > 0):
+		#self.fc7.reset()
+		evaluate_sc = True
+		evaluate_cn = 0
+		while(evaluate_sc):
+			evaluate_cn += 1
+			time_init = time.time()
 			utils.activate_I2C_chip()
-		# first go to the async mode
-		self.ssa.ctrl.activate_readout_async()
-		ermsg = ''
-		baseline = False
-		if isinstance(cal_ampl, int):
-			cal_ampl = [cal_ampl]
-		elif cal_ampl == 'baseline':
-			baseline = True
-			cal_ampl = [0]
-			if(set_trim):
-				self.set_trimming(0, display=False)
-				self.set_trimming(31, striplist, display=False)
-		elif not isinstance(cal_ampl, list):
-			return False
-		for cal_val in  cal_ampl:
-			# close shutter and clear counters
-			self.fc7.close_shutter(1)
-			self.fc7.clear_counters(1)
-			# init chip cal pulse
-			self.ssa.strip.set_cal_strips(mode = 'counter', strip = 'all')
-			self.ssa.ctrl.set_cal_pulse(amplitude = cal_val, duration = 15, delay = 'keep')
-			# init firmware cal pulse
-			Configure_TestPulse_MPA_SSA(200, nevents)
-			# then let's try to measure the scurves
-			scurves = np.zeros((256,120), dtype=np.int)
-			threshold = 0
-			utils.ShowPercent(0, 256, "Calculating S-Curves "+msg+" ")
+			# first go to the async mode
+			self.fc7.SendCommand_CTRL("stop_trigger")
+			self.ssa.readout.cluster_data(initialize=True)
+			self.ssa.ctrl.activate_readout_async()
+			ermsg = ''
+			baseline = False
+			if isinstance(cal_ampl, int):
+				cal_ampl = [cal_ampl]
+			elif cal_ampl == 'baseline':
+				baseline = True
+				cal_ampl = [0]
+				if(set_trim):
+					self.set_trimming(0, display=False)
+					self.set_trimming(31, striplist, display=False)
+					sleep(0.001)
+			elif not isinstance(cal_ampl, list):
+				utils.print_error("-> ssa_cal_utility/scurves wrong cal_alpl parameter")
+				return False
+			if(rdmode == 'fast'):
+				self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
+			#Configure_TestPulse_MPA_SSA(200, nevents)# init firmware cal pulse
+			Configure_TestPulse_SSA(50,50,500,nevents,0,0,0)
 
-			while (threshold < 256):
-				strout = ""
-				error = False
-				#print "Setting the threshold to ", threshold, ", sending the test pulse and reading the counters"
-				strout += "threshold = " + str(threshold) + ".   "
-				self.ssa.ctrl.set_threshold(threshold); sleep(0.05); # set the threshold
+			for cal_val in  cal_ampl:
+				# close shutter and clear counters
+				self.fc7.close_shutter(8)
+				self.fc7.clear_counters(8)
+				# init chip cal pulse
+				self.ssa.strip.set_cal_strips(mode = 'counter', strip = 'all')
+				self.ssa.ctrl.set_cal_pulse(amplitude = cal_val, duration = 15, delay = 'keep')
 
-				if (not baseline and (mode == 'all')):	# provide cal pulse to all strips together
-					self.fc7.clear_counters(2)
-					self.fc7.open_shutter(2)
-					self.fc7.SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
-					sleep(0.02)
-					while(self.fc7.read("stat_fast_fsm_state") != 0): sleep(0.01)
-					self.fc7.close_shutter(2)
+				#Configure_TestPulse_MPA_SSA(200, nevents)
+				#Configure_TestPulse_SSA(50,50,500,1000,0,0,0)
 
-				elif(not baseline and (mode == 'sbs')): # provide cal pulse strip by strip
-					self.fc7.clear_counters(1)
-					for s in striplist:
-						self.ssa.strip.set_cal_strips(mode = 'counter', strip = s )
-						sleep(0.01);
-						self.fc7.open_shutter(2); sleep(0.01);
-						self.fc7.SendCommand_CTRL("start_trigger"); sleep(0.01); # send sequence of NEVENTS pulses
-						while(self.fc7.read("stat_fast_fsm_state") != 0):
-							sleep(0.01)
-						self.fc7.close_shutter(2); sleep(0.01);
+				# then let's try to measure the scurves
+				scurves = np.zeros((256,120), dtype=np.int)
+				threshold = start_threshold
+				utils.ShowPercent(0, 256, "Calculating S-Curves "+msg+" ")
+				while (threshold < 256):
+					time_cur = time.time()
+					strout = ""
+					error = False
+					#print "Setting the threshold to ", threshold, ", sending the test pulse and reading the counters"
+					strout += "threshold = " + str(threshold) + ".   "
+					self.ssa.ctrl.set_threshold(threshold);  # set the threshold
+					#sleep(0.05);
+					if (not baseline and (mode == 'all')):	# provide cal pulse to all strips together
+						self.fc7.clear_counters(8, 5)
+						self.fc7.open_shutter(8, 5)
+						#Configure_TestPulse_SSA(50,50,500,1000,0,0,0)
+						#Configure_TestPulse_MPA(200, 200, 200, nevents, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
+						self.fc7.SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
+						test = 1
+						t = time.time()
+						timeout = 500
+						while (test):
+							timeout-=1
+							if(timeout<=0):
+								test=0; break
+							test = (self.fc7.read("stat_fast_fsm_state"))
+							sleep(0.001)
+							#print test,
+							if((not test) and (((time.time()-t)*1E3)<2) ): # D19C firmware issue
+								sleep(0.005)
+								test = self.fc7.read("stat_fast_fsm_state")
+								if(not test):
+									self.fc7.SendCommand_CTRL("start_trigger")
+									t = time.time()
+									test = 1
+						#print ((time.time()-t)*1E3)
+						self.fc7.close_shutter(8,5)
+					elif(not baseline and (mode == 'sbs')): # provide cal pulse strip by strip
+						self.fc7.clear_counters(1)
+						for s in striplist:
+							self.ssa.strip.set_cal_strips(mode = 'counter', strip = s )
+							sleep(0.01);
+							self.fc7.open_shutter(2); sleep(0.01);
+							self.fc7.SendCommand_CTRL("start_trigger"); sleep(0.01); # send sequence of NEVENTS pulses
+							while(self.fc7.read("stat_fast_fsm_state") != 0):
+								sleep(0.01)
+							self.fc7.close_shutter(2); sleep(0.01);
 
-				elif(baseline and (mode == 'all')):
-					self.fc7.clear_counters(2); sleep(0.01);
-					self.fc7.open_shutter(2);   sleep(0.01);
-					self.fc7.close_shutter(2);  sleep(0.01);
+					elif(baseline and (mode == 'all')):
+						self.fc7.clear_counters(2); #sleep(0.01);
+						self.fc7.open_shutter(2);   #sleep(0.01);
+						self.fc7.close_shutter(2);  #sleep(0.01);
 
-				elif(baseline and (mode == 'sbs')):
-					# with this method, the time between open and close shutter
-					# change from strip to strip due to the communication time
-					# so do not use to compare the counters value,
-					# from the point of view of the atandard deviation is not influent
-					self.fc7.clear_counters(2); sleep(0.01);
-					for s in striplist:
-						# all trims at 0 and one at 31 to remove the crosstalks effect
-						if(set_trim):
-							self.ssa.strip.set_trimming('all', 0)
-							self.ssa.strip.set_trimming(s, 31)
-						sleep(0.01);
-						self.fc7.open_shutter(2);  sleep(0.01);
-						self.fc7.close_shutter(2); sleep(0.01);
-				if(rdmode == 'fast'):
-					failed, scurves[threshold] = self.ssa.readout.read_counters_fast(striplist, shift = countershift)
-				elif(rdmode == 'i2c'):
-					failed, scurves[threshold] = self.ssa.readout.read_counters_i2c(striplist)
-				else:
-					failed = True
+					elif(baseline and (mode == 'sbs')):
+						# with this method, the time between open and close shutter
+						# change from strip to strip due to the communication time
+						# so do not use to compare the counters value,
+						# from the point of view of the atandard deviation is not influent
+						self.fc7.clear_counters(2); sleep(0.01);
+						for s in striplist:
+							# all trims at 0 and one at 31 to remove the crosstalks effect
+							if(set_trim):
+								self.ssa.strip.set_trimming('all', 0)
+								self.ssa.strip.set_trimming(s, 31)
+							sleep(0.01);
+							self.fc7.open_shutter(2);  sleep(0.01);
+							self.fc7.close_shutter(2); sleep(0.01);
+					if(rdmode == 'fast'):
+						failed, scurves[threshold] = self.ssa.readout.read_counters_fast(striplist, shift = countershift, initialize = 0)
+					elif(rdmode == 'i2c'):
+						failed, scurves[threshold] = self.ssa.readout.read_counters_i2c(striplist)
+					else:
+						failed = True
 
-				if (failed):
-					error = True; ermsg = '[Counters readout]';
-				else:
-					for s in range(0,120):
-						if ((threshold > 0) and (scurves[threshold,s])==0 and (scurves[threshold-1,s]>(nevents*0.8)) ) :
-							error = True; ermsg = '[Condition 1]' + str(scurves[threshold,s]) +'  ' + str(scurves[threshold-1,s])
-						elif ((not baseline) and (threshold > 10) and (scurves[threshold,s])== 2*scurves[threshold-1,s] and (scurves[threshold,s] != 0)):
-							error = True; ermsg = '[Condition 2]'
+					if (failed):
+						error = True; ermsg = '[Counters readout]';
+					else:
+						if(d19c_firmware_issue_repeat):
+							for s in range(0,120):
+								if ((threshold > 0) and (scurves[threshold,s])==0 and (scurves[threshold-1,s]>(nevents*0.8)) ) :
+									error = True; ermsg = '[Condition 1]' + str(scurves[threshold,s]) +'  ' + str(scurves[threshold-1,s])
+								elif ((not baseline) and (threshold > 10) and (scurves[threshold,s])== 2*scurves[threshold-1,s] and (scurves[threshold,s] != 0)):
+									error = True; ermsg = '[Condition 2]'
 
-				if (error == True):
-					threshold = (threshold-1) if (threshold>0) else 0
-					utils.ShowPercent(threshold, 256, "Failed to read counters for threshold " + str(threshold) + ". Redoing. " +  ermsg)
-					sleep(0.5)
-					continue
-				else:
-					strout += "Counters samples = 1->[" + str(scurves[threshold][0]) + "]  30->[" + str(scurves[threshold][29]) + "]  60->[" + str(scurves[threshold][59]) + "]  90->[" + str(scurves[threshold][89]) + "]  120->[" + str(scurves[threshold][119]) + "]"
+					if (error == True):
+						threshold = (threshold-1) if (threshold>0) else 0
+						utils.ShowPercent(threshold, 256, "Failed to read counters for threshold " + str(threshold) + ". Redoing. " +  ermsg)
+						#sleep(0.5)
+						continue
+					else:
+						strout += "Counters samples = 1->[" + str(scurves[threshold][0]) + "]  30->[" + str(scurves[threshold][29]) + "]  60->[" + str(scurves[threshold][59]) + "]  90->[" + str(scurves[threshold][89]) + "]  120->[" + str(scurves[threshold][119]) + "]"
 
-				if(speeduplevel >= 2 and threshold > 32):
-					if( (scurves[threshold-8: threshold ] == np.zeros((8,120), dtype=np.int)).all() ):
-						break
+					if(speeduplevel >= 2 and threshold > 32):
+						if( (scurves[threshold-8: threshold ] == np.zeros((8,120), dtype=np.int)).all() ):
+							break
 
-				if (display == True):
-					utils.ShowPercent(threshold, 256, strout)
-				else:
-					utils.ShowPercent(threshold, 256, "Calculating S-Curves "+msg+"                                      ")
-				threshold = threshold + 1
+					if (display == True):
+						utils.ShowPercent(threshold, 256, strout)
+					else:
+						utils.ShowPercent(threshold, 256, "Calculating S-Curves "+msg+"                                      ")
+					threshold = threshold + 1
 
-			utils.ShowPercent(256, 256, "Done calculating S-Curves "+msg+"                                            ")
+				utils.ShowPercent(256, 256, "Done calculating S-Curves "+msg+"                                            ")
 
-			if( isinstance(filename, str) ):
-				fo = "../SSA_Results/" + filename + "_scurve_" + filename2 + "__cal_" + str(cal_val) + ".csv"
-				CSV.ArrayToCSV (array = scurves, filename = fo, transpose = True)
-				print "->  \tData saved in" + fo
+				if( isinstance(filename, str) ):
+					fo = "../SSA_Results/" + filename + "_scurve_" + filename2 + "__cal_" + str(cal_val) + ".csv"
+					CSV.ArrayToCSV (array = scurves, filename = fo, transpose = True)
+					utils.print_log( "->  \tData saved in" + fo)
 
+			if(np.sum(scurves[:,10:110] )<100):
+				if(evaluate_cn>4):
+					utils.print_error("-X\tError in S-Curve evaluation {:d}".format(np.sum(scurves[50:100,:])))
+					return False
+				utils.print_warning("-X\tIssue in S-Curve evaluation. Reiterating.. {:d}".format(np.sum(scurves[50:100,:])))
+			else: evaluate_sc = False
+		for i in range(120):
+			if(np.sum(scurves[:,i])==0):
+				utils.print_warning("X>\tScurve consant to 0 for strip {:d}".format(i))
+		#### print "\n\n" , (time.time()-time_init)
 		if(plot == True): plt.clf()
+		plt.ylim(0,3000); plt.xlim(0,150);
 		plt.plot(scurves)
 		if(plot == True): plt.show()
 		self.scurve_data     = scurves
 		self.scurve_nevents  = nevents
 		self.scurve_calpulse = cal_ampl
-
 		return scurves
 
 	###########################################################
-	def trimming_scurves(self, method = 'expected', cal_ampl = 30, th_nominal = 'default', default_trimming = 'keep', striprange = range(1,121), ratio = 'default', iterations = 5, nevents = 1000, plot = True, display = False, reevaluate = True, countershift = -4, filename = False):
+	def trimming_scurves(self,
+		method = 'center', # method = expected_th | expected_cal | center | highest
+		cal_ampl = 30, # lsb, use with expected_cal method
+		target_th = 0.4, #mV use with expected_th method
+		th_nominal = 'default',
+		th_dac_gain = 'dafault', # threshold DAC gain
+		default_trimming = 15, # val | list | 'keep', #to set the starting trimming values
+		striprange = range(1,121), #range of strips to trim
+		ratio = 'default', # evaluate | default | ratio between Threshold DAC and Trimming DAC
+		iterations = 5, nevents = 1000,
+		plot = True, display = False, reevaluate = True,
+		countershift = 0, filename = False):
 		utils.activate_I2C_chip()
+		if(isinstance(th_dac_gain, float) or isinstance(th_dac_gain, int)):
+			gain_th_dac = float(th_dac_gain)
+		else:
+			gain_th_dac = float(self.th_dac_gain)
+		if(method == 'expected_th'):
+			calval = float(target_th)/gain_th_dac
+		else:
+			calval = cal_ampl
 		# trimdac/thdac ratio
 		if(ratio == 'evaluate'):
-			dacratiolist = np.array(self.evaluate_thdac_trimdac_ratio(trimdac_pvt_calib = False, cal_ampl = cal_ampl, th_nominal = th_nominal,  nevents = nevents, plot = False))
+			dacratiolist = np.array(self.evaluate_thdac_trimdac_ratio(trimdac_pvt_calib = False, cal_ampl = calval, th_nominal = th_nominal,  nevents = nevents, plot = False))
 		elif(ratio == 'default'):
 			dacratiolist = np.array([self.default_dac_ratio]*120)
 		elif isinstance(ratio, float) or isinstance(ratio, int):
 			dacratiolist = np.array([ratio]*120)
 		else: exit(1)
 		# apply starting trimming
-		if(method == 'expected'):
+		if(method == 'expected_th' or method == 'expected_cal'):
 			if( isinstance(default_trimming, np.ndarray) or isinstance(default_trimming, list) or isinstance(default_trimming, int)):
-				trimdac_value = self.set_trimming(default_trimming, striprange, display = False)
+				trimdac_value_prev = self.set_trimming(default_trimming, striprange, display = False)
 			elif(default_trimming == 'keep'):
-				trimdac_value = self.set_trimming('keep', display = False)
-			else: return False
+				trimdac_value_prev = self.set_trimming('keep', display = False)
+			else:
+				return False
 		elif(method == 'center'):
 			if(default_trimming == 'keep'):
-				trimdac_value = self.set_trimming('keep', display = False)
+				trimdac_value_prev = self.set_trimming('keep', display = False)
 			else:
-				trimdac_value = self.set_trimming(15, striprange, display = False)
+				trimdac_value_prev = self.set_trimming(15, striprange, display = False)
 		elif (method == 'highest'):
-			trimdac_value = self.set_trimming(0, striprange, display = False)
+			trimdac_value_prev = self.set_trimming(0, striprange, display = False)
 		else: return False
 		# evaluate initial S-Curves
-		if(display):
-			print self.set_trimming('keep', display = False)
+		if(display>=2):
+			utils.print_log( self.set_trimming('keep', display = False) )
 		scurve_init = self.scurves(
-			cal_ampl = cal_ampl,
+			cal_ampl = calval,
 			nevents = nevents,
 			display = False,
-			plot = True,
+			plot = False,
 			filename = False,
 			countershift = countershift,
 			msg = "for iteration 0")
-
 		thlist_init, par_init = self.evaluate_scurve_thresholds(
 			scurve = scurve_init,
 			nevents = nevents)
 		# Define the target threshold
-		if(method == 'expected'):
+		if(method == 'expected_th' or method == 'expected_cal'):
 			if(th_nominal == 'evaluate'):
 				fe_gain , fe_ofs = self.evaluate_fe_gain(nevents = nevents, plot = False)
-				th_expected = fe_ofs + fe_gain * cal_ampl
+				th_expected = fe_ofs + fe_gain * calval
 			elif(th_nominal == 'default'):
-				th_expected = self.fe_ofs + self.fe_gain * cal_ampl
+				th_expected = self.fe_ofs + self.fe_gain * calval
 			elif isinstance(ratio, float) or isinstance(ratio, int):
 				th_expected = th_nominal
 			else: exit(1)
 		elif(method == 'center'):
 			th_expected = np.mean(thlist_init)
-			print "\n------------------------------"
-			print th_expected
-			print thlist_init
-			print "------------------------------"
+			self.thlist_init = thlist_init
+			#print "\n------------------------------"
+			#print th_expected
+			#print thlist_init
+			#print "------------------------------"
 		elif (method == 'highest'):
 			th_expected = np.max(thlist_init)
 		thlist = thlist_init
 		scurve = scurve_init
 		par = par_init
 		print "->  \tStandard deviation = %5.3f" % (np.std(thlist))
-
-
 		# start trimming on the S-Curves
 		for i in range(0, iterations):
 			trimdac_correction = np.zeros(120)
+			trimdac_value = np.zeros(120)
 			for strip in striprange:
 				th_initial                  = thlist[strip-1]
-				trimdac_correction[strip-1] = int(round((th_expected - th_initial) * dacratiolist[strip-1] ))
-				trimdac_current_value       = self.ssa.strip.get_trimming(strip)
+				trimdac_correction[strip-1] = int(round( (th_expected-th_initial)*dacratiolist[strip-1] ))
+				trimdac_current_value       = trimdac_value_prev[strip-1] ##### can be speed up###########################
 				trimdac_value[strip-1]      = trimdac_current_value + trimdac_correction[strip-1]
+				#print strip, '\t', th_initial,'\t', th_expected,'\t', dacratiolist[strip-1],'\t', trimdac_correction[strip-1],'\t', trimdac_current_value, '\t',trimdac_value[strip-1]
 				if(trimdac_value[strip-1] > 31):
-					print "->  \tReached high trimming limit for strip" + str(strip)
+					if(display>=2): print "->  \tReached high trimming limit for strip" + str(strip)
 					trimdac_value[strip-1] = 31
 				elif(trimdac_value[strip-1] < 0):
-					print "->  \tReached low trimming limit for strip" + str(strip)
+					if(display>=2): print "->  \tReached low trimming limit for strip" + str(strip)
 					trimdac_value[strip-1] = 0
 				# Apply correction to the trimming DAC
 				self.ssa.strip.set_trimming(strip, int(trimdac_value[strip-1]))
-			if(display):
-				print "->  \tInitial threshold    " + str(thlist[0:10])
+			trimdac_value_prev = trimdac_value
+			if(display>=2):
 				print "->  \tTarget threshold     " + str([th_expected]*10)
 				print "->  \tTrim-DAC Correction  " + str(trimdac_correction[0:10])
+			if(display>=1):
+				print "->  \tInitial threshold    " + str(thlist[0:10])
 				print "->  \tTrimming DAC values: " + str(trimdac_value[0:10])
-				print self.set_trimming('keep', display = False)
+				#print self.set_trimming('keep', display = False)
 			# evaluate new S-Curves
 			if(isinstance(filename, str)):
 				filename = filename + "_iteration_" + str(i)
 			scurve = self.scurves(
-				cal_ampl = cal_ampl,
+				cal_ampl = calval,
 				nevents = nevents,
 				display = False,
-				plot = True,
+				plot = False,
 				filename = filename,
 				countershift = countershift,
 				msg = "for iteration " + str(i+1))
 			thlist, par = self.evaluate_scurve_thresholds(
 				scurve = scurve,
 				nevents = nevents)
-			dacratiolist = dacratiolist/2.0
+			dacratiolist = dacratiolist
 			print "->  \tStandard deviation = %5.3f" % (np.std(thlist))
 			if ((np.max(thlist)-np.min(thlist)) < 1):
 				break
@@ -291,25 +454,34 @@ class SSA_cal_utility():
 	###########################################################
 	def set_trimming(self, default_trimming = 'keep', striprange = 'all', display = True):
 		r = True
-		if(isinstance(default_trimming, int)):
+		if(isinstance(default_trimming, np.ndarray) or isinstance(default_trimming, list)):
+			for i in range(120):
+				if(default_trimming[i]<0):
+					self.ssa.strip.set_trimming( i+1, 0)
+				elif(default_trimming[i]>31):
+					self.ssa.strip.set_trimming( i+1, 31)
+				else:
+					self.ssa.strip.set_trimming( i+1, default_trimming[i])
+				#print('Setting strip' + str(i+1) + '  with value' +str(default_trimming[i]))
+			if(display):
+				utils.print_log("->  \tTrimming: Applied trimming array" % (default_trimming))
+			self.scurve_trimming = 'trimmed'
+		elif(isinstance(default_trimming, int)):
+			if(default_trimming<0): default_trimming = 0
+			elif(default_trimming>31): default_trimming = 31
 			if(striprange == 'all'):
 				self.ssa.strip.set_trimming('all', default_trimming)
 				if(display):
-					print "->  \tTrimming: Applied value %d to all channels" % (default_trimming)
-				if(default_trimming == 0): self.scurve_trimming = 'zeros'
-				else:self.scurve_trimming = 'const'
+					utils.print_log("->  \tTrimming: Applied value %d to all channels" % (default_trimming))
+				if(default_trimming == 0):
+					self.scurve_trimming = 'zeros'
+				else:
+					self.scurve_trimming = 'const'
 			else:
 				for i in striprange:
 					self.ssa.strip.set_trimming(i, default_trimming)
 					if(display):
-						print "->  \tTrimming: Applied value %d to channel %d" % (default_trimming, i)
-		elif(isinstance(default_trimming, np.ndarray) or isinstance(default_trimming, list)):
-			for i in striprange:
-				self.ssa.strip.set_trimming( i, default_trimming[i])
-			if(display):
-				print "->  \tTrimming: Applied trimming array" % (default_trimming)
-			self.scurve_trimming = 'trimmed'
-
+						utils.print_log("->  \tTrimming: Applied value %d to channel %d" % (default_trimming, i))
 		elif(default_trimming != False and default_trimming != 'keep'):
 			self.scurve_trimming = 'none'
 			error(1)
@@ -350,7 +522,7 @@ class SSA_cal_utility():
 		if(plot):
 			plt.plot(th)
 			plt.show()
-		ratios = 32.0 / (th[0]-th[1])
+		ratios = 31.0 / (th[0]-th[1])
 		return ratios
 
 	###########################################################
@@ -375,15 +547,19 @@ class SSA_cal_utility():
 		sct = curve;
 		err = True;	itr = 0;
 		erret = (-1, [-1, -1, -1])
+		ckr = range(nevents, nevents+1)
 
 		if( np.size(np.where( curve > (nevents-1) )) < 1):
-			print "Fitting Zeros " + errmsg
+			#print "Fitting Zeros " + errmsg
 			return erret
-
 		# get read of the noise peack
-		while ( not ((sct[0] == nevents) and (sct[1] == nevents)) ):
-			sct = sct[ np.argmax(sct)+1 : ]
-
+		try:
+			while ( not ((sct[0] in ckr) and (sct[1] in ckr) and (sct[2] in ckr) and (sct[3] in ckr) and (sct[4] in ckr) and (sct[5] in ckr) ) ):
+				sct = sct[ np.argmax(sct)+1 : ]
+		except:
+			utils.print_error("->\tssa_cal_utility/_scurve_fit_errorfunction -> scurve error")
+			utils.print_log(sct)
+			utils.print_log(curve)
 		for i in range(0, len(curve)-len(sct)):
 			sct = np.insert(sct, 0, nevents)
 
@@ -393,7 +569,7 @@ class SSA_cal_utility():
 		elif(isinstance(expected, int) or isinstance(expected, float)):
 			par_guess = expected
 		else:
-			print "Fitting failed " + errmsg
+			utils.print_error("Fitting failed " + errmsg)
 			return erret
 
 		while(err == True and itr < reiterate):
@@ -410,7 +586,7 @@ class SSA_cal_utility():
 			else:
 				err = False
 		if(err):
-			print "Fitting failed " + errmsg
+			utils.print_error("Fitting failed " + errmsg)
 			return erret
 		else:
 			# readd number of th points removed by the noise cleaning
@@ -423,7 +599,7 @@ class SSA_cal_utility():
 		guess_sigma = np.size( np.where(curve > 10) )/6.0
 		errret = [np.inf, np.inf, np.inf]
 		if(guess_mean == 0 or guess_sigma == 0 ):
-			print "Fitting zeros " + errmsg
+			utils.print_error("Fitting zeros " + errmsg)
 			return errret
 		err = True; itr = 0;
 		while(err == True and itr < reiterate):
@@ -438,7 +614,7 @@ class SSA_cal_utility():
 			else:
 				err = False
 		if(err):
-			print "Fitting failed " + errmsg
+			utils.print_error("Fitting failed " + errmsg)
 			return errret
 		else:
 			return par
@@ -874,10 +1050,14 @@ class SSA_cal_utility():
 		self.scurve_data = False
 		self.scurve_nevents  = 0
 		self.scurve_calpulse = 0
-		self.default_dac_ratio = 4.9 / 2
+		self.default_dac_ratio = 0.7
 		self.fe_ofs = 0.3708
 		self.fe_gain = 1.1165
 		self.calpulse_dll_resolution = 1.2
 		self.tempvalue = np.inf
 		self.baseline = 'nondefined'
 		self.storedscurve = {}
+		self.th_dac_gain = 0
+		self.caldac = [0.777, 2.311, 0]
+		self.thrdac = [-1.919, 628.082, 623]
+		self.fe_average_gain = 47.5 #mV/fC

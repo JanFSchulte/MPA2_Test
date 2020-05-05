@@ -121,12 +121,12 @@ class ssa_ctrl_base:
 			return True
 
 
-	def init_slvs(self, current = 0b100):
+	def init_slvs(self, current = 0b111):
 		self.I2C.peri_write('SLVS_pad_current', current)
 		r = self.I2C.peri_read('SLVS_pad_current')
 		if (self.I2C.peri_read("SLVS_pad_current") != (current & 0b111) ):
-			print "Error! I2C did not work properly"
-			exit(1)
+			utils.print_error("->\tI2C did not work properly")
+			#exit(1)
 
 
 	def set_lateral_lines_alignament(self):
@@ -164,7 +164,10 @@ class ssa_ctrl_base:
 
 	def phase_tuning(self):
 		self.activate_readout_shift()
-		self.set_shift_pattern_all(128)
+		if(self.fc7.invert):
+			self.set_shift_pattern_all(0b01111111) #128 #0b01111111
+		else:
+			self.set_shift_pattern_all(128) #128 #0b01111111
 		time.sleep(0.01)
 		self.set_lateral_lines_alignament()
 		time.sleep(0.01)
@@ -177,24 +180,26 @@ class ssa_ctrl_base:
 
 	def align_out(self):
 		fc7.write("ctrl_phy_phase_tune_again", 1)
-		timeout_max = 2
+		timeout_max = 3
 		timeout = 0
+		sleep(0.1)
 		while(fc7.read("stat_phy_phase_tuning_done") == 0):
 			sleep(0.1)
+			utils.print_warning("->\tWaiting for the phase tuning")
+			timeout+=1
 			if (timeout == timeout_max):
-				timeout = 0
-				print "Waiting for the phase tuning"
-				fc7.write("ctrl_phy_phase_tune_again", 1)
-			else:
-				timeout += 1
+				return False
+		return True
 
 	def set_t1_sampling_edge(self, edge):
 		if edge == "rising" or edge == "positive":
 			self.I2C.peri_write('EdgeSel_T1', 1)
+			utils.print_info("->  \tT1 sampling edge set to rising")
 		elif edge == "falling" or edge == "negative":
 			self.I2C.peri_write('EdgeSel_T1', 0)
+			utils.print_info("->  \tT1 sampling edge set to falling")
 		else:
-			print "Error! The edge name is wrong"
+			print("Error! The edge name is wrong")
 
 
 	def activate_readout_normal(self, mipadapterdisable = 0):
@@ -202,7 +207,7 @@ class ssa_ctrl_base:
 		self.I2C.peri_write('ReadoutMode',val)
 		if (self.I2C.peri_read("ReadoutMode") != val):
 			print "Error! I2C did not work properly"
-			exit(1)
+			#exit(1)
 
 
 	def activate_readout_async(self, ssa_first_counter_delay = 8, correction = 0):
@@ -213,7 +218,7 @@ class ssa_ctrl_base:
 		# check the value
 		if (self.I2C.peri_read("AsyncRead_StartDel_LSB") != ssa_first_counter_delay & 0xff):
 			print "Error! I2C did not work properly"
-			error(1)
+			#error(1)
 		# ssa set delay of the counters
 		fwdel = ssa_first_counter_delay + 24 + correction
 		if(fwdel >= 255):
