@@ -1,6 +1,12 @@
 ### Ported to python 3.5 on April 2020 - acaratel
 
+#try:
 from PyChipsUser import *
+#except:
+#    print("Impossible to import PyChipsUser.")
+#    print("The communication with the test system is unavailable. ")
+#    print("You will be able to run in analysis-mode only.\n\n")
+
 import sys
 import os
 from d19cScripts.ErrorHandler import *
