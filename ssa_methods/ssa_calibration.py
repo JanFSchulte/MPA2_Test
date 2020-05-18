@@ -3,7 +3,7 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
-from myScripts.BasicMultimeter import *
+#### from myScripts.BasicMultimeter import *
 
 import time
 import sys
@@ -11,6 +11,9 @@ import inspect
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+
+
+
 
 
 class ssa_calibration():
@@ -71,7 +74,7 @@ class ssa_calibration():
 					utils.print_log( "\tTune the value (" + str( par.nominal ) + "):" )
 					best_dac = self.__tune_parameter(self.minst, par.par_name, par.nominal)
 					par.best_dac = best_dac
-			print "\n\nSummary of tuning (tuned values):"
+			print("\n\nSummary of tuning (tuned values):")
 			if(measure):
 				self.measure_bias()
 			self.ssa.ctrl.set_output_mux('highimpedence')
@@ -102,7 +105,7 @@ class ssa_calibration():
 		if(not self.initialised and (self.mode == 'MULTIMETER')):
 			self.__initialise()
 		if(not name in self.analog_mux_map):
-			print "->  \tInvalid DAC name"
+			print("->  \tInvalid DAC name")
 			return False
 		fullscale = 2**nbits
 		#if(not self.initialised):
@@ -125,13 +128,13 @@ class ssa_calibration():
 		dnl_max = np.max(np.abs(dnl))
 		g, ofs, sigma = utils.linear_fit(range(0,2**nbits), data)
 		self.ssa.ctrl.set_output_mux('highimpedence')
-		print ""
-		print "DAC "+name+'['+str(nbits)+'-bit]:'
-		print "->\tGAIN    = {:6.3f} mV/cnt".format(g*1000.0)
-		print "->\tOFFSET  = {:6.3f} mV    ".format(ofs*1000.0)
-		print "->\tINL MAX = {:6.3f} cnts  ".format(inl_max)
-		print "->\tDNL INL = {:6.3f} cnts  ".format(dnl_max)
-		print ""
+		print("")
+		print("DAC "+name+'['+str(nbits)+'-bit]:')
+		print("->\tGAIN    = {:6.3f} mV/cnt".format(g*1000.0))
+		print("->\tOFFSET  = {:6.3f} mV    ".format(ofs*1000.0))
+		print("->\tINL MAX = {:6.3f} cnts  ".format(inl_max))
+		print("->\tDNL INL = {:6.3f} cnts  ".format(dnl_max))
+		print("")
 		if(plot):
 			plt.clf()
 			plt.figure(1)
@@ -166,7 +169,7 @@ class ssa_calibration():
 		if(not self.initialised and (self.mode == 'MULTIMETER')):
 			self.__initialise()
 		if(not name in self.analog_mux_map):
-			print "->  \tInvalid DAC name"
+			print("->  \tInvalid DAC name")
 			return False
 		fullscale = 2**nbits
 		self.ssa.ctrl.set_output_mux(name)
@@ -186,7 +189,7 @@ class ssa_calibration():
 			CSV.ArrayToCSV (array = data, filename = fo + ".csv", transpose = True)
 		g, ofs, sigma = utils.linear_fit(x, data)
 		self.ssa.ctrl.set_output_mux('highimpedence')
-		#print "DAC "+name+'['+str(nbits)+'-bit]:'
+		#print("DAC "+name+'['+str(nbits)+'-bit]:')
 		utils.print_good("->\tGain({:12s}) = {:9.3f} mV/cnt".format(name, g*1000.0))
 		utils.print_good("->\tOffs({:12s}) = {:9.3f} mV    ".format(name, ofs*1000.0))
 
@@ -253,7 +256,7 @@ class ssa_calibration():
 
 	def _d5_value(self, name, mode = 'r', value = -1):
 		if ((mode == 'w') & (value == -1)):# check the read value
-			print "Error! Can not use default value for writing. Please set the value"
+			print("Error! Can not use default value for writing. Please set the value")
 			exit(1)
 		if (mode == 'w'):# write now
 			self.I2C.peri_write(name, value)
@@ -263,7 +266,7 @@ class ssa_calibration():
 			return -1
 		if (mode == 'w'):# if it was write - check the result
 			if (value != read_value):
-				print "Error! The write was not succesfull"
+				print("Error! The write was not succesfull")
 				return -1
 			else:
 				return 0

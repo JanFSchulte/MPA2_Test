@@ -90,7 +90,7 @@ class RunTest():
 		self.test = {}
 		self.configname = configname
 		if(configname != 'default'):
-			print '->  \tTest Configuration object [' + str(self.configname) + '] created.'
+			print('->  \tTest Configuration object [' + str(self.configname) + '] created.')
 
 	def enable(self, name):
 		 self.test[name] = True
@@ -109,4 +109,4 @@ class RunTest():
 			return r
 
 	def __del__(self):
-		print '->  \tTest Configuration object [' + str(self.configname) + '] replaced.'
+		print('->  \tTest Configuration object [' + str(self.configname) + '] replaced.')

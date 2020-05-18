@@ -17,4 +17,4 @@ echo "  "                                               >> LaunchPy.py
 echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('MPA') "  >> LaunchPy.py
 cp ./myScripts/ipaddr_mpa.dat  d19cScripts/ipaddr.dat
 python LaunchPy.py
-python rtb.py
+python utilities/rtb.py

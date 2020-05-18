@@ -229,7 +229,7 @@ class SSA_measurements():
 
 	###########################################################
 	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', ret_average = True, filename = False, runname= '', plot = True, filemode = 'w', set_trim = False):
-		print "->  \tBaseline Noise Measurement"
+		print("->  \tBaseline Noise Measurement")
 		data = np.zeros([120, 256])
 		A = []; sigma = []; mu = []; cnt = 0;
 		if(mode == 'sbs'):
@@ -239,7 +239,7 @@ class SSA_measurements():
 			if isinstance(filename, str):
 				fo = "../SSA_Results/" + filename + "_" + str(runname) + "_scurve_SbS__cal_" + str(0) + ".csv"
 				CSV.ArrayToCSV (array = data, filename = fo, transpose = False)
-				print "->  \tData saved in" + fo
+				print("->  \tData saved in" + fo)
 		elif(mode == 'all'):
 			tmp = self.cal.scurves(cal_ampl='baseline', filename = "../SSA_Results/" + filename + "_" + str(runname), rdmode = 'fast', mode = 'all', striplist = striplist, plot = False, speeduplevel = 2, set_trim = set_trim)
 			data = np.transpose(tmp)
@@ -349,7 +349,7 @@ class SSA_measurements():
 			stds.append(s)
 			pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
 			xnew = np.linspace(np.min(lnspc), np.max(lnspc), 1000, endpoint=True)
-			pdf_l = interpolate.spline(lnspc, pdf_g, xnew)
+			pdf_l = interpolate.BSpline(lnspc, pdf_g, xnew)
 			plt.plot(xnew, pdf_l, c = 'darkred', lw = 2) # plot i
 			cnt += 1
 		leg = ax1.legend(fontsize = 24, )
@@ -364,7 +364,7 @@ class SSA_measurements():
 #return stds
 
 	def scurve_trim_old(self, filename = 'Chip0/', calpulse = 50, method = 'center', iterations = 5, countershift = 0, compute_min_max = True, plot = True):
-		print "->  \tS-Curve Trimming"
+		print("->  \tS-Curve Trimming")
 		if(compute_min_max):
 			data = self.scurves(mode = 'all', rdmode = 'fast', cal_list = [calpulse], trim_list = [0, 31], filename = filename, plot = False, countershift = countershift)
 			scurve_0 = data[0]; scurve_31 = data[1];
@@ -394,7 +394,7 @@ class SSA_measurements():
 	def threshold_spread(self, calpulse = 50, file = '../SSA_results/Chip0/', runname = '', use_stored_data = False, plot = True, nevents=1000, speeduplevel = 2, filemode = 'w'):
 		utils.print_log( "->  \tthreshold Spread Measurement")
 		fi = "../SSA_Results/" + file + "_" + str(runname) + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
-		print fi
+		print(fi)
 		if(use_stored_data):
 			if(os.path.exists(fi)):
 				s = CSV.CsvToArray(fi)
@@ -726,7 +726,7 @@ class SSA_measurements():
 		else:
 			a, mu, sigma = self.baseline_noise([strip], plot=False)[0]
 			self.cal.baseline = int(np.round(mu))
-			print "->  \tBaseline = %3.2f" % self.cal.baseline
+			print("->  \tBaseline = {:3.2f}".format(self.cal.baseline))
 		thmin = self.cal.baseline+5   # thmin measured = 8.5 THDAC (0.3fC)
 		for cal in calrange:
 			latency, thlist = self.cal.shaper_pulse_rising(
@@ -757,7 +757,7 @@ class SSA_measurements():
 	###########################################################
 	def _display_power_value(self, data, display):
 		if(display):
-			print "->  \t%8s : Digital = %7.3f, Analog = %7.3f, Pads = %7.3f" %(data[0], data[1][0], data[1][1], data[1][2])
+			print("->  \t%8s : Digital = {:7.3f}, Analog = {:7.3f}, Pads = {:7.3f}".format( (data[0], data[1][0], data[1][1], data[1][2]) ))
 
 	###########################################################
 	def __set_variables(self):

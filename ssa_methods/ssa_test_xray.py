@@ -67,4 +67,4 @@ class SSA_test_xray():
 
 
 	def set_start_irradiation_time(self, filename, ):
-		print 'ciao'
+		print('ciao')

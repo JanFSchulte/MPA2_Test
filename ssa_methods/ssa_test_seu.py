@@ -127,7 +127,7 @@ class SSA_SEU():
 			TILT = float(info[5,1])
 			for f in os.listdir(folder + '/' + dt):
 				if(len(re.findall("\W?SEU_SSA(.+).csv", f))>0):
-					#print folder + '/' + dt + '/' + f
+					#print(folder + '/' + dt + '/' + f)
 					summary = CSV.csv_to_array( folder + '/' + dt + '/' + f )
 			self.summary = summary
 
@@ -159,12 +159,12 @@ class SSA_SEU():
 			l1dataer_h_len = len(tmp + cor)
 			l1dataer_h = np.float(np.mean(tmp + cor))
 
-			print "->  \t%2s   %7.3f   %7.3f  %7.3f  %7.3f " %(ION, LET,  clusterr_l+clusterr_h, l1dataer_l, l1dataer_h)
+			print( "->  \t{:2s}   {:%7.3f}   {:7.3f}  {:7.3f}  {:7.3f} ".format(ION, LET,  clusterr_l+clusterr_h, l1dataer_l, l1dataer_h)  )
 
 			datalog.append( [LET, TILT, 100 , FLUX, 30, seucnt, clusterr_l, l1dataer_l, clusterr_l/(float(FLUX)*30), l1dataer_l/(float(FLUX)*30), clusterr_l_len*30,  clusterr_l_sum, l1dataer_l_len*30,  l1dataer_l_sum ])
-			#print datalog[-1]
+			#print(datalog[-1])
 			datalog.append( [LET, TILT, 500 , FLUX, 30, seucnt, clusterr_h, l1dataer_h, clusterr_h/(float(FLUX)*30), l1dataer_h/(float(FLUX)*30), clusterr_h_len*30,  clusterr_h_sum, l1dataer_h_len*30,  l1dataer_h_sum ])
-			#print datalog[-1]
+			#print(datalog[-1])
 			#time.sleep(2)
 		CSV.array_to_csv( datalog , folder + "/cmplog.csv" )
 		print("->  \tCompiled log saved in: " + str( folder + "/cmplog.csv") )
@@ -244,11 +244,11 @@ class SSA_SEU():
 		peri_er = bool(error[0])
 		strip_er = not all(v == 0 for v in error[1:])
 		if(peri_er):
-			print "-X  \tSEU Configuration -> Error in Periphery configuration"
+			print("-X  \tSEU Configuration -> Error in Periphery configuration")
 		if(strip_er):
-			print "-X  \tSEU Configuration -> Error in Strip configuration"
+			print("-X  \tSEU Configuration -> Error in Strip configuration")
 		if(not peri_er and not strip_er):
-			print "->  \tSEU Configuration -> Correct"
+			print("->  \tSEU Configuration -> Correct")
 		return peri_er, strip_er
 
 
@@ -262,7 +262,7 @@ class SSA_SEU():
 			fo.write(str(time.time()-tinit) + ", " + str(seucounter) + '\n')
 			fo.close()
 			time.sleep(0.2)
-			print str(seucounter)
+			print(str(seucounter))
 			if( (time.time()-tinit) > runtime):
 				return
 
@@ -302,7 +302,7 @@ class SSA_SEU():
 				r = self.I2C.peri_read(reg)
 				registers.append([ reg,  r])
 				if(r != 0x1):
-					print [ reg,  r]
+					print([ reg,  r])
 
 			#for reg in strip_reg_map:
 			#	for strip in range(1,120):
@@ -310,7 +310,7 @@ class SSA_SEU():
 			#		r = self.I2C.strip_read(reg,  strip)
 			#		registers.append([ reg,  r])
 			#		#if(r != 0x1):
-			#		print [ reg,  r]
+			#		print([ reg,  r])
 			CSV.ArrayToCSV(registers, file+ str(i))
 
 
@@ -327,7 +327,7 @@ class SSA_SEU():
 				if(len(re.findall("SEU_SSA_(.+)_configuration.scv", f))>0):
 					filename = folder + '/' + dt + "/CONFIG/" + f
 					tmp = CSV.csv_to_array( filename )
-					print "->  \tElaborating file: " + filename
+					print("->  \tElaborating file: " + filename)
 					conf_read = np.zeros([np.shape(tmp)[0], 8], dtype="|S32")
 					conf_read[:,0:4] = tmp[:,0:4]
 					for reg in conf_read:
@@ -392,12 +392,12 @@ class SSA_SEU():
 
 #for reg in ssa.ctrl.ssa_peri_reg_map:
 #	I2C.peri_write(reg, 0xff)
-#	print ""
-#	print reg
-#	time.sleep(0.2); print ssa.ctrl.read_seu_counter()
-#	time.sleep(0.2); print ssa.ctrl.read_seu_counter()
-#	time.sleep(0.2); print ssa.ctrl.read_seu_counter()
-#	print pwr.get
+#	print("")
+#	print(reg)
+#	time.sleep(0.2); print(ssa.ctrl.read_seu_counter())
+#	time.sleep(0.2); print(ssa.ctrl.read_seu_counter())
+#	time.sleep(0.2); print(ssa.ctrl.read_seu_counter())
+#	print(pwr.get)
 
 
 #6 10, 30, 45, 60

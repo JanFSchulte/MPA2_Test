@@ -80,7 +80,7 @@ class ssa_wp_analyze():
                         self.chipsum['stub'][chipn] = 0
                     else:
                         self.chipsum['analog'][chipn] = 0
-                    #print chipn, inst, i
+                    #print(chipn, inst, i)
                     tmp.append(0)
                     self.chipsum['all-m']    = np.logical_and( self.chipsum['analog'], self.chipsum['stub'] )
                     self.chipsum['all-m1v0'] = np.logical_and( self.chipsum['analog'], self.chipsum['stub'], self.chipsum['memory_1V2'])

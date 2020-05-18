@@ -25,7 +25,7 @@ class ssa_ctrl_base:
 
 	def resync(self):
 		SendCommand_CTRL("fast_fast_reset");
-		print '->  \tSent Re-Sync command'
+		print('->  \tSent Re-Sync command')
 		sleep(0.001)
 
 
@@ -54,10 +54,10 @@ class ssa_ctrl_base:
 			for reg in strip_reg_map:
 				tmp = [strip, reg, self.I2C.strip_read(reg, strip)]
 				registers.append(tmp)
-		#print "->  \tConfiguration Saved on file:   " + str(file)
+		#print("->  \tConfiguration Saved on file:   " + str(file))
 		if display:
 			for i in registers:
-				print i
+				print(i)
 		dir = file[:file.rindex(os.path.sep)]
 		if not os.path.exists(dir): os.makedirs(dir)
 		CSV.ArrayToCSV(registers, file)
@@ -69,22 +69,22 @@ class ssa_ctrl_base:
 		if(upload_on_chip):
 			for tmp in registers:
 				if(tmp[0] == -1):
-					if display: print 'writing'
+					if display: print('writing')
 					if (not 'Fuse' in tmp[1]):
 						self.I2C.peri_write(tmp[1], tmp[2])
 						r = self.I2C.peri_read(tmp[1])
 						if(r != tmp[2]):
-							print 'X>  \t Configuration ERROR Periphery  ' + str(tmp[1]) + '  ' + str(tmp[2]) + '  ' + str(r)
+							print('X>  \t Configuration ERROR Periphery  ' + str(tmp[1]) + '  ' + str(tmp[2]) + '  ' + str(r))
 				elif(tmp[0]>=1 and tmp[0]<=120):
-					if display: print 'writing'
+					if display: print('writing')
 					if ((not 'ReadCounter' in tmp[1]) and ((not 'Fuse' in tmp[1]))):
 						self.I2C.strip_write(tmp[1], tmp[0], tmp[2])
 						r = self.I2C.strip_read(tmp[1], tmp[0])
 						if(r != tmp[2]):
-							print 'X>  \t Configuration ERROR Strip ' + str(tmp[0])
+							print('X>  \t Configuration ERROR Strip ' + str(tmp[0]))
 				if display:
-					print [tmp[0], tmp[1], tmp[2], r]
-			print "->  \tConfiguration Loaded from file"
+					print([tmp[0], tmp[1], tmp[2], r])
+			print("->  \tConfiguration Loaded from file")
 		if(rtarray):
 			return registers
 
@@ -115,7 +115,7 @@ class ssa_ctrl_base:
 		r = ((self.I2C.peri_read('Bias_TEST_LSB') & 0xff))
 		r = ((self.I2C.peri_read('Bias_TEST_MSB') & 0xff) << 8) | r
 		if(r != ctrl):
-			print "Error. Failed to set the MUX"
+			print("Error. Failed to set the MUX")
 			return False
 		else:
 			return True
@@ -148,14 +148,14 @@ class ssa_ctrl_base:
 
 	def __do_phase_tuning(self):
 		cnt = 0; done = True
-		#print self.fc7.read("stat_phy_phase_tuning_done")
+		#print(self.fc7.read("stat_phy_phase_tuning_done"))
 		self.fc7.write("ctrl_phy_phase_tune_again", 1)
-		#print self.fc7.read("stat_phy_phase_tuning_done")
+		#print(self.fc7.read("stat_phy_phase_tuning_done"))
 		send_test(15)
-		#print self.fc7.read("stat_phy_phase_tuning_done")
+		#print(self.fc7.read("stat_phy_phase_tuning_done"))
 		while(self.fc7.read("stat_phy_phase_tuning_done") == 0 and cnt < 5):
 			sleep(0.1)
-			print "Waiting for the phase tuning"
+			print("Waiting for the phase tuning")
 			cnt += 1
 		if cnt>4:
 			done = False
@@ -206,7 +206,7 @@ class ssa_ctrl_base:
 		val = 0b100 if (mipadapterdisable) else 0b000
 		self.I2C.peri_write('ReadoutMode',val)
 		if (self.I2C.peri_read("ReadoutMode") != val):
-			print "Error! I2C did not work properly"
+			print("Error! I2C did not work properly")
 			#exit(1)
 
 
@@ -217,12 +217,12 @@ class ssa_ctrl_base:
 		self.I2C.peri_write("AsyncRead_StartDel_LSB", (ssa_first_counter_delay & 0xff))
 		# check the value
 		if (self.I2C.peri_read("AsyncRead_StartDel_LSB") != ssa_first_counter_delay & 0xff):
-			print "Error! I2C did not work properly"
+			print("Error! I2C did not work properly")
 			#error(1)
 		# ssa set delay of the counters
 		fwdel = ssa_first_counter_delay + 24 + correction
 		if(fwdel >= 255):
-			print '->  \tThe counters delay value selected is not supposrted by the firmware [> 255]'
+			print('->  \tThe counters delay value selected is not supposrted by the firmware [> 255]')
 		self.fc7.write("cnfg_phy_slvs_ssa_first_counter_del", fwdel & 0xff)
 
 
@@ -257,8 +257,8 @@ class ssa_ctrl_base:
 		sleep(0.01)
 		test_read = self.I2C.peri_read("Bias_THDAC")
 		if(test_read != value):
-			print "Was writing: ", value, ", got: ", test_read
-			print "Error. Failed to set the threshold"
+			print("Was writing: ", value, ", got: ", test_read)
+			print("Error. Failed to set the threshold")
 			error(1)
 
 
@@ -267,8 +267,8 @@ class ssa_ctrl_base:
 		sleep(0.01)
 		test_read = self.I2C.peri_read("Bias_THDACHIGH")
 		if(test_read != value):
-			print "Was writing: ", value, ", got: ", test_read
-			print "Error. Failed to set the threshold"
+			print("Was writing: ", value, ", got: ", test_read)
+			print("Error. Failed to set the threshold")
 			error(1)
 
 
@@ -292,7 +292,7 @@ class ssa_ctrl_base:
 		for i in repG:
 			if (i != gain_trimming): error = True
 		if error:
-			print "Error. Failed to set the trimming"
+			print("Error. Failed to set the trimming")
 
 
 	def set_cal_pulse(self, amplitude = 255, duration = 5, delay = 'keep'):

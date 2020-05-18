@@ -160,7 +160,7 @@ class SSA_Measurements():
 				break
 			except:
 				utils.print_warning("X>\tBias measurements error. Reiterating...")
-				print "X>  \tError in Bias test. Reiterating."
+				print("X>  \tError in Bias test. Reiterating.")
 				wd +=1;
 				if(wd>=3): self.test_good = False
 
@@ -201,7 +201,8 @@ class SSA_Measurements():
 				utils.print_warning("X>\tAlignment test error. Reiterating...")
 				exc_info = sys.exc_info()
 				utils.print_warning("----------------------")
-				print Exception, error
+				print(Exception)
+				print(error)
 				traceback.print_exception(*exc_info)
 				utils.print_warning("----------------------")
 				wd +=1;
@@ -221,7 +222,8 @@ class SSA_Measurements():
 				utils.print_warning("X>\tCluster Data with Digital Pulses test error. Reiterating...")
 				exc_info = sys.exc_info()
 				utils.print_warning("----------------------")
-				print Exception, error
+				print(Exception)
+				print(error)
 				traceback.print_exception(*exc_info)
 				utils.print_warning("----------------------")
 				wd +=1;
@@ -241,7 +243,8 @@ class SSA_Measurements():
 				utils.print_warning("X>\tCluster Data with Charge Injection test error. Reiterating...")
 				exc_info = sys.exc_info()
 				utils.print_warning("----------------------")
-				print Exception, error
+				print(Exception)
+				print(error)
 				traceback.print_exception(*exc_info)
 				utils.print_warning("----------------------")
 				wd +=1;
@@ -277,7 +280,8 @@ class SSA_Measurements():
 				utils.print_warning("X>\tMemory test error. Reiterating...")
 				exc_info = sys.exc_info()
 				utils.print_warning("----------------------")
-				print Exception, error
+				print(Exception)
+				print(error)
 				traceback.print_exception(*exc_info)
 				utils.print_warning("----------------------")
 				wd +=1;
@@ -310,7 +314,8 @@ class SSA_Measurements():
 				exc_info = sys.exc_info()
 				utils.print_warning("X>\tL1_Data test error. Reiterating...")
 				utils.print_warning("----------------------")
-				print Exception, error
+				print(Exception)
+				print(error)
 				traceback.print_exception(*exc_info)
 				utils.print_warning("----------------------")
 				wd +=1;
@@ -332,7 +337,8 @@ class SSA_Measurements():
 				exc_info = sys.exc_info()
 				utils.print_warning("X>\tBias_THDAC test error. Reiterating...")
 				utils.print_warning("----------------------")
-				print Exception, error
+				print(Exception)
+				print(error)
 				traceback.print_exception(*exc_info)
 				utils.print_warning("----------------------")
 				wd +=1;
@@ -396,7 +402,8 @@ class SSA_Measurements():
 				exc_info = sys.exc_info()
 				utils.print_warning("X>\tScurve measures test error. Reiterating...")
 				utils.print_warning("----------------------")
-				print Exception, error
+				print(Exception)
+				print(error)
 				traceback.print_exception(*exc_info)
 				utils.print_warning("----------------------")
 				wd +=1;

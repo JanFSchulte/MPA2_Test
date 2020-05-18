@@ -66,7 +66,7 @@ class SSA_test_utility():
 			if(hfi):
 				while(r==prev and len(prev)>0): #for firmware issure to be fix in D19C
 					#time.sleep(0.1)
-					#print 'HFI'
+					#print('HFI')
 					if(mode == "digital"):
 						self.ssa.inject.digital_pulse(hit_list = cl_hits, initialise = False)
 					elif(mode == "analog"):
@@ -126,7 +126,7 @@ class SSA_test_utility():
 	def cluster_data_basic(self, mode = "digital", nruns = 5, shift = 'default', shiftL = 0, display=False, lateral = True, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
 		fo = open(file + "readout_cluster-data-basic_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = ''; stlateralout = '';
-		#print "->  \tRemember to call test.lateral_input_phase_tuning() before to run this test"
+		#print("->  \tRemember to call test.lateral_input_phase_tuning() before to run this test")
 		utils.activate_I2C_chip()
 		if(not self.ssa.cl_word_aligned()):
 			self.ssa.cl_word_alignment()
@@ -159,7 +159,7 @@ class SSA_test_utility():
 			r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 			if(hfi):
 				while(r==[prev]): ## for firmware bug in D19C
-					#print 'HFI'
+					#print('HFI')
 					if(mode == "digital"):
 						self.ssa.inject.digital_pulse(hit_list = [i], initialise = False)
 					elif(mode == "analog"):
@@ -198,11 +198,11 @@ class SSA_test_utility():
 				cnt['lo_err'] += 1;
 			else:
 				if(display == True):
-					print   "\tPassed                " + dstr
+					print(  "\tPassed                " + dstr)
 			prev = i
 			if True in err:
 				fo.write(runname + ' ; ' + erlog + ' \n')
-				print '\t' + erlog
+				print('\t' + erlog)
 				if(stop_on_error):
 					return [0,0,0]
 			utils.ShowPercent(cnt['cl_sum'], len(clrange), "Running clusters test based on " + mode + " test pulses")
@@ -258,7 +258,7 @@ class SSA_test_utility():
 				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = False, shift = shift, latency = latency, multi = False)
 				if (hfi):
 					while(l1hitlist == l1hitlistprev):
-						#print 'HFI'
+						#print('HFI')
 						sleep(0.001); L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(shift = shift, latency = latency, initialise = False, multi = False)
 						if(wd>5): break
 						wd += 1
@@ -332,7 +332,7 @@ class SSA_test_utility():
 					dstr = "expected: [L1 =  1][BX =%3d][HIT =%3s][HIP =%3d]\t  |  found: [L1 =%3d][BX =%3d][HIT =%3s][HIP =%3s]" % (
 							(d+1)%16, strip, HIP,     L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
 					#if(((L1_counter != 1) or (BX_counter != (d+1)%16)) ):
-					#	print "\tCounter Error -> " + dstr + "                                  "
+					#	print("\tCounter Error -> " + dstr + "                                  ")
 
 					shitlist = l1hitlist + [' ']*(120-len(l1hitlist))
 					shiplist = hiplist   + [' ']*(120-len(l1hitlist))
@@ -349,9 +349,9 @@ class SSA_test_utility():
 						cnt[1] += 1
 						errlist.append([[strip], l1hitlist])
 						if(display >= 1):
-							print "\tMemory Error  -> " + dstr + "                                  "
+							print("\tMemory Error  -> " + dstr + "                                  ")
 					elif(display >= 2):
-						print "\tOk            -> " + dstr + "                                  "
+						print("\tOk            -> " + dstr + "                                  ")
 
 					fo = open(file + "memory_log_{:s}.csv".format(runname), 'a')
 					if (error):
@@ -389,7 +389,7 @@ class SSA_test_utility():
 			eff = self.memory(memory = memory, display = 0, latency = latency, shift = shift)
 			erlist = self.memerrlist
 			fo.write("%8s ; %4.3fV ;     %7.2f%% ;       %s ; \n" % (runname, dvdd, eff, erlist))
-			print "->  \t%4.3fV ;  %7.2f%% ;" % (dvdd, eff)
+			print("->  \t{:4.3f}V ;  {:7.2f}% ;".format(dvdd, eff))
 			if eff == 0:
 				break
 		fo.close()
@@ -433,7 +433,7 @@ class SSA_test_utility():
 				dstr += "->      [%3d][%3d][%3s][%3s]\n" % (L1_counter, BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
 			else:
 				dstr = "->      [---][---][---][---]\n"
-		print dstr
+		print(dstr)
 		#return dstr
 
 
@@ -476,7 +476,7 @@ class SSA_test_utility():
 #		self.ssa.inject.digital_pulse(hit_list = pattern, hip_list = [], initialise = False)
 #		L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(latency = latency, initialise = False, multi = False)
 #		dstr = "[%3d][%3d][%3s][%3s]" % (L1_counter, BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
-#		print dstr
+#		print(dstr)
 
 	def _generate_clusters(self, nclusters, min_clsize = 1, max_clsize = 4, smin=-2, smax=124):
 		hit = []; c = []; exc = [];
@@ -496,7 +496,7 @@ class SSA_test_utility():
 	def force_alinament(self, maxtime = 5*60):
 		time_init = time.time()
 		while ((time.time()-time_init) < maxtime):
-			print '________________________________'
+			print('________________________________')
 			rt = self.cluster_data(nruns = 50, stop_on_error = True)
 			if(rt==100):
 				rt1 = self.cluster_data(nruns = 1000, stop_on_error = True)
@@ -504,8 +504,8 @@ class SSA_test_utility():
 				fc7.write("ctrl_phy_fast_cmd_phase",3)
 			else:
 				fc7.write("ctrl_phy_fast_cmd_phase",24)
-			print 'SHIFT = 20'
-			print rt
+			print('SHIFT = 20')
+			print(rt)
 
 	def efuses_read_errorrate(self, vstep = 0.005, expected = 0x12345678, npoints = 1000):
 		rate = []
@@ -541,7 +541,7 @@ class SSA_test_utility():
 	def measure_dynamic_power_old(self, NHits = 5, L1_rate = 1000, display_errors = False):
 		striplist = random.sample(range(1,60), NHits)
 		striplist = list(np.sort(striplist)*2)
-		print striplist
+		print(striplist)
 		hiplist = striplist
 		display = 0 if display_errors else -1
 		t1 = FuncThread(
@@ -564,7 +564,7 @@ class SSA_test_utility():
 		self.striplist = random.sample([item for item in range(0,61) if item not in self.striplist], NHits)
 		#self.striplist = random.sample(range(0,60), NHits)
 		striplist = list(np.sort(self.striplist)*2)
-		#print self.striplist
+		#print(self.striplist)
 		hiplist = self.striplist
 		display = 0 if display_errors else -1
 		sleep(0.01); SendCommand_CTRL("global_reset")
@@ -601,7 +601,7 @@ class SSA_test_utility():
 def prova(i):
 	ssa.inject.digital_pulse([i])
 	r = ssa.readout.cluster_data(initialize = False)
-	if([i] != r): print 'error ' + str(i) + '  ' +str(r)
+	if([i] != r): print('error ' + str(i) + '  ' +str(r))
 
 
 

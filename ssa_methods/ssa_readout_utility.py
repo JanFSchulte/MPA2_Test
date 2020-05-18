@@ -29,7 +29,7 @@ class SSA_readout():
 
 
 	def cluster_data(self, apply_offset_correction = False, display = False, shift = 'default', initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False, return_as_pattern = False):
-	 	data = []; tmp = [];
+		data = []; tmp = [];
 		if(shift == 'default'):
 			ishift = self.cl_shift['digital']
 			if('ssa_inject_utility_mode') in utils.generic_parameters:
@@ -37,8 +37,8 @@ class SSA_readout():
 					ishift = self.cl_shift['analog']
 		else:
 			ishift = shift
-	 	counter = 0; data_loc = 21 + ishift;
-	 	status = [0]*3; timeout = 10;
+		counter = 0; data_loc = 21 + ishift;
+		status = [0]*3; timeout = 10;
 		if(initialize):
 			#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
 			sleep(0.001)
@@ -68,7 +68,7 @@ class SSA_readout():
 			return data
 		if(display):
 			for i in data:
-				print "-->  ", i
+				print("-->  " + str(i) )
 		if (not lookaround):
 			coordinates = []
 			for block in data:
@@ -82,8 +82,8 @@ class SSA_readout():
 				tmp = []
 				cnt1 = 0
 				for block in data:
-		 			if block[ i ] != 0:
-		 				val = self.__apply_offset_correction(block[ i ], apply_offset_correction)
+					if block[ i ] != 0:
+						val = self.__apply_offset_correction(block[ i ], apply_offset_correction)
 						tmp.append( val )
 				for st in tmp:
 					coordinates[cnt1, cnt0] = st
@@ -91,7 +91,7 @@ class SSA_readout():
 				cnt0 += 1
 		if(display_pattern):
 			ctmp = np.array(data[0]).astype(bool).astype(int)
-			print "[%5s]" % '|'.join(map(str, ctmp))
+			print( "[{:5s}]".format( '|'.join(map(str, ctmp)) ) )
 		if return_as_pattern:
 			ctmp = np.zeros([8,40])
 			for i in range(0,8):
@@ -138,9 +138,15 @@ class SSA_readout():
 		sleep(0.001)
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
 		if(display_raw):
-			print "\n->  \tL1 Data: "
+			print("\n->  \tL1 Data: ")
 			for word in ssa_l1_data:
-			    print "    \t->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+			    print(
+					'    \t->' +
+					'{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,24,16)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) )
+				)
 		data = 0
 		for i in range(0,50):
 			word = ssa_l1_data[i]
@@ -164,7 +170,7 @@ class SSA_readout():
 			BX_counter = (data >> 145) & 0x1ff
 			l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
 			hidata = (data >> 121) & 0xffffff
-			#print bin(hidata)
+			#print(bin(hidata))
 			l1datavect = [0]*120
 			hipflagvect = [0]*24
 			for i in range(0,120):
@@ -184,8 +190,10 @@ class SSA_readout():
 				if(hipflagvect[i] > 0):
 					hiplist.append(i+1)
 			if(display):
-				print "->  \tL1 =%3d  |  BX =%4d  |  HIT = [%3s]  |  HIP = [%3s]" % (L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
-			#print data
+				print("->  \tL1 ={:3d}  |  BX ={:4d}  |  HIT = [{:3s}]  |  HIP = [{:3s}]".format(
+					L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)) ) )
+
+			#print(data)
 			data =  data >> 160
 			if(not multi):
 				end = True
@@ -216,13 +224,18 @@ class SSA_readout():
 		lateral_data = self.fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
 		if (display is True):
 			counter = 0
-			print "\n--> Lateral Data: "
+			print("\n--> Lateral Data: ")
 			for word in lateral_data:
-			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
-	 	coordinates = []
-	 	left = 0
-	 	right = 0
-	 	for i in range(0,20):
+				print(
+					'    \t->' +
+					'{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,24,16)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) ) )
+		coordinates = []
+		left = 0
+		right = 0
+		for i in range(0,20):
 			word = lateral_data[i]
 			tmp = (   to_number(word, 8, 0) <<24
 			        | to_number(word,16, 8) <<16
@@ -237,14 +250,14 @@ class SSA_readout():
 		right = (right >> ((shift+13)*8)) & 0xff
 		if(raw):
 			return bin(left), bin(right)
-	 	for i in range(1,9):
-	 		if ((right & 0b1) == 1):
-	 			coordinates.append(i-1)
-	 		right = right >> 1
-	 	for i in range(1,9):
-	 		if ((left & 0b1) == 1):
-	 			coordinates.append(112+i)
-	 		left = left >> 1
+		for i in range(1,9):
+			if ((right & 0b1) == 1):
+				coordinates.append(i-1)
+			right = right >> 1
+		for i in range(1,9):
+			if ((left & 0b1) == 1):
+				coordinates.append(112+i)
+			left = left >> 1
 		return coordinates
 
 
@@ -279,13 +292,13 @@ class SSA_readout():
 				line1 = to_number(fifo1_word,8,0)
 				line2 = to_number(fifo1_word,16,8)
 				count[i] = (line2 << 8) | line1
-				if (i%1000 == 0): print "Reading BX #", i
+				if (i%1000 == 0): print("Reading BX #" + str(i))
 		#### sleep(0.1)
 		#### mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		for s in range(0,120):
 			if (not (s+1) in striplist):
 				count[s] = 0
-		#print (time.time()-t)*1E3
+		#print((time.time()-t)*1E3)
 		return failed, count
 
 
@@ -312,27 +325,42 @@ class SSA_readout():
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
 		lateral_data = self.fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
-		print "--> Status: "
-		print "---> MPA L1 Data Ready: ", ((status & 0x00000001) >> 0)
-		print "---> MPA Stub Data Ready: ", ((status & 0x00000002) >> 1)
-		print "---> MPA Counters Ready: ", ((status & 0x00000004) >> 2)
-		print "---> Lateral Data Counters Ready: ", ((status & 0x00000008) >> 3)
+		print("--> Status: ")
+		print("---> MPA L1 Data Ready: " + str((status & 0x00000001) >> 0))
+		print("---> MPA Stub Data Ready: " + str((status & 0x00000002) >> 1))
+		print("---> MPA Counters Ready: " +str((status & 0x00000004) >> 2))
+		print("---> Lateral Data Counters Ready: "  + str((status & 0x00000008) >> 3))
 		if(l1data):
-			print "\n--> L1 Data: "
+			print("\n--> L1 Data: ")
 			for word in ssa_l1_data:
-			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+				print(
+					'    \t->' +
+					'{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,24,16)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) ) )
 		if(cluster):
 			counter = 0
-			print "\n--> Stub Data: "
+			print("\n--> Stub Data: ")
 			for word in ssa_stub_data:
-			    if (counter % 10 == 0):
-			        print "Line: " + str(counter/10)
-			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
-			    counter += 1
+				if (counter % 10 == 0):
+					print("Line: " + str(counter/10))
+				print(
+					'    \t->' +
+					'{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,24,16)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) ) )
+				counter += 1
 		if(lateral):
-			print "\n--> Lateral Data: "
+			print("\n--> Lateral Data: ")
 			for word in lateral_data:
-			    print "--->", '%10s' % bin(to_number(word,8,0)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(word,32,24)).lstrip('-0b').zfill(8)
+				print(
+					'    \t->' +
+					'{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,24,16)).lstrip('-0b').zfill(8) ) +
+					'{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) ) )
 
 
 	def __apply_offset_correction(self, val, enable = True):
@@ -378,8 +406,8 @@ class SSA_readout():
 #	            fc7.write("ctrl_phy_fast_cmd_phase",phase)
 #	        count += 1
 #	    if (not aligned):
-#	        print "Try with finer step"
+#	        print("Try with finer step")
 #	    else:
-#	        print "All stubs line aligned!"
+#	        print("All stubs line aligned!")
 #	    t1 = time.time()
-#	    print "Elapsed Time: " + str(t1 - t0)
+#	    print("Elapsed Time: " + str(t1 - t0))

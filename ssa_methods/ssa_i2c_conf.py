@@ -1,5 +1,5 @@
 from myScripts.BasicD19c import *
-from ssa_reg_map import *
+from ssa_methods.ssa_reg_map import *
 from myScripts.Utilities import *
 
 
@@ -15,14 +15,14 @@ class ssa_i2c_conf:
 	def set_debug_mode(self, value = True, display = 0):
 		self.debug = value
 		if(display):
-			if(value): print "->  \tSSA Configuration debug mode Enabled"
-			else: print "->  \tSSA Configuration debug mode Disabled"
+			if(value): print("->  \tSSA Configuration debug mode Enabled")
+			else: print("->  \tSSA Configuration debug mode Disabled")
 
 	def set_readback_mode(self, value = True, display = 0):
 		self.readback = value
 		if(display):
-			if(value): print "->  \tSSA Configuration Write-Read-Back mode Enabled"
-			else: print "->  \tSSA Configuration Write-Read-Back mode Disabled"
+			if(value): print("->  \tSSA Configuration Write-Read-Back mode Enabled")
+			else: print("->  \tSSA Configuration Write-Read-Back mode Disabled")
 
 	def set_freq(self, value):
 		self.freq = value
@@ -41,7 +41,7 @@ class ssa_i2c_conf:
 			try:
 				data = data & 0xff
 				if register not in self.ssa_peri_reg_map.keys():
-					print "->  \tRegister name not found"
+					print("->  \tRegister name not found")
 					rep = False
 				else:
 					base = ssa_peri_reg_map[register]
@@ -50,11 +50,11 @@ class ssa_i2c_conf:
 				if(self.readback):
 					rep = self.peri_read(register)
 					if(rep != data):
-						print "->  \tI2C periphery write operation error. [%d][%d]" % (data, rep)
+						print("->  \tI2C periphery write operation error. [%d][%d]" % (data, rep))
 						st = False
 				break
 			except:
-				print '=>  \tTB Communication error - I2C-Peri_write'
+				print('=>  \tTB Communication error - I2C-Peri_write')
 				time.sleep(0.1)
 				cnt += 1
 				st = False
@@ -66,7 +66,7 @@ class ssa_i2c_conf:
 		while cnt < 4:
 			try:
 				if register not in self.ssa_peri_reg_map.keys():
-					print "Register name not found"
+					print("Register name not found")
 					rep = False
 				else:
 					base = ssa_peri_reg_map[register]
@@ -79,7 +79,7 @@ class ssa_i2c_conf:
 						rep = False
 				break
 			except:
-				print '=>  \tTB Communication error - I2C-Peri_read'
+				print('=>  \tTB Communication error - I2C-Peri_read')
 				time.sleep(0.1)
 				cnt += 1
 				rep = False
@@ -91,7 +91,7 @@ class ssa_i2c_conf:
 		while cnt < 4:
 			try:
 				if register not in self.ssa_strip_reg_map.keys():
-					print "Register name not found"
+					print("Register name not found")
 					rep = False
 				else:
 					strip_id = strip if (strip is not 'all') else 0b00000000
@@ -102,11 +102,11 @@ class ssa_i2c_conf:
 					tmp = strip_id if (strip_id != 0) else 50
 					rep = self.strip_read(register, tmp)
 					if(rep != data):
-						print "->  \tI2C Strip %d write operation error. [%d][%d]" % (strip_id, data, rep)
+						print("->  \tI2C Strip %d write operation error. [%d][%d]" % (strip_id, data, rep))
 						st = False
 				break
 			except:
-				print '=>  \tTB Communication error - I2C-Strip_write' + str(cnt)
+				print('=>  \tTB Communication error - I2C-Strip_write' + str(cnt))
 				time.sleep(0.1)
 				cnt += 1
 				st = False
@@ -118,7 +118,7 @@ class ssa_i2c_conf:
 		while cnt < 4:
 			try:
 				if register not in self.ssa_strip_reg_map.keys():
-					print "Register name not found"
+					print("Register name not found")
 					rep = False
 				else:
 					strip_id = strip if (strip is not 'all') else 0b00000000
@@ -127,7 +127,7 @@ class ssa_i2c_conf:
 					rep  = read_I2C('SSA', adr, timeout)
 				break
 			except:
-				print '=>  \tTB Communication error - I2C-Strip-read'
+				print('=>  \tTB Communication error - I2C-Strip-read')
 				time.sleep(0.1)
 				cnt += 1
 				rep = False

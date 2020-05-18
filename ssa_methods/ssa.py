@@ -146,7 +146,7 @@ class SSA_ASIC:
 		if(not status['analog']):
 			utils.print_error('->\tCluster-data word alignment analog injection error')
 			self.generic_parameters['cl_word_alignment_{m:s}'.format(m='analog')] = True
-		#print self.readout.cl_shift
+		#print(self.readout.cl_shift)
 		return (status['digital'] and status['analog'])
 
 
@@ -201,7 +201,7 @@ class SSA_ASIC:
 			fo.write(str(runname) + ' ; ' + str(alined_left) + " ; " + str(alined_right) + ' \n')
 			fo.close()
 		return [alined_left, alined_right]
-		
+
 
 	def cl_word_aligned(self):
 		if ('cl_word_alignment_digital' in self.generic_parameters) and ('cl_word_alignment_analog' in self.generic_parameters):

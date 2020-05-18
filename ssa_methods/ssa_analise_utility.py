@@ -36,7 +36,8 @@ class SSA_Analise_Test_results():
 	def set_configuration(self, preset = 'custom'):
 		self.noise_mean = []; self.noise_std = []; self.noise_x = [];self.PAVDD = []; self.PDVDD = []; self.pwr_x = [];
 		self.VBG = []; self.thresholds = []; self.DAC_GAINs = [];
-		if preset == 'custom:':  print 'Use set_data_path(), set_test_name(), set_data_rate(), set_dataseries_name() methods.'
+		if preset == 'custom:':
+			print('Use set_data_path(), set_test_name(), set_data_rate(), set_dataseries_name() methods.')
 		else: self.__set_run_preset(preset)
 
 	def set_data_path(self, val):
@@ -106,12 +107,12 @@ class SSA_Analise_Test_results():
 	def FE_Gain_Noise_Std__Calculate(self):
 		thresholds = {}; noise = {};
 		thmean = {}; sigmamean = {};
-		print '->  \tSearching for matching files in ' + self.path
+		print('->  \tSearching for matching files in ' + self.path)
 		fl = self._get_file_name()
 		files_list = self._get_files_list( 'scurve_trim__cal_' + '*', 'csv')
 		if(len(files_list) == 0): return ['er']*7
 		calpulses = []; scurve_table = {}; runlist = {}
-		print '->  \tSorting Informations'
+		print('->  \tSorting Informations')
 		for f in files_list:
 			cfl = re.findall( '\W?cal_(\d+)' , f )
 			cal = np.int( cfl[0] )
@@ -123,10 +124,10 @@ class SSA_Analise_Test_results():
 			else:  runlist[tmp][0] += 1
 		for i in runlist:
 			if runlist[i][0] < 2:
-				print "->  \tExcluded file not matching requirements: " + runlist[i][1]
+				print("->  \tExcluded file not matching requirements: " + runlist[i][1])
 				files_list.remove(runlist[i][1])
 		calpulses.sort()
-		print '->  \tLoading data'
+		print('->  \tLoading data')
 		for cal in calpulses:
 			tmp = []
 			for f in files_list:
@@ -138,7 +139,7 @@ class SSA_Analise_Test_results():
 			scurve_table[str(cal)] = tmp
 		CSV.array_to_csv( calpulses,  self.path + 'ANALYSIS/S-Curve_cal_values.csv')
 		# Threshold spread and Noise
-		print '->  \tFitting courves for Threshold-Spread and Noise'
+		print('->  \tFitting courves for Threshold-Spread and Noise')
 		for cal in calpulses:
 			c_thresholds = []; c_noise = [];
 			c_thmean = []; c_sigmamean = [];
@@ -162,16 +163,16 @@ class SSA_Analise_Test_results():
 			CSV.array_to_csv(c_thmean,     self.path + 'ANALYSIS/S-Curve_Threshold_Mean_cal_'+str(cal)+'.csv')
 			CSV.array_to_csv(c_sigmamean,  self.path + 'ANALYSIS/S-Curve_Noise_Mean_cal_'+str(cal)+'.csv')
 		# FE Gain and offset
-		print '->  \tEvaluating Front-End Gain'
+		print('->  \tEvaluating Front-End Gain')
 		if not (np.shape(thresholds[ str(calpulses[0])])[0] == np.shape(thresholds[ str(calpulses[1])])[0] == np.shape(thresholds[ str(calpulses[2])])[0]):
-			print '->  \t ERROR. The number of files for different calibration charge are not equal. This may make the fitting fail.'
+			print('->  \t ERROR. The number of files for different calibration charge are not equal. This may make the fitting fail.')
 		nelements = np.shape(thresholds[ str(calpulses[0])])[0]
 		gains    = np.zeros([120,nelements]);
 		offsets  = np.zeros([120,nelements]);
 		gainmean = np.zeros(nelements);
 		#return thresholds, calpulses
-		print nelements
-		#print gains
+		print(nelements)
+		#print(gains)
 		for s in range(0,120):
 			ths = np.array( [np.array( thresholds[k] , dtype = float)[ : , s ] for k in thresholds if k in list(map(str, calpulses))] )
 			self.ths = ths
@@ -191,13 +192,13 @@ class SSA_Analise_Test_results():
 	def FE_Gain_Noise_Std__Reload(self):
 		thresholds = {}; noise = {};
 		thmean = {}; sigmamean = {};
-		print '->  \tLoading results'
+		print('->  \tLoading results')
 		f1 = self.path + 'ANALYSIS/S-Curve_cal_values.csv'
 		f2 = self.path + 'ANALYSIS/S-Curve_Gain.csv'
 		f3 = self.path + 'ANALYSIS/S-Curve_Gain_Mean.csv'
 		f4 = self.path + 'ANALYSIS/S-Curve_Offset.csv'
 		if(not( os.path.isfile(f1) and os.path.isfile(f2) and os.path.isfile(f3) )):
-			print '->  \tImpossible to find pre-calculated results. Re-calculating..'
+			print('->  \tImpossible to find pre-calculated results. Re-calculating..')
 			return -1,-1,-1,-1,-1,-1,-1, -1, True
 		calpulses = CSV.csv_to_array(f1)[:,1]
 		c_gains = CSV.csv_to_array(f2)
@@ -269,7 +270,7 @@ class SSA_Analise_Test_results():
 		sermean = []
 		for i in range(len(self.instances_to_plot)):
 			ser = (gains[:,self.instances_to_plot[i]]) * FE_Gain_mVfC[self.instances_to_plot[i]]
-			print len(ser)
+			print(len(ser))
 			if(bn is False):
 				bn = np.arange(min(ser)-2, max(ser)+2, 0.2)
 			plt.hist(ser, normed = True, bins = bn, alpha = 0.7)
@@ -304,7 +305,7 @@ class SSA_Analise_Test_results():
 		sermean = []
 		for i in range(len(self.instances_to_plot)):
 			ser = (offsets[:,self.instances_to_plot[i]]) * offsets[self.instances_to_plot[i]]
-			print len(ser)
+			print(len(ser))
 			if(bn is False):
 				bn = np.arange(min(ser)-2, max(ser)+2, 0.2)
 			plt.hist(ser, normed = True, bins = bn, alpha = 0.7)
@@ -346,8 +347,8 @@ class SSA_Analise_Test_results():
 			self.noise_std.append( noise_std )
 			self.noise_x.append( x )
 			xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
-			noise_mean_smooth = interpolate.spline(x, noise_mean, xnew)
-			noise_std_smooth = interpolate.spline(x, noise_std, xnew)
+			noise_mean_smooth = interpolate.BSpline(x, noise_mean, xnew)
+			noise_std_smooth = interpolate.BSpline(x, noise_std, xnew)
 			noise_hat = scypy_signal.savgol_filter(x = noise_mean_smooth , window_length = 999, polyorder = 5)
 			color=iter(sns.color_palette('deep'))
 			c = next(color)
@@ -379,7 +380,7 @@ class SSA_Analise_Test_results():
 		for i in range(len(self.instances_to_plot)):
 			self.noise = noise
 			dataset = np.array(noise[typcal])[self.instances_to_plot[i],:]
-			print len(dataset)
+			print(len(dataset))
 			ser.append( self.Convert_Noise_dac_to_electrons(dataset, THD_gain_array[self.instances_to_plot[i]] , FE_Gain_mVfC[self.instances_to_plot[i]]) )
 		bn = np.arange(np.min(ser)-2, np.max(ser)+2, 2)
 		for i in range(len(self.instances_to_plot)):
@@ -444,7 +445,7 @@ class SSA_Analise_Test_results():
 		ser = []
 		for i in range(len(self.instances_to_plot)):
 			dataset = np.array(thresholds[typcal])[self.instances_to_plot[i],:]
-			print len(dataset)
+			print(len(dataset))
 			ser.append(dataset)
 		bn = np.round(np.arange(np.min(ser)-2, np.max(ser)+3, 1))
 		plt.xticks( bn, fontsize=32)
@@ -470,14 +471,14 @@ class SSA_Analise_Test_results():
 	##############################################################################################
 
 	def FE_Threshold_Trimming__Plot(self, filename = 'Init', plot = True):
-		print '->  \tSearching for matching files'
+		print('->  \tSearching for matching files')
 		filename = filename + '*scurve_trim*_cal_*'
 		files_list = self._get_files_list( filename, 'csv')
 		if(len(files_list) == 0): return
 		scurves = {}
 		for f in files_list:
 			cfl = re.findall( '\W?trim(\d+)_' , f )
-			print cfl
+			print(cfl)
 			if(cfl == []):
 				scurves['trim'] = np.transpose( CSV.csv_to_array( self.path + f ) )
 			elif(cfl[0] == '0' or cfl[0] == '31'):
@@ -526,7 +527,7 @@ class SSA_Analise_Test_results():
 			stds.append(s)
 			pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
 			xnew = np.linspace(np.min(lnspc), np.max(lnspc), 1000, endpoint=True)
-			pdf_l = interpolate.spline(lnspc, pdf_g, xnew)
+			pdf_l = interpolate.BSpline(lnspc, pdf_g, xnew)
 			plt.plot(xnew, pdf_l, c = 'darkred', lw = 2) # plot i
 			cnt += 1
 		leg = ax1.legend(fontsize = 24, )
@@ -541,7 +542,7 @@ class SSA_Analise_Test_results():
 	##############################################################################################
 
 	def Power_AnalogParams_plot(self, filename = 'default', plot = True):
-		print '->  \tSearching for matching files'
+		print('->  \tSearching for matching files')
 		if filename == 'default':
 			filename = '*GlobalLog'
 		files_list = self._get_files_list( filename, 'csv')
@@ -576,26 +577,26 @@ class SSA_Analise_Test_results():
 		plt.ylabel("mV", fontsize=16)
 		plt.xlabel(self.XLabel_Series, fontsize=16)
 
-		plt.plot(xnew, interpolate.spline(x, PAVDD, xnew), color='r', lw=1)
-		plt.plot(xnew, interpolate.spline(x, PDVDD, xnew), color='r', lw=1)
-		plt.plot(xnew, interpolate.spline(x, PPVDD, xnew), color='r', lw=1)
+		plt.plot(xnew, interpolate.BSpline(x, PAVDD, xnew), color='r', lw=1)
+		plt.plot(xnew, interpolate.BSpline(x, PDVDD, xnew), color='r', lw=1)
+		plt.plot(xnew, interpolate.BSpline(x, PPVDD, xnew), color='r', lw=1)
 
 		fig = plt.figure(figsize=(w,h))
-		plt.plot(xnew, interpolate.spline(x, VBG, xnew), color='r', lw=1)
+		plt.plot(xnew, interpolate.BSpline(x, VBG, xnew), color='r', lw=1)
 
 		fig = plt.figure(figsize=(w,h))
-		plt.plot(xnew, interpolate.spline(x, Bias_D5BFEED, xnew), color='r', lw=1)
-		plt.plot(xnew, interpolate.spline(x, Bias_D5PREAMP, xnew), color='r', lw=1)
-		plt.plot(xnew, interpolate.spline(x, Bias_D5ALLV, xnew), color='r', lw=1)
-		plt.plot(xnew, interpolate.spline(x, Bias_D5ALLI, xnew), color='r', lw=1)
-		plt.plot(xnew, interpolate.spline(x, Bias_D5DAC8, xnew), color='r', lw=1)
-		plt.plot(xnew, interpolate.spline(x, GND, xnew), color='r', lw=1)
-		plt.plot(xnew, interpolate.spline(x, VBG, xnew), color='r', lw=1)
-		plt.plot(xnew, interpolate.spline(x, Bias_BOOSTERBASELINE, xnew), color='r', lw=1)
+		plt.plot(xnew, interpolate.BSpline(x, Bias_D5BFEED, xnew), color='r', lw=1)
+		plt.plot(xnew, interpolate.BSpline(x, Bias_D5PREAMP, xnew), color='r', lw=1)
+		plt.plot(xnew, interpolate.BSpline(x, Bias_D5ALLV, xnew), color='r', lw=1)
+		plt.plot(xnew, interpolate.BSpline(x, Bias_D5ALLI, xnew), color='r', lw=1)
+		plt.plot(xnew, interpolate.BSpline(x, Bias_D5DAC8, xnew), color='r', lw=1)
+		plt.plot(xnew, interpolate.BSpline(x, GND, xnew), color='r', lw=1)
+		plt.plot(xnew, interpolate.BSpline(x, VBG, xnew), color='r', lw=1)
+		plt.plot(xnew, interpolate.BSpline(x, Bias_BOOSTERBASELINE, xnew), color='r', lw=1)
 		plt.show()
 
 	def Power_plot(self, filename = 'default', plot = True, save = True):
-		print '->  \tSearching for matching files'
+		print('->  \tSearching for matching files')
 		if filename == 'default':
 			filename = '*GlobalLog'
 		files_list = self._get_files_list( filename, 'csv')
@@ -617,9 +618,9 @@ class SSA_Analise_Test_results():
 		plt.ylabel("mW", fontsize=16)
 		plt.xlabel(self.XLabel_Series, fontsize=16)
 		color=iter(sns.color_palette('deep'))
-		#PAVDD_int = interpolate.spline(x, PAVDD, xnew)
-		#PDVDD_int = interpolate.spline(x, PDVDD, xnew)
-		#VBG_int   = interpolate.spline(x, VBG, xnew)
+		#PAVDD_int = interpolate.BSpline(x, PAVDD, xnew)
+		#PDVDD_int = interpolate.BSpline(x, PDVDD, xnew)
+		#VBG_int   = interpolate.BSpline(x, VBG, xnew)
 		self.PAVDD.append(PAVDD)
 		self.PDVDD.append(PDVDD)
 		self.VBG.append(VBG)
@@ -662,7 +663,7 @@ class SSA_Analise_Test_results():
 		c = next(color)
 		PrcPAVDD = (100.0*(self.PrcPAVDD/self.PrcPAVDD[0]-1))[x]
 		plt.plot(x, PrcPAVDD, color=c, lw=0, marker='o')
-		PrcPAVDD = interpolate.spline(x, PrcPAVDD, xnew)
+		PrcPAVDD = interpolate.BSpline(x, PrcPAVDD, xnew)
 		PrcPAVDD = scypy_signal.savgol_filter(x = PrcPAVDD , window_length = 501, polyorder = 5, mode='nearest')
 		plt.plot(xnew, PrcPAVDD, color=c, lw=2)
 
@@ -671,13 +672,13 @@ class SSA_Analise_Test_results():
 		plt.plot(x, PrcPDVDD, color=c, lw=0, marker='o')
 		PrcPDVDD = scypy_signal.savgol_filter(x = PrcPDVDD , window_length = 51, polyorder = 5, mode='nearest')
 		#PrcPDVDD[0] = 0
-		#PrcPDVDD = interpolate.spline(x, PrcPDVDD, xnew)
+		#PrcPDVDD = interpolate.BSpline(x, PrcPDVDD, xnew)
 		plt.plot(x, PrcPDVDD, color=c, lw=2)
 
 		c = next(color)
 		PrcThGAIN = (100.0*(self.PrcThGAIN/self.PrcThGAIN[0]-1))[x]
 		plt.plot(x, PrcThGAIN, color=c, lw=0, marker='o')
-		#PrcThGAIN = interpolate.spline(x, PrcThGAIN, xnew)
+		#PrcThGAIN = interpolate.BSpline(x, PrcThGAIN, xnew)
 		#PrcThGAIN = scypy_signal.savgol_filter(x = PrcThGAIN , window_length = 501, polyorder = 5, mode='nearest')
 		fn = interpolate.interp1d(x, PrcThGAIN, kind='cubic')
 		plt.plot(xnew, fn(xnew), color=c, lw=2)
@@ -728,7 +729,7 @@ class SSA_Analise_Test_results():
 		xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
 		for i in range(nplots):
 			c = next(color);
-			vbg_smuth = interpolate.spline(x, np.array(self.VBG[i][x]), xnew)
+			vbg_smuth = interpolate.BSpline(x, np.array(self.VBG[i][x]), xnew)
 			vbg_hat = scypy_signal.savgol_filter(x = vbg_smuth , window_length = 999, polyorder = 5)
 			plt.plot(xnew, vbg_smuth , color=c, lw=0.8, alpha = 0.8)
 			plt.plot(xnew, vbg_hat   , color=c, lw=3, alpha = 0.8)
@@ -755,7 +756,7 @@ class SSA_Analise_Test_results():
 		xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
 		for i in range(nplots):
 			c = next(color);
-			gain_smuth = interpolate.spline(x, -1*np.array(self.DAC_GAINs[i][0:xmax]), xnew)
+			gain_smuth = interpolate.BSpline(x, -1*np.array(self.DAC_GAINs[i][0:xmax]), xnew)
 			gain_hat = scypy_signal.savgol_filter(x = gain_smuth , window_length = 999, polyorder = 5)
 			plt.plot(xnew, gain_smuth , color=c, lw=0.8, alpha = 0.8)
 			plt.plot(xnew, gain_hat , color=c, lw=3, alpha = 0.8)
@@ -930,8 +931,8 @@ class SSA_Analise_Test_results():
 					noise_mean[nk] = (noise_mean[nk+1]+noise_mean[nk-1])/2.0
 			noise_std  = np.array(self.noise_std[i])
 			xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
-			noise_mean_smooth = interpolate.spline(x, noise_mean[x], xnew)
-			noise_std_smooth = interpolate.spline(x, noise_std[x], xnew)
+			noise_mean_smooth = interpolate.BSpline(x, noise_mean[x], xnew)
+			noise_std_smooth = interpolate.BSpline(x, noise_std[x], xnew)
 			noise_mean_hat = scypy_signal.savgol_filter(x = noise_mean_smooth , window_length = 301, polyorder = 5)
 			noise_std_hat = scypy_signal.savgol_filter(x = noise_std_smooth , window_length = 301, polyorder = 5)
 			c = next(color)
@@ -962,8 +963,8 @@ class SSA_Analise_Test_results():
 			noise_mean = np.array(self.noise_mean[i])
 			noise_std  = np.array(self.noise_std[i])
 			xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
-			noise_mean_smooth = interpolate.spline(x, noise_mean[x], xnew)
-			noise_std_smooth = interpolate.spline(x, noise_std[x], xnew)
+			noise_mean_smooth = interpolate.BSpline(x, noise_mean[x], xnew)
+			noise_std_smooth = interpolate.BSpline(x, noise_std[x], xnew)
 			noise_mean_hat = scypy_signal.savgol_filter(x = noise_mean_smooth , window_length = 301, polyorder = 5)
 			noise_std_hat = scypy_signal.savgol_filter(x = noise_std_smooth , window_length = 301, polyorder = 5)
 			c = next(color)
@@ -993,8 +994,8 @@ class SSA_Analise_Test_results():
 			noise_mean = np.array(self.noise_mean[i])
 			noise_std  = np.array(self.noise_std[i])
 			xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
-			noise_mean_smooth = interpolate.spline(x, noise_mean[x], xnew)
-			noise_std_smooth = interpolate.spline(x, noise_std[x], xnew)
+			noise_mean_smooth = interpolate.BSpline(x, noise_mean[x], xnew)
+			noise_std_smooth = interpolate.BSpline(x, noise_std[x], xnew)
 			noise_mean_hat = scypy_signal.savgol_filter(x = noise_mean_smooth , window_length = 501, polyorder = 5)
 			noise_std_hat = scypy_signal.savgol_filter(x = noise_std_smooth , window_length = 501, polyorder = 5)
 			c = next(color)
@@ -1023,8 +1024,8 @@ class SSA_Analise_Test_results():
 			noise_mean = np.array(self.noise_mean[i])
 			noise_std  = np.array(self.noise_std[i])
 			xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
-			noise_mean_smooth = interpolate.spline(x, noise_mean[x], xnew)
-			noise_std_smooth = interpolate.spline(x, noise_std[x], xnew)
+			noise_mean_smooth = interpolate.BSpline(x, noise_mean[x], xnew)
+			noise_std_smooth = interpolate.BSpline(x, noise_std[x], xnew)
 			noise_mean_hat = scypy_signal.savgol_filter(x = noise_mean_smooth , window_length = 501, polyorder = 5)
 			noise_mean_hat = (noise_mean_hat)/noise_mean_hat[0] - 1
 			noise_std_hat = scypy_signal.savgol_filter(x = noise_std_smooth , window_length = 501, polyorder = 5)
@@ -1058,8 +1059,8 @@ class SSA_Analise_Test_results():
 			for i in x:
 				th_mean[i], th_std[i] = stats.norm.fit(self.thresholds[p][self.typcal][i,:])
 			xnew = np.linspace(np.min(x), np.max(x), 1000, endpoint=True)
-			th_mean_smooth = interpolate.spline(x, th_mean[x], xnew)
-			th_std_smooth = interpolate.spline(x, th_std[x], xnew)
+			th_mean_smooth = interpolate.BSpline(x, th_mean[x], xnew)
+			th_std_smooth = interpolate.BSpline(x, th_std[x], xnew)
 			th_mean_hat = scypy_signal.savgol_filter(x = th_mean_smooth , window_length = 501, polyorder = 5)
 			th_std_hat = scypy_signal.savgol_filter(x = th_std_smooth , window_length = 501, polyorder = 5)
 			c = next(color)
@@ -1097,13 +1098,13 @@ class SSA_Analise_Test_results():
 		Noise = ( np.array(Sigma) * DAC_Gain * 1E-3) / (FE_Gain * 1E12 * ph_const.elementary_charge )
 		for i in range(len(Noise)):
 			if Noise[i] > 600:
-				print 'High Noise strip: ' + str(i) + '   ' + str(Sigma[i]) + '   ' +   str(DAC_Gain) + '   ' +   str(FE_Gain) +  '   ' +   str(Noise[i])
-				print 'Average:          ' + '  '   + '   ' + str(np.mean(Sigma)) + '   ' +   str(np.mean(DAC_Gain)) + '   ' +   str(np.mean(FE_Gain)) +  '   ' +   str(np.mean(Noise))
+				print('High Noise strip: ' + str(i) + '   ' + str(Sigma[i]) + '   ' +   str(DAC_Gain) + '   ' +   str(FE_Gain) +  '   ' +   str(Noise[i]))
+				print('Average:          ' + '  '   + '   ' + str(np.mean(Sigma)) + '   ' +   str(np.mean(DAC_Gain)) + '   ' +   str(np.mean(FE_Gain)) +  '   ' +   str(np.mean(Noise)))
 		return Noise
 
 
 	def Power(self, plot = True, evaluate = False, return_values = False):
-		print 'TO DO'
+		print('TO DO')
 
 
 	def _get_file_name(self, folder='default' , run_name='default'):
@@ -1117,10 +1118,10 @@ class SSA_Analise_Test_results():
 
 	def _get_files_list(self, test_name, file_format = 'csv'):
 		matchstr = self.run_name + '*' + '_' + test_name + '.' + file_format
-		#print matchstr
+		#print(matchstr)
 		rp = fnmatch.filter( os.listdir( self.path ), matchstr)
 		rp = sorted(rp)
-		print '->  \tFound %d data files matching %s' % (len(rp), matchstr)
+		print('->  \tFound %d data files matching %s' % (len(rp), matchstr))
 		return rp
 
 
