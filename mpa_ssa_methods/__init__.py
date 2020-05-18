@@ -1,1 +1,1 @@
-from main import * 
+from mpa_ssa_methods.main import * 

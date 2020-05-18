@@ -13,14 +13,15 @@ from ssa_methods.ssa_calibration import *
 from ssa_methods.ssa_seu_utility import *
 from ssa_methods.ssa_test_seu import *
 from myScripts.BasicADC import *
-from ssa_wp_analyze import * 
+from ssa_methods.ssa_wp_analyze import *
 
 
 try:
+	from myScripts.BasicMultimeter import *
 	multimeter = keithley_multimeter()
 except ImportError:
 	multimeter = False
-	print "- Impossible to access GPIB instruments"
+	print("- Impossible to access GPIB instruments")
 
 FC7         = ssa_fc7_com(fc7)
 ssa_i2c     = ssa_i2c_conf()
