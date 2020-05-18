@@ -1,0 +1,11 @@
+
+Necessary:
+- numpy
+- matplotlib
+- pandas
+- scipy
+- lmfit
+- seaborn
+
+Necessary only for external instrument handling:
+- Gpib

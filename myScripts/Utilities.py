@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.special import erfc
 from scipy.special import erf
 import matplotlib.cm as cm
-from scipy.interpolate import spline as interpspline
+from scipy.interpolate import BSpline as interpspline
 from multiprocessing import Process
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
@@ -133,7 +133,7 @@ class Utilities:
 		if(not pr == 'debug'):
 			self.print_enable(True)
 		if(pr == 'print'):
-			print '->  \tEnabled I2C master for chips control'
+			print('->  \tEnabled I2C master for chips control')
 
 	def date_time(self, format='print'):
 		if(format == 'print'):
@@ -191,7 +191,7 @@ utils = Utilities()
 
 def f_errorf(x, *p):
 	a, mu, sigma = p
-	#    print x
+	#    print(x)
 	return 0.5*a*(1.0+erf((x-mu)/sigma))
 
 def f_line(x, *p):

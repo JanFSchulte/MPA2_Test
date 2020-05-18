@@ -1,11 +1,10 @@
-import Gpib
 import csv
 import numpy
 import sys
 import os
 import random
 import time
-from mpa_methods.mpa_probe_test import *
+#from mpa_methods.mpa_probe_test import *
 from ssa_methods.main_ssa_test_2 import *
 
 '''
@@ -20,12 +19,26 @@ AP = AUTOPROBER(
 AP.MSR_ALL()
 '''
 
+try:
+    import Gpib
+except:
+    print("- Impossible to access WAFER PROBER via GPIB")
+
+
+class tmperrgpib:
+    def write(self):
+        pass
+
 class AUTOPROBER:
 
     def __init__(self, wafer, name, chip='MPA', dryRun = False, exclude = []):
         self.name = name
         self.wafer = wafer
-        self.ProbeStation = Gpib.Gpib(1, 22)
+        try:
+            self.ProbeStation = Gpib.Gpib(1, 22)
+        except:
+            print("- Impossible to access WAFER PROBER via GPIB")
+            self.ProbeStation = tmperrgpib()
         time.sleep(0.1)
         self.ProbeStation.write("*RST")
         time.sleep(0.1)
@@ -38,8 +51,8 @@ class AUTOPROBER:
 
     def colprint(self, text):
         sys.stdout.write("\033[1;34m")
-    	print(str(text))
-    	sys.stdout.write("\033[0;0m")
+        print(str(text))
+        sys.stdout.write("\033[0;0m")
 
     def ConnToPS(self):
         self.colprint("\n\n===== PROBE STATION INITIALIZED: =====")
@@ -67,13 +80,13 @@ class AUTOPROBER:
         # first pass at all chips
         while self.KeepOnStepping:
             ChipStatus = self.NEXT(nchips)
-            print ChipStatus
+            print(ChipStatus)
             if ChipStatus == 0:
                 badR = self.DieR
                 badC = self.DieC
                 self.BadChips.append([badR, badC]) # bad chips will be scanned again
-        print self.BadChips
-        print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+        print(self.BadChips)
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
         # set overtravel a little higher for second pass
         self.ProbeStation.write("SetChuckHeight O V Y 0")
         self.colprint("Increasing overtravel: " + self.ProbeStation.read(100))
@@ -81,7 +94,7 @@ class AUTOPROBER:
         # go over bad chips
         #for C in self.BadChips:
         #    ChipStatus = self.PROBESPECIFIC(C[0],C[1])
-        #    print ChipStatus
+        #    print(ChipStatus)
         self.ProbeStation.write("SetChuckHeight O V Y 0")
         self.colprint("Resetting overtravel: " + self.ProbeStation.read(100))
         time.sleep(0.25)

@@ -1,5 +1,5 @@
 from time import sleep
-from Utilities import *
+from myScripts.Utilities import *
 
 
 class onboard_adc():

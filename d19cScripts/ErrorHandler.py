@@ -1,4 +1,5 @@
 # Project imports
+### Ported to python 3.5 on April 2020 - acaratel
 
 class ErrorHandler(object):
 
@@ -7,7 +8,7 @@ class ErrorHandler(object):
 
     def getErrorDescription(self, block_id, error_code):
         if (block_id == 0 and error_code == 0):
-            print "No Errors"
+            print("No Errors")
             return
         block_name = self.getBlockName(block_id)
         if block_id == 1:
@@ -25,7 +26,7 @@ class ErrorHandler(object):
                 message = "CMD_I2C: Status Changed During the Execution"
             elif hex(error_code) == "0x23L":
                 message = "CMD_I2C: Wrong Hybrid/Chip ID"
-	    elif hex(error_code) == "0x24L":
+            elif hex(error_code) == "0x24L":
                 message = "CMD_I2C: Reading or requiring readback is not permitted for broadcast I2C commands"
             elif hex(error_code) == "0x2fL":
                 message = "CMD_I2C: FSM in a wrong state"
@@ -35,11 +36,11 @@ class ErrorHandler(object):
                 message = "PHY_I2C: " + str(error_code) + " i2c failed during the reading of the page"
             elif hex(error_code) == "0x3cL":
                 message = "PHY_I2C: " + str(error_code) + " i2c failed during the reading the requested register"
-	    elif hex(error_code) == "0x3dL":
+            elif hex(error_code) == "0x3dL":
                 message = "PHY_I2C: " + str(error_code) + " i2c failed during write to page register"
-	    elif hex(error_code) == "0x3eL":
-                message = "PHY_I2C: " + str(error_code) + " writing/reading to/from requested register failed" 
-	    else:
+            elif hex(error_code) == "0x3eL":
+                message = "PHY_I2C: " + str(error_code) + " writing/reading to/from requested register failed"
+            else:
                 message = "Unknown Code: " + str(hex(error_code))
         elif block_id == 2:
             if hex(error_code) == "0x1L":
@@ -52,7 +53,7 @@ class ErrorHandler(object):
                 message = "Unknown Code: " + str(hex(error_code))
         else:
             message = "Unknown Block & Code: " + str(hex(error_code))
-        print "ERROR BLOCK: ", block_name, ", MESSAGE: ", message
+        print("ERROR BLOCK: " + block_name + ", MESSAGE: " + message)
         return
 
     def getBlockName(self, block_id):

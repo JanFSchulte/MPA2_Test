@@ -158,7 +158,7 @@ def ScurveParse(test = "rad", max_run = 100, filename = "/home/testMPA/cernbox/I
                         th_array[(r-1)*120+p] = int(round(par[1]))
                         noise_array[(r-1)*120+p] = par[2]
             except RuntimeError or TypeError:
-                print "Fitting failed on pixel ", p , " row: " ,r
+                print("Fitting failed on pixel ", p , " row: " ,r)
             th_avg = np.append(th_avg, np.mean(th_array))
             noise_avg = np.append(noise_avg, np.mean(noise_array))
             th_spread = np.append(th_spread, np.std(th_array))
@@ -214,8 +214,8 @@ def ScurveParse(test = "rad", max_run = 100, filename = "/home/testMPA/cernbox/I
     return noise_avg
     #return th_spread
     #return th_avg
-    print "noise average: ", np.mean(noise_avg)
-    print "th average: ", np.mean(th_avg)
+    print("noise average: " + str( np.mean(noise_avg)) )
+    print("th average: " + str(  np.mean(th_avg)) )
 
 def DACParse(test = "rad", max_run = 100, filename = "/home/testMPA/cernbox/Irrad2_fix/"):
     i = 0

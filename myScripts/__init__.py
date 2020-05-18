@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-from ArrayToCSV import *
-from BasicD19c import *
-from SelectBoardIp import *
-#from FileParse import *
-from BasicADC import *
-from wafer_probe_ctrl import *
-from wafer_plot import *
+from myScripts.ArrayToCSV import *
+from myScripts.BasicD19c import *
+from myScripts.SelectBoardIp import *
+#from myScripts.FileParse import *
+from myScripts.BasicADC import *
+from myScripts.wafer_probe_ctrl import *
+from myScripts.wafer_plot import *
