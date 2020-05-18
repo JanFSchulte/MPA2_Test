@@ -272,9 +272,9 @@ class ssa_wp_analyze():
         if(show):
             plt.show()
 
-    def analyze_all_wafers(self, plot=False, verboselevel=0):
-        fy = open(self.folder+"/yield.csv", 'w')
-        self.summarylog = open(self.folder+"/PassFail_Summary.csv", 'w')
+    def analyze_all_wafers(self, LogSuffix='', plot=False, verboselevel=0):
+        fy = open(self.folder+"/yield"+LogSuffix+".csv", 'w')
+        self.summarylog = open(self.folder+"/PassFail_Summary"+LogSuffix+".csv", 'w')
         self.summarylog.write("\n{:s}, {:s}, {:s}, {:s}, ".format("WAFER", "N", "Chip ID", "Pass/Fail"))
         first = True
         cntw = 0
@@ -308,7 +308,7 @@ def analyze_all_wafers(plot=False, verboselevel=1):
     sa.analyze_all_wafers(plot=plot, verboselevel=verboselevel)
     return sa
 
-#self = analyze_all_wafers(plot=False)
+#self = analyze_all_wafers('_prova1', plot=False)
 
 #analyze_all_wafers()
 #sa = ssa_wp_analyze()
