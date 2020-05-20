@@ -1,6 +1,6 @@
 '''
 You can use:
->   analyze_all_wafers(plot=False)
+>   analyze_all_wafers(LogSuffix='', plot=False)
 OR
 >   sa = ssa_wp_analyze() # Create object
 >   sa.plot_stats('WaferName') # Plot main set of statistics about the selected wafer
@@ -161,7 +161,7 @@ class ssa_wp_analyze():
         fg.close()
 
         return True
-        # self = analyze_all_wafers(plot=False)
+        # self = analyze_all_wafers(LogSuffix='', plot=False)
 
     def plot_stats(self, wafer = 'Wafer_W4'):
         #self.import_data(wafer, verboselevel=0)
@@ -303,12 +303,12 @@ class ssa_wp_analyze():
         fy.close()
         self.summarylog.close()
 
-def analyze_all_wafers(plot=False, verboselevel=1):
+def analyze_all_wafers(LogSuffix='', plot=False, verboselevel=1):
     sa = ssa_wp_analyze()
-    sa.analyze_all_wafers(plot=plot, verboselevel=verboselevel)
+    sa.analyze_all_wafers(LogSuffix=LogSuffix, plot=plot, verboselevel=verboselevel)
     return sa
 
-#self = analyze_all_wafers('_prova1', plot=False)
+#self = analyze_all_wafers(LogSuffix='_prova3', plot=False)
 
 #analyze_all_wafers()
 #sa = ssa_wp_analyze()

@@ -89,3 +89,5 @@ analog_mux_map['Bias_THDACHIGH']        = 0b0000000100000000
 analog_mux_map['Bias_D5DAC8']           = 0b0000001000000000
 analog_mux_map['VBG']                   = 0b0000010000000000
 analog_mux_map['GND']                   = 0b0000100000000000
+
+print('bbbbbbbb')

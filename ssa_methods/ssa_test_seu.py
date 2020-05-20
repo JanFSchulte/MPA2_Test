@@ -236,7 +236,7 @@ class SSA_SEU():
 	def check_configuration(self, filename = 'Try', strip_list = range(1,121), latency = 500):
 		#t = time.time()
 		conf_new = self.ssa.ctrl.save_configuration(rtarray = True, display=False, strip_list = strip_list, file = (filename+'__configuration.scv'))
-		conf_ref = self.ssa.ctrl.load_configuration(rtarray = True, display=False, upload_on_chip = False, file = 'ssa_methods/ssa_configuration_base.csv')
+		conf_ref = self.ssa.ctrl.load_configuration(rtarray = True, display=False, upload_on_chip = False, file = 'ssa_methods/Configuration/ssa_configuration_base.csv')
 		conf_ref[ np.where(conf_ref[:,1] == 'L1-Latency_LSB')[0][0] , 2] = (latency >> 0) & 0xff
 		conf_ref[ np.where(conf_ref[:,1] == 'L1-Latency_MSB')[0][0] , 2] = (latency >> 8) & 0xff
 		error = self.ssa.ctrl.compare_configuration(conf_new, conf_ref)
@@ -319,8 +319,8 @@ class SSA_SEU():
 		dirs = os.listdir(folder)
 		dirs = [s for s in dirs  if "Test_" in s]
 		dirs.sort()
-		conf_correct = CSV.csv_to_array('ssa_methods/ssa_configuration_base.csv')
-		conf_default = CSV.csv_to_array('ssa_methods/ssa_configuration_reset.csv')
+		conf_correct = CSV.csv_to_array('ssa_methods/Configuration/ssa_configuration_base.csv')
+		conf_default = CSV.csv_to_array('ssa_methods/Configuration/ssa_configuration_reset.csv')
 		for dt in dirs:
 			errors = []
 			for f in os.listdir( folder + '/' + dt + "/CONFIG/" ):

@@ -1,7 +1,13 @@
 from myScripts.BasicD19c import *
-from ssa_methods.ssa_reg_map import *
 from myScripts.Utilities import *
+from utilities.tbsettings import *
 
+if(tbconfig.VERSION['SSA'] == 2):
+	from ssa_methods.Configuration.ssa2_reg_map import *
+elif(tbconfig.VERSION['SSA'] == 1):
+	from ssa_methods.Configuration.ssa1_reg_map import *
+else:
+	exit(1)
 
 class ssa_i2c_conf:
 

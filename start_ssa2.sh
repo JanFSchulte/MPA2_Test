@@ -20,9 +20,13 @@ printf '             Starting SSA Test System                 \n'
 printf '                                                      \n'
 
 echo ""
-echo "from d19cScripts import *"    >  LaunchPy.py
-echo "from myScripts import *"      >> LaunchPy.py
-echo "from ssa_methods import *"    >> LaunchPy.py
+echo "from d19cScripts import *"         >  LaunchPy.py
+echo "from myScripts import *"           >> LaunchPy.py
+echo "from ssa_methods import *"         >> LaunchPy.py
+echo "from utilities import tbconfig "    >  utilities/tbsettings.py
+echo "tbconfig.VERSION['SSA'] = 2"        >> utilities/tbsettings.py
+echo "tbconfig.VERSION['MPA'] = 1"        >> utilities/tbsettings.py
+
 cp ./myScripts/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
@@ -35,7 +39,7 @@ if ! (( $rep == 0 )); then
 		read -r -p "    Do you want to configure the communication? [y/N] " response
 		if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 			sudo /usr/sbin/rarpd -a
-			sudo ifconfig ${eth}:1 1.1.1.100
+			sudo ifconfig ${eth}:1 3.3.3.100
 			sudo udevadm control --reload-rules
 			sudo modprobe ni_usb_gpib
 			ping -c 1 -W 1 $IP; rep=$?

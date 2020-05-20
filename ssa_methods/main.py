@@ -1,3 +1,4 @@
+from utilities.tbsettings import *
 from ssa_methods.ssa import *
 from ssa_methods.ssa_power_utility import *
 from ssa_methods.ssa_cal_utility import *
@@ -15,6 +16,9 @@ from ssa_methods.ssa_test_seu import *
 from myScripts.BasicADC import *
 from ssa_methods.ssa_wp_analyze import *
 
+#print("--------------------------------------")
+#print(tbconfig.VERSION)
+#print("--------------------------------------")
 
 try:
 	from myScripts.BasicMultimeter import *
