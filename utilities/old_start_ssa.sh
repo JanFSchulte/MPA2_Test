@@ -33,7 +33,7 @@ if ! (( $rep == 0 )); then
 		read -r -p "    Do you want to configure the communication? [y/N] " response
 		if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 			sudo /usr/sbin/rarpd -a
-			sudo ifconfig ${eth}:1 192.168.1.90
+			sudo ifconfig ${eth}:1 192.168.0.90
 			sudo udevadm control --reload-rules
 			sudo modprobe ni_usb_gpib
 			ping -c 1 -W 1 $IP; rep=$?

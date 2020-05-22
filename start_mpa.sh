@@ -2,16 +2,16 @@
 
 if ! ifconfig | grep 'enp0s31f6:1'; then
 	sudo /usr/sbin/rarpd -a
-	sudo ifconfig enp0s31f6:1 192.168.1.82
+	sudo ifconfig enp0s31f6:1 192.168.0.82
 fi
 
 #if ! ifconfig | grep 'enp0s25:1'; then
 #	sudo /usr/sbin/rarpd -a
-#	sudo ifconfig enp0s25:1 192.168.1.82
+#	sudo ifconfig enp0s25:1 192.168.0.82
 #fi
 
 
-ping 192.168.1.33 -c 1
+ping 192.168.0.33 -c 1
 #ping 192.168.5.202 -c 1
 source ~/FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib

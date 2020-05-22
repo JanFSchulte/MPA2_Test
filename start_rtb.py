@@ -2,10 +2,10 @@
 
 if ! ifconfig | grep 'enp0s25:1'; then
 	sudo /usr/sbin/rarpd -a
-	sudo ifconfig enp0s25:1 192.168.1.82
+	sudo ifconfig enp0s25:1 192.168.0.82
 fi
 
-#ping 192.168.1.79 -c 1
+#ping 192.168.0.79 -c 1
 source ~/FC7/sw/fc7/setup.sh
 echo ""
 echo ""

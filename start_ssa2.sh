@@ -2,6 +2,7 @@
 
 source ~/FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+export LC_ALL=C; unset LANGUAGE
 
 #in /etc/ethers put
 #sudo /etc/init.d/network restart
@@ -39,7 +40,7 @@ if ! (( $rep == 0 )); then
 		read -r -p "    Do you want to configure the communication? [y/N] " response
 		if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 			sudo /usr/sbin/rarpd -a
-			sudo ifconfig ${eth}:1 3.3.3.100
+			sudo ifconfig ${eth}:1 192.168.0.100
 			sudo udevadm control --reload-rules
 			sudo modprobe ni_usb_gpib
 			ping -c 1 -W 1 $IP; rep=$?
@@ -48,7 +49,7 @@ if ! (( $rep == 0 )); then
 			else
 				printf '\n->  SSA Testbench correctly found on %s\n' "$IP"
 				printf '______________________________________________________\n'
-				python3 -i LaunchPy.py
+				python -i LaunchPy.py
 			fi
 		fi
 	else
@@ -61,16 +62,16 @@ if ! (( $rep == 0 )); then
 		read -r -p "    Do you want to proceed anyways? [y/N] " response
 		if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 			printf '______________________________________________________\n'
-			python3 -i LaunchPy.py
+			python -i LaunchPy.py
 		else
 			printf '\nExiting.\n\n'
 			printf '______________________________________________________\n'
 		fi
 	elif [[  $1 == y ]]; then
 			printf '______________________________________________________\n'
-			python3 -i LaunchPy.py
+			python -i LaunchPy.py
 	fi
 else
 	printf '\n->  SSA Testbench correctly found on %s\n' "$IP"
-	python3 -i LaunchPy.py
+	python -i LaunchPy.py
 fi

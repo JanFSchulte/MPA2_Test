@@ -21,10 +21,10 @@ if ! ifconfig | grep ${eth}:'1'; then
 	printf '\n->  Ethernet interface =' ${eth}':1' 'not found\n'
 	sudo /usr/sbin/rarpd -a
 	sudo ifconfig ${eth}:1 192.168.0.4
-	sudo udevadm control --reload-rules	
+	sudo udevadm control --reload-rules
 	sudo modprobe ni_usb_gpib
 else
-	printf '\n->  Ethernet interface found  ' 
+	printf '\n->  Ethernet interface found  '
 	echo ${eth}
 	printf '\n'
 fi
@@ -32,7 +32,7 @@ fi
 ping -c 1 -W 1 $IP; rep=$?
 
 if ! (( $rep == 0 )); then
-	printf   '\n->  SSA Testbench unrichable. Verify connectivity\n'
+	printf   '\n->  SSA Testbench unreachable. Verify connectivity\n'
 
 else
 	printf '\n->  SSA Testbench correctly found on %s\n' "$IP"
@@ -44,11 +44,13 @@ else
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_11.bin -f ~/D19C/bitfiles/SEU/SSA_SEU_11.bit
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_12.bin -f ~/D19C/bitfiles/SEU/SEU_SSA_12.bit
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_11.bit -f ~/Desktop/SSA_SEU_11.bit
-	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_7.bin  
-	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_11.bin 
-	./bin/fc7-d19c.exe  -i $IP -n  MPA_SEU_L1_9.bin -f /home/acaratel/D19C/MPA_Test/fw_bitfiles/MPA_SEU_L1_9.bit
+	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_7.bin
+	#./bin/fc7-d19c.exe  -i $IP -n  MPA_SEU_L1_9.bin -f ~/D19C/MPA_Test/fw_bitfiles/MPA_SEU_L1_9.bit
+	# USE SSA_SEU_11.bin for SSA tests on carrier board
+	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_11.bin
+	# USE d19c_ssa_none_16052019.bin for SSA tests on wafer (swapped signals on probe card)
+	#./bin/fc7-d19c.exe  -i $IP -n  d19c_ssa_none_16052019_v2.bin -f ~/MPA_Test/fw_bitfiles/d19c_ssa_none_16052019_v2.bit
+	#./bin/fc7-d19c.exe  -i $IP -n  d19c_ssa_none_16052019_v2.bin
+	./bin/fc7-d19c.exe  -i $IP -n  d19c_ssa_none_17052019.bin -f ~/MPA_Test/fw_bitfiles/d19c_ssa_none_17052019.bit
 
 fi
-
-
-
