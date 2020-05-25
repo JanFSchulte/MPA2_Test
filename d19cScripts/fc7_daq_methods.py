@@ -32,6 +32,9 @@ if isInD19CScripts:
 else:
     f = open('./d19cScripts/ipaddr.dat', 'r')
 ipaddr = f.readline()
+ipaddr = ipaddr.replace('\n', '')
+ipaddr = ipaddr.replace('\t', '')
+ipaddr = ipaddr.replace(' ' , '')
 f.close()
 fc7 = ChipsBusUdp(fc7AddrTable, ipaddr, 50001)
 #############

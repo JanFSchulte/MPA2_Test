@@ -209,3 +209,13 @@ def f_gauss1(x, A, mu, sigma):
 def f_errorfc(x, *p):
 	a, mu, sigma = p
 	return a*0.5*erfc((x-mu)/(sigma*np.sqrt(2)))
+
+def try_fc7_com(fc7_if):
+	for i in range(4):
+		fc7_if.write("cnfg_mpa_ssa_board_i2c_freq", i)
+		time.sleep(0.001)
+		r = fc7_if.read("cnfg_mpa_ssa_board_i2c_freq")
+		time.sleep(0.001)
+		if(r == i): st = 'Pass'
+		else: st = 'Fail'
+		print('{:s}: {:d}-{:d}'.format(st, i, r))

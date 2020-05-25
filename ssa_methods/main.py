@@ -1,4 +1,6 @@
-#from utilities.tbsettings import *
+from utilities.tbsettings import *
+from myScripts.SelectBoardIp import *
+
 from ssa_methods.ssa import *
 from ssa_methods.ssa_power_utility import *
 from ssa_methods.ssa_cal_utility import *
@@ -27,7 +29,10 @@ except ImportError:
 	multimeter = False
 	print("- Impossible to access GPIB instruments")
 
-FC7         = ssa_fc7_com(fc7)
+ipaddr, fc7AddrTable, fc7_if = SelectBoard('ssa')
+try_fc7_com(fc7_if)
+
+FC7         = ssa_fc7_com(fc7_if)
 ssa_i2c     = ssa_i2c_conf()
 ssa_pwr     = ssa_power_utility(ssa_i2c, FC7)
 ssa         = SSA_ASIC(ssa_i2c, FC7, ssa_pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)

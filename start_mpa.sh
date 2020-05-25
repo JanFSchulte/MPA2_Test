@@ -31,5 +31,5 @@ echo "from mpa_methods import * "  >> LaunchPy.py
 #echo "from mpa_methods.bias_calibration import *"  >> LaunchPy.py
 #echo "from mpa_methods.krum_test import *"  >> LaunchPy.py
 
-cp ./myScripts/ipaddr_mpa.dat  d19cScripts/ipaddr.dat
+cp ./utilities/ipaddr_mpa.dat  d19cScripts/ipaddr.dat
 python -i LaunchPy.py

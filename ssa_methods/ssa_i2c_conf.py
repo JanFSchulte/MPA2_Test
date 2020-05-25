@@ -92,7 +92,7 @@ class ssa_i2c_conf:
 		return rep
 
 
-	def strip_write(self, register, strip, data):
+	def strip_write(self, register, strip, data, field_mask=False, field_location=False, timeout = 0.01):
 		cnt = 0; st = True;
 		while cnt < 4:
 			try:
@@ -103,7 +103,15 @@ class ssa_i2c_conf:
 					strip_id = strip if (strip is not 'all') else 0b00000000
 					base = ssa_strip_reg_map[register]
 					adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
-					rep  = write_I2C('SSA', adr, data, self.freq)
+					if(not field_mask):
+						wdata = data
+					else:
+						tdata = data << field_location
+						#### readreg  = read_I2C('SSA', adr, timeout)
+						readreg = 0
+						wdata = (readreg & (~int(field_mask))) | (tdata & int(field_mask))
+					#### rep  = write_I2C('SSA', adr, wdata, self.freq)
+					print("writing value " + bin(wdata) + " to reg " )
 				if(self.readback):
 					tmp = strip_id if (strip_id != 0) else 50
 					rep = self.strip_read(register, tmp)
@@ -119,7 +127,7 @@ class ssa_i2c_conf:
 		return st
 
 
-	def strip_read(self, register, strip, timeout = 0.01):
+	def strip_read(self, register, strip, field_mask=0xff, field_location=0, timeout = 0.01):
 		cnt = 0; rep = True;
 		while cnt < 4:
 			try:
@@ -130,7 +138,8 @@ class ssa_i2c_conf:
 					strip_id = strip if (strip is not 'all') else 0b00000000
 					base = ssa_strip_reg_map[register]
 					adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
-					rep  = read_I2C('SSA', adr, timeout)
+					repd = read_I2C('SSA', adr, timeout)
+					rep  = ((repd & field_mask) >> field_location)
 				break
 			except:
 				print('=>  \tTB Communication error - I2C-Strip-read')

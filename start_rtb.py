@@ -15,6 +15,6 @@ echo "from d19cScripts import *"                        >  LaunchPy.py
 echo "from myScripts import *"                          >> LaunchPy.py
 echo "  "                                               >> LaunchPy.py
 echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('MPA') "  >> LaunchPy.py
-cp ./myScripts/ipaddr_mpa.dat  d19cScripts/ipaddr.dat
+cp ./utilities/ipaddr_mpa.dat  d19cScripts/ipaddr.dat
 python LaunchPy.py
 python utilities/rtb.py

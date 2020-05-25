@@ -55,7 +55,7 @@ class SSA_ASIC:
 			sys.stdout.write("->  \tInitialising..\r")
 			sys.stdout.flush()
 		if(reset_board):
-			fc7.write("ctrl_command_global_reset", 1)
+			self.fc7.write("ctrl_command_global_reset", 1)
 			sleep(0.3);
 			if(display): utils.print_info("->  \tReset FC7 Firmware")
 		if(reset_chip):
@@ -159,7 +159,7 @@ class SSA_ASIC:
 		if (init): self.init(reset_board = False, reset_chip = False, display = False)
 		self.readout.cluster_data(initialize = True)
 		alined_left  = False; alined_right = False; cnt = 0;
-		fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay)
+		self.fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay)
 		self.inject.digital_pulse([100, 121, 124], initialise = True)
 		#self.ctrl.set_lateral_data(0b00001001, 0)
 		while ((alined_left == False) and (cnt < timeout)):
@@ -169,8 +169,8 @@ class SSA_ASIC:
 					alined_left = True
 			utils.ShowPercent(cnt, timeout+1, "Aligning left input line\t\t" + str(clusters) + "           ")
 			time.sleep(0.001)
-			#if  (cnt==256): fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay+1)
-			#elif(cnt==512): fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay+2)
+			#if  (cnt==256): self.fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay+1)
+			#elif(cnt==512): self.fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay+2)
 			self.ctrl.set_lateral_data_phase(0,5)
 			time.sleep(0.001)
 			cnt += 1

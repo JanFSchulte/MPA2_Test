@@ -13,7 +13,7 @@ echo ""
 echo "from myScripts import *"      > LaunchPy.py
 echo "from ssa_methods import *"    >> LaunchPy.py
 
-cp ./myScripts/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
+cp ./utilities/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
 printf '______________________________________________________\n'

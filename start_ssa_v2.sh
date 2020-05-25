@@ -7,7 +7,7 @@ export LC_ALL=C; unset LANGUAGE
 #in /etc/ethers put
 #sudo /etc/init.d/network restart
 
-file="./myScripts/ipaddr_ssa.dat"
+file="./utilities/ipaddr_ssa.dat"
 while IFS= read -r line
 do
 	IP=$line
@@ -21,14 +21,15 @@ printf '             Starting SSA Test System                 \n'
 printf '                                                      \n'
 
 echo ""
-echo "from d19cScripts import *"         >  LaunchPy.py
-echo "from myScripts import *"           >> LaunchPy.py
-echo "from ssa_methods import *"         >> LaunchPy.py
-echo "from utilities import tbconfig "    >  utilities/tbsettings.py
-echo "tbconfig.VERSION['SSA'] = 1"        >> utilities/tbsettings.py
-echo "tbconfig.VERSION['MPA'] = 1"        >> utilities/tbsettings.py
+echo "from d19cScripts import *" >  LaunchPy.py
+echo "from myScripts import *" >> LaunchPy.py
+echo "from ssa_methods import *" >> LaunchPy.py
+#echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('ssa') "  >> LaunchPy.py
+echo "from utilities import tbconfig " >  utilities/tbsettings.py
+echo "tbconfig.VERSION['SSA'] = 2" >> utilities/tbsettings.py
+echo "tbconfig.VERSION['MPA'] = 1" >> utilities/tbsettings.py
 
-cp ./myScripts/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
+cp ./utilities/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 

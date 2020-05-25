@@ -1,8 +1,6 @@
 *.pyc
-ipaddr.dat
 d19cScripts/ipaddr.dat
 *tmp*
 *temp*
-myScripts/ipaddr_ssa.dat
 vivado*
 fw_bitfiles/

@@ -6,15 +6,17 @@ def SelectBoard(name):
 	global fc7AddrTable
 	global fc7
 	if name == 'mpa' or name == 'MPA' or name == 0:
-		f = open('./myScripts/ipaddr_mpa.dat', 'r')
+		f = open('./utilities/ipaddr_mpa.dat', 'r')
 		ipaddr = f.readline()
 		f.close()
-		print('MPA Board Selected on IP address: ' + str(ipaddr))
 	elif name == 'ssa' or name == 'SSA' or name == 1:
-		f = open('./myScripts/ipaddr_ssa.dat', 'r')
+		f = open('./utilities/ipaddr_ssa.dat', 'r')
 		ipaddr = f.readline()
 		f.close()
-		print('SSA Board Selected on IP address: ' + str(ipaddr))
+	ipaddr = ipaddr.replace('\n', '')
+	ipaddr = ipaddr.replace('\t', '')
+	ipaddr = ipaddr.replace(' ' , '')
 	fc7AddrTable = AddressTable("./d19cScripts/fc7AddrTable.dat")
 	fc7 = ChipsBusUdp(fc7AddrTable, ipaddr, 50001)
-	return ipaddr, fc7AddrTable, fc7 
+	print('Board Selected on IP address: [' + str(ipaddr) + ']')
+	return ipaddr, fc7AddrTable, fc7

@@ -7,7 +7,7 @@ if [ $# -eq 0 ]
 		exit 1
 fi
 
-file="./myScripts/ipaddr_ssa.dat"
+file="./utilities/ipaddr_ssa.dat"
 while IFS= read -r line
 do
         IP=$line
@@ -39,7 +39,7 @@ echo "from ssa_methods import *"    >> LaunchPy.py
 echo "AP = AUTOPROBER('$1', 'N' , 'SSA')"  >> LaunchPy.py
 echo "AP.MSR_ALL(90)"             >> LaunchPy.py
 
-cp ./myScripts/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
+cp ./utilities/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
