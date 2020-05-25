@@ -1,4 +1,4 @@
-from fc7_daq_methods import *
+from d19cScriptsfc7_daq_methods import *
 
 ## readout is still connected, and the counters (BX, L1, TDC, ..) will fill up the FIFO's quickly, if we don't disable the backpressure
 fc7.write("cnfg_fast_backpressure_enable", 0)

@@ -1,4 +1,8 @@
 
+#  import json
+#  with open('ssa_methods/Configuration/ssa2_reg_map.json') as datafile:
+#      ssa_reg_map = json.load(datafile)
+#  print(json.dumps(ssa_reg_map, indent=4, sort
 
 ################# Strip register map #########################
 ssa_strip_reg_map = {}

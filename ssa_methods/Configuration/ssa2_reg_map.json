@@ -1,0 +1,99 @@
+{
+    "ssa_strip_reg_map": {
+        "ENFLAGS": {
+            "adr": 0,
+            "permissions": "RW",
+            "fields_mask": {
+                "PixelMask"       : "0b00000001",
+                "SignalPolarity"  : "0b00000010",
+                "EN_HitCounter"   : "0b00000100",
+                "EN_DigitalCalib" : "0b00001000",
+                "EN_AnalogCalib"  : "0b00010000",
+                "Mode_Trig"       : "0b01100000"
+            }
+        },
+        "StripControl2": {
+            "adr": 1,
+            "permission": "RW",
+            "fields_mask": {
+                "HipCut"         : "0b00000111",
+                "GainTrimming"   : "0b01111000"
+            }
+        },
+        "ThresholdTrimming": {
+            "adr": 2,
+            "permissions": "RW",
+            "fields_mask": {
+                "ThresholdTrimming": "0b00011111"
+            }
+        },
+        "DigCalibPattern_L": {
+            "adr": 3,
+            "permissions": "RW",
+            "fields_mask": {
+                "DigCalibPattern_L": "0b11111111"
+            }
+        },
+        "DigCalibPattern_H": {
+            "adr": 4,
+            "permissions": "RW",
+            "fields_mask": {
+                "DigCalibPattern_H": "0b11111111"
+            }
+        },
+        "AC_ReadCounterLSB": {
+            "adr": 5,
+            "permissions": "R",
+            "fields_mask": {
+                "AC_ReadCounterLSB": "0b11111111"
+            }
+        },
+        "AC_ReadCounterMSB": {
+            "adr": 6,
+            "permissions": "R",
+            "fields_mask": {
+                "AC_ReadCounterMSB": "0b11111111"
+            }
+        }
+    },
+    "ssa_peri_reg_map": {
+        "ENFLAGS0": {
+            "adr": 0,
+            "fields": {
+                "a": "0",
+                "b": "1",
+                "c": "2",
+                "d": "3"
+            }
+        },
+        "ENFLAGS1": {
+            "adr": 0,
+            "fields": {
+                "a": "0",
+                "b": "1",
+                "c": "2",
+                "d": "3"
+            }
+        },
+        "ENFLAGS2": {
+            "adr": 0,
+            "fields": {
+                "a": "0",
+                "b": "1",
+                "c": "2",
+                "d": "3"
+            }
+        },
+        "ENFLAGS3": {
+            "adr": 0,
+            "fields": {
+                "": [
+                    "0",
+                    "1",
+                    "2",
+                    "3"
+                ]
+            }
+        }
+    }
+}
