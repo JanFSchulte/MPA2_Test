@@ -95,5 +95,8 @@
                 ]
             }
         }
+    },
+    "ssa_peri_reg_map": {
+        "PROVA": 1
     }
 }

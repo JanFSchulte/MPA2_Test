@@ -12,10 +12,7 @@ import matplotlib.pyplot as plt
 
 class ssa_ctrl_strip:
 
-	def __init__(self, I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
-		self.analog_mux_map    = analog_mux_map
-		self.ssa_peri_reg_map  = ssa_peri_reg_map
-		self.ssa_strip_reg_map = ssa_strip_reg_map
+	def __init__(self, I2C, FC7):
 		self.I2C               = I2C
 		self.fc7               = FC7
 		self.dll_chargepump    = 0b00

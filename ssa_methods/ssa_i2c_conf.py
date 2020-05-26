@@ -1,22 +1,34 @@
+import json
 from myScripts.BasicD19c import *
 #from myScripts.Utilities import *
-#from utilities.tbsettings import *
-
-#if(tbconfig.VERSION['SSA'] == 2):
-from ssa_methods.Configuration.ssa2_reg_map import *
-#elif(tbconfig.VERSION['SSA'] == 1):
-#	from ssa_methods.Configuration.ssa1_reg_map import *
-#else:
-#	exit(1)
+from utilities.tbsettings import *
+from ssa_methods.Configuration.ssa1_reg_map import *
 
 class ssa_i2c_conf:
 
 	def __init__(self):
-		self.ssa_peri_reg_map = ssa_peri_reg_map
-		self.ssa_strip_reg_map = ssa_strip_reg_map
+		if(tbconfig.VERSION['SSA'] >= 2):
+			#from ssa_methods.Configuration.ssa2_reg_map import *
+			ssa_reg_map = json.load(open('./ssa_methods/Configuration/ssa2_reg_map.json', 'r'))
+			self.ssa_strip_reg_map = ssa_reg_map['ssa_strip_reg_map']
+			self.ssa_peri_reg_map  = ssa_reg_map['ssa_peri_reg_map']
+			self.analog_mux_map    = analog_mux_map_v1
+		else:
+			self.ssa_strip_reg_map = ssa_strip_reg_map_v1
+			self.ssa_peri_reg_map  = ssa_peri_reg_map_v1
+			self.analog_mux_map    = analog_mux_map_v1
 		self.freq = 0
 		self.debug = False
 		self.readback = False
+
+	def get_strip_reg_map(self):
+		return self.ssa_strip_reg_map
+
+	def get_peri_reg_map(self):
+		return self.ssa_peri_reg_map
+
+	def get_analog_mux_map(self):
+		return self.analog_mux_map
 
 	def set_debug_mode(self, value = True, display = 0):
 		self.debug = value
@@ -40,7 +52,6 @@ class ssa_i2c_conf:
 	def get_freq(self, value):
 		return self.freq
 
-
 	def peri_write(self, register, data):
 		cnt = 0; st = True;
 		while cnt < 4:
@@ -50,7 +61,10 @@ class ssa_i2c_conf:
 					print("->  \tRegister name not found")
 					rep = False
 				else:
-					base = ssa_peri_reg_map[register]
+					if(tbconfig.VERSION['SSA'] == 2):
+						base = self.ssa_peri_reg_map[register]['adr']
+					else:
+						base = self.ssa_peri_reg_map[register]
 					adr  = (base & 0x0fff) | 0b0001000000000000
 					rep  = write_I2C('SSA', adr, data, self.freq)
 				if(self.readback):
@@ -75,7 +89,10 @@ class ssa_i2c_conf:
 					print("Register name not found")
 					rep = False
 				else:
-					base = ssa_peri_reg_map[register]
+					if(tbconfig.VERSION['SSA'] == 2):
+						base = self.ssa_peri_reg_map[register]['adr']
+					else:
+						base = self.ssa_peri_reg_map[register]
 					adr  = (base & 0xfff) | 0b0001000000000000
 					rep  = read_I2C('SSA', adr, timeout)
 					if rep is None:
@@ -101,7 +118,10 @@ class ssa_i2c_conf:
 					rep = False
 				else:
 					strip_id = strip if (strip is not 'all') else 0b00000000
-					base = ssa_strip_reg_map[register]
+					if(tbconfig.VERSION['SSA'] == 2):
+						base = self.ssa_strip_reg_map[register]['adr']
+					else:
+						base = self.ssa_strip_reg_map[register]
 					adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
 					if(not field_mask):
 						wdata = data
@@ -136,7 +156,10 @@ class ssa_i2c_conf:
 					rep = False
 				else:
 					strip_id = strip if (strip is not 'all') else 0b00000000
-					base = ssa_strip_reg_map[register]
+					if(tbconfig.VERSION['SSA'] == 2):
+						base = self.ssa_strip_reg_map[register]['adr']
+					else:
+						base = self.ssa_strip_reg_map[register]
 					adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
 					repd = read_I2C('SSA', adr, timeout)
 					rep  = ((repd & field_mask) >> field_location)

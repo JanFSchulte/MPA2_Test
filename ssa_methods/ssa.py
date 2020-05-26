@@ -16,7 +16,7 @@ class SSA_ASIC:
 	def __init__(self, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
 		self.i2c     = I2C
 		self.ctrl    = ssa_ctrl_base(I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
-		self.strip   = ssa_ctrl_strip(I2C, FC7, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+		self.strip   = ssa_ctrl_strip(I2C, FC7)
 		self.inject  = SSA_inject(I2C, FC7, self.ctrl, self.strip)
 		self.readout = SSA_readout(I2C, FC7, self.ctrl, self.strip)
 		self.pwr     = pwr

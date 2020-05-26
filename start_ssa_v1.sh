@@ -1,5 +1,7 @@
 #!/bin/sh
 
+start_tb='python3 -i LaunchPy.py'
+
 source ~/FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export LC_ALL=C; unset LANGUAGE
@@ -50,7 +52,7 @@ if ! (( $rep == 0 )); then
 			else
 				printf '\n->  SSA Testbench correctly found on %s\n' "$IP"
 				printf '______________________________________________________\n'
-				python -i LaunchPy.py
+				$start_tb
 			fi
 		fi
 	else
@@ -63,16 +65,16 @@ if ! (( $rep == 0 )); then
 		read -r -p "    Do you want to proceed anyways? [y/N] " response
 		if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 			printf '______________________________________________________\n'
-			python -i LaunchPy.py
+			$start_tb
 		else
 			printf '\nExiting.\n\n'
 			printf '______________________________________________________\n'
 		fi
 	elif [[  $1 == y ]]; then
 			printf '______________________________________________________\n'
-			python -i LaunchPy.py
+			$start_tb
 	fi
 else
 	printf '\n->  SSA Testbench correctly found on %s\n' "$IP"
-	python -i LaunchPy.py
+	$start_tb
 fi

@@ -2,6 +2,10 @@ import numpy as np
 import time
 import sys
 import os
+
+if(sys.version_info[0] < 3):
+	print('\n\n\x1b[1;37;41m The MPA-SSA Test bench requires python > 3.5. Compatibility with python 2.8 is not anymore guaranteed. \x1b[0m \n\n')
+
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
