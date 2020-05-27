@@ -18,14 +18,15 @@ class ssa_ctrl_strip:
 		self.dll_chargepump    = 0b00
 
 	def set_enable(self, strip, enable, polarity = 0, hitcounter = 0, digitalpulse = 0, analogpulse = 0):
-		if(strip == 'all'):
-			strip = 0
 		value =((0b1 & analogpulse  ) << 4 |
 			(0b1 & digitalpulse ) << 3 |
 			(0b1 & hitcounter   ) << 2 |
 			(0b1 & polarity     ) << 1 |
 			(0b1 & enable       ) << 0)
-		r = self.I2C.strip_write("ENFLAGS", strip, value)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			r = self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=strip, data=value)
+		else:
+			r = self.I2C.strip_write("ENFLAGS", strip, value)
 
 	def set_trimming(self, strip, value):
 		value = value & 0b11111
@@ -43,19 +44,32 @@ class ssa_ctrl_strip:
 		self.I2C.strip_write("GAINTRIMMING", strip, value)
 
 	def set_sampling_mode(self, strip, mode):
-		if(strip == 'all'): strip = 0
-		done = True
-		if(mode == 'edge'):
-			self.I2C.strip_write("SAMPLINGMODE", strip, 0b00)
-		elif(mode == 'level'):
-			self.I2C.strip_write("SAMPLINGMODE", strip, 0b01)
-		elif (mode == 'or'):
-			self.I2C.strip_write("SAMPLINGMODE", strip, 0b10)
-		elif (mode == 'xor'):
-			self.I2C.strip_write("SAMPLINGMODE", strip, 0b11)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			if(mode == 'edge'):
+				r = self.I2C.strip_write(register="StripControl1", field='Sampling_Mode', strip=strip, data=0b00)
+			elif(mode == 'level'):
+				r = self.I2C.strip_write(register="StripControl1", field='Sampling_Mode', strip=strip, data=0b01)
+			elif (mode == 'or'):
+				r = self.I2C.strip_write(register="StripControl1", field='Sampling_Mode', strip=strip, data=0b10)
+			elif (mode == 'xor'):
+				r = self.I2C.strip_write(register="StripControl1", field='Sampling_Mode', strip=strip, data=0b11)
+			else:
+				r = False
 		else:
-			done = False
-		return done
+			r = True
+			if(strip == 'all'):
+				strip = 0
+			if(mode == 'edge'):
+				self.I2C.strip_write("SAMPLINGMODE", strip, 0b00)
+			elif(mode == 'level'):
+				self.I2C.strip_write("SAMPLINGMODE", strip, 0b01)
+			elif (mode == 'or'):
+				self.I2C.strip_write("SAMPLINGMODE", strip, 0b10)
+			elif (mode == 'xor'):
+				self.I2C.strip_write("SAMPLINGMODE", strip, 0b11)
+			else:
+				r = False
+		return r
 
 	def set_cal_strips(self, mode = 'counter', strip = 'all'):
 		if  (mode == 'counter'):
@@ -63,21 +77,41 @@ class ssa_ctrl_strip:
 		elif(mode == 'analog'):
 			activeval = 0b10001
 		elif(mode == 'digital'):
-		 activeval = 0b01001
+			activeval = 0b01001
 		else: exit(1)
-		if(strip == 'all'):
-			self.I2C.strip_write("ENFLAGS", 0, activeval)
-		elif(strip == 'none'):
-			self.I2C.strip_write("ENFLAGS", 0, 0b00001)
-		elif(isinstance(strip, list)):
-			self.I2C.strip_write("ENFLAGS", 0, 0b00000)
-			for s in strip:
-				self.I2C.strip_write("ENFLAGS", s, activeval)
-		elif(isinstance(strip, int)):
-			self.I2C.strip_write("ENFLAGS", 0, 0b00000)
-			self.I2C.strip_write("ENFLAGS", strip, activeval)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			if(strip == 'all'):
+				r = self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=activeval)
+			elif(strip == 'none'):
+				r = self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00001)
+			elif(isinstance(strip, list)):
+				r = self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00000)
+				for s in strip:
+					r = self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=s, data=activeval)
+			elif(isinstance(strip, int)):
+				self.I2C.strip_write("ENFLAGS", 0, 0b00000)
+				r = self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00000)
+				r = self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=strip, data=activeval)
+			else:
+				print("X>  \tSet_cal_strips error. Wrong strip format specified")
+				return False
+			return r
 		else:
-			exit(1)
+			if(strip == 'all'):
+				self.I2C.strip_write("ENFLAGS", 0, activeval)
+			elif(strip == 'none'):
+				self.I2C.strip_write("ENFLAGS", 0, 0b00001)
+			elif(isinstance(strip, list)):
+				self.I2C.strip_write("ENFLAGS", 0, 0b00000)
+				for s in strip:
+					self.I2C.strip_write("ENFLAGS", s, activeval)
+			elif(isinstance(strip, int)):
+				self.I2C.strip_write("ENFLAGS", 0, 0b00000)
+				self.I2C.strip_write("ENFLAGS", strip, activeval)
+			else:
+				print("X>  \tSet_cal_strips error. Wrong strip format specified")
+				return False
+			return True
 
 	def set_polarity(self, pol, strip = 'all'):
 		if (strip == 'all'):
@@ -87,9 +121,15 @@ class ssa_ctrl_strip:
 		elif(not isinstance(strip, list)):
 			return False
 		for i in strip:
-			r = self.I2C.strip_read("ENFLAGS", i)
+			if(tbconfig.VERSION['SSA'] >= 2):
+				r = self.I2C.strip_read(register="StripControl1", field='ENFLAGS', strip=i)
+			else:
+				r = self.I2C.strip_read("ENFLAGS", i)
 			val = (r&0b11101) | (pol<<1)
-			self.I2C.strip_write("ENFLAGS", i, val)
+			if(tbconfig.VERSION['SSA'] >= 2):
+				self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=i, data=val)
+			else:
+				self.I2C.strip_write("ENFLAGS", i, val)
 		return True
 
 	def set_hipcut(self, value = 'default', strip = 'all'):

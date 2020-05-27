@@ -138,7 +138,7 @@ class SSA_readout():
 		sleep(0.001)
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
 		if(display_raw):
-			print("\n->  \tL1 Data: ")
+			print("\n->  L1 Data: ")
 			for word in ssa_l1_data:
 			    print(
 					'    \t->' +
@@ -190,7 +190,7 @@ class SSA_readout():
 				if(hipflagvect[i] > 0):
 					hiplist.append(i+1)
 			if(display):
-				print("->  \tL1 ={:3d}  |  BX ={:4d}  |  HIT = [{:3s}]  |  HIP = [{:3s}]".format(
+				print("->  L1 ={:3d}  |  BX ={:4d}  |  HIT = [{:3s}]  |  HIP = [{:3s}]".format(
 					L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)) ) )
 
 			#print(data)

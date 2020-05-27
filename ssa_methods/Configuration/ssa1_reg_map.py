@@ -88,5 +88,3 @@ analog_mux_map_v1['Bias_THDACHIGH']        = 0b0000000100000000
 analog_mux_map_v1['Bias_D5DAC8']           = 0b0000001000000000
 analog_mux_map_v1['VBG']                   = 0b0000010000000000
 analog_mux_map_v1['GND']                   = 0b0000100000000000
-
-print('- Loaded configuration for SSA v1')

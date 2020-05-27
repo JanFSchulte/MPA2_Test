@@ -81,9 +81,9 @@ class SSA_SEU():
 					strip_list = striplist, latency = latency)
 
 				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er]  = results
-				print("->  \tStrip List = " + str(striplist))
+				print("->  Strip List = " + str(striplist))
 				seurate = np.float(seucounter)/(time.time() - init_time)
-				print("->  \tSEU Counter       ->  Value: " + str(seucounter) + " Rate: " + str(seurate) + " 1/s")
+				print("->  SEU Counter       ->  Value: " + str(seucounter) + " Rate: " + str(seurate) + " 1/s")
 				msg  = runname + ', ' + str(iteration) + ', ' + str(latency) + ', '
 				striplist.extend([0]*(8-len(striplist)))
 				msg += ', '.join(map(str, striplist )) + ', '
@@ -159,7 +159,7 @@ class SSA_SEU():
 			l1dataer_h_len = len(tmp + cor)
 			l1dataer_h = np.float(np.mean(tmp + cor))
 
-			print( "->  \t{:2s}   {:%7.3f}   {:7.3f}  {:7.3f}  {:7.3f} ".format(ION, LET,  clusterr_l+clusterr_h, l1dataer_l, l1dataer_h)  )
+			print( "->  {:2s}   {:%7.3f}   {:7.3f}  {:7.3f}  {:7.3f} ".format(ION, LET,  clusterr_l+clusterr_h, l1dataer_l, l1dataer_h)  )
 
 			datalog.append( [LET, TILT, 100 , FLUX, 30, seucnt, clusterr_l, l1dataer_l, clusterr_l/(float(FLUX)*30), l1dataer_l/(float(FLUX)*30), clusterr_l_len*30,  clusterr_l_sum, l1dataer_l_len*30,  l1dataer_l_sum ])
 			#print(datalog[-1])
@@ -167,7 +167,7 @@ class SSA_SEU():
 			#print(datalog[-1])
 			#time.sleep(2)
 		CSV.array_to_csv( datalog , folder + "/cmplog.csv" )
-		print("->  \tCompiled log saved in: " + str( folder + "/cmplog.csv") )
+		print("->  Compiled log saved in: " + str( folder + "/cmplog.csv") )
 
 
 	##############################################################
@@ -230,7 +230,7 @@ class SSA_SEU():
 		curtime = time.time()
 		for i in range(iterations):
 			cnt = self.ssa.ctrl.read_seu_counter()
-			print("->  \t%10.6f -> %3d" % ( (time.time()-curtime), cnt))
+			print("->  %10.6f -> %3d" % ( (time.time()-curtime), cnt))
 
 	##############################################################
 	def check_configuration(self, filename = 'Try', strip_list = range(1,121), latency = 500):
@@ -248,7 +248,7 @@ class SSA_SEU():
 		if(strip_er):
 			print("-X  \tSEU Configuration -> Error in Strip configuration")
 		if(not peri_er and not strip_er):
-			print("->  \tSEU Configuration -> Correct")
+			print("->  SEU Configuration -> Correct")
 		return peri_er, strip_er
 
 
@@ -327,7 +327,7 @@ class SSA_SEU():
 				if(len(re.findall("SEU_SSA_(.+)_configuration.scv", f))>0):
 					filename = folder + '/' + dt + "/CONFIG/" + f
 					tmp = CSV.csv_to_array( filename )
-					print("->  \tElaborating file: " + filename)
+					print("->  Elaborating file: " + filename)
 					conf_read = np.zeros([np.shape(tmp)[0], 8], dtype="|S32")
 					conf_read[:,0:4] = tmp[:,0:4]
 					for reg in conf_read:

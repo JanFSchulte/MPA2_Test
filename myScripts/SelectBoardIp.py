@@ -18,5 +18,5 @@ def SelectBoard(name):
 	ipaddr = ipaddr.replace(' ' , '')
 	fc7AddrTable = AddressTable("./d19cScripts/fc7AddrTable.dat")
 	fc7 = ChipsBusUdp(fc7AddrTable, ipaddr, 50001)
-	print('- Board Selected on IP address: [' + str(ipaddr) + ']')
+	print('->  Board Selected on IP address: [' + str(ipaddr) + ']')
 	return ipaddr, fc7AddrTable, fc7

@@ -25,7 +25,7 @@ class ssa_ctrl_base:
 
 	def resync(self):
 		SendCommand_CTRL("fast_fast_reset");
-		print('->  \tSent Re-Sync command')
+		print('->  Sent Re-Sync command')
 		sleep(0.001)
 
 
@@ -54,7 +54,7 @@ class ssa_ctrl_base:
 			for reg in strip_reg_map:
 				tmp = [strip, reg, self.I2C.strip_read(reg, strip)]
 				registers.append(tmp)
-		#print("->  \tConfiguration Saved on file:   " + str(file))
+		#print("->  Configuration Saved on file:   " + str(file))
 		if display:
 			for i in registers:
 				print(i)
@@ -84,7 +84,7 @@ class ssa_ctrl_base:
 							print('X>  \t Configuration ERROR Strip ' + str(tmp[0]))
 				if display:
 					print([tmp[0], tmp[1], tmp[2], r])
-			print("->  \tConfiguration Loaded from file")
+			print("->  Configuration Loaded from file")
 		if(rtarray):
 			return registers
 
@@ -104,7 +104,6 @@ class ssa_ctrl_base:
 					error[int(conf[i,0])] += 1
 		return error
 
-
 	def set_output_mux(self, testline = 'highimpedence'):
 		#utils.activate_I2C_chip()
 		ctrl = self.analog_mux_map[testline]
@@ -120,28 +119,39 @@ class ssa_ctrl_base:
 		else:
 			return True
 
-
 	def init_slvs(self, current = 0b111):
 		self.I2C.peri_write('SLVS_pad_current', current)
 		r = self.I2C.peri_read('SLVS_pad_current')
 		if (self.I2C.peri_read("SLVS_pad_current") != (current & 0b111) ):
-			utils.print_error("->\tI2C did not work properly")
+			utils.print_error("->  I2C did not work properly")
 			#exit(1)
 
-
 	def set_lateral_lines_alignament(self):
-		self.I2C.strip_write("ENFLAGS", 0, 0b01001)
-		self.I2C.strip_write("DigCalibPattern_L", 0, 0)
-		self.I2C.strip_write("DigCalibPattern_H", 0, 0)
-		self.I2C.peri_write( "CalPulse_duration", 15)
-		self.I2C.strip_write("ENFLAGS",   7, 0b01001)
-		self.I2C.strip_write("ENFLAGS", 120, 0b01001)
-		self.I2C.strip_write("DigCalibPattern_L",   7, 0xff)
-		self.I2C.strip_write("DigCalibPattern_L", 120, 0xff)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.strip_write( register="StripControl1",     field='ENFLAGS', strip='all', data=0b00001001)
+			self.I2C.strip_write( register="DigCalibPattern_L", field=False,     strip='all', data=0)
+			self.I2C.strip_write( register="DigCalibPattern_H", field=False,     strip='all', data=0)
+			self.I2C.peri_write(  register="CalPulse_duration", field=False,                  data=15)
+			self.I2C.strip_write( register="StripControl1",     field='ENFLAGS', strip=7,     data=0b01001)
+			self.I2C.strip_write( register="StripControl1",     field='ENFLAGS', strip=120,   data=0b01001)
+			self.I2C.strip_write( register="DigCalibPattern_L", field=False,     strip=7,     data=0xff)
+			self.I2C.strip_write( register="DigCalibPattern_L", field=False,     strip=120,   data=0xff)
+		else:
+			self.I2C.strip_write("ENFLAGS", 0, 0b01001)
+			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
+			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
+			self.I2C.peri_write( "CalPulse_duration", 15)
+			self.I2C.strip_write("ENFLAGS",   7, 0b01001)
+			self.I2C.strip_write("ENFLAGS", 120, 0b01001)
+			self.I2C.strip_write("DigCalibPattern_L",   7, 0xff)
+			self.I2C.strip_write("DigCalibPattern_L", 120, 0xff)
 
 
 	def reset_pattern_injection(self):
-		self.I2C.strip_write("ENFLAGS", 0, 0b01001)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.strip_write("StripControl1", 'all', 0b01001)
+		else:
+			self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 		self.I2C.strip_write("DigCalibPattern_L", 0, 0)
 		self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 
@@ -185,7 +195,7 @@ class ssa_ctrl_base:
 		sleep(0.1)
 		while(fc7.read("stat_phy_phase_tuning_done") == 0):
 			sleep(0.1)
-			utils.print_warning("->\tWaiting for the phase tuning")
+			utils.print_warning("->  Waiting for the phase tuning")
 			timeout+=1
 			if (timeout == timeout_max):
 				return False
@@ -194,10 +204,10 @@ class ssa_ctrl_base:
 	def set_t1_sampling_edge(self, edge):
 		if edge == "rising" or edge == "positive":
 			self.I2C.peri_write('EdgeSel_T1', 1)
-			utils.print_info("->  \tT1 sampling edge set to rising")
+			utils.print_info("->  T1 sampling edge set to rising")
 		elif edge == "falling" or edge == "negative":
 			self.I2C.peri_write('EdgeSel_T1', 0)
-			utils.print_info("->  \tT1 sampling edge set to falling")
+			utils.print_info("->  T1 sampling edge set to falling")
 		else:
 			print("Error! The edge name is wrong")
 
@@ -222,7 +232,7 @@ class ssa_ctrl_base:
 		# ssa set delay of the counters
 		fwdel = ssa_first_counter_delay + 24 + correction
 		if(fwdel >= 255):
-			print('->  \tThe counters delay value selected is not supposrted by the firmware [> 255]')
+			print('->  The counters delay value selected is not supposrted by the firmware [> 255]')
 		self.fc7.write("cnfg_phy_slvs_ssa_first_counter_del", fwdel & 0xff)
 
 
@@ -392,18 +402,18 @@ class ssa_ctrl_base:
 		r2 = self.I2C.peri_read('Fuse_Prog_b2')
 		r3 = self.I2C.peri_read('Fuse_Prog_b3')
 		if (((r3<<24) | (r2<<16) | (r1<<8) | (r0<<0) ) != val):
-			print("\n->  \tError in setting the e-fuses write buffer")
+			print("\n->  Error in setting the e-fuses write buffer")
 			return -1
 		if(pulse):
 			if confirm:  rp = 'Y'
-			else:  rp = raw_input("\n->  \tAre you sure you want to write the e-fuses? [Y|n] : ")
+			else:  rp = raw_input("\n->  Are you sure you want to write the e-fuses? [Y|n] : ")
 			if (rp == 'Y'):
 				time.sleep(0.1); self.I2C.peri_write('Fuse_Mode', 0b11110000)
 				time.sleep(0.1); self.fc7.send_test(15)
 				time.sleep(0.1); self.I2C.peri_write('Fuse_Mode', 0b00000000)
 		r = self.read_fuses(pulse = True, display = display)
 		if(r != val):
-			print('->  \tE-Fuses write error: ')
+			print('->  E-Fuses write error: ')
 			print('    \t    Written:...{0:032b}'.format(val))
 			print('    \t    Read:......{0:032b}'.format(r))
 			return False

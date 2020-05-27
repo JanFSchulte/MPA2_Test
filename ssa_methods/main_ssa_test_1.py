@@ -170,7 +170,7 @@ class SSA_test_top():
 				r1, r2 = self.test.lateral_input_phase_tuning(display=False, file = filename, filemode = 'a', runname = runname, shift = shift[6])
 				self.summary.set('Lateral_In_L', r1, '', '',  runname)
 				self.summary.set('Lateral_In_R', r2, '', '',  runname)
-				print("->  \tlateral_input_phase_tuning test Time = {:7.2f}".format( (time.time()-time_init) ))
+				print("->  lateral_input_phase_tuning test Time = {:7.2f}".format( (time.time()-time_init) ))
 				time_init = time.time();
 				break
 			except:
@@ -184,7 +184,7 @@ class SSA_test_top():
 				self.summary.set('Cluster_Data',         r1, '%', '',  runname)
 				self.summary.set('Lateral_In_Clusters',  r2, '%', '',  runname)
 				self.summary.set('Lateral_Out_Clusters', r3, '%', '',  runname)
-				print("->  \tcluster_data_basic test Time = {:7.2f}".format( (time.time() - time_init) ))
+				print("->  cluster_data_basic test Time = {:7.2f}".format( (time.time() - time_init) ))
 				time_init = time.time();
 				break
 			except:
@@ -196,7 +196,7 @@ class SSA_test_top():
 			try:
 				r1, r2, r3 = self.test.cluster_data_basic(mode = 'analog',  shift = shift[2], shiftL = shift[3], display=False, file = filename, filemode = 'a', runname = runname)
 				self.summary.set('Pulse_Injection', r1, '%', '',  runname)
-				print("->  \tPulse_Injection test Time = {:7.2f}".format( (time.time() - time_init) ))
+				print("->  Pulse_Injection test Time = {:7.2f}".format( (time.time() - time_init) ))
 				time_init = time.time();
 				break
 			except:
@@ -208,7 +208,7 @@ class SSA_test_top():
 			try:
 				r1 = self.test.cluster_data(mode = 'digital', nstrips = 3, shift = shift[0], display=False, file = filename, filemode = 'a', runname = runname)
 				self.summary.set('Cluster_Data2',  r1, '%', '',  runname)
-				print("->  \tcluster_data_basic test Time = {:7.2f}".format( (time.time() - time_init) ))
+				print("->  cluster_data_basic test Time = {:7.2f}".format( (time.time() - time_init) ))
 				time_init = time.time();
 				break
 			except:
@@ -220,7 +220,7 @@ class SSA_test_top():
 			try:
 				r1 = self.test.memory(memory = 1, shift = shift[4], display= 0,  file = filename, filemode = 'a', runname = runname)
 				self.summary.set('Memory_1', r1, '%', '',  runname)
-				print("->  \tMemory_1 test Time = {:7.2f}".format( (time.time() - time_init) ))
+				print("->  Memory_1 test Time = {:7.2f}".format( (time.time() - time_init) ))
 				time_init = time.time();
 				break
 			except:
@@ -232,7 +232,7 @@ class SSA_test_top():
 			try:
 				r1 = self.test.memory(memory = 2, shift = shift[4], display= 0,  file = filename, filemode = 'a', runname = runname)
 				self.summary.set('Memory_2', r1, '%', '',  runname)
-				print("->  \tMemory_2 test Time = {:7.2f}".format( (time.time() - time_init) ))
+				print("->  Memory_2 test Time = {:7.2f}".format( (time.time() - time_init) ))
 				time_init = time.time();
 				break
 			except:
@@ -245,7 +245,7 @@ class SSA_test_top():
 				r1, r2 = self.test.l1_data_basic(mode = 'digital', shift = shift[5], file = filename, filemode = 'a', runname = runname)
 				self.summary.set('L1_data',    r1, '%', '',  runname)
 				self.summary.set('HIP_flags',  r2, '%', '',  runname)
-				print("->  \tl1_data_basic test Time = {:7.2f}".format( (time.time() - time_init) ))
+				print("->  l1_data_basic test Time = {:7.2f}".format( (time.time() - time_init) ))
 				time_init = time.time();
 				break
 			except:
@@ -257,7 +257,7 @@ class SSA_test_top():
 			try:
 				time.sleep(0.1)
 				self.test.memory_vs_voltage(memory = 2, step = 0.005, start = 1.2, stop = 0.90, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
-				print("->  \tmemory_vs_voltage Time = {:7.2f}".format( (time.time() - time_init) ))
+				print("->  memory_vs_voltage Time = {:7.2f}".format( (time.time() - time_init) ))
 				time_init = time.time();
 				self.pwr.set_dvdd(self.dvdd)
 				break
@@ -271,7 +271,7 @@ class SSA_test_top():
 			try:
 				time.sleep(0.1)
 				self.test.memory_vs_voltage(memory = 1, step = 0.010, start = 1.1, stop = 0.90, latency = 200, shift = 0, file = filename, filemode = 'a', runname = runname)
-				print("->  \t memory_vs_voltage Time = {:7.2f}".format( (time.time() - time_init) ))
+				print("->   memory_vs_voltage Time = {:7.2f}".format( (time.time() - time_init) ))
 				time_init = time.time();
 				self.pwr.set_dvdd(self.dvdd)
 				break
@@ -300,7 +300,7 @@ class SSA_test_top():
 				r1, r2 = self.measure.baseline_noise(ret_average = True, plot = False, mode = 'all', filename = filename, runname = runname, filemode = 'a')
 				self.summary.set('noise_baseline' , r1, 'LSB', '',  runname)
 				self.summary.set('baseline_issues', r2, '#',   '',  runname)
-				print("->  \tl1_data_basic Time = {:7.2f}".format( (time.time() - time_init) ))
+				print("->  l1_data_basic Time = {:7.2f}".format( (time.time() - time_init) ))
 				time_init = time.time();
 				break
 			except:
@@ -316,7 +316,7 @@ class SSA_test_top():
 				self.summary.set('offset'        , r2, 'ThDAC'       , '',  runname)
 				self.summary.set('noise_scurve'  , r3, 'ThDAC'       , '',  runname)
 				self.summary.set('scurve_issues' , r4, 'list'        , '',  runname)
-				print("->  \tgain_offset_noise Time = {:7.2f}".format( (time.time() - time_init) ))
+				print("->  gain_offset_noise Time = {:7.2f}".format( (time.time() - time_init) ))
 				time_init = time.time();
 				break
 			except:
@@ -328,7 +328,7 @@ class SSA_test_top():
 			try:
 				r1 = self.measure.threshold_spread(calpulse = 50, use_stored_data = True, plot = False, file = filename, filemode = 'a', runname = runname)
 				self.summary.set('threshold std' , r1, 'ThDAC', '',  runname)
-				print("->  \tthreshold_spread Time = {:7.2f}".format( (time.time() - time_init) ))
+				print("->  threshold_spread Time = {:7.2f}".format( (time.time() - time_init) ))
 				time_init = time.time();
 				break
 			except:

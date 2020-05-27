@@ -114,11 +114,11 @@ class SSA_test_utility():
 		fo.close()
 		rt = 100.0*(1.0-float(cnt['cl_err'])/float(cnt['cl_sum']))
 		fo = open(file + "readout_cluster-data_summary" + mode + ".csv", 'a')
-		fo.write("->\tCluster data test with {mode:s} injection -> {res:5.3f}%".format(mode=mode, res=rt))
+		fo.write("->  Cluster data test with {mode:s} injection -> {res:5.3f}%".format(mode=mode, res=rt))
 		if(rt == 100.0):
-			utils.print_good("->\tCluster data test with {mode:s} injection -> 100%".format(mode=mode))
+			utils.print_good("->  Cluster data test with {mode:s} injection -> 100%".format(mode=mode))
 		else:
-			utils.print_error("->\tCluster data test with {mode:s} injection -> {res:5.3f}%".format(mode=mode, res=rt))
+			utils.print_error("->  Cluster data test with {mode:s} injection -> {res:5.3f}%".format(mode=mode, res=rt))
 		return rt
 
 
@@ -126,7 +126,7 @@ class SSA_test_utility():
 	def cluster_data_basic(self, mode = "digital", nruns = 5, shift = 'default', shiftL = 0, display=False, lateral = True, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
 		fo = open(file + "readout_cluster-data-basic_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = ''; stlateralout = '';
-		#print("->  \tRemember to call test.lateral_input_phase_tuning() before to run this test")
+		#print("->  Remember to call test.lateral_input_phase_tuning() before to run this test")
 		utils.activate_I2C_chip()
 		if(not self.ssa.cl_word_aligned()):
 			self.ssa.cl_word_alignment()
@@ -292,9 +292,9 @@ class SSA_test_utility():
 		result = [ (1.0 - float(counter[0][1])/float(counter[0][0]))*100.0  ,  (1.0 - float(counter[1][1])/float(counter[1][0]))*100.0  ]
 		#return "%5.2f%%" % (result)
 		if(result[0] == 100 and result[1] == 100):
-			utils.print_good("->\tL1 data test scan with {mode:s} injection -> 100%".format(mode=mode))
+			utils.print_good("->  L1 data test scan with {mode:s} injection -> 100%".format(mode=mode))
 		else:
-			utils.print_error("->\tCluster data test scan with {mode:s} injection -> {res0:5.3f}% hit - {res1:5.3f}% HIP flags".format(mode=mode, res0=result[0], res1=result[1]))
+			utils.print_error("->  Cluster data test scan with {mode:s} injection -> {res0:5.3f}% hit - {res1:5.3f}% HIP flags".format(mode=mode, res0=result[0], res1=result[1]))
 		return result
 
 
@@ -366,7 +366,7 @@ class SSA_test_utility():
 				fo = open(file + "memory_summary.csv", 'a')
 				fo.write("\n{:8s}, {:0d}, {:0d}, {:7.3f} , {:s} ,".format(runname, (HIP+1), d, eff, (', '.join(map(str, errlist))) ))
 				fo.close()
-				strprint = ("->\tMemory {:0d} test scan ({:1s}) -> {:5.3f}%".format((HIP+1), runname, eff))
+				strprint = ("->  Memory {:0d} test scan ({:1s}) -> {:5.3f}%".format((HIP+1), runname, eff))
 				if(eff==100):
 					utils.print_good(strprint)
 				else:
@@ -389,7 +389,7 @@ class SSA_test_utility():
 			eff = self.memory(memory = memory, display = 0, latency = latency, shift = shift)
 			erlist = self.memerrlist
 			fo.write("%8s ; %4.3fV ;     %7.2f%% ;       %s ; \n" % (runname, dvdd, eff, erlist))
-			print("->  \t{:4.3f}V ;  {:7.2f}% ;".format(dvdd, eff))
+			print("->  {:4.3f}V ;  {:7.2f}% ;".format(dvdd, eff))
 			if eff == 0:
 				break
 		fo.close()
@@ -406,7 +406,10 @@ class SSA_test_utility():
 			self.I2C.peri_write('L1-Latency_MSB', 0)
 			self.I2C.peri_write('L1-Latency_LSB', latency)
 			self.I2C.peri_write("CalPulse_duration", calpulse_duration)
-			self.I2C.strip_write("ENFLAGS", 0, 0b01001)
+			if(tbconfig.VERSION['SSA'] >= 2):
+				self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b01001)
+			else:
+				self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 			self.fc7.write("cnfg_fast_source", 6)
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", fc_test)
@@ -518,7 +521,7 @@ class SSA_test_utility():
 					cnt += 1
 			tmp = [dvdd, np.float(cnt)/npoints]
 			rate.append( tmp )
-			print('->  \t{0:5.3f}V -> {1:5.2f}'.format(tmp[0], tmp[1]*100.0))
+			print('->  {0:5.3f}V -> {1:5.2f}'.format(tmp[0], tmp[1]*100.0))
 		rate = np.array(rate)
 		x = rate[:,0]; y = rate[:,1];
 		w, h = plt.figaspect(1/2.0)
@@ -588,7 +591,7 @@ class SSA_test_utility():
 		for nclusters in range(0,32,1):
 			[Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip] = self.measure_dynamic_power(NHits = nclusters, L1_rate = L1_rate, display_errors = display_errors, slvs_current=slvs_current)
 			I.append([nclusters, Id, Ia, Ip])
-			print("->\tN Clusters %5.1f  -> Current = %7.3f - %7.3f - %7.3f" % (nclusters/2.0, Id, Ia, Ip ))
+			print("->  N Clusters %5.1f  -> Current = %7.3f - %7.3f - %7.3f" % (nclusters/2.0, Id, Ia, Ip ))
 		return I
 
 	def shift(self, pattern = 0b00011000):

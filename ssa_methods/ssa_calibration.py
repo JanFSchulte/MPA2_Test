@@ -89,7 +89,7 @@ class ssa_calibration():
 		for par in self.par_list:
 			value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
 			voltage = voltage*1E3
-			utils.print_log( "->  \t" + par.full_name + ": " + (" [%3d] %7.3f mV") % (value, voltage) )
+			utils.print_log( "->  " + par.full_name + ": " + (" [%3d] %7.3f mV") % (value, voltage) )
 			par.curr_value = voltage
 		self.ssa.ctrl.set_output_mux('highimpedence')
 		if return_data:
@@ -105,7 +105,7 @@ class ssa_calibration():
 		if(not self.initialised and (self.mode == 'MULTIMETER')):
 			self.__initialise()
 		if(not name in self.analog_mux_map):
-			print("->  \tInvalid DAC name")
+			print("->  Invalid DAC name")
 			return False
 		fullscale = 2**nbits
 		#if(not self.initialised):
@@ -130,10 +130,10 @@ class ssa_calibration():
 		self.ssa.ctrl.set_output_mux('highimpedence')
 		print("")
 		print("DAC "+name+'['+str(nbits)+'-bit]:')
-		print("->\tGAIN    = {:6.3f} mV/cnt".format(g*1000.0))
-		print("->\tOFFSET  = {:6.3f} mV    ".format(ofs*1000.0))
-		print("->\tINL MAX = {:6.3f} cnts  ".format(inl_max))
-		print("->\tDNL INL = {:6.3f} cnts  ".format(dnl_max))
+		print("->  GAIN    = {:6.3f} mV/cnt".format(g*1000.0))
+		print("->  OFFSET  = {:6.3f} mV    ".format(ofs*1000.0))
+		print("->  INL MAX = {:6.3f} cnts  ".format(inl_max))
+		print("->  DNL INL = {:6.3f} cnts  ".format(dnl_max))
 		print("")
 		if(plot):
 			plt.clf()
@@ -169,7 +169,7 @@ class ssa_calibration():
 		if(not self.initialised and (self.mode == 'MULTIMETER')):
 			self.__initialise()
 		if(not name in self.analog_mux_map):
-			print("->  \tInvalid DAC name")
+			print("->  Invalid DAC name")
 			return False
 		fullscale = 2**nbits
 		self.ssa.ctrl.set_output_mux(name)
@@ -190,8 +190,8 @@ class ssa_calibration():
 		g, ofs, sigma = utils.linear_fit(x, data)
 		self.ssa.ctrl.set_output_mux('highimpedence')
 		#print("DAC "+name+'['+str(nbits)+'-bit]:')
-		utils.print_good("->\tGain({:12s}) = {:9.3f} mV/cnt".format(name, g*1000.0))
-		utils.print_good("->\tOffs({:12s}) = {:9.3f} mV    ".format(name, ofs*1000.0))
+		utils.print_good("->  Gain({:12s}) = {:9.3f} mV/cnt".format(name, g*1000.0))
+		utils.print_good("->  Offs({:12s}) = {:9.3f} mV    ".format(name, ofs*1000.0))
 
 
 		if(plot):

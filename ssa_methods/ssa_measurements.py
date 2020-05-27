@@ -73,7 +73,7 @@ class SSA_measurements():
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_trim))
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_test))
 		CSV.ArrayToCSV (array = scurves['l_trim'], filename = fo[1], transpose = True)
-		utils.print_log("->\tScurve data saved in {:s}".format(fo[1]))
+		utils.print_log("->  Scurve data saved in {:s}".format(fo[1]))
 
 		rp = self.FE_Gain_Noise_Std__Calculate(
 			input_files = fo,
@@ -162,7 +162,7 @@ class SSA_measurements():
 			t_thrdac = thdac_gain
 		else: return False
 		if(len(files_list) == 0): return ['er']*7
-		utils.print_log('->  \tSorting Informations')
+		utils.print_log('->  Sorting Informations')
 		if plot:
 			plt.figure()
 			color=iter(sns.color_palette('deep'))
@@ -174,9 +174,9 @@ class SSA_measurements():
 				scurve = CSV.csv_to_array( f )
 				scurve_table[str(cal)] = scurve
 		calpulses.sort()
-		utils.print_log('->\tLoading S-Curves data completed')
+		utils.print_log('->  Loading S-Curves data completed')
 		CSV.array_to_csv( calpulses,  output_file+'frontend_cal_values.csv')
-		utils.print_log('->\tFitting courves for Threshold-Spread and Noise')
+		utils.print_log('->  Fitting courves for Threshold-Spread and Noise')
 		for cal in calpulses:
 			c_thresholds = []; c_noise = [];
 			c_thmean = []; c_sigmamean = [];
@@ -198,7 +198,7 @@ class SSA_measurements():
 				c = next(color)
 				plt.plot(s, '-', color=c, lw=1, alpha = 1)
 		self.thresholds = thresholds
-		utils.print_log('->\tEvaluating Front-End Gain')
+		utils.print_log('->  Evaluating Front-End Gain')
 		gains = np.zeros([120]);
 		gains_mV_fC = np.zeros([120]);
 		offsets = np.zeros([120]);
@@ -229,7 +229,7 @@ class SSA_measurements():
 
 	###########################################################
 	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', ret_average = True, filename = False, runname= '', plot = True, filemode = 'w', set_trim = False):
-		print("->  \tBaseline Noise Measurement")
+		print("->  Baseline Noise Measurement")
 		data = np.zeros([120, 256])
 		A = []; sigma = []; mu = []; cnt = 0;
 		if(mode == 'sbs'):
@@ -239,7 +239,7 @@ class SSA_measurements():
 			if isinstance(filename, str):
 				fo = "../SSA_Results/" + filename + "_" + str(runname) + "_scurve_SbS__cal_" + str(0) + ".csv"
 				CSV.ArrayToCSV (array = data, filename = fo, transpose = False)
-				print("->  \tData saved in" + fo)
+				print("->  Data saved in" + fo)
 		elif(mode == 'all'):
 			tmp = self.cal.scurves(cal_ampl='baseline', filename = "../SSA_Results/" + filename + "_" + str(runname), rdmode = 'fast', mode = 'all', striplist = striplist, plot = False, speeduplevel = 2, set_trim = set_trim)
 			data = np.transpose(tmp)
@@ -359,12 +359,12 @@ class SSA_measurements():
 
 #fpl = self.path + 'ANALYSIS/S-Curve_Threshold_Trimming'+self.pltname+'.png'
 #plt.savefig(fpl, bbox_inches="tight");
-#print("->  \tPlot saved in %s" % (fpl))
+#print("->  Plot saved in %s" % (fpl))
 #plt.show()
 #return stds
 
 	def scurve_trim_old(self, filename = 'Chip0/', calpulse = 50, method = 'center', iterations = 5, countershift = 0, compute_min_max = True, plot = True):
-		print("->  \tS-Curve Trimming")
+		print("->  S-Curve Trimming")
 		if(compute_min_max):
 			data = self.scurves(mode = 'all', rdmode = 'fast', cal_list = [calpulse], trim_list = [0, 31], filename = filename, plot = False, countershift = countershift)
 			scurve_0 = data[0]; scurve_31 = data[1];
@@ -392,7 +392,7 @@ class SSA_measurements():
 
 	###########################################################
 	def threshold_spread(self, calpulse = 50, file = '../SSA_results/Chip0/', runname = '', use_stored_data = False, plot = True, nevents=1000, speeduplevel = 2, filemode = 'w'):
-		utils.print_log( "->  \tthreshold Spread Measurement")
+		utils.print_log( "->  threshold Spread Measurement")
 		fi = "../SSA_Results/" + file + "_" + str(runname) + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
 		print(fi)
 		if(use_stored_data):
@@ -427,7 +427,7 @@ class SSA_measurements():
 
 	###########################################################
 	def gain_offset_noise(self, calpulse = 50, ret_average = True, plot = True, use_stored_data = False, file = 'TestLogs/Chip0', filemode = 'w', runname = '', nevents=1000, speeduplevel = 2):
-		utils.print_log("->  \tSCurve Gain, Offset and Noise Measurement")
+		utils.print_log("->  SCurve Gain, Offset and Noise Measurement")
 		utils.activate_I2C_chip()
 		callist = [calpulse-20, calpulse, calpulse+20]
 		thresholds = []; sigmas = [];
@@ -525,7 +525,7 @@ class SSA_measurements():
 		CSV.ArrayToCSV (array = data2, filename = (fo+'_std.csv'), transpose = False)
 		CSV.ArrayToCSV (array = raw,   filename = (fo+'_raw.csv'), transpose = False)
 		CSV.ArrayToCSV (array = np.array([timeresolution]),  filename = (fo+'_dllres.csv'), transpose = False)
-		utils.print_log("->  \tData saved in" + fo)
+		utils.print_log("->  Data saved in" + fo)
 		if(plot):
 			self.shaper_pulse_plot(filename = filename, runname = runname)
 		#return pmean, tm, charge
@@ -652,7 +652,10 @@ class SSA_measurements():
 			self.cal.set_trimming(default_trimming = 31, striprange = 'all', display=False)
 		th = np.array(th)
 		data = np.zeros((len(th)*rp, 3), dtype = float )
-		self.I2C.strip_write("ENFLAGS", 0, 0b10001)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b10001)
+		else:
+			self.I2C.strip_write("ENFLAGS", 0, 0b10001)
 		nitr = 0
 		for i in range(len(th)):
 			for l in range(rp):
@@ -667,7 +670,7 @@ class SSA_measurements():
 				data[nitr, 0] = th[i]
 				data[nitr, 1] = np.average(cnt)
 				data[nitr, 2] = self.pwr.get_power_digital(display = False)
-				utils.print_log('->  \tth = %3d | pwr = %7.3f | ncl = %8.5f | itr = %3d' % (data[nitr, 0], data[nitr, 2], data[nitr, 1], nitr))
+				utils.print_log('->  th = %3d | pwr = %7.3f | ncl = %8.5f | itr = %3d' % (data[nitr, 0], data[nitr, 2], data[nitr, 1], nitr))
 				nitr += 1
 		self.ssa.ctrl.set_threshold(100)
 		if print_file:
@@ -726,7 +729,7 @@ class SSA_measurements():
 		else:
 			a, mu, sigma = self.baseline_noise([strip], plot=False)[0]
 			self.cal.baseline = int(np.round(mu))
-			print("->  \tBaseline = {:3.2f}".format(self.cal.baseline))
+			print("->  Baseline = {:3.2f}".format(self.cal.baseline))
 		thmin = self.cal.baseline+5   # thmin measured = 8.5 THDAC (0.3fC)
 		for cal in calrange:
 			latency, thlist = self.cal.shaper_pulse_rising(
@@ -757,7 +760,7 @@ class SSA_measurements():
 	###########################################################
 	def _display_power_value(self, data, display):
 		if(display):
-			print("->  \t%8s : Digital = {:7.3f}, Analog = {:7.3f}, Pads = {:7.3f}".format( (data[0], data[1][0], data[1][1], data[1][2]) ))
+			print("->  %8s : Digital = {:7.3f}, Analog = {:7.3f}, Pads = {:7.3f}".format( (data[0], data[1][0], data[1][1], data[1][2]) ))
 
 	###########################################################
 	def __set_variables(self):

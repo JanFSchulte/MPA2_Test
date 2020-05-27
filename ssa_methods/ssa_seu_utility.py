@@ -121,7 +121,10 @@ class SSA_SEU_utilities():
 		sleep(0.01); self.ssa.ctrl.activate_readout_normal(mipadapterdisable = 1)
 		sleep(0.01); self.I2C.peri_write("CalPulse_duration", 1)
 		#sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b01001)
-		sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b00000)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			sleep(0.01); self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00000)
+		else:
+			sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b00000)
 		sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", 0, 0x0)
 		sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", 0, 0x0)
 		sleep(0.01); self.I2C.peri_write('L1-Latency_MSB', (latency & 0xff00) >> 8)
@@ -134,7 +137,10 @@ class SSA_SEU_utilities():
 		l = np.zeros(10, dtype = np.uint8)
 		for st in strip_list:
 			if(st>0 and st<121):
-				sleep(0.01); self.I2C.strip_write("ENFLAGS", st, 0b01001)
+				if(tbconfig.VERSION['SSA'] >= 2):
+					sleep(0.01); self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=st, data=0b01001)
+				else:
+					sleep(0.01); self.I2C.strip_write("ENFLAGS", st, 0b01001)
 				sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", st, 0x1)
 		for st in hipflag_list:
 			if(st>0 and st<121):
@@ -143,7 +149,10 @@ class SSA_SEU_utilities():
 		#### injet strip reset error case
 		if(create_errors):
 			for i in range(81, 89):
-				sleep(0.01); self.I2C.strip_write("ENFLAGS", i, 0b00101)
+				if(tbconfig.VERSION['SSA'] >= 2):
+					self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=i, data=0b00101)
+				else:
+					sleep(0.01); self.I2C.strip_write("ENFLAGS", i, 0b00101)
 				sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", i, 170)
 				sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", i, 170)
 
@@ -252,13 +261,13 @@ class SSA_SEU_utilities():
 			return
 		rp = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 		if(display>1):
-			print("->  \tAlmost full flag of FIFO before starting: " + str( rp ))
+			print("->  Almost full flag of FIFO before starting: " + str( rp ))
 		self.fc7.write("ctrl_phy_SLVS_compare_start",1)
 		state = fc7.read("stat_phy_slvs_compare_state_machine")
 		full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 		if(display>1):
-			print("->  \tState of FSM after starting: " + str(state))
-			print("->  \tAlmost full flag of FIFO after starting: " + str(full))
+			print("->  State of FSM after starting: " + str(state))
+			print("->  Almost full flag of FIFO after starting: " + str(full))
 		self.fc7.SendCommand_CTRL("start_trigger")
 		timer = 0
 		FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
@@ -273,9 +282,9 @@ class SSA_SEU_utilities():
 		fc7.write("ctrl_phy_SLVS_compare_stop",1)
 		if(display>1): print("State of FSM after stopping: " + str(fc7.read("stat_phy_slvs_compare_state_machine")))
 		if(timer == run_time and FIFO_almost_full == 0):
-			print("->  \tSEU Cluster-Data  -> data taking stopped because reached the adequate time")
+			print("->  SEU Cluster-Data  -> data taking stopped because reached the adequate time")
 		elif(fc7.read("stat_phy_slvs_compare_number_good_data") > (2**31-3)):
-			print("->  \tSEU Cluster-Data  -> data taking stopped because reached the good-clusters counter size")
+			print("->  SEU Cluster-Data  -> data taking stopped because reached the good-clusters counter size")
 		elif(FIFO_almost_full == 1 and timer < run_time ):
 			print("-X  \tSEU Cluster-Data  -> data taking stopped because the FIFO reached the 80%")
 		else:
@@ -384,10 +393,10 @@ class SSA_SEU_utilities():
 				FIFO[i,2] = (fifo7_word >>27) & 0xf
 				FIFO[i,3] = (self.parse_to_bin32(fifo7_word) + self.parse_to_bin32(fifo6_word) + self.parse_to_bin32(fifo5_word) + self.parse_to_bin32(fifo4_word) + self.parse_to_bin32(fifo3_word))
 				if(display>0):
-					print("->  \tL1 counter  "  + str( FIFO[i,2] ))
-					print("->  \tBX counter: "  + str( FIFO[i,0] ))
-					print("->  \tBX mirrow:  "  + str( FIFO[i,1] ))
-					print("->  \tPacket:     "  + str( FIFO[i,3] ))
+					print("->  L1 counter  "  + str( FIFO[i,2] ))
+					print("->  BX counter: "  + str( FIFO[i,0] ))
+					print("->  BX mirrow:  "  + str( FIFO[i,1] ))
+					print("->  Packet:     "  + str( FIFO[i,3] ))
 		fo = ("../SSA_Results/" + filename + "__SEU__L1-DATA-FIFO__" + runname + ".csv")
 		dir = fo[:fo.rindex(os.path.sep)]
 		if not os.path.exists(dir): os.makedirs(dir)
@@ -439,14 +448,14 @@ class SSA_SEU_utilities():
 		if(header and display>0):
 			print("________________________________________________________________________________________")
 		if(display==2):
-			print("->  \tSEU L1-Data       -> State of FSM:       %12d "           % (state))
-			print("->  \tSEU L1-Data       -> Full Flag:          %12d "           % (full))
-			print("->  \tSEU L1-Data       -> Correct events:     %12d (%10.6f%%)" % (n_correct, 100*np.float(n_correct)/(n_triggers)))
-			print("->  \tSEU L1-Data       -> Packets with Error: %12d (%10.6f%%)" % (n_in_fifo,  100*np.float(n_in_fifo)/(n_triggers)))
-			print("->  \tSEU L1-Data       -> Packets Missing:    %12d (%10.6f%%)" % ((n_triggers-n_headers),  (100*np.float(n_triggers-n_headers))/n_triggers))
+			print("->  SEU L1-Data       -> State of FSM:       %12d "           % (state))
+			print("->  SEU L1-Data       -> Full Flag:          %12d "           % (full))
+			print("->  SEU L1-Data       -> Correct events:     %12d (%10.6f%%)" % (n_correct, 100*np.float(n_correct)/(n_triggers)))
+			print("->  SEU L1-Data       -> Packets with Error: %12d (%10.6f%%)" % (n_in_fifo,  100*np.float(n_in_fifo)/(n_triggers)))
+			print("->  SEU L1-Data       -> Packets Missing:    %12d (%10.6f%%)" % ((n_triggers-n_headers),  (100*np.float(n_triggers-n_headers))/n_triggers))
 		elif(display==1):
-			print("->  \tSEU L1-Data       -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (n_correct, (100*np.float(n_correct)/(n_correct+n_in_fifo+1E-9)), n_in_fifo,  (100*np.float(n_in_fifo)/(n_correct+n_in_fifo+1E-9)) ))
-			print("->  \tSEU L1-Headers    -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (n_headers, 100*(1-np.float(n_triggers-n_headers)/(n_triggers+1E-9)) , (n_triggers - n_headers), 100*(np.float(n_triggers - n_headers)/(n_triggers+1E-9)) ) )
+			print("->  SEU L1-Data       -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (n_correct, (100*np.float(n_correct)/(n_correct+n_in_fifo+1E-9)), n_in_fifo,  (100*np.float(n_in_fifo)/(n_correct+n_in_fifo+1E-9)) ))
+			print("->  SEU L1-Headers    -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (n_headers, 100*(1-np.float(n_triggers-n_headers)/(n_triggers+1E-9)) , (n_triggers - n_headers), 100*(np.float(n_triggers - n_headers)/(n_triggers+1E-9)) ) )
 		return [n_correct, n_in_fifo, n_headers, (n_triggers-n_headers)]
 
 
@@ -460,12 +469,12 @@ class SSA_SEU_utilities():
 			print("________________________________________________________________________________________")
 			print("%18s                      CORRECT                         ERROR " % message)
 		if(display==2):
-			print("->  \tSEU Cluster-Data  -> State of FSM:      %12d" % (state))
-			print("->  \tSEU Cluster-Data  -> FIFO almost full:  %12d" % (full))
-			print("->  \tSEU Cluster-Data  -> Number of good BX: %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad)))
-			print("->  \tSEU Cluster-Data  -> Number of bad  BX: %12d (%10.6f%%)" % (CntBad,  100*np.float(CntBad)/(CntGood+CntBad)))
+			print("->  SEU Cluster-Data  -> State of FSM:      %12d" % (state))
+			print("->  SEU Cluster-Data  -> FIFO almost full:  %12d" % (full))
+			print("->  SEU Cluster-Data  -> Number of good BX: %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad)))
+			print("->  SEU Cluster-Data  -> Number of bad  BX: %12d (%10.6f%%)" % (CntBad,  100*np.float(CntBad)/(CntGood+CntBad)))
 		elif(display==1):
-			print("->  \tSEU Cluster-Data  -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad+1E-9), CntBad,  100*np.float(CntBad)/(CntGood+CntBad+1E-9)))
+			print("->  SEU Cluster-Data  -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad+1E-9), CntBad,  100*np.float(CntBad)/(CntGood+CntBad+1E-9)))
 		return [CntGood, CntBad]
 
 
@@ -478,12 +487,12 @@ class SSA_SEU_utilities():
 		if(header and display>0):
 			print("________________________________________________________________________________________")
 		if(display==2):
-			print("->  \tSEU Lateral-Data  -> State of FSM:      %12d" % (state))
-			print("->  \tSEU Lateral-Data  -> FIFO almost full:  %12d" % (full))
-			print("->  \tSEU Lateral-Data  -> Number of good BX: %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad)))
-			print("->  \tSEU Lateral-Data  -> Number of bad  BX: %12d (%10.6f%%)" % (CntBad,  100*np.float(CntBad)/(CntGood+CntBad)))
+			print("->  SEU Lateral-Data  -> State of FSM:      %12d" % (state))
+			print("->  SEU Lateral-Data  -> FIFO almost full:  %12d" % (full))
+			print("->  SEU Lateral-Data  -> Number of good BX: %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad)))
+			print("->  SEU Lateral-Data  -> Number of bad  BX: %12d (%10.6f%%)" % (CntBad,  100*np.float(CntBad)/(CntGood+CntBad)))
 		if(display==1):
-			print("->  \tSEU Lateral-Data  -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad+1E-9), CntBad,  100*np.float(CntBad)/(CntGood+CntBad+1E-9)))
+			print("->  SEU Lateral-Data  -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad+1E-9), CntBad,  100*np.float(CntBad)/(CntGood+CntBad+1E-9)))
 		return [CntGood, CntBad]
 
 

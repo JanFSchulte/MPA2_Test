@@ -37,7 +37,7 @@ class ssa_wp_analyze():
     def __init__(self, folder = '../SSA_Results/WaferProbing/', display=False):
         self.folder = folder
         if(display):
-            print("->\tAvailable wafers info:")
+            print("->  Available wafers info:")
             for wp in os.listdir(self.folder):
                 print("  \t-  "+wp)
 
@@ -83,7 +83,7 @@ class ssa_wp_analyze():
                 if( (float(i)>=inst[1]) and (float(i)<=inst[2])):
                     tmp.append(1)
                     if(verboselevel>=2):
-                        print("->\tchip="+str(chipn)+"  "+str(inst[0])+"  value="+str(i)+"  range=["+str(inst[1])+","+str(inst[2])+"]")
+                        print("->  chip="+str(chipn)+"  "+str(inst[0])+"  value="+str(i)+"  range=["+str(inst[1])+","+str(inst[2])+"]")
                 else:
                     if(verboselevel>=1):
                         print("X>\tchip="+str(chipn)+"  "+str(inst[0])+"  value="+str(i)+"  range=["+str(inst[1])+","+str(inst[2])+"]")
@@ -220,7 +220,7 @@ class ssa_wp_analyze():
         wpt.plot_wafer(self.measured[property], unit, minv, maxv, reverse)
         fpl = self.folder + '/Plots/' + self.wafer + '__wafermap__' + property + '.png'
         plt.savefig(fpl, bbox_inches="tight");
-        print("->  \tPlot saved in %s" % (fpl))
+        print("->  Plot saved in %s" % (fpl))
         if(show):
             plt.show()
 
@@ -268,7 +268,7 @@ class ssa_wp_analyze():
         plt.legend(loc='best', fontsize = 16)
         fpl = self.folder + '/Plots/' + self.wafer + '__' + '__'.join(map(str, dlist)) + '.png'
         plt.savefig(fpl, bbox_inches="tight");
-        print("->  \tPlot saved in %s" % (fpl))
+        print("->  Plot saved in %s" % (fpl))
         if(show):
             plt.show()
 

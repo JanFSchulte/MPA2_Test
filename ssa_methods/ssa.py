@@ -44,7 +44,7 @@ class SSA_ASIC:
 
 	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
 		self.ctrl.save_configuration(file = file, display = display)
-		utils.print_log("->\tConfig registers saved in {:s}.".format(file))
+		utils.print_log("->  Config registers saved in {:s}.".format(file))
 
 	def load_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
 		self.ctrl.load_configuration(file = file, display = display)
@@ -52,38 +52,38 @@ class SSA_ASIC:
 	def init(self, reset_board = False, reset_chip = False, slvs_current = 0b111, edge = "rising", display = True, read_current = False):
 		self.generic_parameters['cl_word_alignment'] = False
 		if(display):
-			sys.stdout.write("->  \tInitialising..\r")
+			sys.stdout.write("->  Initialising..\r")
 			sys.stdout.flush()
 		if(reset_board):
 			self.fc7.write("ctrl_command_global_reset", 1)
 			sleep(0.3);
-			if(display): utils.print_info("->  \tReset FC7 Firmware")
+			if(display): utils.print_info("->  Reset FC7 Firmware")
 		if(reset_chip):
 			self.ctrl.reset(display=False)
 			sleep(0.3);
-			if(display): utils.print_info("->  \tReset SSA Chip")
+			if(display): utils.print_info("->  Reset SSA Chip")
 		utils.activate_I2C_chip()
 		sleep(0.2)
 		self.ctrl.set_lateral_data(left=0, right=0)
 		if(display):
-			sys.stdout.write("->  \tTuning sampling phases..\r")
+			sys.stdout.write("->  Tuning sampling phases..\r")
 			sys.stdout.flush()
 		sleep(0.1); self.ctrl.set_t1_sampling_edge(edge)
 		sleep(0.1); self.ctrl.init_slvs(slvs_current)
 		sleep(0.1); rt = self.ctrl.phase_tuning()
 		if(rt):
-			if(display): utils.print_good("->  \tShift register mode ok")
-			if(display): utils.print_good("->  \tSampling phases tuned")
+			if(display): utils.print_good("->  Shift register mode ok")
+			if(display): utils.print_good("->  Sampling phases tuned")
 		else:
-			if(display): utils.print_error("->  \tImpossible to complete phase tuning")
+			if(display): utils.print_error("->  Impossible to complete phase tuning")
 		sleep(0.2); self.ctrl.activate_readout_normal()
 		sleep(0.1); self.ctrl.activate_readout_normal()
 		self.ctrl.set_sampling_deskewing_coarse(value = 0)
 		self.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
 		self.ctrl.set_cal_pulse_delay(0)
 		if(display):
-			utils.print_info("->  \tActivated normal readout mode");
-			sys.stdout.write("->  \tReady!                  \r")
+			utils.print_info("->  Activated normal readout mode");
+			sys.stdout.write("->  Ready!                  \r")
 			sys.stdout.flush()
 			sleep(0.2)
 			if(read_current):
@@ -102,9 +102,9 @@ class SSA_ASIC:
 		r3, r4 = self.alignment_lateral_input(file = file)
 		rpst = "initialize={:0b}, stub-data={:0b}, left={:0b}, right={:0b}".format(r1,r2,r3,r4)
 		if(r1 and r2 and r3 and r4):
-			utils.print_good("->\tSSA alignment successfull (" + rpst+ ")")
+			utils.print_good("->  SSA alignment successfull (" + rpst+ ")")
 		else:
-			utils.print_error("->\tSSA alignment error (" + rpst + ")")
+			utils.print_error("->  SSA alignment error (" + rpst + ")")
 		return r1,r2,r3,r4
 
 	def alignment_cluster_data_phase(self):
@@ -134,17 +134,17 @@ class SSA_ASIC:
 					if(display): print(rp[-1])
 					if(rp[-4:] == rp[-5:-1]):
 						if(map(float, rp[-1]) == map(float, tv)):
-							utils.print_info('->\tCluster-data word alignment {m:7s} successfull ({r:d})'.format(m=mode, r=self.readout.cl_shift[mode]))
+							utils.print_info('->  Cluster-data word alignment {m:7s} successfull ({r:d})'.format(m=mode, r=self.readout.cl_shift[mode]))
 							self.generic_parameters['cl_word_alignment_{m:s}'.format(m=mode)] = True
 							status[mode] = True
 							ext = True
 							break
 				if(ext): break
 		if(not status['digital']):
-			utils.print_error('->\tCluster-data word alignment digital injection error')
+			utils.print_error('->  Cluster-data word alignment digital injection error')
 			self.generic_parameters['cl_word_alignment_{m:s}'.format(m='digital')] = True
 		if(not status['analog']):
-			utils.print_error('->\tCluster-data word alignment analog injection error')
+			utils.print_error('->  Cluster-data word alignment analog injection error')
 			self.generic_parameters['cl_word_alignment_{m:s}'.format(m='analog')] = True
 		#print(self.readout.cl_shift)
 		return (status['digital'] and status['analog'])
@@ -176,9 +176,9 @@ class SSA_ASIC:
 			cnt += 1
 		utils.ShowPercent(1,1,''); sys.stdout.flush()
 		if(alined_left == True):
-			utils.print_info("->\tLeft input line alined                       ")
+			utils.print_info("->  Left input line alined                       ")
 		else:
-			utils.print_error("->\tImpossible to align left input data line")
+			utils.print_error("->  Impossible to align left input data line")
 		#self.ctrl.set_lateral_data(0, 0b10100000)
 		self.inject.digital_pulse([-2, 0, 10], initialise = True)
 		cnt = 0
@@ -194,9 +194,9 @@ class SSA_ASIC:
 			cnt += 1
 		utils.ShowPercent(1,1,''); sys.stdout.flush()
 		if(alined_right == True):
-			utils.print_info("->\tRight input line alined                       ")
+			utils.print_info("->  Right input line alined                       ")
 		else:
-			utils.print_error("->\tImpossible to align right input data line")
+			utils.print_error("->  Impossible to align right input data line")
 		if(isinstance(file, str)):
 			fo.write(str(runname) + ' ; ' + str(alined_left) + " ; " + str(alined_right) + ' \n')
 			fo.close()

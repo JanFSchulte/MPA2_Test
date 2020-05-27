@@ -53,7 +53,7 @@ class SSA_cal_utility():
 		else: return False
 
 		cal_ampl = self.evaluate_caldac_ampl(charge_fc, t_caldac)
-		utils.print_log("->\tCALDAC value for trimming = {:d}".format(cal_ampl))
+		utils.print_log("->  CALDAC value for trimming = {:d}".format(cal_ampl))
 		sc = []; th = []; cnt = 0;
 
 		for trimdac in [0, 31]:
@@ -69,12 +69,12 @@ class SSA_cal_utility():
 			sc.append(scv)
 			ths, pars = self.evaluate_scurve_thresholds(scv)
 			th.append( ths )
-			utils.print_info("->\tThreshold Trimming: ThDAC={:2d}         -> mean(th)={:5.3f} std(th)={:5.3f}".format(trimdac, np.mean(ths), np.std(ths)))
+			utils.print_info("->  Threshold Trimming: ThDAC={:2d}         -> mean(th)={:5.3f} std(th)={:5.3f}".format(trimdac, np.mean(ths), np.std(ths)))
 			cnt += 1
 			if( isinstance(filename, str) ):
 				fo = (filename + "frontend_Q_{c:1.3f}_scurve_trim-{t:0d}_.csv".format(c=charge_fc, t=trimdac))
 				CSV.ArrayToCSV (array = scv, filename = fo, transpose = True)
-				utils.print_log("->\tScurve data saved in {:s}".format(fo))
+				utils.print_log("->  Scurve data saved in {:s}".format(fo))
 
 		ths_test = []
 		ratios = (th[1]-th[0])/32.0 # ratios array
@@ -103,7 +103,7 @@ class SSA_cal_utility():
 			sc.append(scv)
 			ths, pars = self.evaluate_scurve_thresholds(scv)
 			th.append( ths )
-			utils.print_info("->\tThreshold Trimming: Trim iteration {:1d} -> mean(th)={:5.3f} std(th)={:5.3f} taget={:5.3f}".format(i, np.mean(ths), np.std(ths), th_dac))
+			utils.print_info("->  Threshold Trimming: Trim iteration {:1d} -> mean(th)={:5.3f} std(th)={:5.3f} taget={:5.3f}".format(i, np.mean(ths), np.std(ths), th_dac))
 			ratios = ratios*np.sqrt(2)
 			correction = ((np.array([th_dac]*120)-ths)/ ratios )
 			trimming_new = trimming_prev + correction
@@ -114,7 +114,7 @@ class SSA_cal_utility():
 		if( isinstance(filename, str) ):
 			fo = (filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc))
 			CSV.ArrayToCSV (array = sc[-1], filename = fo, transpose = True)
-			utils.print_log("->\tScurve data saved in {:s}".format(fo))
+			utils.print_log("->  Scurve data saved in {:s}".format(fo))
 		if(return_scurves):
 			return (th+ths_test), sc
 		else:
@@ -287,7 +287,7 @@ class SSA_cal_utility():
 				if( isinstance(filename, str) ):
 					fo = "../SSA_Results/" + filename + "_scurve_" + filename2 + "__cal_" + str(cal_val) + ".csv"
 					CSV.ArrayToCSV (array = scurves, filename = fo, transpose = True)
-					utils.print_log( "->  \tData saved in" + fo)
+					utils.print_log( "->  Data saved in" + fo)
 
 			if(np.sum(scurves[:,10:110] )<100):
 				if(evaluate_cn>4):
@@ -390,7 +390,7 @@ class SSA_cal_utility():
 		thlist = thlist_init
 		scurve = scurve_init
 		par = par_init
-		print("->  \tStandard deviation = %5.3f" % (np.std(thlist)))
+		print("->  Standard deviation = %5.3f" % (np.std(thlist)))
 		# start trimming on the S-Curves
 		for i in range(0, iterations):
 			trimdac_correction = np.zeros(120)
@@ -402,20 +402,20 @@ class SSA_cal_utility():
 				trimdac_value[strip-1]      = trimdac_current_value + trimdac_correction[strip-1]
 				#print(strip, '\t', th_initial,'\t', th_expected,'\t', dacratiolist[strip-1],'\t', trimdac_correction[strip-1],'\t', trimdac_current_value, '\t',trimdac_value[strip-1])
 				if(trimdac_value[strip-1] > 31):
-					if(display>=2): print("->  \tReached high trimming limit for strip" + str(strip))
+					if(display>=2): print("->  Reached high trimming limit for strip" + str(strip))
 					trimdac_value[strip-1] = 31
 				elif(trimdac_value[strip-1] < 0):
-					if(display>=2): print("->  \tReached low trimming limit for strip" + str(strip))
+					if(display>=2): print("->  Reached low trimming limit for strip" + str(strip))
 					trimdac_value[strip-1] = 0
 				# Apply correction to the trimming DAC
 				self.ssa.strip.set_trimming(strip, int(trimdac_value[strip-1]))
 			trimdac_value_prev = trimdac_value
 			if(display>=2):
-				print("->  \tTarget threshold     " + str([th_expected]*10))
-				print("->  \tTrim-DAC Correction  " + str(trimdac_correction[0:10]))
+				print("->  Target threshold     " + str([th_expected]*10))
+				print("->  Trim-DAC Correction  " + str(trimdac_correction[0:10]))
 			if(display>=1):
-				print("->  \tInitial threshold    " + str(thlist[0:10]))
-				print("->  \tTrimming DAC values: " + str(trimdac_value[0:10]))
+				print("->  Initial threshold    " + str(thlist[0:10]))
+				print("->  Trimming DAC values: " + str(trimdac_value[0:10]))
 				#print(self.set_trimming('keep', display = False))
 			# evaluate new S-Curves
 			if(isinstance(filename, str)):
@@ -432,11 +432,11 @@ class SSA_cal_utility():
 				scurve = scurve,
 				nevents = nevents)
 			dacratiolist = dacratiolist
-			print("->  \tStandard deviation = {:5.3f}".format(np.std(thlist)))
+			print("->  Standard deviation = {:5.3f}".format(np.std(thlist)))
 			if ((np.max(thlist)-np.min(thlist)) < 1):
 				break
 			if (i == iterations-1):
-				print("->  \tReached the maximum number of iterations (d = " + str(np.max(thlist)-np.min(thlist)) + ")")
+				print("->  Reached the maximum number of iterations (d = " + str(np.max(thlist)-np.min(thlist)) + ")")
 		#plot initial and final S-Curves
 		if(plot):
 			xplt = np.linspace(int(th_expected-30), int(th_expected+31), 601)
@@ -463,7 +463,7 @@ class SSA_cal_utility():
 					self.ssa.strip.set_trimming( i+1, default_trimming[i])
 				#print('Setting strip' + str(i+1) + '  with value' +str(default_trimming[i]))
 			if(display):
-				utils.print_log("->  \tTrimming: Applied trimming array" % (default_trimming))
+				utils.print_log("->  Trimming: Applied trimming array" % (default_trimming))
 			self.scurve_trimming = 'trimmed'
 		elif(isinstance(default_trimming, int)):
 			if(default_trimming<0): default_trimming = 0
@@ -471,7 +471,7 @@ class SSA_cal_utility():
 			if(striprange == 'all'):
 				self.ssa.strip.set_trimming('all', default_trimming)
 				if(display):
-					utils.print_log("->  \tTrimming: Applied value %d to all channels" % (default_trimming))
+					utils.print_log("->  Trimming: Applied value %d to all channels" % (default_trimming))
 				if(default_trimming == 0):
 					self.scurve_trimming = 'zeros'
 				else:
@@ -480,7 +480,7 @@ class SSA_cal_utility():
 				for i in striprange:
 					self.ssa.strip.set_trimming(i, default_trimming)
 					if(display):
-						utils.print_log("->  \tTrimming: Applied value %d to channel %d" % (default_trimming, i))
+						utils.print_log("->  Trimming: Applied value %d to channel %d" % (default_trimming, i))
 		elif(default_trimming != False and default_trimming != 'keep'):
 			self.scurve_trimming = 'none'
 			error(1)
@@ -556,7 +556,7 @@ class SSA_cal_utility():
 			while ( not ((sct[0] in ckr) and (sct[1] in ckr) and (sct[2] in ckr) and (sct[3] in ckr) and (sct[4] in ckr) and (sct[5] in ckr) ) ):
 				sct = sct[ np.argmax(sct)+1 : ]
 		except:
-			utils.print_error("->\tssa_cal_utility/_scurve_fit_errorfunction -> scurve error")
+			utils.print_error("->  ssa_cal_utility/_scurve_fit_errorfunction -> scurve error")
 			utils.print_log(sct)
 			utils.print_log(curve)
 		for i in range(0, len(curve)-len(sct)):
@@ -696,7 +696,10 @@ class SSA_cal_utility():
 		self.ssa.ctrl.set_cal_pulse_duration(1)
 		self.ssa.ctrl.set_threshold_H(200)
 		self.ssa.strip.set_sampling_mode('all', 'edge')
-		self.I2C.strip_write("ENFLAGS", 0, 0)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.strip_write(register="StripControl1", field=False, strip='all', data=0)
+		else:
+			self.I2C.strip_write("ENFLAGS", 0, 0)
 		self.I2C.peri_write("Bias_D5DLLB", 31)
 		self.ssa.strip.set_trimming( 'all', 0)
 		self.ssa.readout.cluster_data(initialize = True)
@@ -705,9 +708,15 @@ class SSA_cal_utility():
 		curve = np.array([np.ones(255, dtype=float)*np.float(-np.inf)]*2)
 		for edge in [0,1]:
 			if(edge):
-				self.I2C.strip_write("ENFLAGS", strip, 0b10011)
+				if(tbconfig.VERSION['SSA'] >= 2):
+					self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=strip, data=0b10011)
+				else:
+					self.I2C.strip_write("ENFLAGS", strip, 0b10011)
 			else:
-				self.I2C.strip_write("ENFLAGS", strip, 0b10001)
+				if(tbconfig.VERSION['SSA'] >= 2):
+					self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=strip, data=0b10001)
+				else:
+					self.I2C.strip_write("ENFLAGS", strip, 0b10001)
 			for threshold in range(thmin, 255, 1):
 				self.ssa.ctrl.set_threshold(threshold)
 				time.sleep(0.01)
@@ -779,9 +788,14 @@ class SSA_cal_utility():
 		self.ssa.ctrl.set_cal_pulse_amplitude(charge)
 		self.ssa.ctrl.set_cal_pulse_duration(1)
 		self.ssa.ctrl.set_threshold_H(200)
-		self.ssa.strip.set_sampling_mode('all', 'level')
-		self.I2C.strip_write("ENFLAGS", 0, 0)
-		self.I2C.strip_write("ENFLAGS", strip, 0b10001)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			#to verify the equivalent of set_sampling_mode
+			self.I2C.strip_write(register="StripControl1", field=False,     strip='all', data=0b00100000)
+			self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=strip, data=0b10001)
+		else:
+			self.ssa.strip.set_sampling_mode('all', 'level')
+			self.I2C.strip_write("ENFLAGS", 0, 0)
+			self.I2C.strip_write("ENFLAGS", strip, 0b10001)
 		self.I2C.peri_write("Bias_D5DLLB", 31)
 		self.ssa.strip.set_trimming( 'all', 0)
 		self.ssa.readout.cluster_data(initialize = True)
@@ -849,7 +863,7 @@ class SSA_cal_utility():
 			sleep(0.01)
 			latency = self.data_latency(strip = strip, shift = shift, samplingmode=samplingmode, iterations = iterations, display_pattern = display_pattern, polarity=polarity)
 			if(display):
-				print("->  \tdeskewing = [%d] \t->  latency = %s)" % (i, latency))
+				print("->  deskewing = [%d] \t->  latency = %s)" % (i, latency))
 			temp = np.insert(temp[:-1], 0, latency)
 			if(temp[0]>256 and temp[1]>256 and temp[2]>256):
 				delay = np.inf

@@ -33,7 +33,10 @@ class SSA_inject():
 
 		if(hit_list != self.hit_list):#to speedup
 			self.hit_list = hit_list
-			self.I2C.strip_write("ENFLAGS", 0, 0b0)
+			if(tbconfig.VERSION['SSA'] >= 2):
+				self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00000)
+			else:
+				self.I2C.strip_write("ENFLAGS", 0, 0b0)
 			for cl in hit_list:
 				if (cl < 1):
 					rightdata = rightdata | (0b1 << (7+cl))
@@ -41,7 +44,10 @@ class SSA_inject():
 					leftdata = leftdata | (0b1 << (cl-121))
 				else:
 					#time.sleep(0.001)
-					self.I2C.strip_write("ENFLAGS", cl, 0b01001)
+					if(tbconfig.VERSION['SSA'] >= 2):
+						self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=cl, data=0b01001)
+					else:
+						self.I2C.strip_write("ENFLAGS", cl, 0b01001)
 
 		if(self.data_l != leftdata or self.data_r != rightdata):#to speedup
 			self.ctrl.set_lateral_data(left = leftdata, right = rightdata)
@@ -70,10 +76,16 @@ class SSA_inject():
 			self.hitmode = mode
 			self.strip.set_sampling_mode('all', mode)
 		#enable pulse injection in selected clusters
-		self.I2C.strip_write("ENFLAGS", 0, 0b00000)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00000)
+		else:
+			self.I2C.strip_write("ENFLAGS", 0, 0b00000)
 		for cl in hit_list:
 			if(cl > 0 and cl < 121):
-				self.I2C.strip_write("ENFLAGS", cl, 0b10001)
+				if(tbconfig.VERSION['SSA'] >= 2):
+					self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=cl, data=0b10001)
+				else:
+					self.I2C.strip_write("ENFLAGS", cl, 0b10001)
 				sleep(0.001)
 		if(trigger == True):
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)

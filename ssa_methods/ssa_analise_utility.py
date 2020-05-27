@@ -107,12 +107,12 @@ class SSA_Analise_Test_results():
 	def FE_Gain_Noise_Std__Calculate(self):
 		thresholds = {}; noise = {};
 		thmean = {}; sigmamean = {};
-		print('->  \tSearching for matching files in ' + self.path)
+		print('->  Searching for matching files in ' + self.path)
 		fl = self._get_file_name()
 		files_list = self._get_files_list( 'scurve_trim__cal_' + '*', 'csv')
 		if(len(files_list) == 0): return ['er']*7
 		calpulses = []; scurve_table = {}; runlist = {}
-		print('->  \tSorting Informations')
+		print('->  Sorting Informations')
 		for f in files_list:
 			cfl = re.findall( '\W?cal_(\d+)' , f )
 			cal = np.int( cfl[0] )
@@ -124,10 +124,10 @@ class SSA_Analise_Test_results():
 			else:  runlist[tmp][0] += 1
 		for i in runlist:
 			if runlist[i][0] < 2:
-				print("->  \tExcluded file not matching requirements: " + runlist[i][1])
+				print("->  Excluded file not matching requirements: " + runlist[i][1])
 				files_list.remove(runlist[i][1])
 		calpulses.sort()
-		print('->  \tLoading data')
+		print('->  Loading data')
 		for cal in calpulses:
 			tmp = []
 			for f in files_list:
@@ -139,7 +139,7 @@ class SSA_Analise_Test_results():
 			scurve_table[str(cal)] = tmp
 		CSV.array_to_csv( calpulses,  self.path + 'ANALYSIS/S-Curve_cal_values.csv')
 		# Threshold spread and Noise
-		print('->  \tFitting courves for Threshold-Spread and Noise')
+		print('->  Fitting courves for Threshold-Spread and Noise')
 		for cal in calpulses:
 			c_thresholds = []; c_noise = [];
 			c_thmean = []; c_sigmamean = [];
@@ -163,9 +163,9 @@ class SSA_Analise_Test_results():
 			CSV.array_to_csv(c_thmean,     self.path + 'ANALYSIS/S-Curve_Threshold_Mean_cal_'+str(cal)+'.csv')
 			CSV.array_to_csv(c_sigmamean,  self.path + 'ANALYSIS/S-Curve_Noise_Mean_cal_'+str(cal)+'.csv')
 		# FE Gain and offset
-		print('->  \tEvaluating Front-End Gain')
+		print('->  Evaluating Front-End Gain')
 		if not (np.shape(thresholds[ str(calpulses[0])])[0] == np.shape(thresholds[ str(calpulses[1])])[0] == np.shape(thresholds[ str(calpulses[2])])[0]):
-			print('->  \t ERROR. The number of files for different calibration charge are not equal. This may make the fitting fail.')
+			print('->   ERROR. The number of files for different calibration charge are not equal. This may make the fitting fail.')
 		nelements = np.shape(thresholds[ str(calpulses[0])])[0]
 		gains    = np.zeros([120,nelements]);
 		offsets  = np.zeros([120,nelements]);
@@ -192,13 +192,13 @@ class SSA_Analise_Test_results():
 	def FE_Gain_Noise_Std__Reload(self):
 		thresholds = {}; noise = {};
 		thmean = {}; sigmamean = {};
-		print('->  \tLoading results')
+		print('->  Loading results')
 		f1 = self.path + 'ANALYSIS/S-Curve_cal_values.csv'
 		f2 = self.path + 'ANALYSIS/S-Curve_Gain.csv'
 		f3 = self.path + 'ANALYSIS/S-Curve_Gain_Mean.csv'
 		f4 = self.path + 'ANALYSIS/S-Curve_Offset.csv'
 		if(not( os.path.isfile(f1) and os.path.isfile(f2) and os.path.isfile(f3) )):
-			print('->  \tImpossible to find pre-calculated results. Re-calculating..')
+			print('->  Impossible to find pre-calculated results. Re-calculating..')
 			return -1,-1,-1,-1,-1,-1,-1, -1, True
 		calpulses = CSV.csv_to_array(f1)[:,1]
 		c_gains = CSV.csv_to_array(f2)
@@ -248,7 +248,7 @@ class SSA_Analise_Test_results():
 			plt.plot(x, gain_mean, color="white", lw=3)
 			fpl = self.path + 'ANALYSIS/S-Curve_Gain_Mean'+self.pltname+'.png'
 			plt.savefig(fpl, bbox_inches="tight");
-			print("->  \tPlot saved in %s" % (fpl))
+			print("->  Plot saved in %s" % (fpl))
 
 		# FE Gain distribution ################################
 		plt.clf();
@@ -284,7 +284,7 @@ class SSA_Analise_Test_results():
 			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{G_{FE}} = %6.2f $' % (sermean[i]), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
 		fpl = self.path + 'ANALYSIS/S-Curve_Gain_hist'+self.pltname+'.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 
 		# FE Offset distribution ################################
 		plt.clf();
@@ -319,7 +319,7 @@ class SSA_Analise_Test_results():
 			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{OFS_{FE}} = %6.2f mV$' % (sermean[i]), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
 		fpl = self.path + 'ANALYSIS/S-Curve_Offset_hist'+self.pltname+'.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 
 		# FE Noise evolution #################################
 		if multifile:
@@ -357,7 +357,7 @@ class SSA_Analise_Test_results():
 			plt.plot(xnew, noise_hat, color=c, lw=1)
 			fpl = self.path + 'ANALYSIS/S-Curve_Noise_Mean'+self.pltname+'.png'
 			plt.savefig(fpl, bbox_inches="tight");
-			print("->  \tPlot saved in %s" % (fpl))
+			print("->  Plot saved in %s" % (fpl))
 
 		# Noise #############################################
 		plt.clf();
@@ -395,7 +395,7 @@ class SSA_Analise_Test_results():
 			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{noise} = %6.2f $' % (np.mean(ser[i])), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
 		fpl = self.path + 'ANALYSIS/S-Curve_Noise_hist'+self.pltname+'.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 
 		plt.clf();
 		#w, h = plt.figaspect(1/1.5)
@@ -424,7 +424,7 @@ class SSA_Analise_Test_results():
 		ax.set_zlabel('Z')
 		fpl = self.path + 'ANALYSIS/S-Curve_Noise_hist'+self.pltname+'_3d.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 
 
 
@@ -464,14 +464,14 @@ class SSA_Analise_Test_results():
 			plt.text(1, 1-(0.05*i), self.label[i] + r'  $\overline{\sigma} = %6.2f $' % (sigma[i]), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
 			fpl = self.path + 'ANALYSIS/S-Curve_Threshold_Std'+self.pltname+'.png'
 			plt.savefig(fpl, bbox_inches="tight");
-			print("->  \tPlot saved in %s" % (fpl))
+			print("->  Plot saved in %s" % (fpl))
 
 
 
 	##############################################################################################
 
 	def FE_Threshold_Trimming__Plot(self, filename = 'Init', plot = True):
-		print('->  \tSearching for matching files')
+		print('->  Searching for matching files')
 		filename = filename + '*scurve_trim*_cal_*'
 		files_list = self._get_files_list( filename, 'csv')
 		if(len(files_list) == 0): return
@@ -534,7 +534,7 @@ class SSA_Analise_Test_results():
 		leg.get_frame().set_linewidth(0.0)
 		fpl = self.path + 'ANALYSIS/S-Curve_Threshold_Trimming'+self.pltname+'.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 		plt.show()
 		return stds
 
@@ -542,7 +542,7 @@ class SSA_Analise_Test_results():
 	##############################################################################################
 
 	def Power_AnalogParams_plot(self, filename = 'default', plot = True):
-		print('->  \tSearching for matching files')
+		print('->  Searching for matching files')
 		if filename == 'default':
 			filename = '*GlobalLog'
 		files_list = self._get_files_list( filename, 'csv')
@@ -596,7 +596,7 @@ class SSA_Analise_Test_results():
 		plt.show()
 
 	def Power_plot(self, filename = 'default', plot = True, save = True):
-		print('->  \tSearching for matching files')
+		print('->  Searching for matching files')
 		if filename == 'default':
 			filename = '*GlobalLog'
 		files_list = self._get_files_list( filename, 'csv')
@@ -638,7 +638,7 @@ class SSA_Analise_Test_results():
 		if save:
 			fpl = self.path + 'ANALYSIS/Power_'+self.pltname+'.png'
 			plt.savefig(fpl, bbox_inches="tight");
-			print("->  \tPlot saved in %s" % (fpl))
+			print("->  Plot saved in %s" % (fpl))
 
 	def power_gain_percent_variation_plot(self):
 
@@ -690,7 +690,7 @@ class SSA_Analise_Test_results():
 		#plt.plot(x, (100.0*(self.PrcThGAIN/self.PrcThGAIN[0]-1))[x], color=c, lw=0, marker='o')
 		fpl = self.path + 'ANALYSIS/' + '_Percent_Evolution'+self.pltname+'.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 
 
 
@@ -715,7 +715,7 @@ class SSA_Analise_Test_results():
 			#c = next(color);
 		fpl = self.path + 'ANALYSIS/Power'+self.pltname+'_multirun.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 		fig = plt.figure(figsize=(w,h))
 		ax = plt.subplot(111)
 		ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
@@ -736,7 +736,7 @@ class SSA_Analise_Test_results():
 			#c = next(color);
 		fpl = self.path + 'ANALYSIS/V_BG'+self.pltname+'_multirun.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 
 
 	def dacs_multirun_plot(self, nplots):
@@ -764,7 +764,7 @@ class SSA_Analise_Test_results():
 			#c = next(color);
 		fpl = self.path + 'ANALYSIS/DAC_GAIN'+self.pltname+'_multirun.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 
 
 
@@ -832,7 +832,7 @@ class SSA_Analise_Test_results():
 		plt.plot(x, GAINs, color="#3F5D7D", lw=3)
 		fpl = self.path + 'ANALYSIS/' + name + '_GAIN_Evolution'+self.pltname+'.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 
 
 		plt.clf();
@@ -857,7 +857,7 @@ class SSA_Analise_Test_results():
 		plt.plot(x, 100.0*(GAINs/GAINs[0]-1), color="#3F5D7D", lw=0, marker='o')
 		fpl = self.path + 'ANALYSIS/' + name + '_GAIN_Evolution'+self.pltname+'Percent.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 
 
 
@@ -879,7 +879,7 @@ class SSA_Analise_Test_results():
 			plt.plot(x, vals[i][:,1], lw=6, alpha = 0.5)
 		fpl = self.path + 'ANALYSIS/' + name + '_GAIN_Caracteristics.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 
 		plt.clf();
 		w, h = plt.figaspect(1/2.5)
@@ -905,7 +905,7 @@ class SSA_Analise_Test_results():
 			plt.text(1, 0.95, self.label[-1]  + r'  ${INL_{MAX}} = %6.2f $' % ( INLs[self.instances_to_plot[-1]]), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=16, color='darkred')
 		fpl = self.path + 'ANALYSIS/' + name + '_GAIN_INLs'+self.pltname+'.png'
 		plt.savefig(fpl, bbox_inches="tight");
-		print("->  \tPlot saved in %s" % (fpl))
+		print("->  Plot saved in %s" % (fpl))
 
 
 	##############################################################################################
@@ -942,7 +942,7 @@ class SSA_Analise_Test_results():
 
 			fpl = self.path + 'ANALYSIS/S-Curve_Noise_Mean_DoubleRun'+self.pltname+'.png'
 			plt.savefig(fpl, bbox_inches="tight");
-			print("->  \tPlot saved in %s" % (fpl))
+			print("->  Plot saved in %s" % (fpl))
 
 		plt.clf();
 		w, h = plt.figaspect(1/1)
@@ -972,7 +972,7 @@ class SSA_Analise_Test_results():
 			plt.plot(xnew, 100.0*((noise_mean_hat/noise_mean_hat[0])-1), lw=3, color = c)
 			fpl = self.path + 'ANALYSIS/S-Curve_Noise_Mean_DoubleRun'+self.pltname+'Percent.png'
 			plt.savefig(fpl, bbox_inches="tight");
-			print("->  \tPlot saved in %s" % (fpl))
+			print("->  Plot saved in %s" % (fpl))
 
 		plt.clf();
 		w, h = plt.figaspect(1/1)
@@ -1003,7 +1003,7 @@ class SSA_Analise_Test_results():
 			plt.plot(xnew, noise_mean_hat, lw=2, color = c)
 			fpl = self.path + 'ANALYSIS/S-Curve_Noise_Mean_DoubleRun'+self.pltname+'LOG.png'
 			plt.savefig(fpl, bbox_inches="tight");
-			print("->  \tPlot saved in %s" % (fpl))
+			print("->  Plot saved in %s" % (fpl))
 
 		plt.clf();
 		w, h = plt.figaspect(1/1)
@@ -1035,7 +1035,7 @@ class SSA_Analise_Test_results():
 			plt.plot(xnew, noise_mean_hat, lw=2, color = c)
 			fpl = self.path + 'ANALYSIS/S-Curve_Noise_Mean_DoubleRun'+self.pltname+'Percent1.png'
 			plt.savefig(fpl, bbox_inches="tight");
-			print("->  \tPlot saved in %s" % (fpl))
+			print("->  Plot saved in %s" % (fpl))
 
 
 		plt.clf();
@@ -1068,7 +1068,7 @@ class SSA_Analise_Test_results():
 			plt.plot(xnew, th_mean_smooth, lw=2, color = c)
 			fpl = self.path + 'ANALYSIS/S-Curve_Threshold_Mean_DoubleRun'+self.pltname+'.png'
 			plt.savefig(fpl, bbox_inches="tight");
-			print("->  \tPlot saved in %s" % (fpl))
+			print("->  Plot saved in %s" % (fpl))
 
 
 
@@ -1121,7 +1121,7 @@ class SSA_Analise_Test_results():
 		#print(matchstr)
 		rp = fnmatch.filter( os.listdir( self.path ), matchstr)
 		rp = sorted(rp)
-		print('->  \tFound %d data files matching %s' % (len(rp), matchstr))
+		print('->  Found %d data files matching %s' % (len(rp), matchstr))
 		return rp
 
 

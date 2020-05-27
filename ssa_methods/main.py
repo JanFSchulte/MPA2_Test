@@ -22,7 +22,7 @@ try:
 	multimeter = keithley_multimeter()
 except ImportError:
 	multimeter = False
-	print("- Impossible to access GPIB instruments")
+	print("->  Impossible to access GPIB instruments")
 
 ipaddr, fc7AddrTable, fc7_if = SelectBoard('ssa')
 

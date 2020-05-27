@@ -1,6 +1,6 @@
 {
     "ssa_strip_reg_map": {
-        "ENFLAGS": {
+        "StripControl1": {
             "adr": 0,
             "permissions": "RW",
             "fields_mask": {
@@ -9,7 +9,8 @@
                 "EN_HitCounter"   : "0b00000100",
                 "EN_DigitalCalib" : "0b00001000",
                 "EN_AnalogCalib"  : "0b00010000",
-                "Mode_Trig"       : "0b01100000"
+                "ENFLAGS"         : "0b00011111",
+                "Sampling_Mode"   : "0b01100000"
             }
         },
         "StripControl2": {
@@ -97,6 +98,19 @@
         }
     },
     "ssa_peri_reg_map": {
-        "PROVA": 1
+        "PROVA": {
+            "adr": 4,
+            "permissions": "RW",
+            "fields_mask": {
+                "PixelMask"       : "0b00000001",
+                "SignalPolarity"  : "0b00000010",
+                "EN_HitCounter"   : "0b00000100",
+                "EN_DigitalCalib" : "0b00001000",
+                "EN_AnalogCalib"  : "0b00010000",
+                "Mode_Trig"       : "0b01100000"
+            }
+        }
+
+
     }
 }

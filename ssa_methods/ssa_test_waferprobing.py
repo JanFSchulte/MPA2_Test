@@ -66,7 +66,7 @@ class SSA_Measurements():
 				fp.write( utils.date_time('csv') + '\n')
 				fp.close()
 				break
-		utils.print_info("->\tThe log files are located in {:s}/ \n".format(curdir))
+		utils.print_info("->  The log files are located in {:s}/ \n".format(curdir))
 		fo = curdir + "/Test_"
 		utils.set_log_files(curdir+'/OperationLog.txt',curdir+'/ErrorLog.txt')
 
@@ -173,7 +173,7 @@ class SSA_Measurements():
 		while (en and wd < 3):
 			try:
 				self.ssa.save_configuration(filename + 'configuration' + str(runname) + '.csv', display=False)
-				utils.print_good("->\tConfig registers readout via I2C and saved corrrectly.")
+				utils.print_good("->  Config registers readout via I2C and saved corrrectly.")
 				break
 			except:
 				utils.print_warning("X>\tConfig registers save error. Reiterating...")
@@ -216,7 +216,7 @@ class SSA_Measurements():
 				if(r1<100.0):
 					self.test_good = False
 				else:
-					utils.print_good("->\tCluster Data with Digital Pulses test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
+					utils.print_good("->  Cluster Data with Digital Pulses test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 				break
 			except  Exception, error:
 				utils.print_warning("X>\tCluster Data with Digital Pulses test error. Reiterating...")
@@ -237,7 +237,7 @@ class SSA_Measurements():
 				if(r1<100.0):
 					self.test_good = False
 				else:
-					utils.print_good("->\tCluster Data with ChargeInjection test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
+					utils.print_good("->  Cluster Data with ChargeInjection test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 				break
 			except Exception, error:
 				utils.print_warning("X>\tCluster Data with Charge Injection test error. Reiterating...")
@@ -378,15 +378,15 @@ class SSA_Measurements():
 					filename = filename)
 
 				if(rp):
-					utils.print_good( "->\tScurve FE Trim Std: {:7.3f} cnt (L)    {:7.3f} cnt (H)".format(rp[1], rp[2]));
-					utils.print_good( "->\tScurve FE Noise:    {:7.3f} cnt (L)    {:7.3f} cnt (H)".format(rp[5], rp[6]));
-					utils.print_good( "->\tScurve FE Gain:     {:7.3f} mV/fC".format(rp[8]));
-					utils.print_good( "->\tScurve FE Offset:   {:7.3f} mV".format(rp[9]));
-					utils.print_log(  "->\tAnalog test time:   {:7.2f} s".format((time.time()-time_init))); time_init = time.time();
+					utils.print_good( "->  Scurve FE Trim Std: {:7.3f} cnt (L)    {:7.3f} cnt (H)".format(rp[1], rp[2]));
+					utils.print_good( "->  Scurve FE Noise:    {:7.3f} cnt (L)    {:7.3f} cnt (H)".format(rp[5], rp[6]));
+					utils.print_good( "->  Scurve FE Gain:     {:7.3f} mV/fC".format(rp[8]));
+					utils.print_good( "->  Scurve FE Offset:   {:7.3f} mV".format(rp[9]));
+					utils.print_log(  "->  Analog test time:   {:7.2f} s".format((time.time()-time_init))); time_init = time.time();
 				else:
-					utils.print_error( "->\tScurve trimming error.")
-					utils.print_error( "->\tScurve noise evaluation error.")
-					utils.print_error( "->\tScurve Gain and Offset evaluation error.")
+					utils.print_error( "->  Scurve trimming error.")
+					utils.print_error( "->  Scurve noise evaluation error.")
+					utils.print_error( "->  Scurve Gain and Offset evaluation error.")
 
 				self.summary.set("threshold_std_init",  str(rp[0]), 'cnt_thdac', '', runname)
 				self.summary.set("threshold_std_trim",  str(rp[1]), 'cnt_thdac', '', runname)

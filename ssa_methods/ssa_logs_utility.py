@@ -63,15 +63,15 @@ class results():
 		self.update(runname = runname)
 		fn = (directory+'/'+self.get_file_name(filename)+"Logfile.csv"    )
 		fo = open(fn, 'w');  fo.write(self.summary[0]);  fo.close();
-		utils.print_log("->\tLog saved in {:s}".format(fn))
+		utils.print_log("->  Log saved in {:s}".format(fn))
 
 		fn =  (directory+'/'+self.get_file_name(filename)+"Summary.csv")
 		fo = open(fn, 'w');  fo.write(self.summary[2]);  fo.close();
-		utils.print_log("->\tSummary saved in {:s}".format(fn))
+		utils.print_log("->  Summary saved in {:s}".format(fn))
 
 		fn = (directory+'/'+"GlobalSummary.csv")
 		fo = open( fn, 'a'); fo.write("{:s}, {:s},".format(filename, runname) + self.summary[2]);  fo.close();
-		utils.print_log("->\tGlobal summary saved in {:s}".format(fn))
+		utils.print_log("->  Global summary saved in {:s}".format(fn))
 
 
 	def get_file_name(self, filename):
@@ -90,7 +90,7 @@ class RunTest():
 		self.test = {}
 		self.configname = configname
 		if(configname != 'default'):
-			print('->  \tTest Configuration object [' + str(self.configname) + '] created.')
+			print('->  Test Configuration object [' + str(self.configname) + '] created.')
 
 	def enable(self, name):
 		 self.test[name] = True
@@ -109,4 +109,4 @@ class RunTest():
 			return r
 
 	def __del__(self):
-		print('->  \tTest Configuration object [' + str(self.configname) + '] replaced.')
+		print('->  Test Configuration object [' + str(self.configname) + '] replaced.')
