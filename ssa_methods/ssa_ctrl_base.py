@@ -150,11 +150,12 @@ class ssa_ctrl_base:
 	def reset_pattern_injection(self):
 		if(tbconfig.VERSION['SSA'] >= 2):
 			self.I2C.strip_write("StripControl1", 'all', 0b01001)
+			self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip='all', data=0)
+			self.I2C.strip_write( register="DigCalibPattern_H", field=False, strip='all', data=0)
 		else:
 			self.I2C.strip_write("ENFLAGS", 0, 0b01001)
-		self.I2C.strip_write("DigCalibPattern_L", 0, 0)
-		self.I2C.strip_write("DigCalibPattern_H", 0, 0)
-
+			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
+			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 
 	def __do_phase_tuning(self):
 		cnt = 0; done = True
@@ -289,14 +290,22 @@ class ssa_ctrl_base:
 
 
 	def init_trimming(self, th_trimming = 15, gain_trimming = 15):
-		self.I2C.strip_write('THTRIMMING', 0, th_trimming)
-		self.I2C.strip_write('GAINTRIMMING', 0, gain_trimming)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.strip_write( register="ThresholdTrimming", field='ThresholdTrimming', strip='all', data=th_trimming)
+			self.I2C.strip_write( register="StripControl2",     field='GainTrimming',      strip='all', data=gain_trimming)
+		else:
+			self.I2C.strip_write('THTRIMMING', 0, th_trimming)
+			self.I2C.strip_write('GAINTRIMMING', 0, gain_trimming)
 		repT = [0xff]*120
 		repG = [0xff]*120
 		error = False
 		for i in range(1,121):
-			repT[i-1] = self.I2C.strip_read('THTRIMMING', i)
-			repG[i-1] = self.I2C.strip_read('GAINTRIMMING', i)
+			if(tbconfig.VERSION['SSA'] >= 2):
+				repT[i-1] = self.I2C.strip_read( register="ThresholdTrimming", field='ThresholdTrimming', strip=i, data=th_trimming)
+				repG[i-1] = self.I2C.strip_read( register="StripControl2",     field='GainTrimming',      strip=i, data=gain_trimming)
+			else:
+				repT[i-1] = self.I2C.strip_read('THTRIMMING', i)
+				repG[i-1] = self.I2C.strip_read('GAINTRIMMING', i)
 		for i in repT:
 			if (i != th_trimming): error = True
 		for i in repG:

@@ -123,10 +123,13 @@ class SSA_SEU_utilities():
 		#sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 		if(tbconfig.VERSION['SSA'] >= 2):
 			sleep(0.01); self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00000)
+			sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip='all', data=0x0)
+			sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_H", field=False, strip='all', data=0x0)
 		else:
 			sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b00000)
-		sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", 0, 0x0)
-		sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", 0, 0x0)
+			sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", 0, 0x0)
+			sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", 0, 0x0)
+
 		sleep(0.01); self.I2C.peri_write('L1-Latency_MSB', (latency & 0xff00) >> 8)
 		sleep(0.01); self.I2C.peri_write('L1-Latency_LSB', (latency & 0x00ff) >> 0)
 		#SetLineDelayManual(0, 0, 9, 0, 2)
@@ -139,9 +142,10 @@ class SSA_SEU_utilities():
 			if(st>0 and st<121):
 				if(tbconfig.VERSION['SSA'] >= 2):
 					sleep(0.01); self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=st, data=0b01001)
+					sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip=st, data=0x1)
 				else:
 					sleep(0.01); self.I2C.strip_write("ENFLAGS", st, 0b01001)
-				sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", st, 0x1)
+					sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", st, 0x1)
 		for st in hipflag_list:
 			if(st>0 and st<121):
 				sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", st, 0x1)
@@ -150,11 +154,13 @@ class SSA_SEU_utilities():
 		if(create_errors):
 			for i in range(81, 89):
 				if(tbconfig.VERSION['SSA'] >= 2):
-					self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=i, data=0b00101)
+					sleep(0.01); self.I2C.strip_write( register="StripControl1",     field='ENFLAGS', strip=i, data=0b00101)
+					sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_L", field=False,     strip=i, data=170)
+					sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_H", field=False,     strip=i, data=170)
 				else:
 					sleep(0.01); self.I2C.strip_write("ENFLAGS", i, 0b00101)
-				sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", i, 170)
-				sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", i, 170)
+					sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", i, 170)
+					sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", i, 170)
 
 		sleep(0.01)
 

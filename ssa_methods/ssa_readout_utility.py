@@ -282,8 +282,9 @@ class SSA_readout():
 			return failed, -1
 		if raw_mode_en == 0:
 			count = self.fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 120)
-			if(119 in striplist): ## BUG IN SSA CHIP (STRIP 120 COUNTER READABLE ONLY VIA I2C)
-				count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
+			if(tbconfig.VERSION['SSA'] == 1):
+				if(119 in striplist): ## BUG IN SSA CHIP (STRIP 120 COUNTER READABLE ONLY VIA I2C) FIXED in SSAv2
+					count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
 		else:
 			count = np.zeros((20000, ), dtype = np.uint16)
 			for i in range(0,20000):
@@ -305,7 +306,12 @@ class SSA_readout():
 	def read_counters_i2c(self, striplist = range(1,120)):
 		count = [0]*120
 		for s in striplist:
-			count[s-1] = (self.I2C.strip_read("ReadCounter_MSB", s) << 8) | self.I2C.strip_read("ReadCounter_LSB", s)
+			if(tbconfig.VERSION['SSA'] >= 2):
+				rmsb  = self.I2C.strip_read(register="ReadCounter_MSB", field=False, strip=s)
+				rlsb  = self.I2C.strip_read(register="ReadCounter_LSB", field=False, strip=s)
+				count[s-1] = ((rmsb << 8) | rlsb)
+			else:
+				count[s-1] = (self.I2C.strip_read("ReadCounter_MSB", s) << 8) | self.I2C.strip_read("ReadCounter_LSB", s)
 		return False, count
 
 

@@ -29,7 +29,10 @@ class SSA_inject():
 			#fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
 
 		if(sequence != self.DigCalibPattern): #to speedup
-			self.I2C.strip_write("DigCalibPattern_L", 0, sequence)
+			if(tbconfig.VERSION['SSA'] >= 2):
+				self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip='all', data=sequence)
+			else:
+				self.I2C.strip_write("DigCalibPattern_L", 0, sequence)
 
 		if(hit_list != self.hit_list):#to speedup
 			self.hit_list = hit_list
@@ -69,8 +72,12 @@ class SSA_inject():
 			self.ctrl.set_cal_pulse(amplitude = cal_pulse_amplitude, duration = 15, delay = 'keep')
 			self.ctrl.set_threshold(threshold[0])
 			self.ctrl.set_threshold_H(threshold[1])
-			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
-			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
+			if(tbconfig.VERSION['SSA'] >= 2):
+				self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip='all', data=0)
+				self.I2C.strip_write( register="DigCalibPattern_H", field=False, strip='all', data=0)
+			else:
+				self.I2C.strip_write("DigCalibPattern_L", 0, 0)
+				self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 			#Configure_TestPulse_MPA_SSA(200, 1)
 		if(mode != self.hitmode): # to speed up
 			self.hitmode = mode

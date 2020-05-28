@@ -30,18 +30,27 @@ class ssa_ctrl_strip:
 
 	def set_trimming(self, strip, value):
 		value = value & 0b11111
-		if(strip == 'all'):
-			strip = 0
-		self.I2C.strip_write("THTRIMMING", strip, value)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			r = self.I2C.strip_write(register="ThresholdTrimming", field='ThresholdTrimming', strip=strip, data=value)
+		else:
+			if(strip == 'all'): strip = 0
+			r = self.I2C.strip_write("THTRIMMING", strip, value)
+		return r
 
 	def get_trimming(self, strip):
-		r = self.I2C.strip_read("THTRIMMING", strip)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			r = self.I2C.strip_read(register="ThresholdTrimming", field='ThresholdTrimming', strip=strip)
+		else:
+			r = self.I2C.strip_read("THTRIMMING", strip)
 		return r
 
 	def set_gain_trimming(self, strip, value):
 		value = value & 0b11111
-		if(strip == 'all'): strip = 0
-		self.I2C.strip_write("GAINTRIMMING", strip, value)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.strip_write( register="StripControl2", field='GainTrimming', strip=strip, data=value)
+		else:
+			if(strip == 'all'): strip = 0
+			self.I2C.strip_write("GAINTRIMMING", strip, value)
 
 	def set_sampling_mode(self, strip, mode):
 		if(tbconfig.VERSION['SSA'] >= 2):
@@ -139,13 +148,24 @@ class ssa_ctrl_strip:
 			value = 1
 		elif(not isinstance(value, int)):
 			return False
-		if(strip == 'all'):
-			self.I2C.strip_write("HIPCUT", 0, value)
-		elif(isinstance(strip, int)):
-			self.I2C.strip_write("HIPCUT", strip, value)
-		elif(isinstance(strip, list)):
-			for i in strip:
-				self.I2C.strip_write("HIPCUT", i, value)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			if(strip == 'all'):
+				self.I2C.strip_write(register="StripControl2", field='HIP_Cut', strip='all', data=value)
+			elif(isinstance(strip, int)):
+				self.I2C.strip_write(register="StripControl2", field='HIP_Cut', strip=strip, data=value)
+			elif(isinstance(strip, list)):
+				for i in strip:
+					self.I2C.strip_write(register="StripControl2", field='HIP_Cut', strip=i, data=value)
+			else:
+				return False
 		else:
-			return False
+			if(strip == 'all'):
+				self.I2C.strip_write("HIPCUT", 0, value)
+			elif(isinstance(strip, int)):
+				self.I2C.strip_write("HIPCUT", strip, value)
+			elif(isinstance(strip, list)):
+				for i in strip:
+					self.I2C.strip_write("HIPCUT", i, value)
+			else:
+				return False
 		return True

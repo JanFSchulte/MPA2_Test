@@ -401,8 +401,12 @@ class SSA_test_utility():
 			self.ssa.init(reset_board = True, reset_chip = False, display = False)
 		if init:
 			self.ssa.ctrl.activate_readout_normal()
-			self.I2C.strip_write("DigCalibPattern_L", 0, 0)
-			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
+			if(tbconfig.VERSION['SSA'] >= 2):
+				sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip='all', data=0)
+				sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_H", field=False, strip='all', data=0)
+			else:
+				self.I2C.strip_write("DigCalibPattern_L", 0, 0)
+				self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 			self.I2C.peri_write('L1-Latency_MSB', 0)
 			self.I2C.peri_write('L1-Latency_LSB', latency)
 			self.I2C.peri_write("CalPulse_duration", calpulse_duration)
