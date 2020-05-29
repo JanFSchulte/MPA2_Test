@@ -1,5 +1,13 @@
 {
-    "ssa_strip_reg_map": {
+    "INFO": {
+        "Description" : "SSA2 Configuration Registers Map file.",
+        "Author"      : "Alessandro Caratelli",
+        "Manual"      : "https://espace.cern.ch/CMS-MPA/SitePages/Documents.aspx",
+        "Contacts"    : "alessandro.caratelli@cern.ch"
+    },
+
+    "STRIP_REGISTERS": {
+
         "StripControl1": {
             "adr": "0x0",
             "permissions": "RW",
@@ -57,7 +65,9 @@
             }
         }
     },
-    "ssa_peri_reg_map": {
+
+    "PERIPHERY_REGISTERS": {
+
         "mask_strip": {
             "adr" : "0x0DF7",
             "permissions" : "RW",
@@ -82,14 +92,1045 @@
                 "mask_strip" : "0b11111111"
             }
         },
-        "PROVA": {
+        "Ring_oscillator_ctrl": {
+            "adr": "0x1000",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Ring_oscillator_ctrl" : "0b11111111"
+            }
+        },
+        "control_1": {
+            "adr": "0x1001",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "ReadoutMode"      : "0b00000111",
+                "EdgeSel_T1"       : "0b00001000",
+                "L1Offset_H"       : "0b00010000",
+                "memory_select"    : "0b01100000",
+                "T1_or_CLK_select" : "0b10000000"
+            }
+        },
+        "control_2": {
+            "adr": "0x12",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "ClusterCut"        : "0b00001111",
+                "CalPulse_duration" : "0b11110000"
+
+            }
+        },
+        "control_3": {
+            "adr": "0x1003",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "PhaseShiftClock" : "0b11111111",
+                "PhaseShiftClock" : "0b11111111",
+                "PhaseShiftClock" : "0b11111111",
+                "PhaseShiftClock" : "0b11111111"
+            }
+        },
+        "ClockDeskewing_coarse": {
             "adr": "0x1004",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "mask_strip" : "0b000000111"
+            }
+        },
+        "ClockDeskewing_fine": {
+            "adr": "0x1005",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "DLL_value"      : "0b00001111",
+                "DLL_chargepump" : "0b00110000",
+                "DLL_bypass"     : "0b01000000",
+                "DLL_Enable"     : "0b10000000"
+            }
+        },
+        "AsyncRead_StartDel_L": {
+            "adr": "0x1006",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "AsyncRead_StartDel_L" : "0b11111111"
+            }
+        },
+        "AsyncRead_StartDel_H": {
+            "adr": "0x1007",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "AsyncRead_StartDel_H" : "0b00111111"
+            }
+        },
+        "LateralRX_sampling": {
+            "adr": "0x1008",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "LateralRX_L_PhaseData" : "0b00000111",
+                "LateralRX_L_Edge320"   : "0b00001000",
+                "LateralRX_R_PhaseData" : "0b01110000",
+                "LateralRX_R_Edge320"   : "0b10000000"
+            }
+        },
+        "Shift_pattern_st_0": {
+            "adr": "0x1009",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Shift_pattern_st_0" : "0b11111111"
+            }
+        },
+        "Shift_pattern_st_1": {
+            "adr": "0x100A",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Shift_pattern_st_1" : "0b11111111"
+            }
+        },
+        "Shift_pattern_st_2": {
+            "adr": "0x100B",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Shift_pattern_st_2" : "0b11111111"
+            }
+        },
+        "Shift_pattern_st_3": {
+            "adr": "0x100C",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Shift_pattern_st_3" : "0b11111111"
+            }
+        },
+        "Shift_pattern_st_4_st_5": {
+            "adr": "0x100D",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Shift_pattern_st_4_st_5" : "0b11111111"
+            }
+        },
+        "Shift_pattern_st_6_st_7": {
+            "adr": "0x100E",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "mask_strip" : "0b11111111"
+            }
+        },
+        "Shift_pattern_Left": {
+            "adr": "0x100F",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Shift_pattern_Left" : "0b11111111"
+            }
+        },
+        "Shift_pattern_Right": {
+            "adr": "0x1010",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Shift_pattern_Right" : "0b11111111"
+            }
+        },
+        "Shift_pattern_L1": {
+            "adr": "0x1011",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Shift_pattern_L1" : "0b11111111"
+            }
+        },
+        "StripOffset_byte0": {
+            "adr": "0x1012",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "StripOffset_0" : "0b11111000",
+                "StripOffset_1" : "0b00000111"
+            }
+        },
+        "StripOffset_byte1": {
+            "adr": "0x1013",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "StripOffset_1" : "0b11000000",
+                "StripOffset_2" : "0b00111110",
+                "StripOffset_3" : "0b00000001"
+            }
+        },
+        "StripOffset_byte2": {
+            "adr": "0x1014",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "StripOffset_3" : "0b11110000",
+                "StripOffset_4" : "0b00001111"
+            }
+        },
+        "StripOffset_byte3": {
+            "adr": "0x1015",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "StripOffset_4" : "0b10000000",
+                "StripOffset_5" : "0b01111100"
+            }
+        },
+        "ClkTree_control": {
+            "adr": "0x1016",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "memory_sram_gating" : "0b00000011",
+                "ClkTree_A"          : "0b00001100",
+                "ClkTree_B"          : "0b00110000",
+                "ClkTree_C"          : "0b11000000"
+            }
+        },
+        "ClkTreeMagicNumber": {
+            "adr": "0x1017",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "ClkTreeMagicNumber" : "0b11111111"
+            }
+        },
+        "bist_memory_latch_ctrl": {
+            "adr": "0x1018",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "bist_latch_enable_L" : "0b00000001",
+                "bist_latch_enable_H" : "0b00000010",
+                "sram_gating_ClrRst"  : "0b11111100"
+            }
+        },
+        "bist_memory_sram_mode": {
+            "adr": "0x1019",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "bist_memory_sram_mode_L" : "0b00001111",
+                "bist_memory_sram_mode_H" : "0b11110000"
+            }
+        },
+        "bist_memory_sram_start": {
+            "adr": "0x101A",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "bist_memory_sram_start_L" : "0b00001111",
+                "bist_memory_sram_start_H" : "0b11110000"
+            }
+        },
+        "output_inv_ctrl_S": {
+            "adr": "0x101B",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "output_inv_ctrl_S_all" : "0b11111111",
+                "Edge40_sample_Stub"    : "0b00000001",
+                "Edge40_sample_L1"      : "0b00000010",
+                "Edge40_sample_Left_tx" : "0b00000100",
+                "Edge40_sample_Right_tx": "0b00001000",
+                "Edge40_sample_Left_rx" : "0b00010000",
+                "Edge40_sample_Right_rx": "0b00100000"
+            }
+        },
+        "Config_HitDelay": {
+            "adr": "0x101C",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Config_HitDelay" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_blk0": {
+            "adr": "0x101E",
+            "permissions": "R",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Async_SEUcnt_blk0" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_blk0": {
+            "adr": "0x101F",
+            "permissions": "R",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Sync_SEUcnt_blk0" : "0b11111111"
+            }
+        },
+
+
+        "THDAC_L": {
+            "adr": "0x1020",
             "permissions": "RW",
             "mask_reg"   : "mask_peri_A",
             "fields_mask": {
-                "hello"       : "0b01111100"
+                "THDAC_L" : "0b11111111"
+            }
+        },
+        "THDAC_H": {
+            "adr": "0x1021",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "THDAC_H" : "0b11111111"
+            }
+        },
+        "CALDAC": {
+            "adr": "0x1022",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "CALDAC" : "0b11111111"
+            }
+        },
+        "Bias_TEST_lsb": {
+            "adr": "0x1023",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Bias_TEST_lsb" : "0b00001111"
+            }
+        },
+        "Bias_TEST_msb": {
+            "adr": "0x1024",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Bias_TEST_msb" : "0b11111111"
+            }
+        },
+        "Delay_line": {
+            "adr": "0x1025",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "DL_ctrl" : "0b00111111",
+                "DL_en"   : "0b10000000"
+            }
+        },
+        "Bias_D5BFEED": {
+            "adr": "0x1026",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Bias_D5BFEED" : "0b00011111"
+            }
+        },
+        "Bias_D5PREAMP": {
+            "adr": "0x1027",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Bias_D5PREAMP" : "0b00011111"
+            }
+        },
+        "Bias_D5TDR": {
+            "adr": "0x1028",
+            "permissions": "Rw",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Bias_D5TDR" : "0b00011111"
+            }
+        },
+        "Bias_D5ALLV": {
+            "adr": "0x1029",
+            "permissions": "Rw",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Bias_D5ALLV" : "0b00011111"
+            }
+        },
+        "Bias_D5ALLI": {
+            "adr": "0x102A",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Bias_D5ALLI" : "0b00011111"
+            }
+        },
+        "Bias_D5DLLB": {
+            "adr": "0x102B",
+            "permissions": "Rw",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Bias_D5DLLB" : "0b00011111"
+            }
+        },
+        "Bias_D5DAC8": {
+            "adr": "0x102C",
+            "permissions": "Rw",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Bias_D5DAC8" : "0b00011111"
+            }
+        },
+        "SLVS_pad_current_Lateral": {
+            "adr": "0x102D",
+            "permissions": "Rw",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "SLVS_pad_current_Left"        : "0b00000111",
+                "SLVS_pad_current_Right"       : "0b00111000",
+                "SLVS_pad_termination_lateral" : "0b11000000"
+            }
+        },
+        "SLVS_pad_current_Stub_0_1": {
+            "adr": "0x102E",
+            "permissions": "Rw",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "SLVS_pad_current_Stub_0" : "0b00000111",
+                "SLVS_pad_current_Stub_1" : "0b00111000"
+            }
+        },
+        "SLVS_pad_current_Stub_2_3": {
+            "adr": "0x102F",
+            "permissions": "Rw",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "SLVS_pad_current_Stub_2" : "0b00000111",
+                "SLVS_pad_current_Stub_3" : "0b00111000"
+            }
+        },
+        "SLVS_pad_current_Stub_4_5": {
+            "adr": "0x1030",
+            "permissions": "Rw",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "SLVS_pad_current_Stub_4" : "0b00000111",
+                "SLVS_pad_current_Stub_5" : "0b00111000"
+            }
+        },
+        "SLVS_pad_current_Stub_6_7": {
+            "adr": "0x1031",
+            "permissions": "Rw",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "SLVS_pad_current_Stub_6" : "0b00000111",
+                "SLVS_pad_current_Stub_7" : "0b00111000"
+            }
+        },
+        "SLVS_pad_current_Clk_T1": {
+            "adr": "0x1032",
+            "permissions": "Rw",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "SLVS_pad_current_Clk"   : "0b00000111",
+                "SLVS_pad_current_T1"    : "0b00111000",
+                "SLVS_termination_clock" : "0b01000000",
+                "SLVS_termination_T1"    : "0b10000000"
+            }
+        },
+        "SLVS_pad_current_L1": {
+            "adr": "0x1033",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "SLVS_pad_current_L1" : "0b00000111"
+            }
+        },
+        "Fuse_Mode": {
+            "adr": "0x1034",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Fuse_Mode" : "0b11111111"
+            }
+        },
+        "Fuse_Prog_b0": {
+            "adr": "0x1035",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Fuse_Prog_b0" : "0b11111111"
+            }
+        },
+        "Fuse_Prog_b1": {
+            "adr": "0x1036",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Fuse_Prog_b1" : "0b11111111"
+            }
+        },
+        "Fuse_Prog_b2": {
+            "adr": "0x1037",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Fuse_Prog_b2" : "0b11111111"
+            }
+        },
+        "Fuse_Prog_b3": {
+            "adr": "0x1038",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Fuse_Prog_b3" : "0b11111111"
+            }
+        },
+        "ADC_control": {
+            "adr": "0x1039",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "ADC_control_input_sel"  : "0b00011111",
+                "loc_ADC_control_soc"    : "0b00100000",
+                "loc_ADC_control_enable" : "0b01000000",
+                "loc_ADC_control_rst"    : "0b10000000"
+            }
+        },
+        "ADC_trimming": {
+            "adr": "0x103A",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "ADC_trimming_trim_val" : "0b00111111",
+                "ADC_trimming_trim_sel" : "0b01000000",
+                "ADC_trimming_SW_en"    : "0b10000000"
+            }
+        },
+        "ADC_ref": {
+            "adr": "0x103B",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "ADC_ref" : "0b00011111"
+            }
+        },
+        "unused_register": {
+            "adr": "0x103C",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "unused_field" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_blk1": {
+            "adr": "0x103E",
+            "permissions": "R",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Async_SEUcnt_blk1" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_blk1": {
+            "adr": "0x103F",
+            "permissions": "R",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Sync_SEUcnt_blk1" : "0b11111111"
+            }
+        },
+
+
+
+
+
+        "status_reg": {
+            "adr": "0x1040",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "status_reg" : "0b11111111"
+            }
+        },
+        "CLuster_Overflow_Cnt_L": {
+            "adr": "0x1041",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "CLuster_Overflow_Cnt_L" : "0b11111111"
+            }
+        },
+        "CLuster_Overflow_Cnt_H": {
+            "adr": "0x1042",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "CLuster_Overflow_Cnt_H" : "0b11111111"
+            }
+        },
+        "L1_FIFO_Overflow_Cnt_L": {
+            "adr": "0x1043",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "L1_FIFO_Overflow_Cnt_L" : "0b11111111"
+            }
+        },
+        "L1_FIFO_Overflow_Cnt_H": {
+            "adr": "0x1044",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "L1_FIFO_Overflow_Cnt_H" : "0b11111111"
+            }
+        },
+        "Fuse_Value_b0": {
+            "adr": "0x1045",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Fuse_Value_b0" : "0b11111111"
+            }
+        },
+        "Fuse_Value_b1": {
+            "adr": "0x1046",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Fuse_Value_b1" : "0b11111111"
+            }
+        },
+        "Fuse_Value_b2": {
+            "adr": "0x1047",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Fuse_Value_b2" : "0b11111111"
+            }
+        },
+        "Fuse_Value_b3": {
+            "adr": "0x1048",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Fuse_Value_b3" : "0b11111111"
+            }
+        },
+        "bist_output": {
+            "adr": "0x1049",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "status_reg" : "0b11111111",
+                "status_reg" : "0b11111111",
+                "status_reg" : "0b11111111"
+            }
+        },
+        "ADC_out_L": {
+            "adr": "0x104A",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "ADC_out_L" : "0b11111111"
+            }
+        },
+        "ADC_out_H": {
+            "adr": "0x104B",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "ADC_out_H" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locBR_T1_L": {
+            "adr": "0x104C",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locBR_T1_L" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locBR_T1_H": {
+            "adr": "0x104D",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locBR_T1_H" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locBR_T2_L": {
+            "adr": "0x104E",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locBR_T2_L" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locBR_T2_H": {
+            "adr": "0x104F",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locBR_T2_H" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locTR_T1_L": {
+            "adr": "0x1050",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locTR_T1_L" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locTR_T1_H": {
+            "adr": "0x1051",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locTR_T1_H" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locTR_T2_L": {
+            "adr": "0x1052",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locTR_T2_L" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locTR_T2_H": {
+            "adr": "0x1053",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locTR_T2_H" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locBC_T1_L": {
+            "adr": "0x1054",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locBC_T1_L" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locBC_T1_H": {
+            "adr": "0x1055",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locBC_T1_H" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locBC_T2_L": {
+            "adr": "0x1056",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locBC_T2_L" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locBC_T2_H": {
+            "adr": "0x1057",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locBC_T2_H" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locBL_T1_L": {
+            "adr": "0x1058",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locBL_T1_L" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locBL_T1_H": {
+            "adr": "0x1059",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locBL_T1_H" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locBL_T2_L": {
+            "adr": "0x105A",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locBL_T2_L" : "0b11111111"
+            }
+        },
+        "Ring_oscillator_out_locBL_T2_H": {
+            "adr": "0x105B",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "Ring_oscillator_out_locBL_T2_H" : "0b11111111"
+            }
+        },
+
+
+
+
+        "bist_memory_sram_output_L_0": {
+            "adr": "0x1060",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_0" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_1": {
+            "adr": "0x1061",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_1" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_2": {
+            "adr": "0x1062",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_2" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_3": {
+            "adr": "0x1063",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_3" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_4": {
+            "adr": "0x1064",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_4" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_5": {
+            "adr": "0x1065",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_5" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_6": {
+            "adr": "0x1066",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_6" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_7": {
+            "adr": "0x1067",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_7" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_8": {
+            "adr": "0x1068",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_8" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_9": {
+            "adr": "0x1069",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_9" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_A": {
+            "adr": "0x106A",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_A" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_B": {
+            "adr": "0x106B",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_B" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_C": {
+            "adr": "0x106C",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_C" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_D": {
+            "adr": "0x106D",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_D" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_E": {
+            "adr": "0x106E",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_E" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_L_F": {
+            "adr": "0x106F",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_L_F" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_0": {
+            "adr": "0x1060",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_0" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_1": {
+            "adr": "0x1061",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_1" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_2": {
+            "adr": "0x1062",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_2" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_3": {
+            "adr": "0x1063",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_3" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_4": {
+                    "adr": "0x1064",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_4" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_5": {
+            "adr": "0x1065",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_5" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_6": {
+            "adr": "0x1066",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_6" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_7": {
+            "adr": "0x1067",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_7" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_8": {
+            "adr": "0x1068",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_8" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_9": {
+            "adr": "0x1069",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_9" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_A": {
+            "adr": "0x106A",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_A" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_B": {
+            "adr": "0x106B",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_B" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_C": {
+            "adr": "0x106C",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_C" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_D": {
+            "adr": "0x106D",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_D" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_E": {
+            "adr": "0x106E",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_E" : "0b11111111"
+            }
+        },
+        "bist_memory_sram_output_H_F": {
+            "adr": "0x106F",
+            "permissions": "R",
+            "mask_reg"   : "",
+            "fields_mask": {
+                "bist_memory_sram_output_H_F" : "0b11111111"
             }
         }
+
+
 
 
     }

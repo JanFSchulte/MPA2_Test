@@ -11,8 +11,8 @@ class ssa_i2c_conf:
 		if(tbconfig.VERSION['SSA'] >= 2):
 			#from ssa_methods.Configuration.ssa2_reg_map import *
 			ssa_reg_map = json.load(open('./ssa_methods/Configuration/ssa2_reg_map.json', 'r'))
-			self.ssa_strip_reg_map = ssa_reg_map['ssa_strip_reg_map']
-			self.ssa_peri_reg_map  = ssa_reg_map['ssa_peri_reg_map']
+			self.ssa_strip_reg_map = ssa_reg_map['STRIP_REGISTERS']
+			self.ssa_peri_reg_map  = ssa_reg_map['PERIPHERY_REGISTERS']
 			self.analog_mux_map    = analog_mux_map_v1
 			print('->  Loaded configuration for SSA v2')
 		else:
