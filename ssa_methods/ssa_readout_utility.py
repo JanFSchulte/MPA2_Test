@@ -126,8 +126,12 @@ class SSA_readout():
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
 			Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = (latency+3+shift), delay_before_next_pulse = 0, number_of_test_pulses = 1, enable_rst_L1 = 0, enable_initial_reset = 0, enable_L1 = 1)
 			self.fc7.write("cnfg_fast_delay_between_consecutive_trigeers", 0)
-			self.I2C.peri_write('L1-Latency_MSB', 0)
-			self.I2C.peri_write('L1-Latency_LSB', latency)
+			if(tbconfig.VERSION['SSA'] >= 2):
+				self.I2C.peri_write(register="control_1", field='L1_Latency_msb', data = 0 )
+				self.I2C.peri_write(register="control_3", field='L1_Latency_lsb', data = latency )
+			else:
+				self.I2C.peri_write('L1_Latency_msb', 0)
+				self.I2C.peri_write('L1_Latency_lsb', latency)
 			self.ctrl.activate_readout_normal(mipadapterdisable = mipadapterdisable)
 			sleep(0.001)
 		if trigger:

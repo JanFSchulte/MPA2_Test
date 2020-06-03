@@ -105,14 +105,19 @@ class ssa_ctrl_base:
 		return error
 
 	def set_output_mux(self, testline = 'highimpedence'):
-		#utils.activate_I2C_chip()
-		ctrl = self.analog_mux_map[testline]
-		self.I2C.peri_write('Bias_TEST_LSB', 0) # to avoid short
-		self.I2C.peri_write('Bias_TEST_MSB', 0) # to avoid short
-		self.I2C.peri_write('Bias_TEST_LSB', (ctrl >> 0) & 0xff)
-		self.I2C.peri_write('Bias_TEST_MSB', (ctrl >> 8) & 0xff)
-		r = ((self.I2C.peri_read('Bias_TEST_LSB') & 0xff))
-		r = ((self.I2C.peri_read('Bias_TEST_MSB') & 0xff) << 8) | r
+		if(tbconfig.VERSION['SSA'] >= 2):
+			ctrl = self.analog_mux_map_V2[testline]
+			r = self.I2C.peri_write( register="adr_ADC_control", field='ADC_control_input_sel', data=ctrl)
+			r = self.I2C.peri_read(  register="adr_ADC_control", field='ADC_control_input_sel')
+		else:
+			#utils.activate_I2C_chip()
+			ctrl = self.analog_mux_map[testline]
+			self.I2C.peri_write('Bias_TEST_LSB', 0) # to avoid short
+			self.I2C.peri_write('Bias_TEST_MSB', 0) # to avoid short
+			self.I2C.peri_write('Bias_TEST_LSB', (ctrl >> 0) & 0xff)
+			self.I2C.peri_write('Bias_TEST_MSB', (ctrl >> 8) & 0xff)
+			r = ((self.I2C.peri_read('Bias_TEST_LSB') & 0xff))
+			r = ((self.I2C.peri_read('Bias_TEST_MSB') & 0xff) << 8) | r
 		if(r != ctrl):
 			print("Error. Failed to set the MUX")
 			return False
@@ -120,11 +125,25 @@ class ssa_ctrl_base:
 			return True
 
 	def init_slvs(self, current = 0b111):
-		self.I2C.peri_write('SLVS_pad_current', current)
-		r = self.I2C.peri_read('SLVS_pad_current')
-		if (self.I2C.peri_read("SLVS_pad_current") != (current & 0b111) ):
-			utils.print_error("->  I2C did not work properly")
-			#exit(1)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.peri_write(  register="SLVS_pad_current_Lateral",  field='SLVS_pad_current_Left',   data=current)
+			self.I2C.peri_write(  register="SLVS_pad_current_Lateral",  field='SLVS_pad_current_Right',  data=current)
+			self.I2C.peri_write(  register="SLVS_pad_current_Stub_0_1", field='SLVS_pad_current_Stub_0', data=current)
+			self.I2C.peri_write(  register="SLVS_pad_current_Stub_0_1", field='SLVS_pad_current_Stub_1', data=current)
+			self.I2C.peri_write(  register="SLVS_pad_current_Stub_2_3", field='SLVS_pad_current_Stub_2', data=current)
+			self.I2C.peri_write(  register="SLVS_pad_current_Stub_2_3", field='SLVS_pad_current_Stub_3', data=current)
+			self.I2C.peri_write(  register="SLVS_pad_current_Stub_4_5", field='SLVS_pad_current_Stub_4', data=current)
+			self.I2C.peri_write(  register="SLVS_pad_current_Stub_4_5", field='SLVS_pad_current_Stub_5', data=current)
+			self.I2C.peri_write(  register="SLVS_pad_current_Stub_6_7", field='SLVS_pad_current_Stub_6', data=current)
+			self.I2C.peri_write(  register="SLVS_pad_current_Stub_6_7", field='SLVS_pad_current_Stub_7', data=current)
+			self.I2C.peri_write(  register="SLVS_pad_current_L1",       field='SLVS_pad_current_L1',     data=current)
+			self.I2C.peri_write(  register="SLVS_pad_current_Clk_T1",   field='SLVS_pad_current_Clk',    data=current)
+			self.I2C.peri_write(  register="SLVS_pad_current_Clk_T1",   field='SLVS_pad_current_T1',     data=current)
+		else:
+			self.I2C.peri_write('SLVS_pad_current', current)
+			r = self.I2C.peri_read('SLVS_pad_current')
+			if (self.I2C.peri_read("SLVS_pad_current") != (current & 0b111) ):
+				utils.print_error("->  I2C did not work properly")
 
 	def set_lateral_lines_alignament(self):
 		if(tbconfig.VERSION['SSA'] >= 2):
@@ -203,11 +222,14 @@ class ssa_ctrl_base:
 		return True
 
 	def set_t1_sampling_edge(self, edge):
+		V = tbconfig.VERSION['SSA']
 		if edge == "rising" or edge == "positive":
-			self.I2C.peri_write('EdgeSel_T1', 1)
+			if(V>=2): self.I2C.peri_write(register="control_1", field='EdgeSel_T1', data=1)
+			else:     self.I2C.peri_write('EdgeSel_T1', 1)
 			utils.print_info("->  T1 sampling edge set to rising")
 		elif edge == "falling" or edge == "negative":
-			self.I2C.peri_write('EdgeSel_T1', 0)
+			if(V>=2): self.I2C.peri_write(register="control_1", field='EdgeSel_T1', data=0)
+			else:     self.I2C.peri_write('EdgeSel_T1', 0)
 			utils.print_info("->  T1 sampling edge set to falling")
 		else:
 			print("Error! The edge name is wrong")
@@ -215,21 +237,27 @@ class ssa_ctrl_base:
 
 	def activate_readout_normal(self, mipadapterdisable = 0):
 		val = 0b100 if (mipadapterdisable) else 0b000
-		self.I2C.peri_write('ReadoutMode',val)
-		if (self.I2C.peri_read("ReadoutMode") != val):
-			print("Error! I2C did not work properly")
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.peri_write(register="control_1", field='ReadoutMode', data=gain_trimming)
+			rep = self.I2C.peri_read( register="control_1", field='ReadoutMode')
+		else:
+			self.I2C.peri_write('ReadoutMode',val)
+			rep = self.I2C.peri_read("ReadoutMode")
+		if(rep != val):
+			print("Error! I2C did not work properly in activate_readout_normal")
 			#exit(1)
 
 
 	def activate_readout_async(self, ssa_first_counter_delay = 8, correction = 0):
-		self.I2C.peri_write('ReadoutMode',0b01)
-		# write to the I2C
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.peri_write(register="control_1", field='ReadoutMode', data=0b001)
+		else:
+			self.I2C.peri_write('ReadoutMode',0b01)
+
 		self.I2C.peri_write("AsyncRead_StartDel_MSB", ((ssa_first_counter_delay >> 8) & 0x01))
 		self.I2C.peri_write("AsyncRead_StartDel_LSB", (ssa_first_counter_delay & 0xff))
-		# check the value
 		if (self.I2C.peri_read("AsyncRead_StartDel_LSB") != ssa_first_counter_delay & 0xff):
 			print("Error! I2C did not work properly")
-			#error(1)
 		# ssa set delay of the counters
 		fwdel = ssa_first_counter_delay + 24 + correction
 		if(fwdel >= 255):
@@ -238,23 +266,35 @@ class ssa_ctrl_base:
 
 
 	def activate_readout_shift(self):
-		self.I2C.peri_write('ReadoutMode',0b10)
-
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.peri_write(register="control_1", field='ReadoutMode', data=0b010)
+		else:
+			self.I2C.peri_write('ReadoutMode',0b10)
 
 	def set_shift_pattern_all(self, pattern):
-		self.set_shift_pattern(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern)
+		self.set_shift_pattern( ST = [pattern]*8, L1 = pattern, Left = pattern, Right = pattern)
 
 
-	def set_shift_pattern(self, line0, line1, line2, line3, line4, line5, line6, line7):
-		self.I2C.peri_write('OutPattern0',line0)
-		self.I2C.peri_write('OutPattern1',line1)
-		self.I2C.peri_write('OutPattern2',line2)
-		self.I2C.peri_write('OutPattern3',line3)
-		self.I2C.peri_write('OutPattern4',line4)
-		self.I2C.peri_write('OutPattern5',line5)
-		self.I2C.peri_write('OutPattern6',line6)
-		self.I2C.peri_write('OutPattern7/FIFOconfig',line7)
-
+	def set_shift_pattern(self, ST=[0xaa]*8, L1=0xaa, Left=0xaa, Right=0xaa):
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.peri_write(register="Shift_pattern_st_0",      field=False, data=st[0])
+			self.I2C.peri_write(register="Shift_pattern_st_1",      field=False, data=st[1])
+			self.I2C.peri_write(register="Shift_pattern_st_2",      field=False, data=st[2])
+			self.I2C.peri_write(register="Shift_pattern_st_3",      field=False, data=st[3])
+			self.I2C.peri_write(register="Shift_pattern_st_4_st_5", field=False, data=st[4])
+			self.I2C.peri_write(register="Shift_pattern_st_6_st_7", field=False, data=st[6])
+			self.I2C.peri_write(register="Shift_pattern_Left",      field=False, data=Left)
+			self.I2C.peri_write(register="Shift_pattern_Right",     field=False, data=Right)
+			self.I2C.peri_write(register="Shift_pattern_L1",        field=False, data=L1)
+		else:
+			self.I2C.peri_write('OutPattern1',st[0])
+			self.I2C.peri_write('OutPattern1',st[1])
+			self.I2C.peri_write('OutPattern2',st[2])
+			self.I2C.peri_write('OutPattern3',st[3])
+			self.I2C.peri_write('OutPattern4',st[4])
+			self.I2C.peri_write('OutPattern5',st[5])
+			self.I2C.peri_write('OutPattern6',st[6])
+			self.I2C.peri_write('OutPattern7/FIFOconfig',st[7])
 
 	def set_async_delay(self, value):
 		msb = (value & 0xFF00) >> 8
@@ -326,52 +366,79 @@ class ssa_ctrl_base:
 		self.I2C.peri_write("CalPulse_duration", duration)
 
 	def set_cal_pulse_delay(self, delay):
+		V = tbconfig.VERSION['SSA']
 		if(isinstance(delay, str)):
 			if(delay == 'disable' or delay == 'off'):
-				self.I2C.peri_write("Bias_DL_en", 0)
+				if(V>=2): self.I2C.peri_write(register='Delay_line', field='Bias_DL_en',  data=0)
+				else:     self.I2C.peri_write("Bias_DL_en", 0)
 				self.bias_dl_enable = False
 			elif(delay == 'enable'or delay == 'on'):
-				self.I2C.peri_write("Bias_DL_en", 1)
+				if(V>=2): self.I2C.peri_write(register='Delay_line', field='Bias_DL_en',  data=1)
+				else:     self.I2C.peri_write("Bias_DL_en", 1)
 				self.bias_dl_enable = True
-			elif(delay == 'keep'): pass
-			else: exit(1)
+			elif(delay == 'keep'):
+				pass
+			else:
+				exit(1)
 		elif(isinstance(delay, int)):
 			if (not self.bias_dl_enable):
-				self.I2C.peri_write("Bias_DL_en", 1)
+				if(V>=2): self.I2C.peri_write(register='Delay_line', field='Bias_DL_en',  data=1)
+				else:     self.I2C.peri_write("Bias_DL_en", 1)
 				self.bias_dl_enable = True
-			self.I2C.peri_write("Bias_DL_ctrl", delay)
+			if(V>=2): self.I2C.peri_write(register='Delay_line', field='DL_ctrl',  data=delay)
+			else:     self.I2C.peri_write("Bias_DL_ctrl", delay)
 		return True
 
 
 	def set_sampling_deskewing_coarse(self, value):
 		word = value & 0b111
-		self.I2C.peri_write("PhaseShiftClock", word)
-		r = self.I2C.peri_read("PhaseShiftClock")
+		if((tbconfig.VERSION['SSA'] >= 2) and onchip_mask):
+			r = self.I2C.peri_write(register="ClockDeskewing_coarse", field=False,  data=word)
+			r = self.I2C.peri_read( register="ClockDeskewing_coarse", field=False)
+		else:
+			self.I2C.peri_write("PhaseShiftClock", word)
+			r = self.I2C.peri_read("PhaseShiftClock")
 		if(r != word): return False
 		else: return True
 
 
-	def set_sampling_deskewing_fine(self, value, enable = True, bypass = False):
-		word = (
-			((value & 0b1111) << 0) |
-			((self.dll_chargepump & 0b11) << 4) |
-			((bypass & 0b1) << 6) |
-			((enable & 0b1) << 7)
-		)
-		self.I2C.peri_write("ClockDeskewing", word)
-		r = self.I2C.peri_read("ClockDeskewing")
-		if(r != word): return False
-		else: return True
+	def set_sampling_deskewing_fine(self, value, enable = True, bypass = False, onchip_mask=False):
+		if((tbconfig.VERSION['SSA'] >= 2) and onchip_mask):
+			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_value',      data=value)
+			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_chargepump', data=self.dll_chargepump)
+			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_bypass',     data=bypass)
+			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_Enable',     data=enable)
+		else:
+			word = (
+				((value & 0b1111) << 0) |
+				((self.dll_chargepump & 0b11) << 4) |
+				((bypass & 0b1) << 6) |
+				((enable & 0b1) << 7)
+			)
+			if((tbconfig.VERSION['SSA'] >= 2) and onchip_mask):
+				self.I2C.peri_write(register="ClockDeskewing_fine", field = False, data = word)
+				r = self.I2C.peri_read(register="ClockDeskewing_fine", field = False)
+			else:
+				self.I2C.peri_write("ClockDeskewing", word)
+				r = self.I2C.peri_read("ClockDeskewing")
+			if(r != word): return False
+			else: return True
 
 
 	def set_sampling_deskewing_chargepump(self, val):
 		self.dll_chargepump = val & 0b11
-		r = self.I2C.peri_read("ClockDeskewing")
-		word = (r & 0b11001111) | (self.dll_chargepump << 4)
-		self.I2C.peri_write("ClockDeskewing", word)
-		r = self.I2C.peri_read("ClockDeskewing")
-		if(r != word): return False
-		else: return True
+
+		if((tbconfig.VERSION['SSA'] >= 2) and onchip_mask):
+			r = self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_chargepump', data=self.dll_chargepump)
+			r = self.I2C.peri_read( register="ClockDeskewing_fine", field='DLL_chargepump')
+			return (r == val)
+		else:
+			r = self.I2C.peri_read("ClockDeskewing")
+			word = (r & 0b11001111) | (self.dll_chargepump << 4)
+			self.I2C.peri_write("ClockDeskewing", word)
+			r = self.I2C.peri_read("ClockDeskewing")
+			if(r != word): return False
+			else: return True
 
 
 	def set_lateral_data_phase(self, left, right):
@@ -434,11 +501,15 @@ class ssa_ctrl_base:
 		return rp
 
 	def set_l1_latency(self, latency):
-		time.sleep(0.001)
-		self.I2C.peri_write('L1-Latency_MSB', (latency & 0xff00) >> 8)
-		time.sleep(0.001)
-		self.I2C.peri_write('L1-Latency_LSB', (latency & 0x00ff) >> 0)
-		time.sleep(0.001)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.peri_write(register="control_3", field='L1_Latency_lsb', data = ((latency & 0x00ff) >> 0) )
+			self.I2C.peri_write(register="control_1", field='L1_Latency_msb', data = ((latency & 0x0100) >> 8) )
+		else:
+			time.sleep(0.001)
+			self.I2C.peri_write('L1_Latency_msb', (latency & 0xff00) >> 8)
+			time.sleep(0.001)
+			self.I2C.peri_write('L1_Latency_lsb', (latency & 0x00ff) >> 0)
+			time.sleep(0.001)
 
 
 

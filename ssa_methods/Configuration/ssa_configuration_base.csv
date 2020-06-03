@@ -18,9 +18,9 @@
 16,-1,OutPattern0,128
 17,-1,OutPattern3,128
 18,-1,OutPattern2,128
-19,-1,L1-Latency_MSB,1
+19,-1,L1_Latency_msb,1
 20,-1,ReadoutMode,4
-21,-1,L1-Latency_LSB,245
+21,-1,L1_Latency_lsb,245
 22,-1,LateralRX_L_DataPhase,4
 23,-1,Bias_D5PREAMP,15
 24,-1,Bias_D5ALLV,15

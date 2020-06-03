@@ -402,13 +402,16 @@ class SSA_test_utility():
 		if init:
 			self.ssa.ctrl.activate_readout_normal()
 			if(tbconfig.VERSION['SSA'] >= 2):
-				sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip='all', data=0)
-				sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_H", field=False, strip='all', data=0)
+				sleep(0.01); self.I2C.strip_write(register="DigCalibPattern_L", field=False, strip='all', data=0)
+				sleep(0.01); self.I2C.strip_write(register="DigCalibPattern_H", field=False, strip='all', data=0)
+				sleep(0.01); self.I2C.peri_write( register="control_1", field='L1_Latency_msb', data = 0 )
+				sleep(0.01); self.I2C.peri_write( register="control_3", field='L1_Latency_lsb', data = latency )
 			else:
-				self.I2C.strip_write("DigCalibPattern_L", 0, 0)
-				self.I2C.strip_write("DigCalibPattern_H", 0, 0)
-			self.I2C.peri_write('L1-Latency_MSB', 0)
-			self.I2C.peri_write('L1-Latency_LSB', latency)
+				sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", 0, 0)
+				sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", 0, 0)
+				sleep(0.01); self.I2C.peri_write('L1_Latency_msb', 0)
+				sleep(0.01); self.I2C.peri_write('L1_Latency_lsb', latency)
+
 			self.I2C.peri_write("CalPulse_duration", calpulse_duration)
 			if(tbconfig.VERSION['SSA'] >= 2):
 				self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b01001)

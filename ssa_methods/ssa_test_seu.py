@@ -237,8 +237,8 @@ class SSA_SEU():
 		#t = time.time()
 		conf_new = self.ssa.ctrl.save_configuration(rtarray = True, display=False, strip_list = strip_list, file = (filename+'__configuration.scv'))
 		conf_ref = self.ssa.ctrl.load_configuration(rtarray = True, display=False, upload_on_chip = False, file = 'ssa_methods/Configuration/ssa_configuration_base.csv')
-		conf_ref[ np.where(conf_ref[:,1] == 'L1-Latency_LSB')[0][0] , 2] = (latency >> 0) & 0xff
-		conf_ref[ np.where(conf_ref[:,1] == 'L1-Latency_MSB')[0][0] , 2] = (latency >> 8) & 0xff
+		conf_ref[ np.where(conf_ref[:,1] == 'L1_Latency_lsb')[0][0] , 2] = (latency >> 0) & 0xff
+		conf_ref[ np.where(conf_ref[:,1] == 'L1_Latency_msb')[0][0] , 2] = (latency >> 8) & 0xff
 		error = self.ssa.ctrl.compare_configuration(conf_new, conf_ref)
 		#print(time.time() - t)
 		peri_er = bool(error[0])
@@ -336,7 +336,7 @@ class SSA_SEU():
 						reg[4] = ''
 						reg[6] = str(correct_val)
 						reg[7] = str(default_val)
-						if((reg[3] == str(correct_val)) or ((reg[2] == 'L1-Latency_LSB') and (reg[3] in ['101', '501'])) or ((reg[2] == 'L1-Latency_MSB') and (reg[3] in ['0', '1']))):
+						if((reg[3] == str(correct_val)) or ((reg[2] == 'L1_Latency_lsb') and (reg[3] in ['101', '501'])) or ((reg[2] == 'L1_Latency_msb') and (reg[3] in ['0', '1']))):
 							reg[5] = ""
 						elif(reg[3] == str(default_val)):
 							reg[5] = "Reset"

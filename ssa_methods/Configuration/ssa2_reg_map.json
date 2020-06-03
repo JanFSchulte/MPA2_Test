@@ -107,7 +107,7 @@
             "fields_mask": {
                 "ReadoutMode"      : "0b00000111",
                 "EdgeSel_T1"       : "0b00001000",
-                "L1Offset_H"       : "0b00010000",
+                "L1_Latency_msb"   : "0b00010000",
                 "memory_select"    : "0b01100000",
                 "T1_or_CLK_select" : "0b10000000"
             }
@@ -127,10 +127,7 @@
             "permissions": "RW",
             "mask_reg"   : "mask_peri_D",
             "fields_mask": {
-                "PhaseShiftClock" : "0b11111111",
-                "PhaseShiftClock" : "0b11111111",
-                "PhaseShiftClock" : "0b11111111",
-                "PhaseShiftClock" : "0b11111111"
+                "L1_Latency_lsb" : "0b11111111"
             }
         },
         "ClockDeskewing_coarse": {
@@ -138,7 +135,7 @@
             "permissions": "RW",
             "mask_reg"   : "mask_peri_D",
             "fields_mask": {
-                "mask_strip" : "0b000000111"
+                "ClockDeskewing_coarse" : "0b000000111"
             }
         },
         "ClockDeskewing_fine": {
@@ -152,20 +149,20 @@
                 "DLL_Enable"     : "0b10000000"
             }
         },
-        "AsyncRead_StartDel_L": {
+        "AsyncRead_StartDel_LSB": {
             "adr": "0x1006",
             "permissions": "RW",
             "mask_reg"   : "mask_peri_D",
             "fields_mask": {
-                "AsyncRead_StartDel_L" : "0b11111111"
+                "AsyncRead_StartDel_LSB" : "0b11111111"
             }
         },
-        "AsyncRead_StartDel_H": {
+        "AsyncRead_StartDel_MSB": {
             "adr": "0x1007",
             "permissions": "RW",
             "mask_reg"   : "mask_peri_D",
             "fields_mask": {
-                "AsyncRead_StartDel_H" : "0b00111111"
+                "AsyncRead_StartDel_MSB" : "0b00111111"
             }
         },
         "LateralRX_sampling": {
@@ -375,28 +372,28 @@
         },
 
 
-        "THDAC_L": {
+        "Bias_THDAC": {
             "adr": "0x1020",
             "permissions": "RW",
             "mask_reg"   : "mask_peri_A",
             "fields_mask": {
-                "THDAC_L" : "0b11111111"
+                "Threshold_DAC_L" : "0b11111111"
             }
         },
-        "THDAC_H": {
+        "Bias_THDACHIGH": {
             "adr": "0x1021",
             "permissions": "RW",
             "mask_reg"   : "mask_peri_A",
             "fields_mask": {
-                "THDAC_H" : "0b11111111"
+                "Threshold_DAC_H" : "0b11111111"
             }
         },
-        "CALDAC": {
+        "Bias_CALDAC": {
             "adr": "0x1022",
             "permissions": "RW",
             "mask_reg"   : "mask_peri_A",
             "fields_mask": {
-                "CALDAC" : "0b11111111"
+                "Calibration_DAC" : "0b11111111"
             }
         },
         "Bias_TEST_lsb": {

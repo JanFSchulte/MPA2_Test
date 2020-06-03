@@ -123,15 +123,16 @@ class SSA_SEU_utilities():
 		#sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 		if(tbconfig.VERSION['SSA'] >= 2):
 			sleep(0.01); self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00000)
-			sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip='all', data=0x0)
-			sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_H", field=False, strip='all', data=0x0)
+			sleep(0.01); self.I2C.strip_write(register="DigCalibPattern_L", field=False, strip='all', data=0x0)
+			sleep(0.01); self.I2C.strip_write(register="DigCalibPattern_H", field=False, strip='all', data=0x0)
+			sleep(0.01); self.I2C.peri_write( register="control_1", field='L1_Latency_msb', data = ((latency & 0x0100)>>8) )
+			sleep(0.01); self.I2C.peri_write( register="control_3", field='L1_Latency_lsb', data = ((latency & 0x00ff)>>0) )
 		else:
 			sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b00000)
 			sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", 0, 0x0)
 			sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", 0, 0x0)
-
-		sleep(0.01); self.I2C.peri_write('L1-Latency_MSB', (latency & 0xff00) >> 8)
-		sleep(0.01); self.I2C.peri_write('L1-Latency_LSB', (latency & 0x00ff) >> 0)
+			sleep(0.01); self.I2C.peri_write('L1_Latency_msb', (latency & 0xff00) >> 8)
+			sleep(0.01); self.I2C.peri_write('L1_Latency_lsb', (latency & 0x00ff) >> 0)
 		#SetLineDelayManual(0, 0, 9, 0, 2)
 		#SetLineDelayManual(0, 0,10, 0, 2)
 		word = np.zeros(16, dtype = np.uint8)
