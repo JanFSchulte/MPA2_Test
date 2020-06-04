@@ -49,6 +49,9 @@ ssa_anl           = SSA_Analise_Test_results(ssa_toptest, ssa_test, ssa_measure,
 ssa_seu           = SSA_SEU(ssa, ssa_seuutil, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pwr, ssa_test, ssa_measure)
 SSA               = ssa
 
+
+### fast trials methods ###
+
 def ssa_on():
 	utils.activate_I2C_chip()
 	sleep(0.1);  ssa_pwr.set_supply('on', display=False)

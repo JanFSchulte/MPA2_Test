@@ -5,7 +5,7 @@ source ~/FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export LC_ALL=C; unset LANGUAGE
 
-file="./myScripts/ipaddr_ssa.dat"
+file="./utilities/ipaddr_ssa.dat"
 while IFS= read -r line
 do
         IP=$line
@@ -49,7 +49,7 @@ else
 	printf '\n->  Testbench correctly found on %s\n' "$IP"
 	printf '\n->  Starting loading the firmware\n'
 	cd ~/FC7/sw/fc7/tests
-	./bin/fc7-d19c.exe  -i 192.168.0.33 -n SSA_SEU_11.bin
+	./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_11 -f ~/MPA-SSA_Test/bitfiles/SSA_SEU_11.bit
 	cd -
 fi

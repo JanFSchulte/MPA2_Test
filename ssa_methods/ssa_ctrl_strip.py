@@ -1,14 +1,16 @@
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
-from myScripts.ArrayToCSV import *
-from myScripts.Utilities import *
-
 import time
 import sys
 import inspect
 import numpy as np
 import matplotlib.pyplot as plt
+
+from d19cScripts.fc7_daq_methods import *
+from d19cScripts.MPA_SSA_BoardControl import *
+from myScripts.BasicD19c import *
+from myScripts.ArrayToCSV import *
+from myScripts.Utilities import *
+from utilities.tbsettings import *
+
 
 class ssa_ctrl_strip:
 

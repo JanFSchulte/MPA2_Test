@@ -94,6 +94,8 @@ class SSA_ASIC:
 		self.init(reset_board = True, reset_chip = False)
 
 
+
+
 	####### Data alignment functions ################################
 
 	def alignment_all(self, display = False, file = False):
@@ -213,3 +215,12 @@ class SSA_ASIC:
 		SetLineDelayManual(0,0, 9,0,left)
 		SetLineDelayManual(0,0,10,0,right)
 		self.ctrl.phase_tuning()
+
+	def try_i2c(self, repeat=5):
+		return self.ctrl.try_i2c(repeat)
+
+	def try_shift(self, pattern=0xaa):
+		time.sleep(0.1); self.ctrl.set_shift_pattern_all(pattern)
+		time.sleep(0.1); self.ctrl.activate_readout_shift()
+		time.sleep(0.1); self.readout.all_lines(configure=False)
+		time.sleep(0.1); self.ctrl.activate_readout_normal()

@@ -1,14 +1,18 @@
+import time
+import sys
+import inspect
+import numpy as np
+import matplotlib.pyplot as plt
+from random import randint
+
+from utilities.tbsettings import *
 from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 
-import time
-import sys
-import inspect
-import numpy as np
-import matplotlib.pyplot as plt
+
 
 class ssa_ctrl_base:
 
@@ -22,12 +26,10 @@ class ssa_ctrl_base:
 		self.dll_chargepump = 0b00;
 		self.bias_dl_enable = False
 
-
 	def resync(self):
 		SendCommand_CTRL("fast_fast_reset");
 		print('->  Sent Re-Sync command')
 		sleep(0.001)
-
 
 	def reset(self, display=True):
 		rp = self.pwr.reset(display=display)
@@ -74,14 +76,14 @@ class ssa_ctrl_base:
 						self.I2C.peri_write(tmp[1], tmp[2])
 						r = self.I2C.peri_read(tmp[1])
 						if(r != tmp[2]):
-							print('X>  \t Configuration ERROR Periphery  ' + str(tmp[1]) + '  ' + str(tmp[2]) + '  ' + str(r))
+							print('X>   Configuration ERROR Periphery  ' + str(tmp[1]) + '  ' + str(tmp[2]) + '  ' + str(r))
 				elif(tmp[0]>=1 and tmp[0]<=120):
 					if display: print('writing')
 					if ((not 'ReadCounter' in tmp[1]) and ((not 'Fuse' in tmp[1]))):
 						self.I2C.strip_write(tmp[1], tmp[0], tmp[2])
 						r = self.I2C.strip_read(tmp[1], tmp[0])
 						if(r != tmp[2]):
-							print('X>  \t Configuration ERROR Strip ' + str(tmp[0]))
+							print('X>   Configuration ERROR Strip ' + str(tmp[0]))
 				if display:
 					print([tmp[0], tmp[1], tmp[2], r])
 			print("->  Configuration Loaded from file")
@@ -96,19 +98,20 @@ class ssa_ctrl_base:
 				if(int(conf[i,2]) != int(conf_ref[i,2])):
 					error[0] += 1
 					if(display):
-						print("-X  \tConfiguration error. Reg: " + str(conf[i,1]) + " Expected: " + str(int(conf_ref[i,2])) + "Found: " + str(int(conf[i,2])))
+						print("-X  Configuration error. Reg: " + str(conf[i,1]) + " Expected: " + str(int(conf_ref[i,2])) + "Found: " + str(int(conf[i,2])))
 			elif(int(conf[i,0]) > 0):
 				if(int(conf[i,2]) != int(conf_ref[i,2])):
 					if(display):
-						print("-X  \tConfiguration error. Reg: " + str(conf[i,1]) + " Strip: " + str(int(conf[i,0])) + " Expected: " + str(int(conf_ref[i,2])) + " Found: " + str(int(conf[i,2])) )
+						print("-X  Configuration error. Reg: " + str(conf[i,1]) + " Strip: " + str(int(conf[i,0])) + " Expected: " + str(int(conf_ref[i,2])) + " Found: " + str(int(conf[i,2])) )
 					error[int(conf[i,0])] += 1
 		return error
 
 	def set_output_mux(self, testline = 'highimpedence'):
 		if(tbconfig.VERSION['SSA'] >= 2):
-			ctrl = self.analog_mux_map_V2[testline]
-			r = self.I2C.peri_write( register="adr_ADC_control", field='ADC_control_input_sel', data=ctrl)
-			r = self.I2C.peri_read(  register="adr_ADC_control", field='ADC_control_input_sel')
+			ctrl = self.analog_mux_map[testline]
+			r =    self.I2C.peri_write( register="ADC_trimming",    field='TestPad_Enable',        data=0b1)
+			r = r| self.I2C.peri_write( register="adr_ADC_control", field='ADC_control_input_sel', data=ctrl)
+			r = r| self.I2C.peri_read(  register="adr_ADC_control", field='ADC_control_input_sel')
 		else:
 			#utils.activate_I2C_chip()
 			ctrl = self.analog_mux_map[testline]
@@ -123,6 +126,28 @@ class ssa_ctrl_base:
 			return False
 		else:
 			return True
+
+	def adc_measeure(self, testline = 'highimpedence', fast=True):
+		input_sel = self.analog_mux_map[testline]
+		if(fast):
+			r =    self.I2C.peri_write( register="ADC_trimming", field=False, data=(0b11100000 | (input_sel & 0b00011111)) )
+			r = r| self.I2C.peri_write( register="ADC_trimming", field=False, data=(0b11000000 | (input_sel & 0b00011111)) )
+		else:
+			r =    self.I2C.peri_write( register="ADC_trimming", field=False                     , data=0x00)
+			r = r| self.I2C.peri_write( register="ADC_trimming", field='ADC_control_reset'       , data=0b1)
+			r = r| self.I2C.peri_write( register="ADC_trimming", field='ADC_control_reset'       , data=0b0)
+			r = r| self.I2C.peri_write( register="ADC_trimming", field='ADC_control_input_sel'   , data=input_sel)
+			r = r| self.I2C.peri_write( register="ADC_trimming", field='ADC_control_enable_start', data=0b11)
+		if(not r):
+			print("Error. Failed to use the ADC")
+			return False
+		msb = self.I2C.peri_read( register="ADC_out_H", field=False )
+		lsb = self.I2C.peri_read( register="ADC_out_L", field=False )
+		if((msb==None) or (lsb==None)):
+			res = False
+		else:
+			res = ((msb<<8) | lsb)
+		return res
 
 	def init_slvs(self, current = 0b111):
 		if(tbconfig.VERSION['SSA'] >= 2):
@@ -277,24 +302,24 @@ class ssa_ctrl_base:
 
 	def set_shift_pattern(self, ST=[0xaa]*8, L1=0xaa, Left=0xaa, Right=0xaa):
 		if(tbconfig.VERSION['SSA'] >= 2):
-			self.I2C.peri_write(register="Shift_pattern_st_0",      field=False, data=st[0])
-			self.I2C.peri_write(register="Shift_pattern_st_1",      field=False, data=st[1])
-			self.I2C.peri_write(register="Shift_pattern_st_2",      field=False, data=st[2])
-			self.I2C.peri_write(register="Shift_pattern_st_3",      field=False, data=st[3])
-			self.I2C.peri_write(register="Shift_pattern_st_4_st_5", field=False, data=st[4])
-			self.I2C.peri_write(register="Shift_pattern_st_6_st_7", field=False, data=st[6])
-			self.I2C.peri_write(register="Shift_pattern_Left",      field=False, data=Left)
-			self.I2C.peri_write(register="Shift_pattern_Right",     field=False, data=Right)
-			self.I2C.peri_write(register="Shift_pattern_L1",        field=False, data=L1)
+			self.I2C.peri_write(register="Shift_pattern_st_0",      field=False, data = ST[0])
+			self.I2C.peri_write(register="Shift_pattern_st_1",      field=False, data = ST[1])
+			self.I2C.peri_write(register="Shift_pattern_st_2",      field=False, data = ST[2])
+			self.I2C.peri_write(register="Shift_pattern_st_3",      field=False, data = ST[3])
+			self.I2C.peri_write(register="Shift_pattern_st_4_st_5", field=False, data = ST[4])
+			self.I2C.peri_write(register="Shift_pattern_st_6_st_7", field=False, data = ST[6])
+			self.I2C.peri_write(register="Shift_pattern_Left",      field=False, data = Left)
+			self.I2C.peri_write(register="Shift_pattern_Right",     field=False, data = Right)
+			self.I2C.peri_write(register="Shift_pattern_L1",        field=False, data = L1)
 		else:
-			self.I2C.peri_write('OutPattern1',st[0])
-			self.I2C.peri_write('OutPattern1',st[1])
-			self.I2C.peri_write('OutPattern2',st[2])
-			self.I2C.peri_write('OutPattern3',st[3])
-			self.I2C.peri_write('OutPattern4',st[4])
-			self.I2C.peri_write('OutPattern5',st[5])
-			self.I2C.peri_write('OutPattern6',st[6])
-			self.I2C.peri_write('OutPattern7/FIFOconfig',st[7])
+			self.I2C.peri_write('OutPattern0', ST[0])
+			self.I2C.peri_write('OutPattern1', ST[1])
+			self.I2C.peri_write('OutPattern2', ST[2])
+			self.I2C.peri_write('OutPattern3', ST[3])
+			self.I2C.peri_write('OutPattern4', ST[4])
+			self.I2C.peri_write('OutPattern5', ST[5])
+			self.I2C.peri_write('OutPattern6', ST[6])
+			self.I2C.peri_write('OutPattern7/FIFOconfig',ST[7])
 
 	def set_async_delay(self, value):
 		msb = (value & 0xFF00) >> 8
@@ -490,8 +515,8 @@ class ssa_ctrl_base:
 		r = self.read_fuses(pulse = True, display = display)
 		if(r != val):
 			print('->  E-Fuses write error: ')
-			print('    \t    Written:...{0:032b}'.format(val))
-			print('    \t    Read:......{0:032b}'.format(r))
+			print('        Written:...{0:032b}'.format(val))
+			print('        Read:......{0:032b}'.format(r))
 			return False
 		else:
 			return True
@@ -512,11 +537,35 @@ class ssa_ctrl_base:
 			time.sleep(0.001)
 
 
+	def try_i2c(self, repeat=5):
+		r=[]; d=[]; w=[];
+		Result = True
+		if(tbconfig.VERSION['SSA'] >= 2):
+			reglist = ['Bias_TEST_msb','Bias_TEST_lsb', 'unused_register', 'Shift_pattern_st_0', 'Shift_pattern_st_1', 'Shift_pattern_st_2']
+		else:
+			reglist = ['OutPattern0','OutPattern1', 'OutPattern2', 'OutPattern3', 'OutPattern4', 'OutPattern5']
 
+		for iter in range(repeat):
+			for reg in reglist:
+				data = randint(1,255)
+				d.append( data )
+				w.append( self.I2C.peri_write(register = reg, field = False, data = data))
+				time.sleep(0.01)
+			for reg in reglist:
+				r.append( self.I2C.peri_read( register = reg, field = False))
+				time.sleep(0.01)
 
+		for i in range(len(d)):
+			if(r[i] == 'Null'):
+				utils.print_error('->  I2C Register check null  [{:8b}] - [NoReply]'.format(d[i]))
+				Result = False
+			elif( r[i] != d[i] ):
+				utils.print_warning('->  I2C Register check error [{:8b}] - [{:8b}]'.format(d[i], r[i]) )
+				Result = False
+			else:
+				utils.print_good('->  I2C Register check match [{:8b}] - [{:8b}]'.format(d[i], r[i]) )
 
-
-
+		return Result
 
 # ssa_peri_reg_map['Fuse_Mode']              = 43
 # ssa_peri_reg_map['Fuse_Prog_b0']           = 44

@@ -1,0 +1,47 @@
+{
+    "INFO": {
+        "Description" : "SSA2 ADC and Test MUX Map file.",
+        "Author"      : "Alessandro Caratelli",
+        "Manual"      : "https://espace.cern.ch/CMS-MPA/SitePages/Documents.aspx",
+        "Contacts"    : "alessandro.caratelli@cern.ch"
+    },
+    "ADC": {
+        "highimpedence"        :  0,
+        "Bias_D5BFEED"         :  1,
+        "Bias_D5PREAMP"        :  2,
+        "Bias_D5TDR"           :  3,
+        "Bias_D5ALLV"          :  4,
+        "Bias_D5ALLI"          :  5,
+        "Bias_CALDAC"          :  6,
+        "Bias_BOOSTERBASELINE" :  7,
+        "Bias_THDAC"           :  8,
+        "Bias_THDACHIGH"       :  9,
+        "Bias_D5DAC8"          : 10,
+        "VBG"                  : 11,
+        "GND"                  : 12,
+        "VREF"                 : 13,
+        "DAC_VREF"             : 14,
+        "unused"               : 15,
+        "Temperature"          : 16,
+        "AVDD"                 : 17,
+        "PVDD"                 : 18,
+        "DVDD"                 : 19
+    },
+    "PAD": {
+        "highimpedence"        :  0,
+        "Bias_D5BFEED"         :  1,
+        "Bias_D5PREAMP"        :  2,
+        "Bias_D5TDR"           :  3,
+        "Bias_D5ALLV"          :  4,
+        "Bias_D5ALLI"          :  5,
+        "Bias_CALDAC"          :  6,
+        "Bias_BOOSTERBASELINE" :  7,
+        "Bias_THDAC"           :  8,
+        "Bias_THDACHIGH"       :  9,
+        "Bias_D5DAC8"          : 10,
+        "VBG"                  : 11,
+        "GND"                  : 12,
+        "VREF"                 : 13,
+        "DAC_VREF"             : 14
+    }
+}

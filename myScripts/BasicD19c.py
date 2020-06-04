@@ -450,8 +450,8 @@ def write_I2C (chip, address, data, frequency = 0):
     if (chip == 'MPA'):
         SendCommand_I2C  (command_type, 0, MPA, 0, write, address, data, readback)
     elif (chip == 'SSA'):
-        print('DEBUG: Sending I2C WRITE command ADR=[{:4X}] DATA=[{:8b}]'.format(address, data))
-        #SendCommand_I2C  (command_type, 0, SSA, 0, write, address, data, readback)
+        #print('DEBUG: Sending I2C WRITE command ADR=[{:4X}] DATA=[{:8b}]'.format(address, data))
+        SendCommand_I2C  (command_type, 0, SSA, 0, write, address, data, readback)
 
 def read_I2C (chip, address, timeout = 0.001):
     MPA = 0
@@ -464,8 +464,8 @@ def read_I2C (chip, address, timeout = 0.001):
     if (chip == 'MPA'):
         SendCommand_I2C(command_type, 0, MPA, 0, read, address, data, readback)
     elif (chip == 'SSA'):
-        print('DEBUG: Sending I2C READ command ADR=[{:4X}] DATA=[{:8b}]'.format(address, data))
-        #SendCommand_I2C(command_type, 0, SSA, 0, read, address, data, readback)
+        #print('DEBUG: Sending I2C READ command ADR=[{:4X}] DATA=[{:8b}]'.format(address, data))
+        SendCommand_I2C(command_type, 0, SSA, 0, read, address, data, readback)
     sleep(timeout)
     read_data = ReadChipDataNEW()
     return read_data

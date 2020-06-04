@@ -6,7 +6,7 @@
         "Contacts"    : "alessandro.caratelli@cern.ch"
     },
 
-    "STRIP_REGISTERS": {
+    "STRIP": {
 
         "StripControl1": {
             "adr": "0x0",
@@ -66,7 +66,7 @@
         }
     },
 
-    "PERIPHERY_REGISTERS": {
+    "PERIPHERY": {
 
         "mask_strip": {
             "adr" : "0x0DF7",
@@ -401,7 +401,7 @@
             "permissions": "RW",
             "mask_reg"   : "mask_peri_A",
             "fields_mask": {
-                "Bias_TEST_lsb" : "0b00001111"
+                "unused" : "0b11111111"
             }
         },
         "Bias_TEST_msb": {
@@ -409,7 +409,7 @@
             "permissions": "RW",
             "mask_reg"   : "mask_peri_A",
             "fields_mask": {
-                "Bias_TEST_msb" : "0b11111111"
+                "unused" : "0b11111111"
             }
         },
         "Delay_line": {
@@ -587,10 +587,12 @@
             "permissions": "RW",
             "mask_reg"   : "mask_peri_A",
             "fields_mask": {
-                "ADC_control_input_sel"  : "0b00011111",
-                "loc_ADC_control_soc"    : "0b00100000",
-                "loc_ADC_control_enable" : "0b01000000",
-                "loc_ADC_control_rst"    : "0b10000000"
+                "ADC_control_input_sel"    : "0b00011111",
+                "ADC_control_start"        : "0b00100000",
+                "ADC_control_enable"       : "0b01000000",
+                "ADC_control_reset"        : "0b10000000",
+                "ADC_control_conv"         : "0b01111111",
+                "ADC_control_enable_start" : "0b01100000"
             }
         },
         "ADC_trimming": {
@@ -600,7 +602,8 @@
             "fields_mask": {
                 "ADC_trimming_trim_val" : "0b00111111",
                 "ADC_trimming_trim_sel" : "0b01000000",
-                "ADC_trimming_SW_en"    : "0b10000000"
+                "ADC_trimming_trim"     : "0b01111111",
+                "TestPad_Enable"        : "0b10000000"
             }
         },
         "ADC_ref": {
@@ -616,7 +619,7 @@
             "permissions": "RW",
             "mask_reg"   : "mask_peri_A",
             "fields_mask": {
-                "unused_field" : "0b11111111"
+                "unused" : "0b11111111"
             }
         },
         "Async_SEUcnt_blk1": {

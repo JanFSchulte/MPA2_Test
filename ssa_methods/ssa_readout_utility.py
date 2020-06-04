@@ -1,15 +1,16 @@
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
-from myScripts.ArrayToCSV import *
-from myScripts.Utilities import *
-
 import time
 import sys
 import inspect
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+
+from d19cScripts.fc7_daq_methods import *
+from d19cScripts.MPA_SSA_BoardControl import *
+from myScripts.BasicD19c import *
+from myScripts.ArrayToCSV import *
+from myScripts.Utilities import *
+from utilities.tbsettings import *
 
 class SSA_readout():
 
@@ -317,7 +318,6 @@ class SSA_readout():
 			else:
 				count[s-1] = (self.I2C.strip_read("ReadCounter_MSB", s) << 8) | self.I2C.strip_read("ReadCounter_LSB", s)
 		return False, count
-
 
 	def all_lines(self, trigger = True, configure = True, cluster = True, l1data = True, lateral = True):
 		if(configure):
