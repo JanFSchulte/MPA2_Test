@@ -119,7 +119,7 @@ class SSA_SEU_utilities():
 		#here define the way to generate stub/centroid data pattern on the MPA/SSA
 		sleep(0.01); utils.activate_I2C_chip()
 		sleep(0.01); self.ssa.ctrl.activate_readout_normal(mipadapterdisable = 1)
-		sleep(0.01); self.I2C.peri_write("CalPulse_duration", 1)
+		sleep(0.01); self.ssa.ctrl.set_cal_pulse_duration(duration = 1) 
 		#sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 		if(tbconfig.VERSION['SSA'] >= 2):
 			sleep(0.01); self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00000)

@@ -24,7 +24,7 @@ class SSA_inject():
 
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
-			self.I2C.peri_write("CalPulse_duration", times)
+			self.ctrl.set_cal_pulse_duration(times)
 			#self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 			#fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
 

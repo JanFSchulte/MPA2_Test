@@ -175,7 +175,7 @@ class ssa_ctrl_base:
 			self.I2C.strip_write( register="StripControl1",     field='ENFLAGS', strip='all', data=0b00001001)
 			self.I2C.strip_write( register="DigCalibPattern_L", field=False,     strip='all', data=0)
 			self.I2C.strip_write( register="DigCalibPattern_H", field=False,     strip='all', data=0)
-			self.I2C.peri_write(  register="CalPulse_duration", field=False,                  data=15)
+			self.I2C.peri_write(  register="control_2",         field='CalPulse_duration',    data=15)
 			self.I2C.strip_write( register="StripControl1",     field='ENFLAGS', strip=7,     data=0b01001)
 			self.I2C.strip_write( register="StripControl1",     field='ENFLAGS', strip=120,   data=0b01001)
 			self.I2C.strip_write( register="DigCalibPattern_L", field=False,     strip=7,     data=0xff)
@@ -380,15 +380,23 @@ class ssa_ctrl_base:
 
 
 	def set_cal_pulse(self, amplitude = 255, duration = 5, delay = 'keep'):
-		self.I2C.peri_write("Bias_CALDAC", amplitude) # init cal pulse itself
-		self.I2C.peri_write("CalPulse_duration", duration) # set cal pulse duration
-		self.set_cal_pulse_delay(delay) # init the cal pulse digital delay line
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.peri_write("Bias_CALDAC", amplitude)
+			self.I2C.peri_write(register="control_2", field='CalPulse_duration', data=15)
+			self.set_cal_pulse_delay(delay)
+		else:
+			self.I2C.peri_write("Bias_CALDAC", amplitude) # init cal pulse itself
+			self.I2C.peri_write("CalPulse_duration", duration) # set cal pulse duration
+			self.set_cal_pulse_delay(delay) # init the cal pulse digital delay line
 
 	def set_cal_pulse_amplitude(self, amplitude = 255):
 		self.I2C.peri_write("Bias_CALDAC", amplitude)
 
 	def set_cal_pulse_duration(self, duration = 5):
-		self.I2C.peri_write("CalPulse_duration", duration)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.peri_write(register="control_2", field='CalPulse_duration', data=duration)
+		else:
+			self.I2C.peri_write("CalPulse_duration", duration)
 
 	def set_cal_pulse_delay(self, delay):
 		V = tbconfig.VERSION['SSA']
@@ -522,7 +530,17 @@ class ssa_ctrl_base:
 			return True
 
 	def read_seu_counter(self):
-		rp = self.I2C.peri_read('SEU_Counter')
+		if(tbconfig.VERSION['SSA'] >= 2):
+			rp = { 'A':{'peri':[0]*2, 'strip':[0]*8}, 'S':{'peri':[0]*2, 'strip':[0]*8} }
+			rp['S']['peri'][0]  = self.I2C.peri_read(register = 'Sync_SEUcnt_blk0')
+			rp['S']['peri'][1]  = self.I2C.peri_read(register = 'Sync_SEUcnt_blk1')
+			rp['A']['peri'][0]  = self.I2C.peri_read(register = 'aseSync_SEUcnt_blk0')
+			rp['A']['peri'][1]  = self.I2C.peri_read(register = 'aseSync_SEUcnt_blk1')
+			for i in range(8)
+				rp['S']['strip'][i] = 0 # TODO
+				rp['A']['strip'][i] = 0 # TODO
+		else:
+			rp = self.I2C.peri_read('SEU_Counter')
 		return rp
 
 	def set_l1_latency(self, latency):

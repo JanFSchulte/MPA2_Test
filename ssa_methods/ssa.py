@@ -132,10 +132,12 @@ class SSA_ASIC:
 				time.sleep(0.1)
 				rp = []
 				for i in range(20):
-					rp.append(self.readout.cluster_data(initialize = False))
-					if(display): print(rp[-1])
+					rp.append(self.readout.cluster_data(initialize = False, shift = 'default'))
+					# with shift=='default', the shift value is the one set by "self.readout.cl_shift[mode]"
+					if(display):
+						print("->  Word alignment. Shift value = {:d}. Read Value = {:s}. Iteration = {:d}.".format(shift, str(list(map(float,rp[-1]))), i))
 					if(rp[-4:] == rp[-5:-1]):
-						if(map(float, rp[-1]) == map(float, tv)):
+						if(list(map(float, rp[-1])) == list(map(float, tv))):
 							utils.print_info('->  Cluster-data word alignment {m:7s} successfull ({r:d})'.format(m=mode, r=self.readout.cl_shift[mode]))
 							self.generic_parameters['cl_word_alignment_{m:s}'.format(m=mode)] = True
 							status[mode] = True

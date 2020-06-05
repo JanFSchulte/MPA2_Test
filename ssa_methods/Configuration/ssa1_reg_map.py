@@ -2,15 +2,15 @@
 ################# Strip register map #########################
 ssa_strip_reg_map_v1 = {}
 
-ssa_strip_reg_map_v1['ENFLAGS']                = 0b00001
-ssa_strip_reg_map_v1['SAMPLINGMODE']           = 0b00010
-ssa_strip_reg_map_v1['GAINTRIMMING']           = 0b00011
-ssa_strip_reg_map_v1['THTRIMMING']             = 0b00100
-ssa_strip_reg_map_v1['HIPCUT']                 = 0b00101
-ssa_strip_reg_map_v1['DigCalibPattern_L']      = 0b00110
-ssa_strip_reg_map_v1['DigCalibPattern_H']      = 0b00111
-ssa_strip_reg_map_v1['ReadCounter_MSB']        = 0b01000
-ssa_strip_reg_map_v1['ReadCounter_LSB']        = 0b01001
+ssa_strip_reg_map_v1['ENFLAGS']                = 0b00001 # ported to v2
+ssa_strip_reg_map_v1['SAMPLINGMODE']           = 0b00010 # ported to v2
+ssa_strip_reg_map_v1['GAINTRIMMING']           = 0b00011 # ported to v2
+ssa_strip_reg_map_v1['THTRIMMING']             = 0b00100 # ported to v2
+ssa_strip_reg_map_v1['HIPCUT']                 = 0b00101 # ported to v2
+ssa_strip_reg_map_v1['DigCalibPattern_L']      = 0b00110 # ported to v2
+ssa_strip_reg_map_v1['DigCalibPattern_H']      = 0b00111 # ported to v2
+ssa_strip_reg_map_v1['ReadCounter_MSB']        = 0b01000 # ported to v2
+ssa_strip_reg_map_v1['ReadCounter_LSB']        = 0b01001 # ported to v2
 
 ################# Periphery register map #####################
 ssa_peri_reg_map_v1 = {}
@@ -54,23 +54,23 @@ ssa_peri_reg_map_v1['Bias_THDACHIGH']         = 33 # ported to v2
 ssa_peri_reg_map_v1['Bias_CALDAC']            = 34 # ported to v2
 ssa_peri_reg_map_v1['Bias_DL_en']             = 35 # ported to v2
 ssa_peri_reg_map_v1['Bias_DL_ctrl']           = 36 # ported to v2
-ssa_peri_reg_map_v1['Bias_TEST_LSB']          = 37
-ssa_peri_reg_map_v1['Bias_TEST_MSB']          = 38
+ssa_peri_reg_map_v1['Bias_TEST_LSB']          = 37 # ported to v2
+ssa_peri_reg_map_v1['Bias_TEST_MSB']          = 38 # ported to v2
 ssa_peri_reg_map_v1['LateralRX_L_DataPhase']  = 39
 ssa_peri_reg_map_v1['LateralRX_R_DataPhase']  = 40
 ssa_peri_reg_map_v1['LateralRX_L_SampleEdge'] = 41
 ssa_peri_reg_map_v1['LateralRX_R_SampleEdge'] = 42
-ssa_peri_reg_map_v1['Fuse_Mode']              = 43
-ssa_peri_reg_map_v1['Fuse_Prog_b0']           = 44
-ssa_peri_reg_map_v1['Fuse_Prog_b1']           = 45
-ssa_peri_reg_map_v1['Fuse_Prog_b2']           = 46
-ssa_peri_reg_map_v1['Fuse_Prog_b3']           = 47
-ssa_peri_reg_map_v1['Fuse_Value_b0']          = 48
-ssa_peri_reg_map_v1['Fuse_Value_b1']          = 49
-ssa_peri_reg_map_v1['Fuse_Value_b2']          = 50
-ssa_peri_reg_map_v1['Fuse_Value_b3']          = 51
-ssa_peri_reg_map_v1['CalPulse_duration']      = 52
-ssa_peri_reg_map_v1['SEU_Counter']            = 53
+ssa_peri_reg_map_v1['Fuse_Mode']              = 43 # ported to v2
+ssa_peri_reg_map_v1['Fuse_Prog_b0']           = 44 # ported to v2
+ssa_peri_reg_map_v1['Fuse_Prog_b1']           = 45 # ported to v2
+ssa_peri_reg_map_v1['Fuse_Prog_b2']           = 46 # ported to v2
+ssa_peri_reg_map_v1['Fuse_Prog_b3']           = 47 # ported to v2
+ssa_peri_reg_map_v1['Fuse_Value_b0']          = 48 # ported to v2
+ssa_peri_reg_map_v1['Fuse_Value_b1']          = 49 # ported to v2
+ssa_peri_reg_map_v1['Fuse_Value_b2']          = 50 # ported to v2
+ssa_peri_reg_map_v1['Fuse_Value_b3']          = 51 # ported to v2
+ssa_peri_reg_map_v1['CalPulse_duration']      = 52 # ported to v2
+ssa_peri_reg_map_v1['SEU_Counter']            = 53 # ported to v2
 ssa_peri_reg_map_v1['ClkEnable_Code']         = 54
 
 ################# Analog MUX map #####################

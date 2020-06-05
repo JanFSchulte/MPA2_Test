@@ -34,7 +34,7 @@ ssa_i2c           = ssa_i2c_conf()
 ssa_strip_reg_map = ssa_i2c.get_strip_reg_map()
 ssa_peri_reg_map  = ssa_i2c.get_peri_reg_map()
 ssa_ana_mux_map   = ssa_i2c.get_analog_mux_map()
-
+SSA               = ssa
 ssa_pwr           = ssa_power_utility(ssa_i2c, FC7)
 ssa               = SSA_ASIC(ssa_i2c, FC7, ssa_pwr, ssa_peri_reg_map, ssa_strip_reg_map, ssa_ana_mux_map)
 ssa_cal           = SSA_cal_utility(ssa, ssa_i2c, FC7)
@@ -47,7 +47,7 @@ ssa_toptest       = SSA_test_top(ssa, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pw
 ssa_xray          = SSA_test_xray(ssa_toptest, ssa, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pwr, ssa_test, ssa_measure)
 ssa_anl           = SSA_Analise_Test_results(ssa_toptest, ssa_test, ssa_measure, ssa_biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
 ssa_seu           = SSA_SEU(ssa, ssa_seuutil, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pwr, ssa_test, ssa_measure)
-SSA               = ssa
+
 
 
 ### fast trials methods ###

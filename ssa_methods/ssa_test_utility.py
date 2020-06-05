@@ -412,7 +412,8 @@ class SSA_test_utility():
 				sleep(0.01); self.I2C.peri_write('L1_Latency_msb', 0)
 				sleep(0.01); self.I2C.peri_write('L1_Latency_lsb', latency)
 
-			self.I2C.peri_write("CalPulse_duration", calpulse_duration)
+			self.ssa.ctrl.set_cal_pulse_duration(duration = calpulse_duration)
+
 			if(tbconfig.VERSION['SSA'] >= 2):
 				self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b01001)
 			else:

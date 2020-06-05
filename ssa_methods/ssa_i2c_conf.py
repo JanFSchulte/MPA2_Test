@@ -23,7 +23,7 @@ class ssa_i2c_conf:
 			self.analog_mux_map    = analog_mux_map_v1
 			print('->  Loaded configuration for SSA v2')
 		self.freq = 0
-		self.debug = True
+		self.debug = False
 		self.readback = False
 
 	def get_strip_reg_map(self):
