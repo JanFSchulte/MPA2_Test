@@ -1,0 +1,192 @@
+utils.activate_I2C_chip()
+
+
+
+ssa.pwr.off()
+
+ssa.pwr.mainpoweron()
+
+time.sleep(0.2); ssa.pwr.set_pvdd( 1.2 )
+time.sleep(0.2); ssa.pwr.set_dvdd( 1.2 )
+time.sleep(0.2); ssa.pwr.set_avdd( 1.2 )
+
+ssa.pwr.get_power()
+ssa.pwr.reset()
+ssa.pwr.get_power()
+
+
+ssa.try_i2c()
+
+
+
+
+hex(ssa.ctrl.I2C.peri_write( register = 'mask_strip', field = False, data=0xff))
+hex(ssa.ctrl.I2C.peri_read(  register = 'mask_strip', field = False))
+
+
+for i in range(120):
+    p1 = random.randint(1,255)
+    p2 = random.randint(1,255)
+    time.sleep(0.01); hex(ssa.ctrl.I2C.strip_write( strip = 50, register = 'DigCalibPattern_L', field = False, data=p1 ))
+    time.sleep(0.01); hex(ssa.ctrl.I2C.strip_write( strip = 50, register = 'DigCalibPattern_H', field = False, data=p2 ))
+    time.sleep(0.01); r1 = ssa.ctrl.I2C.strip_read(  strip = 50, register = 'DigCalibPattern_L', field = False )
+    time.sleep(0.01); r2 = ssa.ctrl.I2C.strip_read(  strip = 50, register = 'DigCalibPattern_H', field = False )
+    #time.sleep(0.01); print('{:s}, {:s}'.format(r1,r2))
+    if(p1 == r1): print('OK {:d}'.format(r1))
+    else:         print('ER {:d}'.format(r1))
+    if(p2 == r2): print('OK {:d}'.format(r2))
+    else:         print('ER {:d}'.format(r2))
+    print('---------------------------')
+
+
+ssa.ctrl.init_slvs(current=0b111)
+ssa.pwr.get_power()
+
+bin(ssa.ctrl.I2C.peri_write(register = 'mask_strip',  field = False, data=0xff))
+bin(ssa.ctrl.I2C.peri_write(register = 'mask_peri_D', field = False, data=0xff))
+bin(ssa.ctrl.I2C.peri_write(register = 'mask_peri_A', field = False, data=0xff))
+
+
+for i in range(120):
+    p1 = random.randint(1,255)
+    p2 = random.randint(1,255)
+    time.sleep(0.01); hex(ssa.ctrl.I2C.strip_write( strip = i, register = 'DigCalibPattern_L', field = False, data=p1 ))
+    time.sleep(0.01); hex(ssa.ctrl.I2C.strip_write( strip = i, register = 'DigCalibPattern_H', field = False, data=p2 ))
+    time.sleep(0.01); r1 = ssa.ctrl.I2C.strip_read(  strip = i, register = 'DigCalibPattern_L', field = False )
+    time.sleep(0.01); r2 = ssa.ctrl.I2C.strip_read(  strip = i, register = 'DigCalibPattern_H', field = False )
+    #time.sleep(0.01); print('{:s}, {:s}'.format(r1,r2))
+    if(p1 == r1): print('OK {:d}'.format(r1))
+    else:         print('ER {:d}'.format(r1))
+    if(p2 == r2): print('OK {:d}'.format(r2))
+    else:         print('ER {:d}'.format(r2))
+    print('---------------------------')
+
+
+# MASK ##################################################
+bin(ssa.ctrl.I2C.peri_write(register = 'mask_strip',  field = False, data=0xff))
+bin(ssa.ctrl.I2C.peri_write(register = 'mask_peri_D', field = False, data=0xff))
+bin(ssa.ctrl.I2C.peri_write(register = 'mask_peri_A', field = False, data=0xff))
+bin(ssa.ctrl.I2C.peri_read(register = 'mask_strip',  field = False))
+bin(ssa.ctrl.I2C.peri_read(register = 'mask_peri_D', field = False))
+bin(ssa.ctrl.I2C.peri_read(register = 'mask_peri_A', field = False))
+#######################################################################
+
+
+#termination ##################################################
+bin(ssa.ctrl.I2C.peri_write(register = 'SLVS_pad_current_Clk_T1',  field = False, data=0b11111111))
+#######################################################################
+
+
+
+#SLVS ##################################################
+ssa.ctrl.init_slvs(current=0b111)
+#######################################################################
+
+
+# alignment ###########################################################
+self = ssa.ctrl
+bin(ssa.ctrl.I2C.peri_write(register = 'control_1',  field = False, data=0b11010))
+self.set_shift_pattern([0x80]*8)
+ssa.readout.all_lines()
+ssa.ctrl.align_out()
+ssa.readout.all_lines()
+bin(ssa.ctrl.I2C.peri_write(register = 'control_1',  field = False, data=0b11000))
+#######################################################################
+
+
+
+#######################################################################
+ssa.pwr.get_power()
+
+bin(ssa.ctrl.I2C.peri_read(register = 'control_2',  field = False))
+
+#config strip
+for i in range(0, 120):
+    ssa.i2c.strip_write(register="StripControl1", field=False, strip=60, data=0b0)
+
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=30, data=0b1001)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=40, data=0b1001)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=50, data=0b1001)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=60, data=0b1001)
+
+bin(ssa.i2c.strip_read(register="StripControl1", field=False, strip=60) )
+
+#calpulse duration
+bin(ssa.ctrl.I2C.peri_write(register = 'control_2',  field = False, data= 0b11110101))
+bin(ssa.ctrl.I2C.peri_read(register = 'control_2',  field = False))
+
+#######################################################################
+hex(ssa.i2c.peri_read(register="Bias_THDAC", field=False))
+ssa.i2c.peri_write(register="Bias_THDAC", field=False, data=5)
+
+#######################################################################
+
+
+
+###### contatori #####################3
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=50, data=0b00011101)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=51, data=0b00011101)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=52, data=0b00011101)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=53, data=0b00011101)
+
+ssa.i2c.peri_write(register="Bias_THDAC", field=False, data=5)
+hex(ssa.i2c.peri_read(register="Bias_THDAC", field=False))
+
+ssa.i2c.peri_write(register="Bias_CALDAC", field=False, data=100)
+hex(ssa.i2c.peri_read(register="Bias_CALDAC", field=False))
+
+bin(ssa.ctrl.I2C.peri_write(register = 'control_1',  field = False, data= 0b11001 ))
+bin(ssa.ctrl.I2C.peri_read(register = 'control_1',  field = False ))
+
+Configure_TestPulse_SSA(50,50,500, 1000 ,0,0,0)
+
+ssa_cal.fc7.open_shutter(2);
+ssa_cal.fc7.SendCommand_CTRL("start_trigger");
+ssa_cal.fc7.close_shutter(2);
+
+ssa.i2c.strip_read( register="AC_ReadCounterLSB", field=False, strip=50)
+ssa.i2c.strip_read( register="AC_ReadCounterLSB", field=False, strip=51)
+ssa.i2c.strip_read( register="AC_ReadCounterLSB", field=False, strip=52)
+
+
+##### BIST ####################################################
+
+
+time.sleep(0.2); ssa.pwr.set_dvdd( 0.85 )
+
+def BIST_LOOP():
+    for i in range(100000):
+        error = 0
+        time.sleep(0.001); ssa.pwr.reset(display=False)
+        time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'mask_strip',  field = False, data=0xff))
+        time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'mask_peri_D', field = False, data=0xff))
+        time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'mask_peri_A', field = False, data=0xff))
+        # bin(ssa.ctrl.I2C.peri_read(register = 'mask_peri_D', field = False))
+        # bin(ssa.ctrl.I2C.peri_read(register = 'mask_peri_A', field = False))
+        time.sleep(0.001); bin(ssa.i2c.peri_read(register="bist_output", field=False))
+        time.sleep(0.001); bin(ssa.i2c.peri_read(register="ClkTree_control", field=False))
+        time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'ClkTree_control', field = False, data=0b01010100))
+        time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'bist_memory_sram_mode',  field = False, data= 0xf0 ))
+        time.sleep(0.001); hex(ssa.i2c.peri_read(register="bist_memory_sram_mode", field=False))
+        time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'bist_memory_sram_start', field = False, data= 0xf0 ))
+        #time.sleep(0.001); hex(ssa.i2c.peri_read(register="bist_memory_sram_start", field=False))
+        #time.sleep(0.001); hex(ssa.i2c.peri_read(register="bist_output", field=False))
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_0", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_1", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_2", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_3", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_4", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_5", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_6", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_7", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_8", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_9", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_A", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_B", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_C", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_D", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_E", field=False) != 0 ): error += 1
+        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_F", field=False) != 0 ): error += 1
+        print(error)
+
+BIST_LOOP()

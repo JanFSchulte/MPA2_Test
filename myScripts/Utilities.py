@@ -186,6 +186,35 @@ class Utilities:
 		if(self.logfile):
 			self.logfile.write(str(text)+"\n")
 
+	def print_log_color_legend(self, text):
+		sys.stdout.write('Color legend: ')
+		sys.stdout.write("\033[1;31m")
+		sys.stdout.write('error  ')
+		sys.stdout.write("\033[0;0m")
+		sys.stdout.write("\033[1;33m")
+		sys.stdout.write('warning  ')
+		sys.stdout.write("\033[0;0m")
+		sys.stdout.write("\033[1;34m")
+		sys.stdout.write('info  ')
+		sys.stdout.write("\033[0;0m")
+		sys.stdout.write("\033[1;32m")
+		sys.stdout.write('good  ')
+		sys.stdout.write("\033[0;0m")
+		sys.stdout.write(text+'normal\n')
+
+	def print_log_color_legend_i2c(self, text):
+		sys.stdout.write('Color legend: ')
+		sys.stdout.write("\033[1;31m")
+		sys.stdout.write('(no reply) ')
+		sys.stdout.write("\033[0;0m")
+		sys.stdout.write("\033[1;33m")
+		sys.stdout.write('(reply but wrong data) ')
+		sys.stdout.write("\033[0;0m")
+		sys.stdout.write("\033[1;32m")
+		sys.stdout.write('(correct result)')
+		sys.stdout.write("\033[0;0m")
+		sys.stdout.write(text)
+
 def print_method(name):
 	lines = inspect.getsourcelines(name)
 	print("".join(lines[0]))

@@ -319,7 +319,7 @@ class SSA_readout():
 				count[s-1] = (self.I2C.strip_read("ReadCounter_MSB", s) << 8) | self.I2C.strip_read("ReadCounter_LSB", s)
 		return False, count
 
-	def all_lines(self, trigger = True, configure = True, cluster = True, l1data = True, lateral = True):
+	def all_lines(self, trigger = True, configure = True, cluster = True, l1data = True, lateral = False):
 		if(configure):
 			self.fc7.SendCommand_CTRL("fast_test_pulse")
 			self.fc7.SendCommand_CTRL("fast_trigger")

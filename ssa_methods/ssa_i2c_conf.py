@@ -25,6 +25,7 @@ class ssa_i2c_conf:
 		self.freq = 0
 		self.debug = False
 		self.readback = False
+		self.delay = 0.001
 
 	def get_strip_reg_map(self):
 		return self.ssa_strip_reg_map
@@ -63,6 +64,7 @@ class ssa_i2c_conf:
 		#	try:
 		cnt += 1
 		data = data & 0xff
+		time.sleep(self.delay)
 		if(register not in self.ssa_peri_reg_map.keys()):
 			print("'X>  I2C Periphery register name not found")
 			rep = 'Null'
@@ -116,6 +118,7 @@ class ssa_i2c_conf:
 
 	def peri_read(self, register, field=False, timeout = 0.01):
 		cnt = 0; rep = True;
+		time.sleep(self.delay)
 		#while cnt < 4:
 		#	try:
 		cnt += 1
@@ -241,7 +244,7 @@ class ssa_i2c_conf:
 				else:
 					rep  = repd
 				if(self.debug):
-					print('->  I2C Strip {:3d} read  -  Adr=[{:h}], Value=[{:s}] - GOOD'.format(strip_id, adr, wdata))
+					print("->  I2C Strip {:3d} read  - [{:x}] - GOOD".format(strip_id, rep))
 			#			break
 			#except:
 			#	print('=>  TB Communication error - I2C-Strip-read')

@@ -31,9 +31,13 @@ class ssa_ctrl_base:
 		print('->  Sent Re-Sync command')
 		sleep(0.001)
 
-	def reset(self, display=True):
+	def reset_and_set_sampling_edge(self, display=True):
 		rp = self.pwr.reset(display=display)
 		self.set_t1_sampling_edge("negative")
+		return rp
+
+	def reset(self, display=True):
+		rp = self.pwr.reset(display=display)
 		return rp
 
 	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True, rtarray = False, strip_list = range(1,121)):
@@ -300,8 +304,9 @@ class ssa_ctrl_base:
 		self.set_shift_pattern( ST = [pattern]*8, L1 = pattern, Left = pattern, Right = pattern)
 
 
-	def set_shift_pattern(self, ST=[0xaa]*8, L1=0xaa, Left=0xaa, Right=0xaa):
+	def set_shift_pattern(self, ST=[0xaa]*8, L1=0x80, Left=0x80, Right=0x80):
 		if(tbconfig.VERSION['SSA'] >= 2):
+			R_ST = [-1]*7
 			self.I2C.peri_write(register="Shift_pattern_st_0",      field=False, data = ST[0])
 			self.I2C.peri_write(register="Shift_pattern_st_1",      field=False, data = ST[1])
 			self.I2C.peri_write(register="Shift_pattern_st_2",      field=False, data = ST[2])
@@ -311,6 +316,26 @@ class ssa_ctrl_base:
 			self.I2C.peri_write(register="Shift_pattern_Left",      field=False, data = Left)
 			self.I2C.peri_write(register="Shift_pattern_Right",     field=False, data = Right)
 			self.I2C.peri_write(register="Shift_pattern_L1",        field=False, data = L1)
+			R_ST[0] = self.I2C.peri_read(register="Shift_pattern_st_0",      field=False )
+			R_ST[1] = self.I2C.peri_read(register="Shift_pattern_st_1",      field=False )
+			R_ST[2] = self.I2C.peri_read(register="Shift_pattern_st_2",      field=False )
+			R_ST[3] = self.I2C.peri_read(register="Shift_pattern_st_3",      field=False )
+			R_ST[4] = self.I2C.peri_read(register="Shift_pattern_st_4_st_5", field=False )
+			R_ST[6] = self.I2C.peri_read(register="Shift_pattern_st_6_st_7", field=False )
+			R_Left  = self.I2C.peri_read(register="Shift_pattern_Left",      field=False )
+			R_Right = self.I2C.peri_read(register="Shift_pattern_Right",     field=False )
+			R_L1    = self.I2C.peri_read(register="Shift_pattern_L1",        field=False )
+			print(ST)
+			if(R_ST[0] != ST[0] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[0] ))
+			if(R_ST[1] != ST[1] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[1] ))
+			if(R_ST[2] != ST[2] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[2] ))
+			if(R_ST[3] != ST[3] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[3] ))
+			if(R_ST[4] != ST[4] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[4] ))
+			if(R_ST[6] != ST[6] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[6] ))
+			if(R_Left  != Left  ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_Left  ))
+			if(R_Right != Right ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_Right ))
+			if(R_L1    != L1    ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_L1    ))
+
 		else:
 			self.I2C.peri_write('OutPattern0', ST[0])
 			self.I2C.peri_write('OutPattern1', ST[1])
@@ -536,7 +561,7 @@ class ssa_ctrl_base:
 			rp['S']['peri'][1]  = self.I2C.peri_read(register = 'Sync_SEUcnt_blk1')
 			rp['A']['peri'][0]  = self.I2C.peri_read(register = 'aseSync_SEUcnt_blk0')
 			rp['A']['peri'][1]  = self.I2C.peri_read(register = 'aseSync_SEUcnt_blk1')
-			for i in range(8)
+			for i in range(8):
 				rp['S']['strip'][i] = 0 # TODO
 				rp['A']['strip'][i] = 0 # TODO
 		else:
@@ -558,6 +583,7 @@ class ssa_ctrl_base:
 	def try_i2c(self, repeat=5):
 		r=[]; d=[]; w=[];
 		Result = True
+		utils.print_log_color_legend_i2c('\n\n')
 		if(tbconfig.VERSION['SSA'] >= 2):
 			reglist = ['Bias_TEST_msb','Bias_TEST_lsb', 'unused_register', 'Shift_pattern_st_0', 'Shift_pattern_st_1', 'Shift_pattern_st_2']
 		else:

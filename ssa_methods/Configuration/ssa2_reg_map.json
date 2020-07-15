@@ -69,7 +69,7 @@
     "PERIPHERY": {
 
         "mask_strip": {
-            "adr" : "0x0DF7",
+            "adr" : "0x0DFF",
             "permissions" : "RW",
             "mask_reg"   : "mask_strip",
             "fields_mask": {
@@ -113,7 +113,7 @@
             }
         },
         "control_2": {
-            "adr": "0x12",
+            "adr": "0x1002",
             "permissions": "RW",
             "mask_reg"   : "mask_peri_D",
             "fields_mask": {
@@ -720,9 +720,10 @@
             "permissions": "R",
             "mask_reg"   : "",
             "fields_mask": {
-                "status_reg" : "0b11111111",
-                "status_reg" : "0b11111111",
-                "status_reg" : "0b11111111"
+                "bist_latch_output_L"     : "0b00000001",
+                "bist_latch_output_H"     : "0b00000010",
+                "bist_memory_sram_done_L" : "0b00000100",
+                "bist_memory_sram_done_H" : "0b00001000"
             }
         },
         "ADC_out_L": {

@@ -49,6 +49,13 @@ class SSA_ASIC:
 	def load_configuration(self, file = '../SSA_Results/Configuration.csv', display=True):
 		self.ctrl.load_configuration(file = file, display = display)
 
+	def on(self):
+		self.ctrl.reset(display=True)
+		utils.print_info("->  Reset SSA Chip")
+		sleep(0.3);
+		utils.activate_I2C_chip()
+		sleep(0.2)
+
 	def init(self, reset_board = False, reset_chip = False, slvs_current = 0b111, edge = "rising", display = True, read_current = False):
 		self.generic_parameters['cl_word_alignment'] = False
 		if(display):
@@ -59,7 +66,7 @@ class SSA_ASIC:
 			sleep(0.3);
 			if(display): utils.print_info("->  Reset FC7 Firmware")
 		if(reset_chip):
-			self.ctrl.reset(display=False)
+			self.ctrl.reset_and_set_sampling_edge(display=False)
 			sleep(0.3);
 			if(display): utils.print_info("->  Reset SSA Chip")
 		utils.activate_I2C_chip()
