@@ -134,14 +134,14 @@ class ssa_ctrl_base:
 	def adc_measeure(self, testline = 'highimpedence', fast=True):
 		input_sel = self.analog_mux_map[testline]
 		if(fast):
-			r =    self.I2C.peri_write( register="ADC_trimming", field=False, data=(0b11100000 | (input_sel & 0b00011111)) )
-			r = r| self.I2C.peri_write( register="ADC_trimming", field=False, data=(0b11000000 | (input_sel & 0b00011111)) )
+			r =    self.I2C.peri_write( register="ADC_control", field=False, data=(0b11100000 | (input_sel & 0b00011111)) )
+			r = r| self.I2C.peri_write( register="ADC_control", field=False, data=(0b11000000 | (input_sel & 0b00011111)) )
 		else:
-			r =    self.I2C.peri_write( register="ADC_trimming", field=False                     , data=0x00)
-			r = r| self.I2C.peri_write( register="ADC_trimming", field='ADC_control_reset'       , data=0b1)
-			r = r| self.I2C.peri_write( register="ADC_trimming", field='ADC_control_reset'       , data=0b0)
-			r = r| self.I2C.peri_write( register="ADC_trimming", field='ADC_control_input_sel'   , data=input_sel)
-			r = r| self.I2C.peri_write( register="ADC_trimming", field='ADC_control_enable_start', data=0b11)
+			r =    self.I2C.peri_write( register="ADC_control", field=False                     , data=0x00)
+			r = r| self.I2C.peri_write( register="ADC_control", field='ADC_control_reset'       , data=0b1)
+			r = r| self.I2C.peri_write( register="ADC_control", field='ADC_control_reset'       , data=0b0)
+			r = r| self.I2C.peri_write( register="ADC_control", field='ADC_control_input_sel'   , data=input_sel)
+			r = r| self.I2C.peri_write( register="ADC_control", field='ADC_control_enable_start', data=0b11)
 		if(not r):
 			print("Error. Failed to use the ADC")
 			return False
@@ -588,7 +588,6 @@ class ssa_ctrl_base:
 			reglist = ['Bias_TEST_msb','Bias_TEST_lsb', 'unused_register', 'Shift_pattern_st_0', 'Shift_pattern_st_1', 'Shift_pattern_st_2']
 		else:
 			reglist = ['OutPattern0','OutPattern1', 'OutPattern2', 'OutPattern3', 'OutPattern4', 'OutPattern5']
-
 		for iter in range(repeat):
 			for reg in reglist:
 				data = randint(1,255)
@@ -598,7 +597,6 @@ class ssa_ctrl_base:
 			for reg in reglist:
 				r.append( self.I2C.peri_read( register = reg, field = False))
 				time.sleep(0.01)
-
 		for i in range(len(d)):
 			if(r[i] == 'Null'):
 				utils.print_error('->  I2C Register check null  [{:8b}] - [NoReply]'.format(d[i]))
@@ -608,8 +606,57 @@ class ssa_ctrl_base:
 				Result = False
 			else:
 				utils.print_good('->  I2C Register check match [{:8b}] - [{:8b}]'.format(d[i], r[i]) )
-
 		return Result
+
+	def SRAM_BIST(self, memory_select=1, configure=True):
+		bisterr = 0
+		bistres = []
+		if(memory_select == 1):   ctrl = 0x0f
+		elif(memory_select == 2): ctrl = 0xf0
+		else: return False
+		if(configure):
+			self.reset(display=False)
+			self.I2C.peri_write(register = 'mask_strip',  field = False, data=0xff)
+			self.I2C.peri_write(register = 'mask_peri_D', field = False, data=0xff)
+			self.I2C.peri_write(register = 'mask_peri_A', field = False, data=0xff)
+			self.I2C.peri_write(register = 'ClkTree_control', field = False, data=0b01010100)
+		self.I2C.peri_write(register = 'bist_memory_sram_mode',  field = False, data= 0x00 )
+		self.I2C.peri_write(register = 'bist_memory_sram_start', field = False, data= 0x00 )
+		flag = self.I2C.peri_read( register = "bist_output", field=False)
+		if(flag == 'Null'): starterror = True
+		elif( (flag>>2) != 0): starterror = True
+		else:  starterror = False
+		if(starterror):
+			utils.print_error("->  BIST memory {:d} test not working (init).".format(memory_select) )
+			return -1
+		print(flag)
+		self.I2C.peri_write(register = 'bist_memory_sram_mode',  field = False, data= ctrl )
+		self.I2C.peri_write(register = 'bist_memory_sram_start', field = False, data= ctrl )
+		time.sleep(0.010);
+		flag = self.I2C.peri_read( register = "bist_output", field=False)
+		status = ((flag>>(1+memory_select))&0b1)
+		print(flag)
+		if( status == 0):
+			utils.print_error("->  BIST memory {:d} test not working. Return status {:2b}: ".format(memory_select, (flag>>2) ))
+			bisterr=-1
+		else:
+			for N in range(0,16):
+				if(memory_select==1):
+					reg = "bist_memory_sram_output_L_{:X}".format(N)
+				else:
+					reg = "bist_memory_sram_output_H_{:X}".format(N)
+				r = self.I2C.peri_read(register=reg, field=False)
+				bistres.append(r)
+				if(r != 0):
+					bisterr += 1
+			if( bisterr > 0 ):
+				utils.print_warning("->  BIST memory {:d} test error: ".format(memory_select))
+				for N in range(0,16):
+					prstr = bin(bistres[N]) if isinstance(bistres[N], int) else str(bistres[N])
+					print('    |- ' + prstr )
+			else:
+				utils.print_good("->  BIST memory {:d} test OK".format(memory_select))
+		return bisterr
 
 # ssa_peri_reg_map['Fuse_Mode']              = 43
 # ssa_peri_reg_map['Fuse_Prog_b0']           = 44

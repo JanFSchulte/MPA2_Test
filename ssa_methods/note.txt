@@ -152,41 +152,41 @@ ssa.i2c.strip_read( register="AC_ReadCounterLSB", field=False, strip=52)
 ##### BIST ####################################################
 
 
-time.sleep(0.2); ssa.pwr.set_dvdd( 0.85 )
+time.sleep(0.2); ssa.pwr.set_dvdd( 0.82 )
+
+time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'mask_strip',  field = False, data=0xff))
+time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'mask_peri_D', field = False, data=0xff))
+time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'mask_peri_A', field = False, data=0xff))
+
 
 def BIST_LOOP():
+    time.sleep(0.001); ssa.pwr.reset(display=False)
+    time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'mask_strip',  field = False, data=0xff))
+    time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'mask_peri_D', field = False, data=0xff))
+    time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'mask_peri_A', field = False, data=0xff))
+    # bin(ssa.ctrl.I2C.peri_read(register = 'mask_peri_D', field = False))
+    # bin(ssa.ctrl.I2C.peri_read(register = 'mask_peri_A', field = False))
+    time.sleep(0.001);  bin(ssa.i2c.peri_read(register="bist_output", field=False))
+    time.sleep(0.001);  bin(ssa.i2c.peri_read(register="ClkTree_control", field=False))
+    time.sleep(0.001);  bin(ssa.ctrl.I2C.peri_write(register = 'ClkTree_control', field = False, data=0b01010100))
+    error = 0
     for i in range(100000):
-        error = 0
-        time.sleep(0.001); ssa.pwr.reset(display=False)
-        time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'mask_strip',  field = False, data=0xff))
-        time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'mask_peri_D', field = False, data=0xff))
-        time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'mask_peri_A', field = False, data=0xff))
-        # bin(ssa.ctrl.I2C.peri_read(register = 'mask_peri_D', field = False))
-        # bin(ssa.ctrl.I2C.peri_read(register = 'mask_peri_A', field = False))
-        time.sleep(0.001); bin(ssa.i2c.peri_read(register="bist_output", field=False))
-        time.sleep(0.001); bin(ssa.i2c.peri_read(register="ClkTree_control", field=False))
-        time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'ClkTree_control', field = False, data=0b01010100))
-        time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'bist_memory_sram_mode',  field = False, data= 0xf0 ))
-        time.sleep(0.001); hex(ssa.i2c.peri_read(register="bist_memory_sram_mode", field=False))
-        time.sleep(0.001); bin(ssa.ctrl.I2C.peri_write(register = 'bist_memory_sram_start', field = False, data= 0xf0 ))
+        time.sleep(0.001);  bin(ssa.ctrl.I2C.peri_write(register = 'bist_memory_sram_mode',  field = False, data= 0x00 ))
+        time.sleep(0.001);  bin(ssa.ctrl.I2C.peri_write(register = 'bist_memory_sram_start', field = False, data= 0x00 ))
+        time.sleep(0.001);  bin(ssa.ctrl.I2C.peri_write(register = 'bist_memory_sram_mode',  field = False, data= 0x0f ))
+        time.sleep(0.001);  hex(ssa.i2c.peri_read(register="bist_memory_sram_mode", field=False))
+        time.sleep(0.001);  bin(ssa.ctrl.I2C.peri_write(register = 'bist_memory_sram_start', field = False, data= 0x0f ))
         #time.sleep(0.001); hex(ssa.i2c.peri_read(register="bist_memory_sram_start", field=False))
         #time.sleep(0.001); hex(ssa.i2c.peri_read(register="bist_output", field=False))
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_0", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_1", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_2", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_3", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_4", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_5", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_6", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_7", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_8", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_9", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_A", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_B", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_C", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_D", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_E", field=False) != 0 ): error += 1
-        if( ssa.i2c.peri_read(register="bist_memory_sram_output_L_F", field=False) != 0 ): error += 1
+        time.sleep(0.001);
+        for N in range(0,16):
+            reg = "bist_memory_sram_output_L_{:X}".format(N)
+            r = ssa.i2c.peri_read(register=reg, field=False)
+            if( r != 0 ):
+                error += 1
+                print( str(N) + '--' + bin(r))
+        print('-----------------------')
         print(error)
+
 
 BIST_LOOP()
