@@ -25,7 +25,7 @@ class ssa_i2c_conf:
 		self.freq = 0
 		self.debug = False
 		self.readback = False
-		self.delay = 0.001
+		self.delay = 0.0005
 
 	def get_strip_reg_map(self):
 		return self.ssa_strip_reg_map

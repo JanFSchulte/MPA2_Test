@@ -229,7 +229,7 @@ class ssa_calibration():
 		utils.print_good("->  Offs({:12s}) = {:9.3f} mV    ".format(name, ofs*1000.0))
 		if(plot):
 			plt.clf()
-			plt.plot(x, data, '-o')
+			plt.plot(x, data, '.')
 		raw = [x, data]
 		if( isinstance(filename, str) ):
 			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_DNL_INL_" + name + filename2 + '.csv'
