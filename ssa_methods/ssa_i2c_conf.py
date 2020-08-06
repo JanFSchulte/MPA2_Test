@@ -7,8 +7,12 @@ from ssa_methods.Configuration.ssa1_reg_map import *
 
 class ssa_i2c_conf:
 
-	def __init__(self):
-		if(tbconfig.VERSION['SSA'] >= 2):
+	def __init__(self, debug=False):
+		self.__load_reg_map(version=tbconfig.VERSION['SSA'])
+		self.__set_parameters(debug=debug)
+
+	def __load_reg_map(self, version):
+		if(version >= 2):
 			#from ssa_methods.Configuration.ssa2_reg_map import *
 			ssa_reg_map = json.load(open('./ssa_methods/Configuration/ssa2_reg_map.json', 'r'))
 			ssa_cal_map = json.load(open('./ssa_methods/Configuration/ssa2_cal_map.json', 'r'))
@@ -22,10 +26,13 @@ class ssa_i2c_conf:
 			self.ssa_peri_reg_map  = ssa_peri_reg_map_v1
 			self.analog_mux_map    = analog_mux_map_v1
 			print('->  Loaded configuration for SSA v2')
+
+	def __set_parameters(self, debug=False):
 		self.freq = 0
-		self.debug = False
+		self.debug = debug
 		self.readback = False
 		self.delay = 0.0005
+		self.mask_active = {'mask_strip':True, 'mask_peri_A':True, 'mask_peri_D':True, 'None':False}
 
 	def get_strip_reg_map(self):
 		return self.ssa_strip_reg_map
@@ -71,9 +78,12 @@ class ssa_i2c_conf:
 		else:
 			if(tbconfig.VERSION['SSA'] >= 2):
 				reg_adr = self.tonumber(self.ssa_peri_reg_map[register]['adr'],0)
+				mask_name = self.ssa_peri_reg_map[register]['mask_reg']
+				mask_adr  = self.tonumber(self.ssa_peri_reg_map[mask_name]['adr'], 0)
 			else:
 				base = self.ssa_peri_reg_map[register]
 				reg_adr  = (base & 0x0fff) | 0b0001000000000000
+				mask_name = 'None'
 			if(field):
 				if(tbconfig.VERSION['SSA']<2):
 					print('X>  I2C Strip {:3d} error. Field available only for SSA v2'.format(strip_id))
@@ -84,8 +94,7 @@ class ssa_i2c_conf:
 				tdata = (data << loc[0]) & 0xff & mask_val
 
 				if(use_onchip_mask): ### this is the procedure to use
-					mask_name = self.ssa_peri_reg_map[register]['mask_reg']
-					mask_adr  = self.tonumber(self.ssa_peri_reg_map[mask_name]['adr'], 0)
+					self.mask_active[mask_name] = True
 					rep  = write_I2C('SSA', mask_adr, mask_val, self.freq)
 					rep  = write_I2C('SSA', reg_adr, tdata, self.freq)
 				else:
@@ -100,6 +109,9 @@ class ssa_i2c_conf:
 				if(self.debug):
 					print('->  I2C Periphery write - Adr=[0x{:4x}], Value=[{:d}]'.format(reg_adr, tdata))
 			else:
+				if(self.mask_active[mask_name] and (tbconfig.VERSION['SSA']>=2) ):
+					rep  = write_I2C('SSA', mask_adr, 0xff, self.freq)
+					self.mask_active[mask_name] = False
 				rep  = write_I2C('SSA', reg_adr, data, self.freq)
 				if(self.debug):
 					print('->  I2C Periphery write - Adr=[0x{:4x}], Value=[{:d}]'.format(reg_adr, data))
@@ -140,7 +152,7 @@ class ssa_i2c_conf:
 				#self.utils.activate_I2C_chip()
 			else:
 				if(field):
-					mask = self.ssa_peri_reg_map[register]['fields_mask'][field]
+					mask = int(self.ssa_peri_reg_map[register]['fields_mask'][field], 2)
 					loc  = self._get_field_location(mask)
 					rep  = ((repd & mask) >> loc[0])
 				else:
@@ -182,6 +194,7 @@ class ssa_i2c_conf:
 				tdata = (data << loc[0]) & 0xff & mask_val
 
 				if(use_onchip_mask):  ### this is the procedure to use
+					self.mask_active['mask_strip'] = True
 					mask_adr = self.tonumber(self.ssa_peri_reg_map['mask_strip']['adr'],0)
 					rep  = write_I2C('SSA', mask_adr, mask_val, self.freq)
 					rep  = write_I2C('SSA', reg_adr, tdata, self.freq)
@@ -198,6 +211,10 @@ class ssa_i2c_conf:
 				if(self.debug):
 					print('->  I2C Strip {:3d} write - Adr=[0x{:4x}], Value=[{:d}]'.format(strip_id, reg_adr, tdata))
 			else:
+				if(self.mask_active['mask_strip'] and (tbconfig.VERSION['SSA']>=2) ):
+					mask_adr  = self.tonumber(self.ssa_peri_reg_map['mask_strip']['adr'], 0)
+					rep  = write_I2C('SSA', mask_adr, 0xff, self.freq)
+					self.mask_active['mask_strip'] = False
 				wdata = data
 				rep  = write_I2C('SSA', reg_adr, wdata, self.freq)
 				if(self.debug):
@@ -238,7 +255,7 @@ class ssa_i2c_conf:
 				print('X>  I2C Strip {:3d} read  -  Adr=[{:h}], Value=[{:s}] - ERROR'.format(strip_id, adr, 'NOVALUE'))
 			else:
 				if(field):
-					mask = self.ssa_strip_reg_map[register]['fields_mask'][field]
+					mask = int(self.ssa_strip_reg_map[register]['fields_mask'][field], 2)
 					loc  = self._get_field_location(mask)
 					rep  = ((repd & mask) >> loc[0])
 				else:

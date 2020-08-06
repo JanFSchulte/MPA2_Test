@@ -171,10 +171,18 @@ class SSA_readout():
 				else:
 					end = True;	break;
 			if(end): break
-			L1_counter = (data >> 154) & 0xf
-			BX_counter = (data >> 145) & 0x1ff
-			l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
-			hidata = (data >> 121) & 0xffffff
+			if(display_raw):
+				print("\n->  L1 Data Subset: {:s}\n".format(bin(data)))
+			if(tbconfig.VERSION['SSA'] >= 2):
+				L1_counter = (data >> 157) & 0x1ff
+				BX_counter = (data >> 148) & 0x1ff
+				l1data = (data >> 4) & 0x00ffffffffffffffffffffffffffffff
+				hidata = (data >> 125) & 0xffffff
+			else:
+				L1_counter = (data >> 154) & 0xf
+				BX_counter = (data >> 145) & 0x1ff
+				l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
+				hidata = (data >> 121) & 0xffffff
 			#print(bin(hidata))
 			l1datavect = [0]*120
 			hipflagvect = [0]*24
@@ -375,7 +383,10 @@ class SSA_readout():
 
 	def __apply_offset_correction(self, val, enable = True):
 		if(not enable):
-			cr = val - 3
+			if(tbconfig.VERSION['SSA'] >= 2):
+				cr = val - 3.5
+			else:
+				cr = val - 3.0
 		else:
 			if(not self.ofs_initialised):
 				self.ofs[0] = self.I2C.peri_read('Offset0')

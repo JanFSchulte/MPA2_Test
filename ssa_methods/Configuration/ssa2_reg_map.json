@@ -11,6 +11,7 @@
         "StripControl1": {
             "adr": "0x0",
             "permissions": "RW",
+            "mask_reg"   : "mask_strip",
             "fields_mask": {
                 "PixelMask"       : "0b00000001",
                 "SignalPolarity"  : "0b00000010",
@@ -24,6 +25,7 @@
         "StripControl2": {
             "adr": "0x1",
             "permission": "RW",
+            "mask_reg"   : "mask_strip",
             "fields_mask": {
                 "HIP_Cut"        : "0b00000111",
                 "GainTrimming"   : "0b01111000"
@@ -32,6 +34,7 @@
         "ThresholdTrimming": {
             "adr": "0x2",
             "permissions": "RW",
+            "mask_reg"   : "mask_strip",
             "fields_mask": {
                 "ThresholdTrimming": "0b00011111"
             }
@@ -39,6 +42,7 @@
         "DigCalibPattern_L": {
             "adr": "0x3",
             "permissions": "RW",
+            "mask_reg"   : "mask_strip",
             "fields_mask": {
                 "DigCalibPattern_L": "0b11111111"
             }
@@ -46,6 +50,7 @@
         "DigCalibPattern_H": {
             "adr": "0x4",
             "permissions": "RW",
+            "mask_reg"   : "mask_strip",
             "fields_mask": {
                 "DigCalibPattern_H": "0b11111111"
             }
@@ -53,6 +58,7 @@
         "AC_ReadCounterLSB": {
             "adr": "0x5",
             "permissions": "R",
+            "mask_reg"   : "mask_strip",
             "fields_mask": {
                 "AC_ReadCounterLSB": "0b11111111"
             }
@@ -60,6 +66,7 @@
         "AC_ReadCounterMSB": {
             "adr": "0x6",
             "permissions": "R",
+            "mask_reg"   : "mask_strip",
             "fields_mask": {
                 "AC_ReadCounterMSB": "0b11111111"
             }
@@ -73,7 +80,7 @@
             "permissions" : "RW",
             "mask_reg"   : "mask_strip",
             "fields_mask": {
-                "mask_strip"      : "0b11111111"
+                "mask_strip" : "0b11111111"
             }
         },
         "mask_peri_D": {
@@ -81,7 +88,7 @@
             "permissions" : "RW",
             "mask_reg"   : "mask_peri_D",
             "fields_mask": {
-                "mask_strip"      : "0b11111111"
+                "mask_strip" : "0b11111111"
             }
         },
         "mask_peri_A": {
@@ -90,6 +97,22 @@
             "mask_reg"   : "mask_peri_A",
             "fields_mask": {
                 "mask_strip" : "0b11111111"
+            }
+        },
+        "configuration_test": {
+            "adr": "0x103C",
+            "description": "CONFIGURATION TEST REGISTER",
+            "note": "This register does not have any effect on the SSA behaviour",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "all"  : "0b11111111",
+                "mod0" : "0b00000111",
+                "mod1" : "0b00001110",
+                "mod2" : "0b00011100",
+                "mod3" : "0b00111000",
+                "mod4" : "0b01110000",
+                "mod5" : "0b11100000"
             }
         },
         "Ring_oscillator_ctrl": {
@@ -612,14 +635,6 @@
             "mask_reg"   : "mask_peri_A",
             "fields_mask": {
                 "ADC_ref" : "0b00011111"
-            }
-        },
-        "unused_register": {
-            "adr": "0x103C",
-            "permissions": "RW",
-            "mask_reg"   : "mask_peri_A",
-            "fields_mask": {
-                "unused" : "0b11111111"
             }
         },
         "Async_SEUcnt_blk1": {

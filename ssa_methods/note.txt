@@ -102,12 +102,19 @@ bin(ssa.ctrl.I2C.peri_read(register = 'control_2',  field = False))
 
 #config strip
 for i in range(0, 120):
-    ssa.i2c.strip_write(register="StripControl1", field=False, strip=60, data=0b0)
+    ssa.i2c.strip_write(register="StripControl1", field=False, strip=i, data=0b0)
 
-ssa.i2c.strip_write(register="StripControl1", field=False, strip=30, data=0b1001)
-ssa.i2c.strip_write(register="StripControl1", field=False, strip=40, data=0b1001)
-ssa.i2c.strip_write(register="StripControl1", field=False, strip=50, data=0b1001)
-ssa.i2c.strip_write(register="StripControl1", field=False, strip=60, data=0b1001)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=1, data=0b1001)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=2, data=0b1001)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=3, data=0b1001)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=4, data=0b1001)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=5,  data=0b1001)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=6, data=0b1001)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=7, data=0b1001)
+ssa.i2c.strip_write(register="StripControl1", field=False, strip=8, data=0b1001)
+
+ssa.readout.all_lines(l1data=1, cluster=0)
+ssa.readout.l1_data(display_raw=1, display=1)
 
 bin(ssa.i2c.strip_read(register="StripControl1", field=False, strip=60) )
 
@@ -190,3 +197,25 @@ def BIST_LOOP():
 
 
 BIST_LOOP()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if((tbconfig.VERSION['SSA'] >= 2))
+#	print("Mask test:")
+#	for iter in range(repeat):
+#		data = randint(1,255)
+#		d.append( data )
+#		for k in range(8):
+#			field = 'b{:0d}'.format(k)
+#			w.append( self.I2C.peri_write(register = 'configuration_test', field = field, data = data))

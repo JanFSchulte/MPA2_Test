@@ -56,7 +56,7 @@ class SSA_ASIC:
 		utils.activate_I2C_chip()
 		sleep(0.2)
 
-	def init(self, reset_board = False, reset_chip = False, slvs_current = 0b111, edge = "rising", display = True, read_current = False):
+	def init(self, reset_board=False, reset_chip=False, resync=True, slvs_current=0b111, edge="rising", display=True, read_current=False, set_deskewing=False):
 		self.generic_parameters['cl_word_alignment'] = False
 		if(display):
 			sys.stdout.write("->  Initialising..\r")
@@ -70,27 +70,30 @@ class SSA_ASIC:
 			sleep(0.3);
 			if(display): utils.print_info("->  Reset SSA Chip")
 		utils.activate_I2C_chip()
-		sleep(0.2)
+		#sleep(0.2)
 		self.ctrl.set_lateral_data(left=0, right=0)
 		if(display):
 			sys.stdout.write("->  Tuning sampling phases..\r")
 			sys.stdout.flush()
-		sleep(0.1); self.ctrl.set_t1_sampling_edge(edge)
-		sleep(0.1); self.ctrl.init_slvs(slvs_current)
-		sleep(0.1); rt = self.ctrl.phase_tuning()
+		self.ctrl.set_t1_sampling_edge(edge)
+		self.ctrl.init_slvs(slvs_current)
+		rt = self.ctrl.phase_tuning()
 		if(rt):
 			if(display): utils.print_good("->  Shift register mode ok")
 			if(display): utils.print_good("->  Sampling phases tuned")
 		else:
 			if(display): utils.print_error("->  Impossible to complete phase tuning")
-		sleep(0.2); self.ctrl.activate_readout_normal()
-		sleep(0.1); self.ctrl.activate_readout_normal()
-		self.ctrl.set_sampling_deskewing_coarse(value = 0)
-		self.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
-		self.ctrl.set_cal_pulse_delay(0)
+		self.ctrl.activate_readout_normal()
+		if(set_deskewing):
+			self.ctrl.set_sampling_deskewing_coarse(value = 0)
+			self.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
+			self.ctrl.set_cal_pulse_delay(0)
+		if(resync):
+			self.ctrl.resync(display=False)
+			utils.print_info("->  ReSync request");
 		if(display):
 			utils.print_info("->  Activated normal readout mode");
-			sys.stdout.write("->  Ready!                  \r")
+			sys.stdout.write("->  Ready!                  ")
 			sys.stdout.flush()
 			sleep(0.2)
 			if(read_current):

@@ -26,10 +26,11 @@ class ssa_ctrl_base:
 		self.dll_chargepump = 0b00;
 		self.bias_dl_enable = False
 
-	def resync(self):
+	def resync(self, display=True):
 		SendCommand_CTRL("fast_fast_reset");
-		print('->  Sent Re-Sync command')
-		sleep(0.001)
+		if(display):
+			print('->  Sent Re-Sync command')
+		#sleep(0.001)
 
 	def reset_and_set_sampling_edge(self, display=True):
 		rp = self.pwr.reset(display=display)
@@ -189,7 +190,8 @@ class ssa_ctrl_base:
 		time.sleep(0.01)
 		#rt = self.__do_phase_tuning()
 		rt = self.align_out()
-		self.I2C.peri_write('OutPattern7/FIFOconfig', 7)
+		if(tbconfig.VERSION['SSA']==1):
+			self.I2C.peri_write('OutPattern7/FIFOconfig', 7)
 		self.reset_pattern_injection()
 		self.activate_readout_normal()
 		return rt
@@ -224,7 +226,7 @@ class ssa_ctrl_base:
 	def activate_readout_normal(self, mipadapterdisable = 0):
 		val = 0b100 if (mipadapterdisable) else 0b000
 		if(tbconfig.VERSION['SSA'] >= 2):
-			self.I2C.peri_write(register="control_1", field='ReadoutMode', data=gain_trimming)
+			self.I2C.peri_write(register="control_1", field='ReadoutMode', data=val)
 			rep = self.I2C.peri_read( register="control_1", field='ReadoutMode')
 		else:
 			self.I2C.peri_write('ReadoutMode',val)
@@ -537,14 +539,17 @@ class ssa_ctrl_base:
 			time.sleep(0.001)
 
 
-	def try_i2c(self, repeat=5):
+	def try_i2c(self, repeat=4):
 		r=[]; d=[]; w=[];
 		Result = True
 		utils.print_log_color_legend_i2c('\n\n')
 		if(tbconfig.VERSION['SSA'] >= 2):
-			reglist = ['Bias_TEST_msb','Bias_TEST_lsb', 'unused_register', 'Shift_pattern_st_0', 'Shift_pattern_st_1', 'Shift_pattern_st_2']
+			reglist = ['Bias_TEST_msb','Bias_TEST_lsb', 'configuration_test', 'Shift_pattern_st_0', 'Shift_pattern_st_1', 'Shift_pattern_st_2']
 		else:
 			reglist = ['OutPattern0','OutPattern1', 'OutPattern2', 'OutPattern3', 'OutPattern4', 'OutPattern5']
+		self.I2C.peri_write(register = 'mask_strip',  field = False, data=0xff)
+		self.I2C.peri_write(register = 'mask_peri_D', field = False, data=0xff)
+		self.I2C.peri_write(register = 'mask_peri_A', field = False, data=0xff)
 		for iter in range(repeat):
 			for reg in reglist:
 				data = randint(1,255)
@@ -554,6 +559,18 @@ class ssa_ctrl_base:
 			for reg in reglist:
 				r.append( self.I2C.peri_read( register = reg, field = False))
 				time.sleep(0.01)
+
+		if((tbconfig.VERSION['SSA'] >= 2)):
+			for iter in range(repeat):
+				for k in range(6):
+					data = randint(1,7)
+					d.append( data )
+					field = 'mod{:0d}'.format(k)
+					w.append( self.I2C.peri_write(register = 'configuration_test', field = field, data = data))
+					time.sleep(0.01)
+					r.append( self.I2C.peri_read( register = 'configuration_test', field = field))
+					time.sleep(0.01)
+
 		for i in range(len(d)):
 			if(r[i] == 'Null'):
 				utils.print_error('->  I2C Register check null  [{:8b}] - [NoReply]'.format(d[i]))
