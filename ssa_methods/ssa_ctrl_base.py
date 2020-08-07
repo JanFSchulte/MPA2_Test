@@ -171,7 +171,7 @@ class ssa_ctrl_base:
 		send_test(15)
 		#print(self.fc7.read("stat_phy_phase_tuning_done"))
 		while(self.fc7.read("stat_phy_phase_tuning_done") == 0 and cnt < 5):
-			sleep(0.1)
+			time.sleep(0.1)
 			print("Waiting for the phase tuning")
 			cnt += 1
 		if cnt>4:
@@ -200,9 +200,9 @@ class ssa_ctrl_base:
 		fc7.write("ctrl_phy_phase_tune_again", 1)
 		timeout_max = 3
 		timeout = 0
-		sleep(0.1)
+		time.sleep(0.1)
 		while(fc7.read("stat_phy_phase_tuning_done") == 0):
-			sleep(0.1)
+			time.sleep(0.1)
 			utils.print_warning("->  Waiting for the phase tuning")
 			timeout+=1
 			if (timeout == timeout_max):
@@ -314,7 +314,7 @@ class ssa_ctrl_base:
 
 	def set_threshold(self, value):
 		self.I2C.peri_write("Bias_THDAC", value)
-		sleep(0.01)
+		#time.sleep(0.01)
 		test_read = self.I2C.peri_read("Bias_THDAC")
 		if(test_read != value):
 			print("Was writing: ", value, ", got: ", test_read)
@@ -324,7 +324,7 @@ class ssa_ctrl_base:
 
 	def set_threshold_H(self, value):
 		self.I2C.peri_write("Bias_THDACHIGH", value)
-		sleep(0.01)
+		#time.sleep(0.01)
 		test_read = self.I2C.peri_read("Bias_THDACHIGH")
 		if(test_read != value):
 			print("Was writing: ", value, ", got: ", test_read)
@@ -386,11 +386,11 @@ class ssa_ctrl_base:
 		V = tbconfig.VERSION['SSA']
 		if(isinstance(delay, str)):
 			if(delay == 'disable' or delay == 'off'):
-				if(V>=2): self.I2C.peri_write(register='Delay_line', field='Bias_DL_en',  data=0)
+				if(V>=2): self.I2C.peri_write(register='Delay_line', field='DL_en',  data=0)
 				else:     self.I2C.peri_write("Bias_DL_en", 0)
 				self.bias_dl_enable = False
 			elif(delay == 'enable'or delay == 'on'):
-				if(V>=2): self.I2C.peri_write(register='Delay_line', field='Bias_DL_en',  data=1)
+				if(V>=2): self.I2C.peri_write(register='Delay_line', field='DL_en',  data=1)
 				else:     self.I2C.peri_write("Bias_DL_en", 1)
 				self.bias_dl_enable = True
 			elif(delay == 'keep'):
@@ -399,7 +399,7 @@ class ssa_ctrl_base:
 				exit(1)
 		elif(isinstance(delay, int)):
 			if (not self.bias_dl_enable):
-				if(V>=2): self.I2C.peri_write(register='Delay_line', field='Bias_DL_en',  data=1)
+				if(V>=2): self.I2C.peri_write(register='Delay_line', field='DL_en',  data=1)
 				else:     self.I2C.peri_write("Bias_DL_en", 1)
 				self.bias_dl_enable = True
 			if(V>=2): self.I2C.peri_write(register='Delay_line', field='DL_ctrl',  data=delay)
@@ -409,7 +409,7 @@ class ssa_ctrl_base:
 
 	def set_sampling_deskewing_coarse(self, value):
 		word = value & 0b111
-		if((tbconfig.VERSION['SSA'] >= 2) and onchip_mask):
+		if((tbconfig.VERSION['SSA'] >= 2)):
 			r = self.I2C.peri_write(register="ClockDeskewing_coarse", field=False,  data=word)
 			r = self.I2C.peri_read( register="ClockDeskewing_coarse", field=False)
 		else:
@@ -419,8 +419,8 @@ class ssa_ctrl_base:
 		else: return True
 
 
-	def set_sampling_deskewing_fine(self, value, enable = True, bypass = False, onchip_mask=False):
-		if((tbconfig.VERSION['SSA'] >= 2) and onchip_mask):
+	def set_sampling_deskewing_fine(self, value, enable = True, bypass = False):
+		if((tbconfig.VERSION['SSA'] >= 2)):
 			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_value',      data=value)
 			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_chargepump', data=self.dll_chargepump)
 			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_bypass',     data=bypass)
@@ -432,7 +432,7 @@ class ssa_ctrl_base:
 				((bypass & 0b1) << 6) |
 				((enable & 0b1) << 7)
 			)
-			if((tbconfig.VERSION['SSA'] >= 2) and onchip_mask):
+			if((tbconfig.VERSION['SSA'] >= 2)):
 				self.I2C.peri_write(register="ClockDeskewing_fine", field = False, data = word)
 				r = self.I2C.peri_read(register="ClockDeskewing_fine", field = False)
 			else:
@@ -445,7 +445,7 @@ class ssa_ctrl_base:
 	def set_sampling_deskewing_chargepump(self, val):
 		self.dll_chargepump = val & 0b11
 
-		if((tbconfig.VERSION['SSA'] >= 2) and onchip_mask):
+		if((tbconfig.VERSION['SSA'] >= 2)):
 			r = self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_chargepump', data=self.dll_chargepump)
 			r = self.I2C.peri_read( register="ClockDeskewing_fine", field='DLL_chargepump')
 			return (r == val)
@@ -532,12 +532,8 @@ class ssa_ctrl_base:
 			self.I2C.peri_write(register="control_3", field='L1_Latency_lsb', data = ((latency & 0x00ff) >> 0) )
 			self.I2C.peri_write(register="control_1", field='L1_Latency_msb', data = ((latency & 0x0100) >> 8) )
 		else:
-			time.sleep(0.001)
 			self.I2C.peri_write('L1_Latency_msb', (latency & 0xff00) >> 8)
-			time.sleep(0.001)
 			self.I2C.peri_write('L1_Latency_lsb', (latency & 0x00ff) >> 0)
-			time.sleep(0.001)
-
 
 	def try_i2c(self, repeat=4):
 		r=[]; d=[]; w=[];
@@ -555,10 +551,10 @@ class ssa_ctrl_base:
 				data = randint(1,255)
 				d.append( data )
 				w.append( self.I2C.peri_write(register = reg, field = False, data = data))
-				time.sleep(0.01)
+				#time.sleep(0.01)
 			for reg in reglist:
 				r.append( self.I2C.peri_read( register = reg, field = False))
-				time.sleep(0.01)
+				#time.sleep(0.01)
 
 		if((tbconfig.VERSION['SSA'] >= 2)):
 			for iter in range(repeat):
@@ -567,9 +563,9 @@ class ssa_ctrl_base:
 					d.append( data )
 					field = 'mod{:0d}'.format(k)
 					w.append( self.I2C.peri_write(register = 'configuration_test', field = field, data = data))
-					time.sleep(0.01)
+					#time.sleep(0.01)
 					r.append( self.I2C.peri_read( register = 'configuration_test', field = field))
-					time.sleep(0.01)
+					#time.sleep(0.01)
 
 		for i in range(len(d)):
 			if(r[i] == 'Null'):

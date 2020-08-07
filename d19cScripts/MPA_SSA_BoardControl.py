@@ -85,13 +85,13 @@ def Configure_MPA_SSA_I2C_Master(enabled, frequency=4, verbose = 1):
         fc7.write("cnfg_mpa_ssa_board_i2c_freq", frequency)
 
         # wait a bit
-        sleep(0.1)
+        time.sleep(0.1)
 
         # now reset all the I2C related stuff
         fc7.write("ctrl_command_i2c_reset", 1)
         fc7.write("ctrl_command_i2c_reset_fifos", 1)
         fc7.write("ctrl_mpa_ssa_board_reset", 1)
-        sleep(0.1)
+        time.sleep(0.1)
 
 def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data, verbose = 1):
 
@@ -126,7 +126,7 @@ def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data, v
         while fc7.read("stat_command_i2c_fifo_replies_empty") > 0:
                 if verbose:
                         ReadStatus()
-                        sleep(0.1)
+                        time.sleep(0.1)
 
         # get the reply
         reply = fc7.read("ctrl_command_i2c_reply_fifo")
@@ -170,7 +170,7 @@ def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data, v
 # Reset the board
 #print("---> Resetting the d19c board")
 #SendCommand_CTRL("global_reset")
-#sleep(1)
+#time.sleep(1)
 
 # loads the slave map (needs to be done after each reset of the d19c)
 #SetSlaveMap()

@@ -73,7 +73,7 @@ class ssa_i2c_conf:
 		data = data & 0xff
 		time.sleep(self.delay)
 		if(register not in self.ssa_peri_reg_map.keys()):
-			print("'X>  I2C Periphery register name not found")
+			print("'X>  I2C Periphery register name not found: key: {:s} ".format(register))
 			rep = 'Null'
 		else:
 			if(tbconfig.VERSION['SSA'] >= 2):
@@ -135,7 +135,7 @@ class ssa_i2c_conf:
 		#	try:
 		cnt += 1
 		if(register not in self.ssa_peri_reg_map.keys()):
-			print("'X>  I2C Periphery register name not found")
+			print("'X>  I2C Periphery register name not found: key: {:s} ".format(register))
 			rep = 'Null'
 		else:
 			if(tbconfig.VERSION['SSA'] == 2):

@@ -29,7 +29,7 @@ class SSA_readout():
 		return [l1_data_ready, stub_data_ready, counters_ready]
 
 
-	def cluster_data(self, apply_offset_correction = False, display = False, shift = 'default', initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False, return_as_pattern = False):
+	def cluster_data(self, apply_offset_correction = False, display = False, shift = 'default', initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False, return_as_pattern = False, profile=False):
 		data = []; tmp = [];
 		if(shift == 'default'):
 			ishift = self.cl_shift['digital']
@@ -42,20 +42,23 @@ class SSA_readout():
 		status = [0]*3; timeout = 10;
 		if(initialize):
 			#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
-			sleep(0.001)
+			time.sleep(0.001)
 			Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 0, delay_before_next_pulse = 500, number_of_test_pulses = 1, enable_rst_L1 = 0)
-			sleep(0.001)
+			time.sleep(0.001)
+		if(profile): pr_start=time.time()
 		#status_init = self.status()
 		if(send_test_pulse):
 			#self.fc7.SendCommand_CTRL("stop_trigger")
 			self.fc7.SendCommand_CTRL("start_trigger")
+		if(profile): print('->  cluster readout 1 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		while (status[1] != 1 and counter<timeout):
-			sleep(0.001)
+			#time.sleep(0.001)
 			status = self.status()
 			counter += 1
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
 		#self.fc7.SendCommand_CTRL("stop_trigger")
 		counter = 0
+		if(profile): print('->  cluster readout 2 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		for word in ssa_stub_data:
 			counter += 1
 			tmp.append( to_number(word, 8, 0)/2.0 )
@@ -65,6 +68,7 @@ class SSA_readout():
 			if (counter % 10 == 0):
 				data.append(tmp)
 				tmp = []
+		if(profile): print('->  cluster readout 3 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		if raw:
 			return data
 		if(display):
@@ -119,13 +123,16 @@ class SSA_readout():
 		self.fc7.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
 
-	def l1_data(self, latency = 50, shift = 0, initialise = True, mipadapterdisable = True, trigger = True, multi = True, display = False, display_raw = False):
+	def l1_data(self, latency = 50, shift = 0, initialise = True, mipadapterdisable = True, trigger = True, multi = True, display = False, display_raw = False, profile=False):
 		#disable_pixel(0,0)
 		if(initialise == True):
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
-			Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = (latency+3+shift), delay_before_next_pulse = 0, number_of_test_pulses = 1, enable_rst_L1 = 0, enable_initial_reset = 0, enable_L1 = 1)
+			Configure_TestPulse_SSA(
+				delay_after_fast_reset = 0, delay_after_test_pulse = (latency+3+shift),
+				delay_before_next_pulse = 0, number_of_test_pulses = 1, enable_rst_L1 = 0,
+				enable_initial_reset = 0, enable_L1 = 1)
 			self.fc7.write("cnfg_fast_delay_between_consecutive_trigeers", 0)
 			if(tbconfig.VERSION['SSA'] >= 2):
 				self.I2C.peri_write(register="control_1", field='L1_Latency_msb', data = 0 )
@@ -134,14 +141,18 @@ class SSA_readout():
 				self.I2C.peri_write('L1_Latency_msb', 0)
 				self.I2C.peri_write('L1_Latency_lsb', latency)
 			self.ctrl.activate_readout_normal(mipadapterdisable = mipadapterdisable)
-			sleep(0.001)
+			time.sleep(0.001)
+		if(profile): pr_start=time.time()
 		if trigger:
 			self.fc7.SendCommand_CTRL("start_trigger")
 			#self.send_trigger(1)
-		sleep(0.01)
+		if(profile): print('->  L1 readout 1 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+		#time.sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
-		sleep(0.001)
+		#time.sleep(0.001)
+		if(profile): print('->  L1 readout 2 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
+		if(profile): print('->  L1 readout 3 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		if(display_raw):
 			print("\n->  L1 Data: ")
 			for word in ssa_l1_data:
@@ -161,8 +172,9 @@ class SSA_readout():
 			        | int(bin(to_number(word,32,24)).lstrip('-0b').zfill(8), 2)
 			      )
 			data = data | (tmp << (32*(49-i)))
-		end = False; rt = [];
+		end = False; ret = [];
 		timeoutcnt = 50*32
+		if(profile): print('->  L1 readout 4 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		while (not end):
 			while ((data & 0b1) != 0b1 ):
 				data =  data >> 1
@@ -177,7 +189,7 @@ class SSA_readout():
 				L1_counter = (data >> 157) & 0x1ff
 				BX_counter = (data >> 148) & 0x1ff
 				l1data = (data >> 4) & 0x00ffffffffffffffffffffffffffffff
-				hidata = (data >> 125) & 0xffffff
+				hidata = (data >> 124) & 0xffffff
 			else:
 				L1_counter = (data >> 154) & 0xf
 				BX_counter = (data >> 145) & 0x1ff
@@ -210,30 +222,30 @@ class SSA_readout():
 			data =  data >> 160
 			if(not multi):
 				end = True
-				rt = [L1_counter, BX_counter, l1hitlist, hiplist]
+				ret = [L1_counter, BX_counter, l1hitlist, hiplist]
 			else:
-				rt.append([L1_counter, BX_counter, l1hitlist, hiplist])
-		if len(rt) == 0:
-			if multi: rt = [[-1,-1,[],[]]]
-			else: rt = [-1,-1,[],[]]
-
-		return rt
+				ret.append([L1_counter, BX_counter, l1hitlist, hiplist])
+		if len(ret) == 0:
+			if multi: ret = [[-1,-1,[],[]]]
+			else: ret = [-1,-1,[],[]]
+		if(profile): print('->  L1 readout 5 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+		return ret
 #		ssa.readout.l1_data(display = True, trigger = False, display_raw = 1)
 
 
 	def lateral_data(self, display = False, shift = 0, initialize = True, raw = False):
 		if(initialize == True):
 			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
-			sleep(0.001)
+			time.sleep(0.001)
 		self.fc7.SendCommand_CTRL("start_trigger")
 		self.fc7.SendCommand_CTRL("start_trigger")
-		sleep(0.01)
+		time.sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
 		while ((status & 0x00000002) >> 1) != 1:
 			status = self.fc7.read("stat_slvs_debug_general")
-			sleep(0.001)
+			time.sleep(0.001)
 			counter = 0
-		sleep(0.001)
+		time.sleep(0.001)
 		lateral_data = self.fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
 		if (display is True):
 			counter = 0
@@ -286,7 +298,7 @@ class SSA_readout():
 		timeout = 0
 		failed = False
 		while ((mpa_counters_ready == 0) & (timeout < 100)):
-			#### sleep(0.01)
+			#### time.sleep(0.01)
 			timeout += 1
 			mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 			time.sleep(0.001)
@@ -307,7 +319,7 @@ class SSA_readout():
 				line2 = to_number(fifo1_word,16,8)
 				count[i] = (line2 << 8) | line1
 				if (i%1000 == 0): print("Reading BX #" + str(i))
-		#### sleep(0.1)
+		#### time.sleep(0.1)
 		#### mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		for s in range(0,120):
 			if (not (s+1) in striplist):
@@ -335,10 +347,10 @@ class SSA_readout():
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
 			Configure_TestPulse(199, 50, 400, 1)
-			sleep(0.001)
+			time.sleep(0.001)
 		if(trigger):
 			self.fc7.SendCommand_CTRL("start_trigger")
-			sleep(0.1)
+			time.sleep(0.001)
 		status = self.fc7.read("stat_slvs_debug_general")
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)

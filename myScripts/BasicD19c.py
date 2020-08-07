@@ -8,7 +8,7 @@ import sys, os
 # START HERE
 #####################
 #SendCommand_CTRL("global_reset")
-#sleep(1)
+#time.sleep(1)
 
 ################
 #change the phase of the fast_cmd wrt the 320MHz clock going to the chip:
@@ -316,7 +316,7 @@ def SendCommand_I2C_SeqWrite(command, hybrid_id, chip_id, register_address, data
 
     # first word
     fc7.write("ctrl_command_i2c_command_fifo", cmd0)
-    sleep(0.01)
+    time.sleep(0.01)
 
     # nbytes
     nbytes = data.size
@@ -336,7 +336,7 @@ def SendCommand_I2C_SeqWrite(command, hybrid_id, chip_id, register_address, data
         cmd = raw_command + raw_word_id + raw_data
         fc7.write("ctrl_command_i2c_command_fifo", cmd)
         word_counter = word_counter + 1
-        sleep(0.01)
+        time.sleep(0.01)
 
     return description
 
@@ -369,7 +369,7 @@ def ReadChipDataNEW(nbytes = 1, verbose = 0):
             # just in case wait next word
             while(fc7.read("stat_command_i2c_fifo_replies_empty") == 1):
                 print("debug: waiting next word, should not happen")
-                sleep(1)
+                time.sleep(1)
             reply = fc7.read("ctrl_command_i2c_reply_fifo")
             data1 = (reply & 0x000000FF) >> 0
             data2 = (reply & 0x0000FF00) >> 8
@@ -466,7 +466,7 @@ def read_I2C (chip, address, timeout = 0.001):
     elif (chip == 'SSA'):
         #print('DEBUG: Sending I2C READ command ADR=[{:4X}] DATA=[{:8b}]'.format(address, data))
         SendCommand_I2C(command_type, 0, SSA, 0, read, address, data, readback)
-    sleep(timeout)
+    time.sleep(timeout)
     read_data = ReadChipDataNEW()
     return read_data
 
@@ -475,7 +475,7 @@ def read_I2C (chip, address, timeout = 0.001):
 #    timeout_max = 5
 #    timeout = 0
 #    while(fc7.read("stat_phy_phase_tuning_done") == 0):
-#        sleep(0.1)
+#        time.sleep(0.1)
 #        if (timeout == timeout_max):
 #            timeout = 0
 #            if (verbose): print("Waiting for the phase tuning")

@@ -11,7 +11,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from threading import Thread
-
+from utilities.tbsettings import *
 
 
 class SSA_test_utility():
@@ -227,10 +227,12 @@ class SSA_test_utility():
 	#		print( bin(a) + '  ' + bin(b))
 
 
-	def l1_data_basic(self, mode = "digital", nruns = 1, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = ''):
+	def l1_data_basic(self, mode = "digital", nruns = 1, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '',profile=False):
 		fo = open(file + "readout_L1-data_" + mode + ".csv", filemode)
 		counter = [[0,0],[0,0]]
 		utils.activate_I2C_chip()
+		if(tbconfig.VERSION['SSA'] >= 2): l1_counter_mask = 0b111111111
+		else: l1_counter_mask = 0b1111
 		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
 		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
@@ -241,12 +243,16 @@ class SSA_test_utility():
 			return 'error'
 		l1hitlistprev = []
 		hiplistprev = []
+		if(profile):
+			pr_start=time.time()
+			pr_cnt=0
 		for H in range(0,2):
 			if(mode == "digital"):
 				self.ssa.inject.digital_pulse(initialise = True)
 			else:
 				self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', threshold = threshold, cal_pulse_amplitude = calpulse[H])
 			for i in random.sample(range(1, 121), 120)*nruns:
+				if(profile): pr_cnt+=1
 				err = [False, False]; wd = 0;
 				if(mode == "digital"):
 					self.ssa.inject.digital_pulse(hit_list = [i], hip_list = [i]*H, initialise = False)
@@ -254,12 +260,13 @@ class SSA_test_utility():
 					self.ssa.inject.analog_pulse(hit_list = [i], initialise = False)
 				counter[H][0] += 1
 				#self.ssa.inject.digital_pulse(hit_list = [i], initialise = False)
-				time.sleep(0.001)
+				#time.sleep(0.001)
 				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = False, shift = shift, latency = latency, multi = False)
 				if (hfi):
 					while(l1hitlist == l1hitlistprev):
 						#print('HFI')
-						sleep(0.001); L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(shift = shift, latency = latency, initialise = False, multi = False)
+						#sleep(0.001);
+						L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(shift = shift, latency = latency, initialise = False, multi = False)
 						if(wd>5): break
 						wd += 1
 				if(L1_counter < 0): return 'error'
@@ -270,12 +277,12 @@ class SSA_test_utility():
 				if (len(hiplist) != H): err[H] = True
 				if (len(hiplist) > 0):
 					if (hiplist[0] != H): err[H] = True
-				dstr = "expected: [%2d][%3s][%3s]\t  |  found: [%2d][%3s][%3s]"  % (
-				        (L1_counter_init+1)&0b1111, i, H,
-				        L1_counter,      ', '.join(map(str, l1hitlist)),       ', '.join(map(str, hiplist)))
-				fstr = "[%2d][%3s][%3s];   \t[%2d][%3s][%3s]"  % (
-				        (L1_counter_init+1)&0b1111, i, H,
-				        L1_counter,      ', '.join(map(str, l1hitlist)),       ', '.join(map(str, hiplist)))
+				dstr = "expected: [{:2d}][{:3s}][{:3s}]\t  |  found: [{:2d}][{:3s}][{:3s}]".format(
+						(L1_counter_init+1)&l1_counter_mask,  str(i),  str(H),
+						L1_counter,  ', '.join(map(str, l1hitlist)),  ', '.join(map(str, hiplist)))
+				fstr = "[{:2d}][{:3s}][{:3s}];   \t[{:2d}][{:3s}][{:3s}]".format(
+				        (L1_counter_init+1)&l1_counter_mask,  str(i),  str(H),
+				        L1_counter,  ', '.join(map(str, l1hitlist)),  ', '.join(map(str, hiplist)))
 				l1hitlistprev = l1hitlist
 				hiplistprev   = hiplist
 				L1_counter_init = L1_counter
@@ -295,6 +302,9 @@ class SSA_test_utility():
 			utils.print_good("->  L1 data test scan with {mode:s} injection -> 100%".format(mode=mode))
 		else:
 			utils.print_error("->  Cluster data test scan with {mode:s} injection -> {res0:5.3f}% hit - {res1:5.3f}% HIP flags".format(mode=mode, res0=result[0], res1=result[1]))
+		if(profile):
+			tres = time.time()-pr_start
+			print('->  Test time = {:0.3f}s - Time per cycle = {:0.3f}ms'.format(tres, 1000*tres/float(pr_cnt)))
 		return result
 
 

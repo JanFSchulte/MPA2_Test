@@ -10,7 +10,7 @@ from PyChipsUser import *
 import sys
 import os
 from d19cScripts.ErrorHandler import *
-from time import sleep
+import time
 import numpy as np
 
 # sometimes you may want to run the script from the sw directory
@@ -62,7 +62,7 @@ def SendCommand_I2C(command, hybrid_id, chip_id, page, read, register_address, d
       fc7.write("ctrl_command_i2c_command_fifo", cmd0)
   else:
     fc7.write("ctrl_command_i2c_command_fifo", cmd0)
-    #sleep(0.01)
+    #time.sleep(0.01)
     fc7.write("ctrl_command_i2c_command_fifo", cmd1)
 
   return description
@@ -71,12 +71,13 @@ def DataFromMask(data, mask_name):
   return fc7AddrTable.getItem(mask_name).shiftDataFromMask(data)
 
 # Send command ctrl
-def SendCommand_CTRL(name = "none"):
+def SendCommand_CTRL(name = "none", profile=0):
+    if(profile): pr_start=time.time()
     if name == "none":
         print("Sending nothing")
     elif name == "global_reset":
         fc7.write("ctrl_command_global_reset", 1)
-        sleep(0.5)
+        time.sleep(0.5)
     elif name == "reset_trigger":
         fc7.write("ctrl_fast_reset", 1)
     elif name == "start_trigger":
@@ -103,6 +104,7 @@ def SendCommand_CTRL(name = "none"):
         fc7.write("ctrl_dio5_load_config", 1)
     else:
         print("Unknown Command" + str(name))
+    if(profile): print('->  FC7 SendCommand_CTRL -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 
 # Data Readout
 def to_str(i):
@@ -190,13 +192,13 @@ def InitFMCPower(fmc_id):
   if (fmc_id == "fmc_l12"):
     fc7.write("system_fmc_l12_pwr_en",0)
     os.system("python fc7_i2c_voltage_set.py L12 p2v5");
-    sleep(0.5)
+    time.sleep(0.5)
     fc7.write("system_fmc_l12_pwr_en",1)
 
   if (fmc_id == "fmc_l8"):
     fc7.write("system_fmc_l8_pwr_en",0)
     os.system("python fc7_i2c_voltage_set.py L8 p2v5");
-    sleep(0.5)
+    time.sleep(0.5)
     fc7.write("system_fmc_l8_pwr_en",1)
 
   os.system("python fc7_i2c_voltage_get_all.py");
@@ -208,11 +210,11 @@ def SetLineDelayManual(hybrid_id, chip_id, line_id, delay, bitslip):
     word = ((hybrid_id & 0xF) << 28) + ((chip_id & 0xF) << 24) + ((line_id & 0xF) << 20) + (1 << 16) + ((delay & 0x1F) << 8) + ((bitslip & 0x07) << 0)
     # write word
     fc7.write("cnfg_phy_manual_delays", word)
-    sleep(0.01)
+    time.sleep(0.01)
     # do tuning
     fc7.write("ctrl_phy_phase_tune_again", 1)
-    # sleep
-    sleep(0.1)
+    # time.sleep
+    time.sleep(0.1)
 
 # Configure Fast Block
 def Configure_Fast(triggers_to_accept, user_frequency, source, stubs_mask, stubs_latency):
@@ -221,11 +223,11 @@ def Configure_Fast(triggers_to_accept, user_frequency, source, stubs_mask, stubs
   fc7.write("cnfg_fast_source", source)
   fc7.write("cnfg_fast_stub_mask", stubs_mask)
   fc7.write("cnfg_fast_stub_trigger_delay", stubs_latency)
-  #sleep(1)
+  #time.sleep(1)
   SendCommand_CTRL("reset_trigger")
-  sleep(0.001)
+  time.sleep(0.001)
   SendCommand_CTRL("load_trigger_config")
-  sleep(0.001)
+  time.sleep(0.001)
 
 def Configure_TestPulse_MPA_SSA(delay_before_next_pulse, number_of_test_pulses):
   # fast commands within the test pulse fsm
@@ -280,9 +282,9 @@ def Configure_TestPulse_SSA(
     fc7.write("cnfg_fast_source", 6)
     #fc7.write("cnfg_fast_initial_fast_reset_enable", (enable_rst_L1 or enable_initial_reset))
     #### fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
-    sleep(0.1)
+    time.sleep(0.1)
     SendCommand_CTRL("load_trigger_config")
-    sleep(0.1)
+    time.sleep(0.1)
 
 def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses):
   fc7.write("cnfg_fast_initial_fast_reset_enable", 0)
@@ -291,9 +293,9 @@ def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_be
   fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
   fc7.write("cnfg_fast_triggers_to_accept", number_of_test_pulses)
   fc7.write("cnfg_fast_source", 6)
-  sleep(0.01)
+  time.sleep(0.01)
   SendCommand_CTRL("load_trigger_config")
-  sleep(0.01)
+  time.sleep(0.01)
 
 def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst, enable_init_rst, enable_L1):
   fc7.write("cnfg_fast_initial_fast_reset_enable", enable_init_rst) #enable_rst_L1
@@ -306,19 +308,19 @@ def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, dela
   fc7.write("cnfg_fast_tp_fsm_l1a_en", enable_L1)
   fc7.write("cnfg_fast_triggers_to_accept", number_of_test_pulses)
   fc7.write("cnfg_fast_source", 6)
-  sleep(0.1)
+  time.sleep(0.1)
   SendCommand_CTRL("load_trigger_config")
-  sleep(0.1)
+  time.sleep(0.1)
 
 def Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses, initial_reset = 0):
-  sleep(0.01); fc7.write("cnfg_fast_initial_fast_reset_enable", initial_reset)
-  sleep(0.01); fc7.write("cnfg_fast_delay_before_next_pulse", cal_pulse_period)
-  sleep(0.01); fc7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
-  sleep(0.01); fc7.write("cnfg_fast_triggers_to_accept", number_of_cal_pulses)
-  sleep(0.01); fc7.write("cnfg_fast_source", 9)
-  sleep(0.1)
+  time.sleep(0.01); fc7.write("cnfg_fast_initial_fast_reset_enable", initial_reset)
+  time.sleep(0.01); fc7.write("cnfg_fast_delay_before_next_pulse", cal_pulse_period)
+  time.sleep(0.01); fc7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
+  time.sleep(0.01); fc7.write("cnfg_fast_triggers_to_accept", number_of_cal_pulses)
+  time.sleep(0.01); fc7.write("cnfg_fast_source", 9)
+  time.sleep(0.1)
   SendCommand_CTRL("load_trigger_config")
-  sleep(0.1)
+  time.sleep(0.1)
 
 # Configure I2C
 def Configure_I2C(mask):
@@ -369,7 +371,7 @@ def SetParameterI2C(parameter_name, data):
         write_data = ShiftDataToMask(cbc2_map[parameter_name].mask, data)
 
     SendCommand_I2C(2, 0, 0, cbc2_map[parameter_name].page, write, cbc2_map[parameter_name].reg_address, write_data, 0)
-    sleep(0.5)
+    time.sleep(0.5)
 
 def CBC_Config():
     SetParameterI2C("trigger_latency", 195)
@@ -385,7 +387,7 @@ def CBC_Config():
     i_finish = 64    # 64
     for i in range(i_start, i_finish):
         SendCommand_I2C(2, 0, 0, 0, 0, 0, i, 255, 0)
-    sleep(2)
+    time.sleep(2)
 
 def CBC_ConfigTXT():
     # 0 - write, 1 - read
@@ -397,7 +399,7 @@ def CBC_ConfigTXT():
     for i in range(0, cbc_config.shape[0]): # including offset
     #for i in range(0, 52): # excluding offset
         SendCommand_I2C(2, 0, 0, int(cbc_config[i][1],0), write, int(cbc_config[i][2],0), int(cbc_config[i][4],0), 0)
-    sleep(2)
+    time.sleep(2)
 
 ###################################################################################################
 
@@ -408,9 +410,9 @@ def Configure_DIO5(out_en, term_en, thresholds):
     combined_config = fc7AddrTable.getItem("cnfg_dio5_ch1_out_en").shiftDataToMask(out_en[i-1]) + fc7AddrTable.getItem("cnfg_dio5_ch1_term_en").shiftDataToMask(term_en[i-1]) + fc7AddrTable.getItem("cnfg_dio5_ch1_threshold").shiftDataToMask(thresholds[i-1])
     fc7.write(("cnfg_dio5_ch"+str(i)+"_sel"), combined_config)
 
-  sleep(0.5)
+  time.sleep(0.5)
   SendCommand_CTRL("load_dio5_config")
-  sleep(0.5)
+  time.sleep(0.5)
 
 
 def ReadStatus(name = "Current Status"):
@@ -528,7 +530,7 @@ def I2CTester():
     for i in range(0, num_i2c_registersPage2):
         SendCommand_I2C(          2,         0,       0,    1, read,        i,    10, ReadBack)
 
-    sleep(1)
+    time.sleep(1)
 
     ReadStatus("After Send Command")
     ReadChipData()
@@ -557,8 +559,8 @@ def SetLineDelayManual(hybrid_id, chip_id, line_id, delay, bitslip):
     word = ((hybrid_id & 0xF) << 28) + ((chip_id & 0xF) << 24) + ((line_id & 0xF) << 20) + (1 << 16) + ((delay & 0x1F) << 8) + ((bitslip & 0x07) << 0)
     # write word
     fc7.write("cnfg_phy_manual_delays", word)
-    sleep(0.01)
+    time.sleep(0.01)
     # do tuning
     fc7.write("ctrl_phy_phase_tune_again", 1)
-    # sleep
-    sleep(0.1)
+    # time.sleep
+    time.sleep(0.1)

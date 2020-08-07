@@ -19,7 +19,7 @@ class SSA_inject():
 		self.ctrl = ssactrl; self.strip = ssastrip;
 		self.__initialise()
 
-	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, sequence = 0xff, initialise = True):
+	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, sequence = 0xff, initialise = True, profile=False):
 		leftdata  = 0; rightdata = 0;
 
 		if(initialise == True):
@@ -27,7 +27,7 @@ class SSA_inject():
 			self.ctrl.set_cal_pulse_duration(times)
 			#self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 			#fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", 4)
-
+		if(profile): pr_start=time.time()
 		if(sequence != self.DigCalibPattern): #to speedup
 			if(tbconfig.VERSION['SSA'] >= 2):
 				self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip='all', data=sequence)
@@ -48,7 +48,7 @@ class SSA_inject():
 				else:
 					#time.sleep(0.001)
 					if(tbconfig.VERSION['SSA'] >= 2):
-						self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=cl, data=0b01001)
+						self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=(cl-1), data=0b01001)
 					else:
 						self.I2C.strip_write("ENFLAGS", cl, 0b01001)
 
@@ -59,11 +59,15 @@ class SSA_inject():
 
 		if(hip_list != self.hip_list):#to speedup
 			self.hip_list = hip_list
-			self.I2C.strip_write("DigCalibPattern_H", 0, 0)
+			self.I2C.strip_write(register="DigCalibPattern_H", strip='all', data=0x0)
 			for cl in hip_list:
-				self.I2C.strip_write("DigCalibPattern_H", cl, sequence)
-		sleep(0.001)
+				if(tbconfig.VERSION['SSA'] >= 2):
+					self.I2C.strip_write("DigCalibPattern_H", (cl-1), sequence)
+				else:
+					self.I2C.strip_write("DigCalibPattern_H", cl, sequence)
+		time.sleep(0.001)
 		utils.generic_parameters['ssa_inject_utility_mode'] = 'digital'
+		if(profile): print('->  digital_pulse time = {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 
 
 	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [50, 100], cal_pulse_amplitude = 255, initialise = True, trigger = False):
@@ -90,15 +94,15 @@ class SSA_inject():
 		for cl in hit_list:
 			if(cl > 0 and cl < 121):
 				if(tbconfig.VERSION['SSA'] >= 2):
-					self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=cl, data=0b10001)
+					self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=(cl-1), data=0b10001)
 				else:
 					self.I2C.strip_write("ENFLAGS", cl, 0b10001)
-				sleep(0.001)
+				time.sleep(0.001)
 		if(trigger == True):
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
 			self.fc7.SendCommand_CTRL("start_trigger")
-			sleep(0.01)
-		sleep(0.001)
+			time.sleep(0.01)
+		time.sleep(0.001)
 		utils.generic_parameters['ssa_inject_utility_mode'] = 'analog'
 
 
@@ -106,6 +110,6 @@ class SSA_inject():
 		self.hitmode = 'none'
 		self.data_l = False
 		self.data_r = False
-		self.hit_list = []
-		self.hip_list = []
-		self.DigCalibPattern = 0
+		self.hit_list = [0xffff]
+		self.hip_list = [0xffff]
+		self.DigCalibPattern = 0xffff
