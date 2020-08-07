@@ -52,9 +52,9 @@ class SSA_ASIC:
 	def on(self):
 		self.ctrl.reset(display=True)
 		utils.print_info("->  Reset SSA Chip")
-		sleep(0.3);
+		time.sleep(0.3);
 		utils.activate_I2C_chip()
-		sleep(0.2)
+		time.sleep(0.2)
 
 	def init(self, reset_board=False, reset_chip=False, resync=True, slvs_current=0b111, edge="rising", display=True, read_current=False, set_deskewing=False):
 		self.generic_parameters['cl_word_alignment'] = False
@@ -63,14 +63,14 @@ class SSA_ASIC:
 			sys.stdout.flush()
 		if(reset_board):
 			self.fc7.write("ctrl_command_global_reset", 1)
-			sleep(0.3);
+			time.sleep(0.3);
 			if(display): utils.print_info("->  Reset FC7 Firmware")
 		if(reset_chip):
 			self.ctrl.reset_and_set_sampling_edge(display=False)
-			sleep(0.3);
+			time.sleep(0.3);
 			if(display): utils.print_info("->  Reset SSA Chip")
 		utils.activate_I2C_chip()
-		#sleep(0.2)
+		#time.sleep(0.2)
 		self.ctrl.set_lateral_data(left=0, right=0)
 		if(display):
 			sys.stdout.write("->  Tuning sampling phases..\r")
@@ -95,7 +95,7 @@ class SSA_ASIC:
 			utils.print_info("->  Activated normal readout mode");
 			sys.stdout.write("->  Ready!                  ")
 			sys.stdout.flush()
-			sleep(0.2)
+			time.sleep(0.2)
 			if(read_current):
 				self.pwr.get_power(display = True)
 		return rt

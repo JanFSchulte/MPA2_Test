@@ -30,7 +30,7 @@ ipaddr, fc7AddrTable, fc7_if = SelectBoard('ssa')
 # try_fc7_com(fc7_if)
 
 FC7               = ssa_fc7_com(fc7_if)
-ssa_i2c           = ssa_i2c_conf()
+ssa_i2c           = ssa_i2c_conf(FC7)
 ssa_strip_reg_map = ssa_i2c.get_strip_reg_map()
 ssa_peri_reg_map  = ssa_i2c.get_peri_reg_map()
 ssa_ana_mux_map   = ssa_i2c.get_analog_mux_map()

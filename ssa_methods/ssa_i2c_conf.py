@@ -7,9 +7,10 @@ from ssa_methods.Configuration.ssa1_reg_map import *
 
 class ssa_i2c_conf:
 
-	def __init__(self, debug=False):
+	def __init__(self, fc7, debug=False):
 		self.__load_reg_map(version=tbconfig.VERSION['SSA'])
 		self.__set_parameters(debug=debug)
+		self.fc7 = fc7
 
 	def __load_reg_map(self, version):
 		if(version >= 2):
@@ -95,13 +96,13 @@ class ssa_i2c_conf:
 
 				if(use_onchip_mask): ### this is the procedure to use
 					self.mask_active[mask_name] = True
-					rep  = write_I2C('SSA', mask_adr, mask_val, self.freq)
-					rep  = write_I2C('SSA', reg_adr, tdata, self.freq)
+					rep  = self.write_I2C('SSA', mask_adr, mask_val, self.freq)
+					rep  = self.write_I2C('SSA', reg_adr, tdata, self.freq)
 				else:
-					readreg  = read_I2C('SSA', reg_adr, timeout)
+					readreg  = self.read_I2C('SSA', reg_adr, timeout)
 					if(readreg != None):
 						wdata = (readreg & (~int(mask, 2))) | (tdata & int(mask, 2))
-						rep  = write_I2C('SSA', reg_adr, wdata, self.freq)
+						rep  = self.write_I2C('SSA', reg_adr, wdata, self.freq)
 					else:
 						print('X>  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(reg_adr, 'NOVALUE'))
 						st = 'Null';
@@ -110,9 +111,9 @@ class ssa_i2c_conf:
 					print('->  I2C Periphery write - Adr=[0x{:4x}], Value=[{:d}]'.format(reg_adr, tdata))
 			else:
 				if(self.mask_active[mask_name] and (tbconfig.VERSION['SSA']>=2) ):
-					rep  = write_I2C('SSA', mask_adr, 0xff, self.freq)
+					rep  = self.write_I2C('SSA', mask_adr, 0xff, self.freq)
 					self.mask_active[mask_name] = False
-				rep  = write_I2C('SSA', reg_adr, data, self.freq)
+				rep  = self.write_I2C('SSA', reg_adr, data, self.freq)
 				if(self.debug):
 					print('->  I2C Periphery write - Adr=[0x{:4x}], Value=[{:d}]'.format(reg_adr, data))
 		if(self.readback):
@@ -143,10 +144,10 @@ class ssa_i2c_conf:
 			else:
 				base = self.ssa_peri_reg_map[register]
 				adr  = (base & 0xfff) | 0b0001000000000000
-			repd = read_I2C('SSA', adr, timeout)
+			repd = self.read_I2C('SSA', adr, timeout)
 			if(repd == None):
 				#utils.activate_I2C_chip()
-				#rep  = read_I2C('SSA', adr, timeout)
+				#rep  = self.read_I2C('SSA', adr, timeout)
 				rep  = 'Null'
 				print('X>  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(adr, 'NOVALUE'))
 				#self.utils.activate_I2C_chip()
@@ -196,14 +197,14 @@ class ssa_i2c_conf:
 				if(use_onchip_mask):  ### this is the procedure to use
 					self.mask_active['mask_strip'] = True
 					mask_adr = self.tonumber(self.ssa_peri_reg_map['mask_strip']['adr'],0)
-					rep  = write_I2C('SSA', mask_adr, mask_val, self.freq)
-					rep  = write_I2C('SSA', reg_adr, tdata, self.freq)
+					rep  = self.write_I2C('SSA', mask_adr, mask_val, self.freq)
+					rep  = self.write_I2C('SSA', reg_adr, tdata, self.freq)
 				else:
-					if(strip=='all'): readreg  = read_I2C('SSA', 1, timeout)
-					else: readreg  = read_I2C('SSA', reg_adr, timeout)
+					if(strip=='all'): readreg  = self.read_I2C('SSA', 1, timeout)
+					else: readreg  = self.read_I2C('SSA', reg_adr, timeout)
 					if(readreg != None):
 						wdata = (readreg & (~int(mask, 2))) | (tdata & int(mask, 2))
-						rep  = write_I2C('SSA', reg_adr, wdata, self.freq)
+						rep  = self.write_I2C('SSA', reg_adr, wdata, self.freq)
 					else:
 						print('X>  I2C Strip {:3d} read  -  Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(strip_id, reg_adr, 'NOVALUE'))
 						st = 'Null';
@@ -213,10 +214,10 @@ class ssa_i2c_conf:
 			else:
 				if(self.mask_active['mask_strip'] and (tbconfig.VERSION['SSA']>=2) ):
 					mask_adr  = self.tonumber(self.ssa_peri_reg_map['mask_strip']['adr'], 0)
-					rep  = write_I2C('SSA', mask_adr, 0xff, self.freq)
+					rep  = self.write_I2C('SSA', mask_adr, 0xff, self.freq)
 					self.mask_active['mask_strip'] = False
 				wdata = data
-				rep  = write_I2C('SSA', reg_adr, wdata, self.freq)
+				rep  = self.write_I2C('SSA', reg_adr, wdata, self.freq)
 				if(self.debug):
 					print('->  I2C Strip {:3d} write - Adr=[0x{:4x}], Value=[{:d}]'.format(strip_id, reg_adr, wdata))
 		if(self.readback):
@@ -249,7 +250,7 @@ class ssa_i2c_conf:
 				strip_id = strip if (strip is not 'all') else 0x00
 				base = self.tonumber(self.ssa_strip_reg_map[register],0)
 			adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
-			repd = read_I2C('SSA', adr, timeout)
+			repd = self.read_I2C('SSA', adr, timeout)
 			if(repd == None):
 				rep  = 'Null'
 				print('X>  I2C Strip {:3d} read  -  Adr=[{:h}], Value=[{:s}] - ERROR'.format(strip_id, adr, 'NOVALUE'))
@@ -268,6 +269,44 @@ class ssa_i2c_conf:
 			#	time.sleep(0.1)
 			#	rep = 'Null'
 		return rep
+
+	# Using FC7 class in SSA methods to handel tipical IP bus communication losses (firmware issue)
+	def write_I2C (self, chip, address, data, frequency = 0):
+		read = 1; write = 0; readback = 0
+		if  (chip == 'MPA'): self.SendCommand_I2C(0, 0, 0, 0, write, address, data, readback)
+		elif(chip == 'SSA'): self.SendCommand_I2C(0, 0, 1, 0, write, address, data, readback)
+
+	def read_I2C (self, chip, address, timeout = 0.001):
+		read = 1; write = 0; readback = 0
+		data = 0
+		if   (chip == 'MPA'): self.SendCommand_I2C(0, 0, 0, 0, read, address, data, readback)
+		elif (chip == 'SSA'): self.SendCommand_I2C(0, 0, 1, 0, read, address, data, readback)
+		time.sleep(timeout)
+		read_data = ReadChipDataNEW()
+		return read_data
+
+	def SendCommand_I2C(self, command, hybrid_id, chip_id, page, read, register_address, data, ReadBack):
+		raw_command   = fc7AddrTable.getItem("ctrl_command_i2c_command_type").shiftDataToMask(command)
+		raw_word0     = fc7AddrTable.getItem("ctrl_command_i2c_command_word_id").shiftDataToMask(0)
+		raw_word1     = fc7AddrTable.getItem("ctrl_command_i2c_command_word_id").shiftDataToMask(1)
+		raw_hybrid_id = fc7AddrTable.getItem("ctrl_command_i2c_command_hybrid_id").shiftDataToMask(hybrid_id)
+		raw_chip_id   = fc7AddrTable.getItem("ctrl_command_i2c_command_chip_id").shiftDataToMask(chip_id)
+		raw_readback  = fc7AddrTable.getItem("ctrl_command_i2c_command_readback").shiftDataToMask(ReadBack)
+		raw_page      = fc7AddrTable.getItem("ctrl_command_i2c_command_page").shiftDataToMask(page)
+		raw_read      = fc7AddrTable.getItem("ctrl_command_i2c_command_read").shiftDataToMask(read)
+		raw_register  = fc7AddrTable.getItem("ctrl_command_i2c_command_register").shiftDataToMask(register_address)
+		raw_data      = fc7AddrTable.getItem("ctrl_command_i2c_command_data").shiftDataToMask(data)
+		cmd0          = raw_command + raw_word0 + raw_hybrid_id + raw_chip_id + raw_readback + raw_read + raw_page + raw_register;
+		cmd1          = raw_command + raw_word1 + raw_data
+		description   = "Command: type = " + str(command) + ", hybrid = " + str(hybrid_id) + ", chip = " + str(chip_id)
+		#print(hex(cmd))
+		if(read == 1):
+			self.fc7.write("ctrl_command_i2c_command_fifo", cmd0)
+		else:
+			self.fc7.write("ctrl_command_i2c_command_fifo", cmd0)
+			#time.sleep(0.01)
+			self.fc7.write("ctrl_command_i2c_command_fifo", cmd1)
+		return description
 
 	def _get_field_location(self, mask):
 		if(isinstance(mask, int)):   maskd = bin(mask)

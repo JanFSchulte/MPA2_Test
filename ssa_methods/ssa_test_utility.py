@@ -270,22 +270,23 @@ class SSA_test_utility():
 						if(wd>5): break
 						wd += 1
 				if(L1_counter < 0): return 'error'
-				if ((L1_counter & 0b1111) != ((L1_counter_init + 1) & 0b1111) ): err[H] = True
+				if ((L1_counter & l1_counter_mask) != ((L1_counter_init + 1) & l1_counter_mask) ): err[H] = True
 				if (len(l1hitlist) != 1): err[H] = True
 				if (len(l1hitlist) > 0):
 					if (l1hitlist[0] != i): err[H] = True
 				if (len(hiplist) != H): err[H] = True
 				if (len(hiplist) > 0):
 					if (hiplist[0] != H): err[H] = True
-				dstr = "expected: [{:2d}][{:3s}][{:3s}]\t  |  found: [{:2d}][{:3s}][{:3s}]".format(
+				dstr = "expected: [{:3d}][{:3s}][{:3s}]\t  |  found: [{:3d}][{:3d}][{:3s}][{:3s}]".format(
 						(L1_counter_init+1)&l1_counter_mask,  str(i),  str(H),
-						L1_counter,  ', '.join(map(str, l1hitlist)),  ', '.join(map(str, hiplist)))
-				fstr = "[{:2d}][{:3s}][{:3s}];   \t[{:2d}][{:3s}][{:3s}]".format(
+						L1_counter, BX_counter, ', '.join(map(str, l1hitlist)),  ', '.join(map(str, hiplist)))
+				fstr = "[{:3d}][{:3s}][{:3s}];   \t[{:3d}][{:3s}][{:3s}]".format(
 				        (L1_counter_init+1)&l1_counter_mask,  str(i),  str(H),
 				        L1_counter,  ', '.join(map(str, l1hitlist)),  ', '.join(map(str, hiplist)))
 				l1hitlistprev = l1hitlist
 				hiplistprev   = hiplist
-				L1_counter_init = L1_counter
+				####### L1_counter_init = L1_counter
+				L1_counter_init +=1
 				if (err[H]):
 					counter[H][1] += 1
 					fo.write(runname + ' ; ' + fstr + ' \n')
