@@ -32,23 +32,23 @@ class ssa_power_utility:
 	def set_supply(self, mode = 'on', d = 1.0, a = 1.2, p = 1.2, bg = 0.270, display = True):
 		utils.activate_I2C_chip()
 		if(mode == 'on' or mode == 1):
-			sleep(0.00); self.mainpoweron()
-			sleep(0.01); self.set_pvdd(p);
-			sleep(0.20); self.set_dvdd(d);
-			sleep(0.00); self.set_avdd(a);
-			sleep(0.10); self.set_vbf(bg)
-			sleep(2.00); self.reset(display=display)
-			sleep(0.10)
+			time.sleep(0.00); self.mainpoweron()
+			time.sleep(0.01); self.set_pvdd(p);
+			time.sleep(0.20); self.set_dvdd(d);
+			time.sleep(0.00); self.set_avdd(a);
+			time.sleep(0.10); self.set_vbf(bg)
+			time.sleep(2.00); self.reset(display=display)
+			time.sleep(0.10)
 			if(display):
-				sleep(0.4); self.get_power(display = True)
+				time.sleep(0.4); self.get_power(display = True)
 		elif(mode == 'off' or mode == 0):
-			sleep(0.00); self.set_vbf(0)
-			sleep(0.10); self.set_avdd(0);
-			sleep(0.00); self.set_dvdd(0);
-			sleep(0.10); self.set_pvdd(0)
-			sleep(0.10); self.mainpoweroff()
+			time.sleep(0.00); self.set_vbf(0)
+			time.sleep(0.10); self.set_avdd(0);
+			time.sleep(0.00); self.set_dvdd(0);
+			time.sleep(0.10); self.set_pvdd(0)
+			time.sleep(0.10); self.mainpoweroff()
 			if(display):
-				sleep(0.10); self.get_power(display = True)
+				time.sleep(0.10); self.get_power(display = True)
 
 	def test_power(self, state = 'operation', display=True):
 		good = True
@@ -269,23 +269,23 @@ class ssa_power_utility:
 	def resync(self):
 		SendCommand_CTRL("fast_fast_reset");
 		utils.print_log( '->  Sent Re-Sync command')
-		sleep(0.001)
+		time.sleep(0.001)
 
 
 	def reset(self, display=True, mode = 'auto'):
 		utils.print_enable(False)
-		sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2);
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
+		time.sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2);
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
 		if(mode == 'auto'):
-			sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0);  # drop reset bit
-			sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1);  # set reset bit
+			time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0);  # drop reset bit
+			time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1);  # set reset bit
 			if(display):
 				utils.print_log( '->  Sent Hard-Reset pulse ')
 		else:
-			sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, int(mode));  # drop reset bit
+			time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, int(mode));  # drop reset bit
 			if(display):
 				utils.print_log( '->  SSA Enabled ' if mode == 1 else '->  SSA Disabled ')
-		sleep(0.01);
+		time.sleep(0.01);
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
 		if(display):
@@ -298,20 +298,20 @@ class ssa_power_utility:
 
 	def _disable_ssa(self, display=True):
 		utils.print_enable(False)
-		sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2);
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0);  # drop reset bit
-		sleep(0.01);
+		time.sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2);
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0);  # drop reset bit
+		time.sleep(0.01);
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
 		if(display): utils.print_log( '->  SSA disabled ')
 
 	def _enable_ssa(self, display=True):
 		utils.print_enable(False)
-		sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2);
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1);  # set reset bit
-		sleep(0.01);
+		time.sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2);
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1);  # set reset bit
+		time.sleep(0.01);
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
 		if(display): utils.print_log( '->  SSA enabled ')

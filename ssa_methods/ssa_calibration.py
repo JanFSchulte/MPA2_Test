@@ -114,7 +114,7 @@ class ssa_calibration():
 		data = np.zeros(fullscale, dtype=np.float);
 		for i in range(0, fullscale):
 			self.I2C.peri_write(name, i)
-			sleep(0.1)
+			time.sleep(0.1)
 			if(self.mode == 'MULTIMETER'):
 				data[i] = self.multimeter.measure(self.minst)
 			else:
@@ -177,7 +177,7 @@ class ssa_calibration():
 		data = np.zeros(len(x), dtype=np.float);
 		for i in range(len(x)):
 			self.I2C.peri_write(name, x[i])
-			sleep(0.1)
+			time.sleep(0.1)
 			if(self.mode == 'MULTIMETER'):
 				data[i] = self.multimeter.measure(self.minst)
 			else:

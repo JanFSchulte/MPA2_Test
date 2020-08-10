@@ -34,19 +34,19 @@ class SSA_SEU_utilities():
 			latency = 101, run_time = 30, display = 1, filename = '', runname = '',
 			delay = 73, create_errors = False, stop_if_fifo_full = True):
 
-		sleep(0.01); SendCommand_CTRL("global_reset")
-		sleep(0.5); SendCommand_CTRL("fast_fast_reset")
-		sleep(0.01);self.ssa.init(edge = 'negative', display = False)
+		time.sleep(0.01); SendCommand_CTRL("global_reset")
+		time.sleep(0.5); SendCommand_CTRL("fast_fast_reset")
+		time.sleep(0.01);self.ssa.init(edge = 'negative', display = False)
 		s1, s2, s3 = self.Stub_Evaluate_Pattern(strip)
 		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern(strip, hipflags)
-		sleep(0.01); self.Configure_Injection(strip_list = strip, hipflag_list = hipflags, analog_injection = 0, latency = latency, create_errors = create_errors)
-		sleep(0.01); self.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = display)
-		sleep(0.01); self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = display)
-		sleep(0.01); Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0, initial_reset = 1)
-		sleep(0.01); fc7.write("cnfg_fast_backpressure_enable", 0)
-		sleep(0.01); self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
-		sleep(0.01); self.RunStateMachine_L1_and_Stubs(timer_data_taking = run_time, display = display, stop_if_fifo_full = stop_if_fifo_full)
-		#sleep(0.1); self.Stub_RunStateMachine(run_time = run_time, display = display)
+		time.sleep(0.01); self.Configure_Injection(strip_list = strip, hipflag_list = hipflags, analog_injection = 0, latency = latency, create_errors = create_errors)
+		time.sleep(0.01); self.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = display)
+		time.sleep(0.01); self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = display)
+		time.sleep(0.01); Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0, initial_reset = 1)
+		time.sleep(0.01); fc7.write("cnfg_fast_backpressure_enable", 0)
+		time.sleep(0.01); self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
+		time.sleep(0.01); self.RunStateMachine_L1_and_Stubs(timer_data_taking = run_time, display = display, stop_if_fifo_full = stop_if_fifo_full)
+		#time.sleep(0.1); self.Stub_RunStateMachine(run_time = run_time, display = display)
 		correction = int(latency/(l1a_period+1))
 		if(display==0): display=1
 		CL_ok, CL_er = self.Stub_printinfo(display = display, header = 1, message = "SUMMARY")
@@ -58,14 +58,14 @@ class SSA_SEU_utilities():
 	def Run_Test_SEU_ClusterData(self, strip =[10,20,30,40,50,60,70], hipflags = [], delay_after_fast_reset = 0, run_time = 5, display = 1, filename = '', runname = '', delay = 70):
 		SendCommand_CTRL("global_reset")
 		p1, p2, p3 = self.Stub_Evaluate_Pattern(strip)
-		sleep(0.1); self.Stub_loadCheckPatternOnFC7(pattern1 = p1, pattern2 = p2, pattern3 = 1, lateral = p3, display = display)
-		sleep(0.1); self.Configure_Injection(strip_list = strip, hipflag_list = hipflags, analog_injection = 0)
-		sleep(0.1); self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
-		sleep(0.1); Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 1, delay_before_next_pulse = 0, number_of_test_pulses = 0, enable_rst_L1 = 0, enable_initial_reset = 1)
-		sleep(0.1); self.Stub_delayDataTaking()
-		sleep(0.1); self.Stub_RunStateMachine(run_time = run_time, display = display)
-		sleep(0.1); SendCommand_CTRL("stop_trigger")
-		sleep(0.1);
+		time.sleep(0.1); self.Stub_loadCheckPatternOnFC7(pattern1 = p1, pattern2 = p2, pattern3 = 1, lateral = p3, display = display)
+		time.sleep(0.1); self.Configure_Injection(strip_list = strip, hipflag_list = hipflags, analog_injection = 0)
+		time.sleep(0.1); self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
+		time.sleep(0.1); Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 1, delay_before_next_pulse = 0, number_of_test_pulses = 0, enable_rst_L1 = 0, enable_initial_reset = 1)
+		time.sleep(0.1); self.Stub_delayDataTaking()
+		time.sleep(0.1); self.Stub_RunStateMachine(run_time = run_time, display = display)
+		time.sleep(0.1); SendCommand_CTRL("stop_trigger")
+		time.sleep(0.1);
 		CntBad  = fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo")
 		CntGood = fc7.read("stat_phy_slvs_compare_number_good_data")
 		self.Stub_printinfo('SUMMARY', display = display, header = 1)
@@ -77,14 +77,14 @@ class SSA_SEU_utilities():
 	def Run_Test_SEU_L1(self, strip = [1,9,17,25,33,17,118,119,120], hipflags = [], run_time = 5, delay_after_fast_reset = 512, latency = 500, shift = 0, cal_pulse_period = 100, display = 1, filename = '', runname = '', delay = 71, cnt_shift = 0):
 		chip = 'SSA'
 		SendCommand_CTRL("global_reset")
-		sleep(1)
+		time.sleep(1)
 		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern(strip, hipflags)
 		self.Configure_Injection(strip_list = strip, hipflag_list = hipflags, analog_injection = 0, latency = latency)
 		self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = display)
 		#Configure_TestPulse_MPA(delay_after_fast_reset = 512, delay_after_test_pulse = latency+3+offset, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_rst_L1 = 1)
 		#Configure_TestPulse_SSA(delay_after_fast_reset = delay_after_fast_reset,delay_after_test_pulse = latency+3+shift,	delay_before_next_pulse = cal_pulse_period,	number_of_test_pulses = 0,	enable_rst_L1 = 0,	enable_L1 = 1)
 		SendCommand_CTRL('fast_fast_reset')
-		sleep(0.1)
+		time.sleep(0.1)
 		for i in range(cnt_shift):
 			send_trigger()
 		fc7.write("cnfg_fast_backpressure_enable", 0)
@@ -98,9 +98,9 @@ class SSA_SEU_utilities():
 		fc7.write("cnfg_fast_triggers_to_accept",  0 )
 		fc7.write("cnfg_fast_source", 6)
 		fc7.write("cnfg_fast_initial_fast_reset_enable",  0 )
-		sleep(0.1)
+		time.sleep(0.1)
 		SendCommand_CTRL("load_trigger_config")
-		sleep(0.1)
+		time.sleep(0.1)
 		self.L1_RunStateMachine(timer_data_taking = run_time)
 		## SendCommand_CTRL("stop_trigger")
 		#self.L1_ReadFIFOs(nevents = 5)878
@@ -117,22 +117,22 @@ class SSA_SEU_utilities():
 		strip_list = np.sort(strip_list)
 		hipflag_list = np.sort(hipflag_list)
 		#here define the way to generate stub/centroid data pattern on the MPA/SSA
-		sleep(0.01); utils.activate_I2C_chip()
-		sleep(0.01); self.ssa.ctrl.activate_readout_normal(mipadapterdisable = 1)
-		sleep(0.01); self.ssa.ctrl.set_cal_pulse_duration(duration = 1) 
-		#sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b01001)
+		time.sleep(0.01); utils.activate_I2C_chip()
+		time.sleep(0.01); self.ssa.ctrl.activate_readout_normal(mipadapterdisable = 1)
+		time.sleep(0.01); self.ssa.ctrl.set_cal_pulse_duration(duration = 1)
+		#time.sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b01001)
 		if(tbconfig.VERSION['SSA'] >= 2):
-			sleep(0.01); self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00000)
-			sleep(0.01); self.I2C.strip_write(register="DigCalibPattern_L", field=False, strip='all', data=0x0)
-			sleep(0.01); self.I2C.strip_write(register="DigCalibPattern_H", field=False, strip='all', data=0x0)
-			sleep(0.01); self.I2C.peri_write( register="control_1", field='L1_Latency_msb', data = ((latency & 0x0100)>>8) )
-			sleep(0.01); self.I2C.peri_write( register="control_3", field='L1_Latency_lsb', data = ((latency & 0x00ff)>>0) )
+			time.sleep(0.01); self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00000)
+			time.sleep(0.01); self.I2C.strip_write(register="DigCalibPattern_L", field=False, strip='all', data=0x0)
+			time.sleep(0.01); self.I2C.strip_write(register="DigCalibPattern_H", field=False, strip='all', data=0x0)
+			time.sleep(0.01); self.I2C.peri_write( register="control_1", field='L1_Latency_msb', data = ((latency & 0x0100)>>8) )
+			time.sleep(0.01); self.I2C.peri_write( register="control_3", field='L1_Latency_lsb', data = ((latency & 0x00ff)>>0) )
 		else:
-			sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b00000)
-			sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", 0, 0x0)
-			sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", 0, 0x0)
-			sleep(0.01); self.I2C.peri_write('L1_Latency_msb', (latency & 0xff00) >> 8)
-			sleep(0.01); self.I2C.peri_write('L1_Latency_lsb', (latency & 0x00ff) >> 0)
+			time.sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b00000)
+			time.sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", 0, 0x0)
+			time.sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", 0, 0x0)
+			time.sleep(0.01); self.I2C.peri_write('L1_Latency_msb', (latency & 0xff00) >> 8)
+			time.sleep(0.01); self.I2C.peri_write('L1_Latency_lsb', (latency & 0x00ff) >> 0)
 		#SetLineDelayManual(0, 0, 9, 0, 2)
 		#SetLineDelayManual(0, 0,10, 0, 2)
 		word = np.zeros(16, dtype = np.uint8)
@@ -142,28 +142,28 @@ class SSA_SEU_utilities():
 		for st in strip_list:
 			if(st>0 and st<121):
 				if(tbconfig.VERSION['SSA'] >= 2):
-					sleep(0.01); self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=st, data=0b01001)
-					sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip=st, data=0x1)
+					time.sleep(0.01); self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=st, data=0b01001)
+					time.sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip=st, data=0x1)
 				else:
-					sleep(0.01); self.I2C.strip_write("ENFLAGS", st, 0b01001)
-					sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", st, 0x1)
+					time.sleep(0.01); self.I2C.strip_write("ENFLAGS", st, 0b01001)
+					time.sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", st, 0x1)
 		for st in hipflag_list:
 			if(st>0 and st<121):
-				sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", st, 0x1)
+				time.sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", st, 0x1)
 
 		#### injet strip reset error case
 		if(create_errors):
 			for i in range(81, 89):
 				if(tbconfig.VERSION['SSA'] >= 2):
-					sleep(0.01); self.I2C.strip_write( register="StripControl1",     field='ENFLAGS', strip=i, data=0b00101)
-					sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_L", field=False,     strip=i, data=170)
-					sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_H", field=False,     strip=i, data=170)
+					time.sleep(0.01); self.I2C.strip_write( register="StripControl1",     field='ENFLAGS', strip=i, data=0b00101)
+					time.sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_L", field=False,     strip=i, data=170)
+					time.sleep(0.01); self.I2C.strip_write( register="DigCalibPattern_H", field=False,     strip=i, data=170)
 				else:
-					sleep(0.01); self.I2C.strip_write("ENFLAGS", i, 0b00101)
-					sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", i, 170)
-					sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", i, 170)
+					time.sleep(0.01); self.I2C.strip_write("ENFLAGS", i, 0b00101)
+					time.sleep(0.01); self.I2C.strip_write("DigCalibPattern_L", i, 170)
+					time.sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", i, 170)
 
-		sleep(0.01)
+		time.sleep(0.01)
 
 
 	##############################################################
@@ -243,7 +243,7 @@ class SSA_SEU_utilities():
 		fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns2",pattern2)
 		fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns3",pattern3)
 		fc7.write("cnfg_phy_lateral_MPA_SSA_SEU_check_patterns1",lateral)
-		sleep(0.5)
+		time.sleep(0.5)
 		if(display>1):
 			print("Content of the patterns1 cnfg register: " + str(fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns1")))
 			print("Content of the patterns2 cnfg register: " + str(fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns2")))
@@ -256,7 +256,7 @@ class SSA_SEU_utilities():
 		if(display>1):
 			print("BX indicator for SSA centroid data:" + str(fc7.read("stat_phy_slvs_compare_fifo_bx_indicator")))
 		#fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns3",0 or 1)
-		sleep(1)
+		time.sleep(1)
 
 
 	##############################################################
@@ -284,7 +284,7 @@ class SSA_SEU_utilities():
 			if(display>0):
 				self.Stub_printinfo(display = display, header = 1)
 				self.Lateral_printinfo(display = display)
-			sleep(1)
+			time.sleep(1)
 		if(display>0): print("____________________________________________________________________________")
 		fc7.write("ctrl_phy_SLVS_compare_stop",1)
 		if(display>1): print("State of FSM after stopping: " + str(fc7.read("stat_phy_slvs_compare_state_machine")))
@@ -413,11 +413,11 @@ class SSA_SEU_utilities():
 
 	#####################################################################################################################
 	def L1_phase_tuning_MPA_emulator(self):
-		sleep(0.1)
+		time.sleep(0.1)
 		fc7.write("ctrl_phy_phase_tune_again", 1)
 		count_waiting = 0
 		while(fc7.read("stat_phy_phase_tuning_done") == 0):
-			sleep(0.5)
+			time.sleep(0.5)
 			print("Phase tuning in state: "  + str( fc7.read("stat_phy_phase_fsm_state_chip0") ))
 			print("Waiting for the phase tuning")
 			fc7.write("ctrl_phy_phase_tune_again", 1)
@@ -433,7 +433,7 @@ class SSA_SEU_utilities():
 		fc7.write("cnfg_phy_l1_MPA_SSA_SEU_check_patterns5",pattern5)
 		fc7.write("cnfg_phy_l1_MPA_SSA_SEU_check_patterns6",pattern6)
 		fc7.write("cnfg_phy_l1_MPA_SSA_SEU_check_patterns7",pattern7)
-		sleep(0.5)
+		time.sleep(0.5)
 		if(display > 1):
 			print("Content of the patterns1 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns1")) ))
 			print("Content of the patterns2 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns2")) ))
@@ -513,7 +513,7 @@ class SSA_SEU_utilities():
 		#start the triggering
 		#Configure_Fast(0, 1000, 3, 0, 0)
 		#fc7.write("cnfg_fast_backpressure_enable",0)
-		#sleep(0.5)
+		#time.sleep(0.5)
 		SendCommand_CTRL("start_trigger")
 		if(display > 1):
 			self.L1_printInfo("AFTER START TRIGGER:")
@@ -525,9 +525,9 @@ class SSA_SEU_utilities():
 			timer = timer + 1
 			message =  "Timer at: ", timer, "/", timer_data_taking
 			self.L1_printInfo(message)
-			sleep(1)
+			time.sleep(1)
 		SendCommand_CTRL("stop_trigger")
-		sleep(1)
+		time.sleep(1)
 		fc7.write("ctrl_phy_SLVS_compare_stop",1)
 		self.L1_printInfo("STATE MACHINE AND TRIGGER STOPPED:")
 		if(timer == timer_data_taking and FIFO_almost_full == 0):
@@ -540,7 +540,7 @@ class SSA_SEU_utilities():
 
 	##############################################################
 	def RunStateMachine_L1_and_Stubs(self, timer_data_taking = 5, display = 2, stop_if_fifo_full = True):
-		sleep(0.1)
+		time.sleep(0.1)
 		FSM = fc7.read("stat_phy_slvs_compare_state_machine")
 		if(display > 1):
 			print("State of FSM before starting: "   + str( FSM))
@@ -548,40 +548,40 @@ class SSA_SEU_utilities():
 		if (FSM == 4):
 			print("Error in FSM")
 			return
-		sleep(0.1); fc7.write("ctrl_phy_l1_SLVS_compare_start",1)
-		sleep(0.1); fc7.write("ctrl_phy_l1_SLVS_compare_start",1)
-		sleep(0.1); fc7.write("ctrl_phy_SLVS_compare_start",1)
-		sleep(0.1); fc7.write("ctrl_phy_SLVS_compare_start",1)
-		sleep(0.1); SendCommand_CTRL("start_trigger")
-		sleep(0.1); SendCommand_CTRL("start_trigger")
+		time.sleep(0.1); fc7.write("ctrl_phy_l1_SLVS_compare_start",1)
+		time.sleep(0.1); fc7.write("ctrl_phy_l1_SLVS_compare_start",1)
+		time.sleep(0.1); fc7.write("ctrl_phy_SLVS_compare_start",1)
+		time.sleep(0.1); fc7.write("ctrl_phy_SLVS_compare_start",1)
+		time.sleep(0.1); SendCommand_CTRL("start_trigger")
+		time.sleep(0.1); SendCommand_CTRL("start_trigger")
 		#self.printInfo("AFTER START STATE MACHINE:")
 		#self.printInfo("AFTER START TRIGGER:")
-		sleep(0.1); state = fc7.read("stat_phy_slvs_compare_state_machine")
+		time.sleep(0.1); state = fc7.read("stat_phy_slvs_compare_state_machine")
 		FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 		if(display > 1):
 			print("State of FSM after starting: "   + str( state ))
 			print("Almost full flag of FIFO after starting: "   + str( FIFO_almost_full ))
 		#start taking data and check the 80% full threshold of the FIFO
-		sleep(0.1); FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-		sleep(0.1); FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+		time.sleep(0.1); FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
+		time.sleep(0.1); FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
 		timer = 0
 		stop_condition = True
 		while(stop_condition):
-			sleep(0.1); FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-			sleep(0.1); FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+			time.sleep(0.1); FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
+			time.sleep(0.1); FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
 			timer = timer + 1
 			message = "Event: "+str(timer)+"/"+ str(timer_data_taking)
 			self.Stub_printinfo(display = display, header = 1, message = message)
 			self.Lateral_printinfo(display = display)
 			self.L1_printInfo(display = display)
-			sleep(1)
+			time.sleep(1)
 			if(stop_if_fifo_full):
 				stop_condition = (FIFO_almost_full != 1 and FIFO_almost_full_L1 != 1 and timer < timer_data_taking)
 			else:
 				stop_condition = (timer < timer_data_taking)
-		sleep(0.1); fc7.write("ctrl_phy_SLVS_compare_stop",1)
-		sleep(0.1); SendCommand_CTRL("stop_trigger")
-		sleep(0.1); SendCommand_CTRL("stop_trigger")
+		time.sleep(0.1); fc7.write("ctrl_phy_SLVS_compare_stop",1)
+		time.sleep(0.1); SendCommand_CTRL("stop_trigger")
+		time.sleep(0.1); SendCommand_CTRL("stop_trigger")
 		#print("State of FSM after stopping: " , fc7.read("stat_phy_slvs_compare_state_machine"))
 		if(display>-1):
 			print("________________________________________________________________________________________\n")

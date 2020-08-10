@@ -160,7 +160,7 @@ class SSA_cal_utility():
 				if(set_trim):
 					self.set_trimming(0, display=False)
 					self.set_trimming(31, striplist, display=False)
-					sleep(0.001)
+					time.sleep(0.001)
 			elif not isinstance(cal_ampl, list):
 				utils.print_error("-> ssa_cal_utility/scurves wrong cal_alpl parameter")
 				return False
@@ -191,7 +191,7 @@ class SSA_cal_utility():
 					#print("Setting the threshold to ", threshold, ", sending the test pulse and reading the counters")
 					strout += "threshold = " + str(threshold) + ".   "
 					self.ssa.ctrl.set_threshold(threshold);  # set the threshold
-					#sleep(0.05);
+					#time.sleep(0.05);
 					if (not baseline and (mode == 'all')):	# provide cal pulse to all strips together
 						self.fc7.clear_counters(8, 5)
 						self.fc7.open_shutter(8, 5)
@@ -206,10 +206,10 @@ class SSA_cal_utility():
 							if(timeout<=0):
 								test=0; break
 							test = (self.fc7.read("stat_fast_fsm_state"))
-							sleep(0.001)
+							time.sleep(0.001)
 							#print(test,)
 							if((not test) and (((time.time()-t)*1E3)<2) ): # D19C firmware issue
-								sleep(0.005)
+								time.sleep(0.005)
 								test = self.fc7.read("stat_fast_fsm_state")
 								if(not test):
 									self.fc7.SendCommand_CTRL("start_trigger")
@@ -221,32 +221,32 @@ class SSA_cal_utility():
 						self.fc7.clear_counters(1)
 						for s in striplist:
 							self.ssa.strip.set_cal_strips(mode = 'counter', strip = s )
-							sleep(0.01);
-							self.fc7.open_shutter(2); sleep(0.01);
-							self.fc7.SendCommand_CTRL("start_trigger"); sleep(0.01); # send sequence of NEVENTS pulses
+							time.sleep(0.01);
+							self.fc7.open_shutter(2); time.sleep(0.01);
+							self.fc7.SendCommand_CTRL("start_trigger"); time.sleep(0.01); # send sequence of NEVENTS pulses
 							while(self.fc7.read("stat_fast_fsm_state") != 0):
-								sleep(0.01)
-							self.fc7.close_shutter(2); sleep(0.01);
+								time.sleep(0.01)
+							self.fc7.close_shutter(2); time.sleep(0.01);
 
 					elif(baseline and (mode == 'all')):
-						self.fc7.clear_counters(2); #sleep(0.01);
-						self.fc7.open_shutter(2);   #sleep(0.01);
-						self.fc7.close_shutter(2);  #sleep(0.01);
+						self.fc7.clear_counters(2); #time.sleep(0.01);
+						self.fc7.open_shutter(2);   #time.sleep(0.01);
+						self.fc7.close_shutter(2);  #time.sleep(0.01);
 
 					elif(baseline and (mode == 'sbs')):
 						# with this method, the time between open and close shutter
 						# change from strip to strip due to the communication time
 						# so do not use to compare the counters value,
 						# from the point of view of the atandard deviation is not influent
-						self.fc7.clear_counters(2); sleep(0.01);
+						self.fc7.clear_counters(2); time.sleep(0.01);
 						for s in striplist:
 							# all trims at 0 and one at 31 to remove the crosstalks effect
 							if(set_trim):
 								self.ssa.strip.set_trimming('all', 0)
 								self.ssa.strip.set_trimming(s, 31)
-							sleep(0.01);
-							self.fc7.open_shutter(2);  sleep(0.01);
-							self.fc7.close_shutter(2); sleep(0.01);
+							time.sleep(0.01);
+							self.fc7.open_shutter(2);  time.sleep(0.01);
+							self.fc7.close_shutter(2); time.sleep(0.01);
 					if(rdmode == 'fast'):
 						failed, scurves[threshold] = self.ssa.readout.read_counters_fast(striplist, shift = countershift, initialize = 0)
 					elif(rdmode == 'i2c'):
@@ -267,7 +267,7 @@ class SSA_cal_utility():
 					if (error == True):
 						threshold = (threshold-1) if (threshold>0) else 0
 						utils.ShowPercent(threshold, 256, "Failed to read counters for threshold " + str(threshold) + ". Redoing. " +  ermsg)
-						#sleep(0.5)
+						#time.sleep(0.5)
 						continue
 					else:
 						strout += "Counters samples = 1->[" + str(scurves[threshold][0]) + "]  30->[" + str(scurves[threshold][29]) + "]  60->[" + str(scurves[threshold][59]) + "]  90->[" + str(scurves[threshold][89]) + "]  120->[" + str(scurves[threshold][119]) + "]"
@@ -486,7 +486,12 @@ class SSA_cal_utility():
 			error(1)
 		readback = np.zeros(120)
 		for i in range(0,120):
-			readback[i] = self.ssa.strip.get_trimming(i+1)
+			time.sleep(0.001)
+			rr = self.ssa.strip.get_trimming(i+1)
+			if(isinstance(rr, str)):
+				print('=>  ERROR : {:s}'.format(rr))
+			else:
+				readback[i] = rr
 		return readback
 
 	###########################################################

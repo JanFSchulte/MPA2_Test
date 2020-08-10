@@ -66,65 +66,74 @@ class ssa_fc7_com():
 			self.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 1)
 
 	def write(self, p1, p2, p3 = 0):
-		cnt = 0
+		cnt = 0; ex = '';
 		while cnt < 4:
 			try:
 				return self.fc7.write(p1, p2, p3)
-				break
 			except:
-				print('=>  \tTB Communication error - fc7_write')
+				print('=>  FC7 Communication error - fc7_write')
+				ex = sys.exc_info()
 				time.sleep(0.1)
 				cnt += 1
+		print(ex)
 
 	def read(self, p1, p2 = 0):
-		cnt = 0
+		cnt = 0; ex = '';
 		while cnt < 4:
 			try:
 				return self.fc7.read(p1, p2)
-				break
 			except:
-				print('=>  \tTB Communication error - fc7_read')
+				ex = sys.exc_info()
+				print('=>  \tFC7 Communication error - fc7_read')
 				time.sleep(0.1)
 				cnt += 1
+		print(ex)
 
 	def blockRead(self, p1, p2, p3 = 0):
-		cnt = 0
+		cnt = 0; ex = '';
 		rt = False; ar = [];
 		while cnt < 4:
 			try:
 				rt = self.fc7.blockRead(p1, p2, p3)
 				break
 			except:
-				print('=>  \tTB Communication error - fc7_read_block')
+				ex = sys.exc_info()
+				print('=>  \tFC7 Communication error - fc7_read_block')
 				time.sleep(0.1)
 				cnt += 1
-		if(self.invert and rt):
-			for word in rt:
-				ar.append( ~np.uint32(word) )
+		if(cnt>=4):
+			print(ex)
+			return
 		else:
-			ar = rt
-		return ar
+			if(self.invert and rt):
+				for word in rt:
+					ar.append( ~np.uint32(word) )
+			else:
+				ar = rt
+			return ar
 
 
 
 	def fifoRead(self, p1, p2, p3 = 0):
-		cnt = 0
+		cnt = 0; ex = '';
 		while cnt < 4:
 			try:
 				return self.fc7.fifoRead(p1, p2, p3)
-				break
 			except:
-				print('=>  \tTB Communication error - fc7_read_fifo')
+				ex = sys.exc_info()
+				print('=>  \tFC7 Communication error - fc7_read_fifo')
 				time.sleep(0.1)
 				cnt += 1
+		print(ex)
 
 	def SendCommand_CTRL(self, p1):
-		cnt = 0
+		cnt = 0; ex = '';
 		while cnt < 4:
 			try:
 				return SendCommand_CTRL(p1)
-				break
 			except:
-				print('=>  \tTB Communication error - SendCommand_CTRL')
+				ex = sys.exc_info()
+				print('=>  \tFC7 Communication error - SendCommand_CTRL')
 				time.sleep(0.1)
 				cnt += 1
+		print(ex)

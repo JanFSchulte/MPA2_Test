@@ -48,7 +48,7 @@ class SSA_inject():
 				else:
 					#time.sleep(0.001)
 					if(tbconfig.VERSION['SSA'] >= 2):
-						self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=(cl-1), data=0b01001)
+						self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=(cl), data=0b01001)
 					else:
 						self.I2C.strip_write("ENFLAGS", cl, 0b01001)
 
@@ -62,7 +62,7 @@ class SSA_inject():
 			self.I2C.strip_write(register="DigCalibPattern_H", strip='all', data=0x0)
 			for cl in hip_list:
 				if(tbconfig.VERSION['SSA'] >= 2):
-					self.I2C.strip_write("DigCalibPattern_H", (cl-1), sequence)
+					self.I2C.strip_write("DigCalibPattern_H", (cl), sequence)
 				else:
 					self.I2C.strip_write("DigCalibPattern_H", cl, sequence)
 		time.sleep(0.001)
@@ -94,7 +94,7 @@ class SSA_inject():
 		for cl in hit_list:
 			if(cl > 0 and cl < 121):
 				if(tbconfig.VERSION['SSA'] >= 2):
-					self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=(cl-1), data=0b10001)
+					self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=(cl), data=0b10001)
 				else:
 					self.I2C.strip_write("ENFLAGS", cl, 0b10001)
 				time.sleep(0.001)

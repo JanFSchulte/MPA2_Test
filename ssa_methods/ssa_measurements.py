@@ -35,7 +35,7 @@ class SSA_measurements():
 		thrdac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
 		nevents = 1000,                 # Number of calibration pulses
 		plot = False,                    # Fast plot of the results
-		filename = '../SSA_Results/Chip0/Chip_0_'
+		filename = '../SSA_Results/TestLogs/Chip_0_'
 		):
 
 		scurves = {}; fo = [];
@@ -288,7 +288,7 @@ class SSA_measurements():
 		nevents = 1000,            # Number of calibration pulses
 		iterative_step = 3,        # Iterative steps to acheive lower variability
 		plot = True,               # Fast plot of the results
-		filename = '../SSA_Results/Chip0/Chip_0_',
+		filename = '../SSA_Results/TestLogs/Chip_0_',
 		return_scurves = False
 		):
 		std = self.cal.trimming_scurves_2(
@@ -299,7 +299,7 @@ class SSA_measurements():
 			self.scurve_trim_plot(filename = filename, charge = charge_fc)
 		return std
 
-	def scurve_trim_plot(self, filename = '../SSA_Results/Chip0/Chip_0_', charge = []):
+	def scurve_trim_plot(self, filename = '../SSA_Results/TestLogs/Chip_0_', charge = []):
 		scurves = {}
 		fi = (filename + "frontend_Q_{c:1.3f}_scurve_trim-{t:0d}_.csv".format(c=charge, t=0))
 		scurves['0'] = np.transpose( CSV.csv_to_array(filename = fi) )
@@ -348,8 +348,13 @@ class SSA_measurements():
 			m, s = stats.norm.fit(c_thresholds[i]) # get mean and standard deviation
 			stds.append(s)
 			pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
+
 			xnew = np.linspace(np.min(lnspc), np.max(lnspc), 1000, endpoint=True)
-			pdf_l = interpolate.BSpline(lnspc, pdf_g, xnew)
+
+			#pdf_l = interpolate.BSpline(lnspc, pdf_g, xnew)
+			helper_y3 = interpolate.make_interp_spline(lnspc, pdf_g)
+			pdf_l = helper_y3(xnew)
+
 			plt.plot(xnew, pdf_l, c = 'darkred', lw = 2) # plot i
 			cnt += 1
 		leg = ax1.legend(fontsize = 24, )
@@ -363,7 +368,7 @@ class SSA_measurements():
 #plt.show()
 #return stds
 
-	def scurve_trim_old(self, filename = 'Chip0/', calpulse = 50, method = 'center', iterations = 5, countershift = 0, compute_min_max = True, plot = True):
+	def scurve_trim_old(self, filename = 'TestLogs/', calpulse = 50, method = 'center', iterations = 5, countershift = 0, compute_min_max = True, plot = True):
 		print("->  S-Curve Trimming")
 		if(compute_min_max):
 			data = self.scurves(mode = 'all', rdmode = 'fast', cal_list = [calpulse], trim_list = [0, 31], filename = filename, plot = False, countershift = countershift)
@@ -391,7 +396,7 @@ class SSA_measurements():
 		return scurve_trim, scurve_init
 
 	###########################################################
-	def threshold_spread(self, calpulse = 50, file = '../SSA_results/Chip0/', runname = '', use_stored_data = False, plot = True, nevents=1000, speeduplevel = 2, filemode = 'w'):
+	def threshold_spread(self, calpulse = 50, file = '../SSA_results/TestLogs/', runname = '', use_stored_data = False, plot = True, nevents=1000, speeduplevel = 2, filemode = 'w'):
 		utils.print_log( "->  threshold Spread Measurement")
 		fi = "../SSA_Results/" + file + "_" + str(runname) + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
 		print(fi)
@@ -426,7 +431,7 @@ class SSA_measurements():
 
 
 	###########################################################
-	def gain_offset_noise(self, calpulse = 50, ret_average = True, plot = True, use_stored_data = False, file = 'TestLogs/Chip0', filemode = 'w', runname = '', nevents=1000, speeduplevel = 2):
+	def gain_offset_noise(self, calpulse = 50, ret_average = True, plot = True, use_stored_data = False, file = 'TestLogs/TestLogs', filemode = 'w', runname = '', nevents=1000, speeduplevel = 2):
 		utils.print_log("->  SCurve Gain, Offset and Noise Measurement")
 		utils.activate_I2C_chip()
 		callist = [calpulse-20, calpulse, calpulse+20]
@@ -666,7 +671,7 @@ class SSA_measurements():
 					compose_fast_command(duration = 0, resync_en = 0, l1a_en = 0, cal_pulse_en = 1, bc0_en = 0)
 					cl = self.ssa.readout.cluster_data(raw = False, apply_offset_correction = False, send_test_pulse = False, shift = 0, initialize = False, lookaround = False, getstatus = False, display_pattern = False, display = False)
 					cnt[m] = len(cl)
-				sleep(0.1)
+				time.sleep(0.1)
 				data[nitr, 0] = th[i]
 				data[nitr, 1] = np.average(cnt)
 				data[nitr, 2] = self.pwr.get_power_digital(display = False)

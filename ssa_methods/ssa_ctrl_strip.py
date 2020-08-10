@@ -33,7 +33,7 @@ class ssa_ctrl_strip:
 	def set_trimming(self, strip, value):
 		value = value & 0b11111
 		if(tbconfig.VERSION['SSA'] >= 2):
-			r = self.I2C.strip_write(register="ThresholdTrimming", field='ThresholdTrimming', strip=strip, data=value)
+			r = self.I2C.strip_write(register="ThresholdTrimming", field=False, strip=strip, data=value)
 		else:
 			if(strip == 'all'): strip = 0
 			r = self.I2C.strip_write("THTRIMMING", strip, value)
@@ -41,7 +41,7 @@ class ssa_ctrl_strip:
 
 	def get_trimming(self, strip):
 		if(tbconfig.VERSION['SSA'] >= 2):
-			r = self.I2C.strip_read(register="ThresholdTrimming", field='ThresholdTrimming', strip=strip)
+			r = self.I2C.strip_read(register="ThresholdTrimming", field=False, strip=strip)
 		else:
 			r = self.I2C.strip_read("THTRIMMING", strip)
 		return r

@@ -179,10 +179,13 @@ class ssa_i2c_conf:
 			print("'X>  I2C Strip register name not found")
 			rep = 'Null'
 		else:
-			if(V>=2): strip_id = strip if (strip is not 'all') else 0x7f
-			else:     strip_id = strip if (strip is not 'all') else 0x00
+
+			if(V>=2): strip_id = strip-1 if (strip is not 'all') else 0x7f
+			else:     strip_id = strip   if (strip is not 'all') else 0x00
+
 			if(V>=2): base = self.tonumber(self.ssa_strip_reg_map[register]['adr'],0)
 			else:     base = self.tonumber(self.ssa_strip_reg_map[register],0)
+
 			reg_adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
 
 			if(field):
@@ -244,7 +247,7 @@ class ssa_i2c_conf:
 			rep = 'Null'
 		else:
 			if(tbconfig.VERSION['SSA'] >= 2):
-				strip_id = strip if (strip is not 'all') else 0x7f
+				strip_id = strip-1 if (strip is not 'all') else 0x7f
 				base = self.tonumber(self.ssa_strip_reg_map[register]['adr'],0)
 			else:
 				strip_id = strip if (strip is not 'all') else 0x00
@@ -253,7 +256,7 @@ class ssa_i2c_conf:
 			repd = self.read_I2C('SSA', adr, timeout)
 			if(repd == None):
 				rep  = 'Null'
-				print('X>  I2C Strip {:3d} read  -  Adr=[{:h}], Value=[{:s}] - ERROR'.format(strip_id, adr, 'NOVALUE'))
+				print('X>  I2C Strip {:3d} read  -  Adr=[{:s}][0x{:x}], Value=[{:s}] - ERROR'.format(strip_id, register, adr, 'NOVALUE'))
 			else:
 				if(field):
 					mask = int(self.ssa_strip_reg_map[register]['fields_mask'][field], 2)
@@ -262,7 +265,7 @@ class ssa_i2c_conf:
 				else:
 					rep  = repd
 				if(self.debug):
-					print("->  I2C Strip {:3d} read  - [{:x}] - GOOD".format(strip_id, rep))
+					print("->  I2C Strip {:3d} read  - [0x{:x}] - GOOD".format(strip_id, rep))
 			#			break
 			#except:
 			#	print('=>  TB Communication error - I2C-Strip-read')
