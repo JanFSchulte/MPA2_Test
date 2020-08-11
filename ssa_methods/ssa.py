@@ -174,15 +174,15 @@ class SSA_ASIC:
 		self.readout.cluster_data(initialize = True)
 		alined_left  = False; alined_right = False; cnt = 0;
 		self.fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay)
-		self.inject.digital_pulse([100, 121, 124], initialise = True)
+		self.inject.digital_pulse([100, 123], initialise = True)
 		#self.ctrl.set_lateral_data(0b00001001, 0)
 		while ((alined_left == False) and (cnt < timeout)):
 			clusters = self.readout.cluster_data(initialize = False, shift = shift)
 			if len(clusters) == 3:
-				if(clusters[0] == 100 and clusters[1] == 121 and clusters[2] == 124):
+				if(clusters[0] == 100 and clusters[1] == 123):
 					alined_left = True
 			utils.ShowPercent(cnt, timeout+1, "Aligning left input line\t\t" + str(clusters) + "           ")
-			time.sleep(0.001)
+			time.sleep(0.1)
 			#if  (cnt==256): self.fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay+1)
 			#elif(cnt==512): self.fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay+2)
 			self.ctrl.set_lateral_data_phase(0,5)

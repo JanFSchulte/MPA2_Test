@@ -101,11 +101,11 @@ class Utilities:
 	def cl2str(self, clist = [0]):
 		if isinstance(clist, list):
 			if len(clist) > 0:
-				rstr = str(map(self.cl_clustdispl, clist))
+				rstr = str(list(map(self.cl_clustdispl, clist)))
 			else:
 				rstr = "[      ]"
 		else:
-			rstr = "[{:6.1f}]".format(clist)
+			rstr = str("[{:6.1f}]".format(clist))
 		return rstr
 
 	def __plot_graph(self, *args):

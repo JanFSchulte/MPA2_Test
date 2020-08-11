@@ -19,7 +19,7 @@ class SSA_inject():
 		self.ctrl = ssactrl; self.strip = ssastrip;
 		self.__initialise()
 
-	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, sequence = 0xff, initialise = True, profile=False):
+	def digital_pulse(self, hit_list = [], hip_list = [], times = 1, sequence = 0x01, initialise = True, profile=False):
 		leftdata  = 0; rightdata = 0;
 
 		if(initialise == True):
@@ -34,7 +34,7 @@ class SSA_inject():
 			else:
 				self.I2C.strip_write("DigCalibPattern_L", 0, sequence)
 
-		if(hit_list != self.hit_list):#to speedup
+		if( (hit_list != self.hit_list) or (self.data_l != leftdata) or (self.data_r != rightdata)):#to speedup
 			self.hit_list = hit_list
 			if(tbconfig.VERSION['SSA'] >= 2):
 				self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00000)
@@ -43,8 +43,10 @@ class SSA_inject():
 			for cl in hit_list:
 				if (cl < 1):
 					rightdata = rightdata | (0b1 << (7+cl))
+					#print(bin(rightdata))
 				elif (cl > 120):
 					leftdata = leftdata | (0b1 << (cl-121))
+					#print(bin(leftdata))
 				else:
 					#time.sleep(0.001)
 					if(tbconfig.VERSION['SSA'] >= 2):
@@ -53,6 +55,8 @@ class SSA_inject():
 						self.I2C.strip_write("ENFLAGS", cl, 0b01001)
 
 		if(self.data_l != leftdata or self.data_r != rightdata):#to speedup
+			print(bin(rightdata))
+			print(bin(leftdata))
 			self.ctrl.set_lateral_data(left = leftdata, right = rightdata)
 			self.data_l = leftdata;
 			self.data_r = rightdata;

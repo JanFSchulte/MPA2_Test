@@ -39,7 +39,7 @@ class SSA_test_utility():
 		if(mode == "digital"):
 			self.ssa.inject.digital_pulse(initialise = True, times = 1)
 		elif(mode == "analog"):
-			self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', cal_pulse_amplitude = 255, threshold = [50, 100])
+			self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', cal_pulse_amplitude = 200, threshold = [30, 100])
 		else:
 			return False
 		time.sleep(0.01)
@@ -129,7 +129,7 @@ class SSA_test_utility():
 		#print("->  Remember to call test.lateral_input_phase_tuning() before to run this test")
 		utils.activate_I2C_chip()
 		if(not self.ssa.cl_word_aligned()):
-			self.ssa.cl_word_alignment()
+			self.ssa.alignment_cluster_data_word()
 		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
 		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
@@ -186,7 +186,7 @@ class SSA_test_utility():
 			stfound = utils.cl2str(r);
 			stlateralout = utils.cl2str(l);
 			stprev = utils.cl2str(prev)
-			dstr = stexpected + ';    ' + stfound + ';    ' + stlateralout + ';    ' + stprev + ';    ' + "                                            "
+			dstr = 'ref=' + stexpected + ';    out=' + stfound + ';    lateral=' + stlateralout + ';    prev=' + stprev + ';    ' + "                                            "
 			if (err[0]):
 				erlog = "Cluster-Data-Error;   " + dstr
 				cnt['cl_err'] += 1
@@ -212,7 +212,10 @@ class SSA_test_utility():
 		return rt
 
 	def lateral_input_phase_tuning(self, display = False, timeout = 256*3, delay = 4, shift = 'default', init = False, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = ''):
-		return self.ssa.alignment_cluster_data_word(display = display, timeout = timeout, delay = delay, shift = shift, init = init, file = file, filemode = filemode, runname = runname)
+		return self.ssa.alignment_cluster_data_word(
+			display = display, timeout = timeout, delay = delay,
+			shift = shift, init = init, file = file,
+			filemode = filemode, runname = runname)
 
 
 	#def lateral_output_phase_tuning(self):

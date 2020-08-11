@@ -235,10 +235,11 @@ class SSA_readout():
 
 	def lateral_data(self, display = False, shift = 0, initialize = True, raw = False):
 		if(initialize == True):
-			Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
+			#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
+			Configure_TestPulse_SSA(    number_of_test_pulses = 1, delay_before_next_pulse = 500, delay_after_test_pulse = 0, delay_after_fast_reset = 0, enable_rst_L1 = 0)
 			time.sleep(0.001)
 		self.fc7.SendCommand_CTRL("start_trigger")
-		self.fc7.SendCommand_CTRL("start_trigger")
+		#self.fc7.SendCommand_CTRL("start_trigger")
 		time.sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
 		while ((status & 0x00000002) >> 1) != 1:
@@ -271,13 +272,13 @@ class SSA_readout():
 				right = right | (tmp << (32*i))
 			else:
 				left = left | (tmp << (32*(i-10)))
-		left  = (left  >> ((shift+13)*8)) & 0xff
-		right = (right >> ((shift+13)*8)) & 0xff
+		left  = (left  >> ((shift+9)*8)) & 0xff
+		right = (right >> ((shift+9)*8)) & 0xff
 		if(raw):
 			return bin(left), bin(right)
 		for i in range(1,9):
 			if ((right & 0b1) == 1):
-				coordinates.append(i-1)
+				coordinates.append(i)
 			right = right >> 1
 		for i in range(1,9):
 			if ((left & 0b1) == 1):
@@ -347,6 +348,9 @@ class SSA_readout():
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
 			Configure_TestPulse(199, 50, 400, 1)
+
+			#Configure_TestPulse_SSA(    number_of_test_pulses = 1, delay_before_next_pulse = 500, delay_after_test_pulse = 0, delay_after_fast_reset = 0, enable_rst_L1 = 0)
+
 			time.sleep(0.001)
 		if(trigger):
 			self.fc7.SendCommand_CTRL("start_trigger")

@@ -284,7 +284,7 @@ class ssa_ctrl_base:
 			R_Left  = self.I2C.peri_read(register="Shift_pattern_Left",      field=False )
 			R_Right = self.I2C.peri_read(register="Shift_pattern_Right",     field=False )
 			R_L1    = self.I2C.peri_read(register="Shift_pattern_L1",        field=False )
-			print(ST)
+			#print(ST)
 			if(R_ST[0] != ST[0] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[0] ))
 			if(R_ST[1] != ST[1] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[1] ))
 			if(R_ST[2] != ST[2] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[2] ))
