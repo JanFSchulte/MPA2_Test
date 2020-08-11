@@ -1,16 +1,19 @@
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
-from myScripts.ArrayToCSV import *
-from myScripts.Utilities import *
-from itertools import groupby
-from operator import itemgetter
 import time
 import sys
 import inspect
 import numpy as np
 import matplotlib.pyplot as plt
 import ctypes
+from itertools import groupby
+from operator import itemgetter
+
+from utilities.tbsettings import *
+from d19cScripts.fc7_daq_methods import *
+from d19cScripts.MPA_SSA_BoardControl import *
+from myScripts.BasicD19c import *
+from myScripts.ArrayToCSV import *
+from myScripts.Utilities import *
+
 
 class SSA_SEU_utilities():
 
@@ -41,7 +44,7 @@ class SSA_SEU_utilities():
 		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern(strip, hipflags)
 		time.sleep(0.01); self.Configure_Injection(strip_list = strip, hipflag_list = hipflags, analog_injection = 0, latency = latency, create_errors = create_errors)
 		time.sleep(0.01); self.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = display)
-		time.sleep(0.01); self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = display)
+		time.sleep(0.01); self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = 2)
 		time.sleep(0.01); Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0, initial_reset = 1)
 		time.sleep(0.01); fc7.write("cnfg_fast_backpressure_enable", 0)
 		time.sleep(0.01); self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
@@ -181,15 +184,20 @@ class SSA_SEU_utilities():
 		centroids = []
 		strip_list = np.array(strip_list[0:8])
 		tmp = enumerate( strip_list[strip_list<=120][strip_list>0] )
-		for k, g in groupby( tmp , lambda i, x : i-x):
-			cluster = map( itemgetter(1), g)
+		# for k, g in groupby( tmp , lambda (i, x) : i-x):
+		for k, g in groupby( tmp , lambda z : z[0]-z[1] ):
+			cluster = list(map( itemgetter(1), g))
 			size = np.size(cluster)
 			center  = np.mean(cluster)
 			if(size < cluster_cut):
 				centroids.append( center )
 		for i in range(np.size(centroids)):
 			if((centroids[i] <= 120) and (centroids[i] >= 1)):
-				slist[i] = int(((centroids[i] + 3) * 2)) & 0xff
+				if(tbconfig.VERSION['SSA'] >= 2):
+					slist[i] = int(((centroids[i] + 3.5) * 2)) & 0xff
+				else:
+					slist[i] = int(((centroids[i] + 3.0) * 2)) & 0xff
+		print(slist)
 		#### Formatting
 		p1 = (slist[0]<<0) | (slist[1]<<8) | (slist[2]<<16) | (slist[3]<<24)
 		p2 = (slist[4]<<0) | (slist[5]<<8) | (slist[6]<<16) | (slist[7]<<24)
@@ -198,7 +206,7 @@ class SSA_SEU_utilities():
 
 
 	##############################################################
-	def L1_Evaluate_Pattern(self, strip_list = [3,7,12,13,18], hflag_list = [3,7,12,13,18]):
+	def L1_Evaluate_Pattern(self, strip_list = [3,7,12,13,18], hflag_list = [3,7,12,13,18], display=0):
 		strip = np.sort(strip_list[0:8])
 		hfleg = np.sort(hflag_list)
 		l1hit  = np.full(120, '0')
@@ -209,8 +217,8 @@ class SSA_SEU_utilities():
 		centroids = []
 		strip_list = np.array(strip_list[0:8])
 		tmp = enumerate( strip_list[strip_list<=120][strip_list>0] )
-		for k, g in groupby( tmp , lambda i, x : i-x):
-			cluster = map( itemgetter(1), g)
+		for k, g in groupby( tmp , lambda z : z[0]-z[1] ):
+			cluster = list(map( itemgetter(1), g))
 			size = np.size(cluster)
 			center  = np.mean(cluster)
 			centroids.append( [center, cluster] )
@@ -227,13 +235,24 @@ class SSA_SEU_utilities():
 					l1flag[location] = '1'
 				else:
 					location += 1
-		p1 = 0x00000000
-		p2 = 0x00000000
-		p3 = int( '0b' + ( ''.join((l1hit[0:30])[::-1])  + '10'    ) , 2)
-		p4 = int( '0b' + ( ''.join((l1hit[30:62])[::-1])  ) , 2)
-		p5 = int( '0b' + ( ''.join((l1hit[62:94])[::-1])  ) , 2)
-		p6 = int( '0b' + ( ''.join((l1flag[0:6])[::-1])   + ''.join((l1hit[94:120])[::-1])  ) , 2)
-		p7 = int( '0b' + ( '0'*10 + ''.join((l1flag[6:24])[::-1])  ) , 2)
+		if(tbconfig.VERSION['SSA'] >= 2):
+			p1 = 0x00000000
+			p2 = 0x00000000
+			p3 = int( '0b' + ( ''.join((l1hit[0:26])[::-1])  + '111100'    ) , 2)
+			p4 = int( '0b' + ( ''.join((l1hit[26:58])[::-1])  ) , 2)
+			p5 = int( '0b' + ( ''.join((l1hit[58:90])[::-1])  ) , 2)
+			p6 = int( '0b' + ( ''.join((l1flag[0:2])[::-1])   + ''.join((l1hit[90:120])[::-1])  ) , 2)
+			p7 = int( '0b' + ( '0'*6 + ''.join((l1flag[2:24])[::-1])  ) , 2)
+		else:
+			p1 = 0x00000000
+			p2 = 0x00000000
+			p3 = int( '0b' + ( ''.join((l1hit[0:30])[::-1])  + '10'    ) , 2)
+			p4 = int( '0b' + ( ''.join((l1hit[30:62])[::-1])  ) , 2)
+			p5 = int( '0b' + ( ''.join((l1hit[62:94])[::-1])  ) , 2)
+			p6 = int( '0b' + ( ''.join((l1flag[0:6])[::-1])   + ''.join((l1hit[94:120])[::-1])  ) , 2)
+			p7 = int( '0b' + ( '0'*10 + ''.join((l1flag[6:24])[::-1])  ) , 2)
+			#if(display>3):
+		print("{:32b}-{:32b}-{:32b}-{:32b}-{:32b}-{:32b}-{:32b}".format(p7, p6, p5, p4, p3, p2, p1))
 		return p1, p2, p3, p4, p5, p6, p7
 
 
@@ -435,13 +454,13 @@ class SSA_SEU_utilities():
 		fc7.write("cnfg_phy_l1_MPA_SSA_SEU_check_patterns7",pattern7)
 		time.sleep(0.5)
 		if(display > 1):
-			print("Content of the patterns1 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns1")) ))
-			print("Content of the patterns2 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns2")) ))
-			print("Content of the patterns3 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns3")) ))
-			print("Content of the patterns4 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns4")) ))
-			print("Content of the patterns5 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns5")) ))
-			print("Content of the patterns6 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns6")) ))
 			print("Content of the patterns7 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns7")) ))
+			print("Content of the patterns6 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns6")) ))
+			print("Content of the patterns5 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns5")) ))
+			print("Content of the patterns4 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns4")) ))
+			print("Content of the patterns3 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns3")) ))
+			print("Content of the patterns2 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns2")) ))
+			print("Content of the patterns1 cnfg register: "  + str( self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns1")) ))
 
 
 	##############################################################

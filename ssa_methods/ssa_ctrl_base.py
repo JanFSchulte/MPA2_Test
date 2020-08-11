@@ -632,9 +632,9 @@ class ssa_ctrl_base:
 	def set_output_mux(self, testline = 'highimpedence'):
 		if(tbconfig.VERSION['SSA'] >= 2):
 			ctrl = self.analog_mux_map[testline]
-			r =    self.I2C.peri_write( register="ADC_trimming",    field='TestPad_Enable',        data=0b1)
-			r = r| self.I2C.peri_write( register="adr_ADC_control", field='ADC_control_input_sel', data=ctrl)
-			r = r| self.I2C.peri_read(  register="adr_ADC_control", field='ADC_control_input_sel')
+			self.I2C.peri_write(    register="ADC_trimming", field='TestPad_Enable',        data=0b1)
+			self.I2C.peri_write(    register="ADC_control",  field='ADC_control_input_sel', data=ctrl)
+			r = self.I2C.peri_read( register="ADC_control",  field='ADC_control_input_sel')
 		else:
 			#utils.activate_I2C_chip()
 			ctrl = self.analog_mux_map[testline]
