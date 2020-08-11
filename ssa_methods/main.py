@@ -1,3 +1,7 @@
+
+from myScripts.Multimeter_GPIB_Keithley import *
+from myScripts.Multimeter_LAN_Keithley import *
+
 from utilities.tbsettings import *
 from myScripts.SelectBoardIp import *
 from ssa_methods.ssa import *
@@ -17,18 +21,11 @@ from ssa_methods.ssa_test_seu import *
 from myScripts.BasicADC import *
 from ssa_methods.ssa_wp_analyze import *
 
-try:
-	from myScripts.BasicMultimeter import *
-	multimeter = keithley_multimeter()
-except ImportError:
-	multimeter = False
-	print("->  Impossible to access GPIB instruments")
-
+multimeter_gpib = keithley_multimeter()
+multimeter_lan  = Multimeter_LAN_Keithley()
 ipaddr, fc7AddrTable, fc7_if = SelectBoard('ssa')
-
 # print(tbconfig.VERSION)
 # try_fc7_com(fc7_if)
-
 FC7               = ssa_fc7_com(fc7_if)
 ssa_i2c           = ssa_i2c_conf(FC7)
 ssa_strip_reg_map = ssa_i2c.get_strip_reg_map()
@@ -38,7 +35,7 @@ ssa_pwr           = ssa_power_utility(ssa_i2c, FC7)
 ssa               = SSA_ASIC(ssa_i2c, FC7, ssa_pwr, ssa_peri_reg_map, ssa_strip_reg_map, ssa_ana_mux_map)
 ssa_cal           = SSA_cal_utility(ssa, ssa_i2c, FC7)
 pcbadc            = onboard_adc()
-ssa_biascal       = ssa_calibration(ssa, ssa_i2c, FC7, multimeter, pcbadc, ssa_peri_reg_map, ssa_strip_reg_map, ssa_ana_mux_map)
+ssa_biascal       = ssa_calibration(ssa, ssa_i2c, FC7, pcbadc, ssa_peri_reg_map, ssa_strip_reg_map, ssa_ana_mux_map, multimeter_gpib, multimeter_lan)
 ssa_measure       = SSA_measurements(ssa, ssa_i2c, FC7, ssa_cal, ssa_ana_mux_map, ssa_pwr, ssa_biascal)
 ssa_seuutil       = SSA_SEU_utilities(ssa, ssa_i2c, FC7, ssa_pwr)
 ssa_test          = SSA_test_utility(ssa, ssa_i2c, FC7, ssa_cal, ssa_pwr, ssa_seuutil)
@@ -47,6 +44,8 @@ ssa_xray          = SSA_test_xray(ssa_toptest, ssa, ssa_i2c, FC7, ssa_cal, ssa_b
 ssa_anl           = SSA_Analise_Test_results(ssa_toptest, ssa_test, ssa_measure, ssa_biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
 ssa_seu           = SSA_SEU(ssa, ssa_seuutil, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pwr, ssa_test, ssa_measure)
 SSA               = ssa
+
+
 
 
 ### fast trials methods ###

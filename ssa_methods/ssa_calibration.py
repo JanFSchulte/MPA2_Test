@@ -1,10 +1,3 @@
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
-from myScripts.ArrayToCSV import *
-from myScripts.Utilities import *
-#### from myScripts.BasicMultimeter import *
-
 import time
 import sys
 import inspect
@@ -12,8 +5,11 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-
+from d19cScripts.fc7_daq_methods import *
+from d19cScripts.MPA_SSA_BoardControl import *
+from myScripts.BasicD19c import *
+from myScripts.ArrayToCSV import *
+from myScripts.Utilities import *
 
 
 class ssa_calibration():
@@ -27,13 +23,18 @@ class ssa_calibration():
 			self.curr_value = curr_value
 			self.docalibrate = docalibrate
 
-	def __init__(self, ssa, I2C, fc7, multimeter, pcbadc, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
+	def __init__(self, ssa, I2C, fc7, pcbadc, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map, multimeter_gpib, multimeter_lan):
 		self.ssa = ssa;  self.I2C = I2C;  self.fc7 = fc7;
-		self.pcbadc = pcbadc;  self.multimeter = multimeter;
+		self.pcbadc = pcbadc;
 		self.ssa_peri_reg_map = ssa_peri_reg_map;  self.ssa_strip_reg_map = ssa_strip_reg_map;
 		self.analog_mux_map = analog_mux_map;  self.initialised = False; self.minst = 0;
-		self.SetMode('MULTIMETER');
+		self.SetMode('MULTIMETER_LAN');
 		self.set_gpib_address(16);
+		#self.multimeter_gpib = keithley_multimeter()
+		self.multimeter_gpib = multimeter_gpib
+		#self.__multimeter_gpib_initialise()
+		#self.multimeter_lan  = Multimeter_LAN_Keithley()
+		self.multimeter_lan = multimeter_lan
 		self.par_list = [
 			self.Parameter("Analog Ground Interal ", "GND",                   0.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Bandgap Voltage       ", "VBG",                   0.3, -1, -1, 'set_dont_calibrate'),
@@ -48,22 +49,25 @@ class ssa_calibration():
 			self.Parameter("Threshold High DAC    ", "Bias_THDACHIGH",      622.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Calibration DAC       ", "Bias_CALDAC",         100.0, -1, -1, 'set_dont_calibrate')]
 
-	def SetMode(self, mode = 'ADC'):
-		''' Modes:  'ADC' or 'MULTIMETER' '''
-		self.mode = mode
+	def SetMode(self, mode = 'MULTIMETER_LAN'):
+		if(mode not in ['ADC', 'MULTIMETER_GPIB', 'MULTIMETER_LAN']):
+			print('->  ERROR MULTIMETER MODE')
+			return False
+		else:
+			self.mode = mode
+			return True
 
 	def set_gpib_address(self, address):
 		self.gpib_address = address
 
-	def __initialise(self):
-		self.minst = self.multimeter.init_keithley(address = self.gpib_address, avg = 0)
+	def __multimeter_gpib_initialise(self):
+		self.minst = self.multimeter_gpib.init_keithley(address = self.gpib_address, avg = 0)
 		self.initialised = True
-
 
 	def calibrate_to_nominals(self, measure = True):
 		try:
-			if(not self.initialised and (self.mode == 'MULTIMETER')):
-				self.__initialise()
+			if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):
+				self.__multimeter_gpib_initialise()
 			for par in self.par_list:
 				if(par.docalibrate == 'set_calibrate'):
 					value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
@@ -84,8 +88,8 @@ class ssa_calibration():
 
 
 	def measure_bias(self, return_data = False):
-		if(not self.initialised and (self.mode == 'MULTIMETER')):
-			self.__initialise()
+		if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):
+			self.__multimeter_gpib_initialise()
 		for par in self.par_list:
 			value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
 			voltage = voltage*1E3
@@ -102,21 +106,23 @@ class ssa_calibration():
 	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot = True, average = 5, runname = '', filemode = 'w'):
 		# ['Bias_D5BFEED'] ['Bias_D5PREAMP']['Bias_D5TDR']['Bias_D5ALLV']['Bias_D5ALLI']
 		# ['Bias_CALDAC']['Bias_BOOSTERBASELINE']['Bias_THDAC']['Bias_THDACHIGH']['Bias_D5DAC8']
-		if(not self.initialised and (self.mode == 'MULTIMETER')):
-			self.__initialise()
+		if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):
+			self.__multimeter_gpib_initialise()
 		if(not name in self.analog_mux_map):
 			print("->  Invalid DAC name")
 			return False
 		fullscale = 2**nbits
 		#if(not self.initialised):
-		#	self.__initialise()
+		#	self.__multimeter_gpib_initialise()
 		self.ssa.ctrl.set_output_mux(name)
 		data = np.zeros(fullscale, dtype=np.float);
 		for i in range(0, fullscale):
 			self.I2C.peri_write(name, i)
 			time.sleep(0.1)
-			if(self.mode == 'MULTIMETER'):
-				data[i] = self.multimeter.measure(self.minst)
+			if(self.mode == 'MULTIMETER_GPIB'):
+				data[i] = self.multimeter_gpib.measure(self.minst)
+			elif(self.mode == 'MULTIMETER_LAN'):
+				data[i] = self.multimeter_lan.measure()
 			else:
 				data[i] = self.pcbadc.measure('SSA', average)
 			utils.ShowPercent(i, fullscale-1, "Measuring "+name+" linearity                         ")
@@ -166,8 +172,8 @@ class ssa_calibration():
 	def measure_dac_gain_offset(self, name='Bias_THDAC', nbits=8, npoints = 10, filename = False, filename2 = "", plot = True, average = 5, runname = '', filemode = 'w'):
 		# ['Bias_D5BFEED'] ['Bias_D5PREAMP']['Bias_D5TDR']['Bias_D5ALLV']['Bias_D5ALLI']
 		# ['Bias_CALDAC']['Bias_BOOSTERBASELINE']['Bias_THDAC']['Bias_THDACHIGH']['Bias_D5DAC8']
-		if(not self.initialised and (self.mode == 'MULTIMETER')):
-			self.__initialise()
+		if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):
+			self.__multimeter_gpib_initialise()
 		if(not name in self.analog_mux_map):
 			print("->  Invalid DAC name")
 			return False
@@ -178,8 +184,10 @@ class ssa_calibration():
 		for i in range(len(x)):
 			self.I2C.peri_write(name, x[i])
 			time.sleep(0.1)
-			if(self.mode == 'MULTIMETER'):
-				data[i] = self.multimeter.measure(self.minst)
+			if(self.mode == 'MULTIMETER_GPIB'):
+				data[i] = self.multimeter_gpib.measure(self.minst)
+			elif(self.mode == 'MULTIMETER_LAN'):
+				data[i] = self.multimeter_lan.measure()
 			else:
 				data[i] = self.pcbadc.measure('SSA', average)
 			utils.ShowPercent(x[i], fullscale-1, "Measuring "+name+" linearity                         ")
@@ -258,14 +266,16 @@ class ssa_calibration():
 
 	def get_value_and_voltage(self, name, inst0 = -1, average = 1):
 		if (inst0 == -1):
-			if(not self.initialised and (self.mode == 'MULTIMETER')):
-				self.__initialise()
+			if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):
+				self.__multimeter_gpib_initialise()
 			inst = self.minst
 		else: inst = inst0
 		self.ssa.ctrl.set_output_mux(name)
 		value = self._d5_value(str(name), 'r')
-		if(self.mode == 'MULTIMETER'):
-			measurement = self.multimeter.measure(inst)
+		if(self.mode == 'MULTIMETER_GPIB'):
+			measurement = self.multimeter_gpib.measure(inst)
+		elif(self.mode == 'MULTIMETER_LAN'):
+			measurement = self.multimeter_lan.measure()
 		else:
 			measurement = self.pcbadc.measure('SSA', average)
 		#self.ssa.ctrl.set_output_mux('highimpedence')
@@ -274,14 +284,16 @@ class ssa_calibration():
 
 	def get_voltage(self, name, inst0 = -1, average = 1):
 		if (inst0 == -1):
-			if(not self.initialised and (self.mode == 'MULTIMETER')):
-				self.__initialise()
+			if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):
+				self.__multimeter_gpib_initialise()
 			inst = self.minst
 		else:
 			inst = inst0
 		self.ssa.ctrl.set_output_mux(name)
-		if(self.mode == 'MULTIMETER'):
-			measurement = self.multimeter.measure(inst)
+		if(self.mode == 'MULTIMETER_GPIB'):
+			measurement = self.multimeter_gpib.measure(inst)
+		elif(self.mode == 'MULTIMETER_LAN'):
+			measurement = self.multimeter_lan.measure()
 		else:
 			measurement = self.pcbadc.measure('SSA', average)
 		self.ssa.ctrl.set_output_mux('highimpedence')

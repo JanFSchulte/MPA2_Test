@@ -7,7 +7,7 @@ import matplotlib.axes as ax
 from mpa_methods.cal_utility import *
 from mpa_methods.power_utility import *
 from mpa_methods.bias_calibration import *
-from myScripts.BasicMultimeter import *
+from myScripts.Multimeter_GPIB_Keithley import *
 from mpa_methods.fast_readout_utility import *
 #import ProbeCardTest2 as PCT
 #PM = PCT.ProbeMeasurement("./")

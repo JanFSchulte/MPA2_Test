@@ -8,7 +8,7 @@ import numpy as np
 import time
 import sys
 import matplotlib.pyplot as plt
-from myScripts.BasicMultimeter import *
+from myScripts.Multimeter_GPIB_Keithley import *
 import Gpib
 
 def disable_test():

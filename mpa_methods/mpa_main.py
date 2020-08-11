@@ -5,7 +5,7 @@ from mpa_methods.mpa_cal_utility import *
 from mpa_methods.mpa_test_utility import *
 from mpa_methods.mpa_fc7_com import *
 #from mpa_methods.mpa_probe_test import *
-from myScripts.BasicMultimeter import *
+from myScripts.Multimeter_GPIB_Keithley import *
 
 FC7   = mpa_fc7_com(fc7)
 I2C   = mpa_i2c_conf()

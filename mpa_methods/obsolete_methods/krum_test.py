@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from mpa_methods.cal_utility import *
 from mpa_methods.power_utility import *
 from mpa_methods.bias_calibration import *
-from myScripts.BasicMultimeter import *
+from myScripts.Multimeter_GPIB_Keithley import *
 
 
 def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1, step = 3):
