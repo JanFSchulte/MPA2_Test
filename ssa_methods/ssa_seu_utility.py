@@ -27,13 +27,14 @@ class SSA_SEU_utilities():
 	##############################################################
 	def __init__(self, ssa, I2C, FC7, pwr):
 		self.ssa = ssa; self.I2C = I2C; self.fc7 = FC7; self.pwr = pwr;
+		self.seu_check_time = -1
 
 	##############################################################
 	def Run_Test_SEU(self,
 			check_stub=True, check_l1=True, check_lateral=True,
 			strip =[10,20,30,40], hipflags = [], cal_pulse_period = 1, l1a_period = 39,
 			latency = 101, run_time = 30, display = 1, filename = '', runname = '',
-			delay = 73, create_errors = False, stop_if_fifo_full = True):
+			delay = 73, create_errors = False, stop_if_fifo_full = True, read_seu_counter=True):
 
 		self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
@@ -55,7 +56,7 @@ class SSA_SEU_utilities():
 		self.fc7.write("cnfg_fast_backpressure_enable", 0)
 		self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
 
-		self.RunStateMachine_L1_and_Stubs(
+		test_duration = self.RunStateMachine_L1_and_Stubs(
 			check_stub=check_stub, check_l1=check_l1,
 			timer_data_taking=run_time, display=display, stop_if_fifo_full=stop_if_fifo_full)
 		#time.sleep(0.1); self.Stub_RunStateMachine(run_time = run_time, display = display)
@@ -65,7 +66,7 @@ class SSA_SEU_utilities():
 		CL_ok, CL_er = self.Stub_printinfo(display = display, header = 1, message = "SUMMARY")
 		LA_ok, LA_er = self.Lateral_printinfo(display = 0)
 		L1_ok, L1_er, LH_ok, LH_er = self.L1_printInfo(display = display, correction = correction )
-		return [CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er]
+		return [CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration]
 
 	##############################################################
 	def RunStateMachine_L1_and_Stubs(self, check_stub=True, check_l1=True, timer_data_taking = 30, display = 2, stop_if_fifo_full = True):
@@ -81,6 +82,7 @@ class SSA_SEU_utilities():
 			self.fc7.write("ctrl_phy_l1_SLVS_compare_start",1)
 		if(check_stub):
 			self.fc7.write("ctrl_phy_SLVS_compare_start",1)
+		timer_init = time.time()
 		self.fc7.SendCommand_CTRL("start_trigger")
 		state = self.fc7.read("stat_phy_slvs_compare_state_machine")
 		FIFO_almost_full_stub = self.fc7.read("stat_phy_slvs_compare_fifo_almost_full")
@@ -91,10 +93,8 @@ class SSA_SEU_utilities():
 		FIFO_almost_full_stub = self.fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 		FIFO_almost_full_L1   = self.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
 		timer = 0
-		timer_init = time.time()
 		timer_prev = 0
 		stop_condition = True
-
 		while(stop_condition):
 			time.sleep(0.01) # to check condition more or less every 10 ms
 			timer = time.time()-timer_init
@@ -114,6 +114,7 @@ class SSA_SEU_utilities():
 				self.print_all_info(check_stub=check_stub, check_l1=check_l1, message=message, display=display, header=1)
 
 		self.fc7.write("ctrl_phy_SLVS_compare_stop",1)
+		timer = time.time()-timer_init
 		self.fc7.SendCommand_CTRL("stop_trigger")
 		self.print_all_info(check_stub=check_stub, check_l1=check_l1, message=message, display=display, header=1)
 		#time.sleep(0.1); self.fc7.SendCommand_CTRL("stop_trigger")
@@ -133,6 +134,7 @@ class SSA_SEU_utilities():
 				print("L1-DATA:  data taking stopped because the FIFO reached the 80%")
 			else:
 				print("L1-DATA:  data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
+		return timer
 
 	##############################################################
 	def Configure_Injection(self, strip_list = [], hipflag_list = [], lateral = [], analog_injection = 0, latency = 100, create_errors = False):
@@ -294,7 +296,6 @@ class SSA_SEU_utilities():
 			print("BX indicator for SSA centroid data:" + str(self.fc7.read("stat_phy_slvs_compare_fifo_bx_indicator")))
 		#self.fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns3",0 or 1)
 		time.sleep(1)
-
 
 	##############################################################
 	def Stub_RunStateMachine(self, display = 2, run_time = 10):

@@ -24,7 +24,7 @@
         },
         "StripControl2": {
             "adr": "0x1",
-            "permission": "RW",
+            "permissions": "RW",
             "mask_reg"   : "mask_strip",
             "fields_mask": {
                 "HIP_Cut"        : "0b00000111",

@@ -3,6 +3,7 @@ import sys
 import inspect
 import numpy as np
 import matplotlib.pyplot as plt
+import copy
 from random import randint
 
 from utilities.tbsettings import *
@@ -25,6 +26,8 @@ class ssa_ctrl_base:
 		self.pwr = pwr
 		self.dll_chargepump = 0b00;
 		self.bias_dl_enable = False
+		self.seu_check_time = -1
+		self.seu_cntr = { 'A':{'peri':[0]*2, 'strip':[0]*8, 'all':0}, 'S':{'peri':[0]*2, 'strip':[0]*8, 'all':0} }
 
 	def resync(self, display=True):
 		SendCommand_CTRL("fast_fast_reset");
@@ -41,17 +44,25 @@ class ssa_ctrl_base:
 		rp = self.pwr.reset(display=display)
 		return rp
 
-	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True, rtarray = False, strip_list = range(1,121)):
+	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True, rtarray = False, strip_list = range(1,121), notes = [['block','register','value']]):
 		registers = []; rm = []
 		peri_reg_map  = self.ssa_peri_reg_map.copy()
 		for i in peri_reg_map:
-			if('Fuse' in i): rm.append(i)
-			if('SEU' in i): rm.append(i)
+			if(tbconfig.VERSION['SSA'] >= 2):
+				if('W' not in peri_reg_map[i]['permissions']):
+					rm.append(i)
+			else:
+				if('Fuse' in i): rm.append(i)
+				if('SEU' in i): rm.append(i)
 		for k in rm:
 			peri_reg_map.pop(k, None)
 		strip_reg_map = self.ssa_strip_reg_map.copy()
 		for i in strip_reg_map:
-			if('ReadCounter' in i): rm.append(i)
+			if(tbconfig.VERSION['SSA'] >= 2):
+				if('W' not in strip_reg_map[i]['permissions']):
+					rm.append(i)
+			else:
+				if('ReadCounter' in i): rm.append(i)
 		for k in rm:
 			strip_reg_map.pop(k, None)
 		for reg in peri_reg_map:
@@ -62,11 +73,14 @@ class ssa_ctrl_base:
 				tmp = [strip, reg, self.I2C.strip_read(reg, strip)]
 				registers.append(tmp)
 		#print("->  Configuration Saved on file:   " + str(file))
+		for n in notes:
+			registers.insert(0, n)
 		if display:
 			for i in registers:
 				print(i)
 		dir = file[:file.rindex(os.path.sep)]
 		if not os.path.exists(dir): os.makedirs(dir)
+
 		CSV.ArrayToCSV(registers, file)
 		if(rtarray):
 			return np.array(registers)
@@ -81,14 +95,14 @@ class ssa_ctrl_base:
 						self.I2C.peri_write(tmp[1], tmp[2])
 						r = self.I2C.peri_read(tmp[1])
 						if(r != tmp[2]):
-							print('X>   Configuration ERROR Periphery  ' + str(tmp[1]) + '  ' + str(tmp[2]) + '  ' + str(r))
+							utils.print_error('X>   Configuration ERROR Periphery  ' + str(tmp[1]) + '  ' + str(tmp[2]) + '  ' + str(r))
 				elif(tmp[0]>=1 and tmp[0]<=120):
 					if display: print('writing')
 					if ((not 'ReadCounter' in tmp[1]) and ((not 'Fuse' in tmp[1]))):
 						self.I2C.strip_write(tmp[1], tmp[0], tmp[2])
 						r = self.I2C.strip_read(tmp[1], tmp[0])
 						if(r != tmp[2]):
-							print('X>   Configuration ERROR Strip ' + str(tmp[0]))
+							utils.print_error('X>   Configuration ERROR Strip ' + str(tmp[0]))
 				if display:
 					print([tmp[0], tmp[1], tmp[2], r])
 			print("->  Configuration Loaded from file")
@@ -513,19 +527,48 @@ class ssa_ctrl_base:
 		else:
 			return True
 
-	def read_seu_counter(self):
+	def read_seu_counter(self, display=True, return_rate=False):
 		if(tbconfig.VERSION['SSA'] >= 2):
-			rp = { 'A':{'peri':[0]*2, 'strip':[0]*8}, 'S':{'peri':[0]*2, 'strip':[0]*8} }
-			rp['S']['peri'][0]  = self.I2C.peri_read(register = 'Sync_SEUcnt_blk0')
-			rp['S']['peri'][1]  = self.I2C.peri_read(register = 'Sync_SEUcnt_blk1')
-			rp['A']['peri'][0]  = self.I2C.peri_read(register = 'aseSync_SEUcnt_blk0')
-			rp['A']['peri'][1]  = self.I2C.peri_read(register = 'aseSync_SEUcnt_blk1')
+			## read counters ##############
+			seu_rate = {}
+			check_time = time.time()
+			prev = copy.deepcopy(self.seu_cntr)
+			self.seu_cntr['S']['peri'][0]  = self.I2C.peri_read(register = 'Sync_SEUcnt_blk0',  field = False)
+			self.seu_cntr['S']['peri'][1]  = self.I2C.peri_read(register = 'Sync_SEUcnt_blk1',  field = False)
+			self.seu_cntr['A']['peri'][0]  = self.I2C.peri_read(register = 'Async_SEUcnt_blk0', field = False)
+			self.seu_cntr['A']['peri'][1]  = self.I2C.peri_read(register = 'Async_SEUcnt_blk1', field = False)
 			for i in range(8):
-				rp['S']['strip'][i] = 0 # TODO
-				rp['A']['strip'][i] = 0 # TODO
+				self.seu_cntr['S']['strip'][i] = 0 # TODO
+				self.seu_cntr['A']['strip'][i] = 0 # TODO
+			################################
+			self.seu_cntr['S']['peri_all']  = np.sum(self.seu_cntr['S']['peri'])
+			self.seu_cntr['A']['peri_all']  = np.sum(self.seu_cntr['A']['peri'])
+			self.seu_cntr['S']['strip_all'] = np.sum(self.seu_cntr['S']['strip'])
+			self.seu_cntr['A']['strip_all'] = np.sum(self.seu_cntr['A']['strip'])
+			self.seu_cntr['S']['all'] = self.seu_cntr['S']['peri_all'] + self.seu_cntr['S']['strip_all']
+			self.seu_cntr['A']['all'] = self.seu_cntr['A']['peri_all'] + self.seu_cntr['A']['strip_all']
+
+			self.seu_cntr['time_since_last_check'] = (check_time - self.seu_check_time)
+			self.seu_check_time = check_time
+			seu_rate['A'] = np.float(self.seu_cntr['A']['all']-prev['A']['all'])/(self.seu_cntr['time_since_last_check'])
+			seu_rate['S'] = np.float(self.seu_cntr['S']['all']-prev['S']['all'])/(self.seu_cntr['time_since_last_check'])
+
+			if(display):
+				utils.print_info("->  SEU Counter       ->  S: rate={:3.3f}seu/s new=[{:d}] total=[{:d}] \n{:s}A: rate={:3.3f}seu/s new=[{:d}] total=[{:d}]".format(
+					seu_rate['S'], self.seu_cntr['S']['all']-prev['S']['all'], self.seu_cntr['S']['all'], ' '*26,
+					seu_rate['A'], self.seu_cntr['A']['all']-prev['A']['all'], self.seu_cntr['A']['all']) )
 		else:
-			rp = self.I2C.peri_read('SEU_Counter')
-		return rp
+			self.seu_cntr = self.I2C.peri_read('SEU_Counter')
+			seu_rate = np.float(self.seu_cntr)/(time.time() - self.seu_check_time)
+			self.seu_check_time = time.time()
+			if(display):
+				utils.print_info("->  SEU Counter       ->  Value: " + str(seucounter) + " Rate: " + str(seurate) + " 1/s")
+		if(return_rate):
+			return self.seu_cntr, seu_rate
+		else:
+			return self.seu_cntr
+
+	##############################################################
 
 	def set_l1_latency(self, latency):
 		if(tbconfig.VERSION['SSA'] >= 2):

@@ -1,10 +1,3 @@
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
-from myScripts.ArrayToCSV import *
-from myScripts.Utilities import *
-from ssa_methods.ssa_logs_utility import *
-from collections import OrderedDict
 import time
 import sys
 import inspect
@@ -19,6 +12,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import fnmatch
 import re
+
+from collections import OrderedDict
+from functools import reduce
+from pandas.core.common import flatten as pandas_flatten
 from scipy import stats
 from scipy import constants as ph_const
 from scipy import signal as scypy_signal
@@ -27,6 +24,13 @@ import matplotlib.gridspec as gridspec
 from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 
+from d19cScripts.fc7_daq_methods import *
+from d19cScripts.MPA_SSA_BoardControl import *
+from myScripts.BasicD19c import *
+from myScripts.ArrayToCSV import *
+from myScripts.Utilities import *
+from ssa_methods.ssa_logs_utility import *
+from utilities.tbsettings import *
 
 class SSA_SEU():
 
@@ -34,6 +38,13 @@ class SSA_SEU():
 		self.ssa = ssa;	  self.I2C = I2C;	self.seuutil = seuutil; self.fc7 = fc7; self.cal = cal;
 		self.pwr = pwr;   self.test = test; self.biascal = biascal; self.measure = measure;
 		self.init_parameters()
+
+	##############################################################
+	def init_parameters(self):
+		self.summary = results()
+		self.runtest = RunTest('default')
+		self.l1_latency = [101, 501]
+		self.run_time = 5 #sec
 
 	##############################################################
 	def main_test(self, run_repeat = 1, run_time = 30):
@@ -54,6 +65,7 @@ class SSA_SEU():
 			stavailable = range(1,121)
 			for rp in range(8):
 				self.ssa.reset(display = False)
+
 				init_time = time.time()
 				#self.ssa.init(edge = 'negative', display = False)
 				#self.test.lateral_input_phase_tuning(shift = 1)
@@ -62,11 +74,16 @@ class SSA_SEU():
 				striplist = list(np.sort(striplist))
 				iteration += 1
 
-				results = self.seuutil.Run_Test_SEU(
-					strip = striplist, hipflags = striplist, delay = 73, run_time = self.run_time,
-					cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 0, stop_if_fifo_full = True)
+				self.ssa.ctrl.read_seu_counter(display=False, return_rate=True) #only to initialize timer for rate calculation
 
-				seucounter = self.ssa.ctrl.read_seu_counter()
+				results = self.seuutil.Run_Test_SEU(
+					check_stub=True, check_l1=False, check_lateral=True,
+					strip = striplist, hipflags = striplist, delay = 73, run_time = self.run_time,
+					cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 1, stop_if_fifo_full = True)
+
+				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration]  = results
+
+				seucounter = self.ssa.ctrl.read_seu_counter(display=True)
 
 				self.seuutil.Stub_ReadFIFOs(
 					nevents = 'all',
@@ -80,21 +97,22 @@ class SSA_SEU():
 					filename = "../SSA_Results/SEU/" + folder + '/CONFIG/' + filename +'__'+str(runname)+'__'+str(iteration),
 					strip_list = striplist, latency = latency)
 
-				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er]  = results
 				print("->  Strip List = " + str(striplist))
-				seurate = np.float(seucounter)/(time.time() - init_time)
-				print("->  SEU Counter       ->  Value: " + str(seucounter) + " Rate: " + str(seurate) + " 1/s")
-				msg  = runname + ', ' + str(iteration) + ', ' + str(latency) + ', '
+
 				striplist.extend([0]*(8-len(striplist)))
-				msg += ', '.join(map(str, striplist )) + ', '
-				msg += ', '.join(map(str, results)) + ', '
-				msg += str(conf_p_er) + ', ' + str(conf_s_er) + ', ' + str(seucounter) + ', '
+				logdata = list(pandas_flatten([
+					runname, str(iteration), str(latency), striplist,
+					CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, conf_p_er,  conf_s_er,
+					self.ssa.ctrl.seu_cntr['S']['peri'], self.ssa.ctrl.seu_cntr['S']['strip'],
+					self.ssa.ctrl.seu_cntr['A']['peri'], self.ssa.ctrl.seu_cntr['A']['strip'],
+					test_duration, seucounter['time_since_last_check'],
+					]))
+				msg = ','.join(map(str, logdata))
 				fn = logfile + self.run_info() + '.csv'
 				dir = fn[:fn.rindex(os.path.sep)]
 				if not os.path.exists(dir): os.makedirs(dir)
-				fo = open(fn, 'a')
-				fo.write(msg + '\n')
-				fo.close()
+				with open(fn, 'a') as fo:
+					fo.write(msg + '\n')
 
 	def analyse_stub_error_buffer(self, folder = "../SSA_Results/SEU_Results_anl"):
 		labels = []
@@ -102,11 +120,6 @@ class SSA_SEU():
 		self.dirs = os.listdir(folder)
 		self.dirs = [s for s in self.dirs  if "Test_" in s]
 		self.dirs.sort()
-
-
-
-
-
 
 	##############################################################
 	def compile_logs(self, folder = "../SSA_Results/SEU_Results", cl_cut = 100, l1_cut = 100):
@@ -233,12 +246,18 @@ class SSA_SEU():
 			print("->  %10.6f -> %3d" % ( (time.time()-curtime), cnt))
 
 	##############################################################
-	def check_configuration(self, filename = 'Try', strip_list = range(1,121), latency = 500):
+	def check_configuration(self, filename = '../SSA_Results/SEU/test', strip_list = range(1,121), latency = 500):
 		#t = time.time()
-		conf_new = self.ssa.ctrl.save_configuration(rtarray = True, display=False, strip_list = strip_list, file = (filename+'__configuration.scv'))
-		conf_ref = self.ssa.ctrl.load_configuration(rtarray = True, display=False, upload_on_chip = False, file = 'ssa_methods/Configuration/ssa_configuration_base.csv')
-		conf_ref[ np.where(conf_ref[:,1] == 'L1_Latency_lsb')[0][0] , 2] = (latency >> 0) & 0xff
-		conf_ref[ np.where(conf_ref[:,1] == 'L1_Latency_msb')[0][0] , 2] = (latency >> 8) & 0xff
+		conf_new = self.ssa.ctrl.save_configuration(
+			rtarray = True, display=False, strip_list = strip_list,
+			file = (filename+'__configuration.scv'))
+
+		conf_ref = self.ssa.ctrl.load_configuration(
+			rtarray = True, display=False, upload_on_chip = False,
+			file = 'ssa_methods/Configuration/ssa_configuration_base_v{:d}.csv'.format(tbconfig.VERSION['SSA']))
+
+		#conf_ref[ np.where(conf_ref[:,1] == 'L1_Latency_lsb')[0][0] , 2] = (latency >> 0) & 0xff
+		#conf_ref[ np.where(conf_ref[:,1] == 'L1_Latency_msb')[0][0] , 2] = (latency >> 8) & 0xff
 		error = self.ssa.ctrl.compare_configuration(conf_new, conf_ref)
 		#print(time.time() - t)
 		peri_er = bool(error[0])
@@ -251,6 +270,11 @@ class SSA_SEU():
 			print("->  SEU Configuration -> Correct")
 		return peri_er, strip_er
 
+	def set_info(self):
+		self.ion    = input("Ion    : ")
+		self.tilt   = input("Angle  : ")
+		self.flux   = input("Flux : ")
+		self.folder = input("Folder : ")
 
 	##############################################################
 	def run_seu_counter(self, folder, filename, runtime = 60):
@@ -265,18 +289,6 @@ class SSA_SEU():
 			print(str(seucounter))
 			if( (time.time()-tinit) > runtime):
 				return
-
-	def init_parameters(self):
-		self.summary = results()
-		self.runtest = RunTest('default')
-		self.l1_latency = [101, 501]
-		self.run_time = 0.5 #sec
-
-	def set_info(self):
-		self.ion    = raw_input("Ion    : ")
-		self.tilt   = raw_input("Angle  : ")
-		self.flux   = raw_input("Flux : ")
-		self.folder = raw_input("Folder : ")
 
 	def run_info(self):
 		return ''
