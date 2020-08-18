@@ -98,10 +98,20 @@ class Utilities:
 		else:
 			return False
 
-	def cl2str(self, clist = [0]):
+	def cl2str(self, clist = [0], flag=[], color_flagged='red', color_others='null'):
 		if isinstance(clist, list):
 			if len(clist) > 0:
-				rstr = str(list(map(self.cl_clustdispl, clist)))
+				rstr = '['
+				for cl in clist:
+					if(cl in flag):
+						rstr += self.text_color("{:6.1f}".format(cl), color_flagged)
+					else:
+						rstr += self.text_color("{:6.1f}".format(cl), color_others)
+					if(cl == clist[-1]):
+						rstr += ']'
+					else:
+						rstr += ','
+				#rstr = str(list(map(self.cl_clustdispl, clist)))
 			else:
 				rstr = "[      ]"
 		else:
@@ -151,9 +161,7 @@ class Utilities:
 
 
 	def print_error(self, text, logfile = False):
-		sys.stdout.write("\033[1;31m")
-		print(str(text))
-		sys.stdout.write("\033[0;0m")
+		print(self.text_color(text, 'red'))
 		if(self.logfile):
 			self.logfile.write(str(text)+"\n")
 		if(self.errorlog):
@@ -161,30 +169,37 @@ class Utilities:
 
 
 	def print_warning(self, text, logfile = False):
-		sys.stdout.write("\033[1;33m")
-		print(str(text))
-		sys.stdout.write("\033[0;0m")
+		print(self.text_color(text, 'yellow'))
 		if(self.logfile):
 			self.logfile.write(str(text)+"\n")
 
 	def print_info(self, text, logfile = False):
-		sys.stdout.write("\033[1;34m")
-		print(str(text))
-		sys.stdout.write("\033[0;0m")
+		print(self.text_color(text, 'blue'))
 		if(self.logfile):
 			self.logfile.write(str(text)+"\n")
 
 	def print_good(self, text, logfile = False):
-		sys.stdout.write("\033[1;32m")
-		print(str(text))
-		sys.stdout.write("\033[0;0m")
+		print(self.text_color(text, 'green'))
 		if(self.logfile):
 			self.logfile.write(str(text)+"\n")
 
 	def print_log(self, text, logfile = False):
-		print(str(text))
+		print(self.text_color(text, 'white'))
 		if(self.logfile):
 			self.logfile.write(str(text)+"\n")
+
+	def text_color(self, text, color='none'):
+		if(color=='green'):
+			return "\033[1;32m" + str(text) + "\033[0;0m"
+		elif(color=='yellow'):
+			return "\033[1;33m" + str(text) + "\033[0;0m"
+		elif(color=='red'):
+			return "\033[1;31m" + str(text) + "\033[0;0m"
+		elif(color=='blue'):
+			return "\033[1;34m" + str(text) + "\033[0;0m"
+		else:
+			return text
+
 
 	def print_log_color_legend(self, text):
 		sys.stdout.write('Color legend: ')

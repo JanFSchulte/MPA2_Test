@@ -41,7 +41,7 @@ class SSA_SEU_utilities():
 		self.ssa.init(edge = 'negative', display = False)
 
 		s1, s2, s3 = self.Stub_Evaluate_Pattern(strip)
-		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern(strip, hipflags)
+		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern([33], [33])
 
 		self.Configure_Injection(
 			strip_list = strip, hipflag_list = hipflags, analog_injection = 0,
@@ -419,6 +419,7 @@ class SSA_SEU_utilities():
 		FIFO = np.full( [16386,4], '', dtype ='|S160')
 		if(not isinstance(nevents, int)):
 			FIFO_depth = self.fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo")
+			FIFO_depth = 50
 		else:
 			FIFO_depth = nevents
 		for i in range(0, FIFO_depth):
@@ -433,10 +434,10 @@ class SSA_SEU_utilities():
 				fifo8_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data8_fifo")
 				fifo9_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data9_fifo")
 				if(display>1): print("Full l1 data package without the header (MSB downto LSB): ")
-				FIFO[i,0] = fifo8_word
-				FIFO[i,1] = fifo9_word
-				FIFO[i,2] = (fifo7_word >>27) & 0xf
-				FIFO[i,3] = (self.parse_to_bin32(fifo7_word) + self.parse_to_bin32(fifo6_word) + self.parse_to_bin32(fifo5_word) + self.parse_to_bin32(fifo4_word) + self.parse_to_bin32(fifo3_word))
+				FIFO[i,0] = '{:8d}'.format(fifo8_word)
+				FIFO[i,1] = '{:8d}'.format(fifo9_word)
+				FIFO[i,2] = '{:8d}'.format(fifo7_word) # (fifo7_word >>27) & 0xf
+				FIFO[i,3] = (self.parse_to_bin32(fifo8_word) +'-'+ self.parse_to_bin32(fifo7_word) +'-'+ self.parse_to_bin32(fifo6_word) +'-'+ self.parse_to_bin32(fifo5_word) +'-'+ self.parse_to_bin32(fifo4_word) +'-'+ self.parse_to_bin32(fifo3_word) +'-'+ self.parse_to_bin32(fifo2_word))
 				if(display>0):
 					print("->  L1 counter  "  + str( FIFO[i,2] ))
 					print("->  BX counter: "  + str( FIFO[i,0] ))

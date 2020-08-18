@@ -44,7 +44,7 @@ class ssa_ctrl_base:
 		rp = self.pwr.reset(display=display)
 		return rp
 
-	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True, rtarray = False, strip_list = range(1,121), notes = [['block','register','value']]):
+	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True, rtarray = False, strip_list = range(1,121), notes = [['note','','']]):
 		registers = []; rm = []
 		peri_reg_map  = self.ssa_peri_reg_map.copy()
 		for i in peri_reg_map:
@@ -83,10 +83,10 @@ class ssa_ctrl_base:
 
 		CSV.ArrayToCSV(registers, file)
 		if(rtarray):
-			return np.array(registers)
+			return np.array(registers[1:])
 
 	def load_configuration(self, file = '../SSA_Results/Configuration.csv', display=True, upload_on_chip = True, rtarray = False):
-		registers = CSV.CsvToArray(file)[:,1:4]
+		registers = CSV.CsvToArray(file)[1:,1:4]
 		if(upload_on_chip):
 			for tmp in registers:
 				if(tmp[0] == -1):

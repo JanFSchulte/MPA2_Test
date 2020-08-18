@@ -49,6 +49,7 @@ class SSA_test_utility():
 		self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 		time.sleep(0.01)
 		cnt = {'cl_sum': 0, 'cl_err' : 0};
+		timeinit = time.time()
 		for i in range(0,nruns):
 			#clrange = np.array( random.sample(range(1, 60), nstrips)) * 2
 			if(lateral):
@@ -62,31 +63,37 @@ class SSA_test_utility():
 			elif(mode == "analog"):
 				self.ssa.inject.analog_pulse( hit_list = cl_hits, initialise = False)
 			time.sleep(0.005) #### important at nstrips = 8 (I2C time)
-			r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
+			received, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 			if(hfi):
-				while(r==prev and len(prev)>0): #for firmware issure to be fix in D19C
+				while(received==prev and len(prev)>0): #for firmware issure to be fix in D19C
 					#time.sleep(0.1)
-					#print('HFI')
-					if(mode == "digital"):
-						self.ssa.inject.digital_pulse(hit_list = cl_hits, initialise = False)
-					elif(mode == "analog"):
-						self.ssa.inject.analog_pulse( hit_list = cl_hits, initialise = False)
+					utils.print_warning('\n->  Seems that the data was not updated in the FC7. Reiterating this sample {:d}.'.format(wd+1))
+					#if(mode == "digital"):
+					#	self.ssa.inject.digital_pulse(hit_list = cl_hits, initialise = False)
+					#elif(mode == "analog"):
+					#	self.ssa.inject.analog_pulse( hit_list = cl_hits, initialise = False)
 					time.sleep(0.001)
-					r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
+					received, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 					if(wd>5): break
 					wd += 1;
-			if (len(r) != len(cl_centroids)):
+			if (len(received) != len(cl_centroids)):
 				err[0] = True
-			else:
-				for k in cl_centroids:
-					if k not in r:
-						err[0] = True
-			stexpected = utils.cl2str(cl_centroids);
-			stfound = utils.cl2str(r)
-			stprev = utils.cl2str(prev)
-			sthits = utils.cl2str(cl_hits)
+			#else:
+			missing=[]; exceding=[];
+			for k in cl_centroids:
+				if k not in received:
+					err[0] = True
+					missing.append(k)
+			for k in received:
+				if k not in cl_centroids:
+					err[0] = True
+					exceding.append(k)
+			stexpected = utils.cl2str(cl_centroids, flag=missing,  color_flagged='red', color_others='green');
+			stfound    = utils.cl2str(received,     flag=exceding, color_flagged='red', color_others='green')
+			stprev     = utils.cl2str(prev)
+			sthits     = utils.cl2str(cl_hits)
 			#dstr = stexpected + ';    ' + stfound + '; ' + ';    ' + sthits + ';    ' + "                                            "
-			dstr = "->       REF:" + stexpected + ',         OUT:' + stfound + ', ' + ",                                            "
+			dstr = "->       REF:" + stexpected + ',\n' + ' '*39 + 'OUT:' + stfound + ', ' + ",                                            \n"
 			if (err[0]):
 				erlog = "Cluster-Data-Error,   " + dstr
 				cnt['cl_err'] += 1
@@ -97,11 +104,11 @@ class SSA_test_utility():
 			else:
 				if(display == True):
 					utils.print_log(   "\tPassed                " + dstr)
-			prev = r
+			prev = received.copy()
 
 			cl_centroids.extend([0]*(8-len(cl_centroids)))
-			r.extend([0]*(8-len(r)))
-			savestr = "{:s}, REF, {:s}, OUT, {:s}".format(runname, ', '.join(map(str, cl_centroids)),  ', '.join(map(str, r)) )
+			received.extend([0]*(8-len(received)))
+			savestr = "{:s}, REF, {:s}, OUT, {:s}".format(runname, ', '.join(map(str, cl_centroids)),  ', '.join(map(str, received)) )
 			if True in err:
 				fo.write('ER' + ', ' + savestr + ' \n')
 				utils.print_log( '\t' + erlog)
@@ -119,6 +126,7 @@ class SSA_test_utility():
 			utils.print_good("->  Cluster data test with {mode:s} injection -> 100%".format(mode=mode))
 		else:
 			utils.print_error("->  Cluster data test with {mode:s} injection -> {res:5.3f}%".format(mode=mode, res=rt))
+		print(time.time()-timeinit)
 		return rt
 
 
@@ -156,26 +164,26 @@ class SSA_test_utility():
 			elif(mode == "analog"):
 				self.ssa.inject.analog_pulse(hit_list = [i], initialise = False)
 			time.sleep(0.001)
-			r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
+			received, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 			if(hfi):
-				while(r==[prev]): ## for firmware bug in D19C
+				while(received==[prev]): ## for firmware bug in D19C
 					#print('HFI')
 					if(mode == "digital"):
 						self.ssa.inject.digital_pulse(hit_list = [i], initialise = False)
 					elif(mode == "analog"):
 						self.ssa.inject.analog_pulse(hit_list = [i], initialise = False)
-					r, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
+					received, status = self.ssa.readout.cluster_data(initialize = False, shift = shift, getstatus = True)
 					if(wd>5): break
 					wd += 1;
 			l = []
 			if(i>0 and i < 121):
-				if (len(r) != 1): err[0] = True
-				elif (r[0] != i): err[0] = True
+				if (len(received) != 1): err[0] = True
+				elif (received[0] != i): err[0] = True
 			else:
 				cnt['li_sum'] += 1;
 				if (mode == "digital"):
-					if (len(r) != 1): err[1] = True
-					elif (r[0] != i): err[1] = True
+					if (len(received) != 1): err[1] = True
+					elif (received[0] != i): err[1] = True
 			if( ((i < 8 and i > 0) or (i > 112 and i < 121))):
 				cnt['lo_sum'] += 1;
 				if (mode == "digital"):
@@ -183,7 +191,7 @@ class SSA_test_utility():
 					if (len(l) != 1): err[2] = True
 					elif (l[0] != i): err[2] = True
 			stexpected = utils.cl2str(i);
-			stfound = utils.cl2str(r);
+			stfound = utils.cl2str(received);
 			stlateralout = utils.cl2str(l);
 			stprev = utils.cl2str(prev)
 			dstr = 'ref=' + stexpected + ';    out=' + stfound + ';    lateral=' + stlateralout + ';    prev=' + stprev + ';    ' + "                                            "
@@ -625,8 +633,8 @@ class SSA_test_utility():
 '''
 def prova(i):
 	ssa.inject.digital_pulse([i])
-	r = ssa.readout.cluster_data(initialize = False)
-	if([i] != r): print('error ' + str(i) + '  ' +str(r))
+	received = ssa.readout.cluster_data(initialize = False)
+	if([i] != received): print('error ' + str(i) + '  ' +str(received))
 
 
 

@@ -12,6 +12,14 @@ from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from utilities.tbsettings import *
 
+'''
+fc7.read("stat_slvs_debug_general")
+mpa_l1_data = fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
+mpa_stub_data = fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
+lateral_data = fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
+fc7.read("stat_slvs_debug_general")
+'''
+
 class SSA_readout():
 
 	def __init__(self, I2C, FC7, ssactrl, ssastrip):
@@ -20,12 +28,15 @@ class SSA_readout():
 		self.ofs_initialised = False;  self.ofs = [0]*6;
 		self.cl_shift = {'digital':0, 'analog':0}
 
-
-	def status(self):
+	def status(self, display=True):
 		status = self.fc7.read("stat_slvs_debug_general")
 		l1_data_ready   = ((status & 0x1) >> 0)
 		stub_data_ready = ((status & 0x2) >> 1)
 		counters_ready  = ((status & 0x4) >> 2)
+		if(display):
+			print('->  L1 data ready:   {:d}'.format(l1_data_ready))
+			print('->  Stub data ready: {:d}'.format(stub_data_ready))
+			print('->  Counters ready:  {:d}'.format(counters_ready))
 		return [l1_data_ready, stub_data_ready, counters_ready]
 
 
@@ -42,19 +53,23 @@ class SSA_readout():
 		status = [0]*3; timeout = 10;
 		if(initialize):
 			#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
-			time.sleep(0.001)
 			Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 0, delay_before_next_pulse = 500, number_of_test_pulses = 1, enable_rst_L1 = 0)
-			time.sleep(0.001)
+			time.sleep(0.005)
+			self.fc7.SendCommand_CTRL("stop_trigger")
 		if(profile): pr_start=time.time()
-		#status_init = self.status()
+		#status_init = self.status(display=0)
 		if(send_test_pulse):
 			#self.fc7.SendCommand_CTRL("stop_trigger")
 			self.fc7.SendCommand_CTRL("start_trigger")
+			self.fc7.SendCommand_CTRL("start_trigger")
+			self.fc7.SendCommand_CTRL("start_trigger")
+
 		if(profile): print('->  cluster readout 1 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
-		while (status[1] != 1 and counter<timeout):
-			#time.sleep(0.001)
-			status = self.status()
-			counter += 1
+		#### status doesn't get reset in the FC7
+		#### while (status[1] != 1 and counter<timeout):
+		#### 	#time.sleep(0.001)
+		#### 	status = self.status(display=0)
+		#### 	counter += 1
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
 		#self.fc7.SendCommand_CTRL("stop_trigger")
 		counter = 0

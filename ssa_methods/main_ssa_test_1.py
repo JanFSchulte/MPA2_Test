@@ -59,14 +59,14 @@ class SSA_test_top():
 			self.filename = file
 		filename = self.filename
 		if (not isinstance(filename, str)):
-			print("Log file name not setup")
+			print("Log file name not setup. Format ssa_toptest.initialise(filename, [plot])")
 			return
 		filename = '../SSA_Results/' + filename
 		dir = filename[:filename.rindex(os.path.sep)]
 		if not os.path.exists(dir):
 			os.makedirs(dir)
 		self.ssa.init(reset_board = True, reset_chip = True)
-		self.biascal.calibrate_to_nominals()
+		self.biascal.calibrate_to_nominals(naverages=1)
 		self.measure.scurve_trim(plot = plot, filename = file + '_Init')
 		self.config_file = filename + '_Configuration_Init.scv'
 		self.ssa.save_configuration(self.config_file, display=False)

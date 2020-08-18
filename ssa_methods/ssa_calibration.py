@@ -64,7 +64,8 @@ class ssa_calibration():
 		self.minst = self.multimeter_gpib.init_keithley(address = self.gpib_address, avg = 0)
 		self.initialised = True
 
-	def calibrate_to_nominals(self, measure = True):
+	def calibrate_to_nominals(self, measure = True, naverages=10):
+		self.get_value_and_voltage_averages = naverages
 		try:
 			if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):
 				self.__multimeter_gpib_initialise()
@@ -111,6 +112,8 @@ class ssa_calibration():
 		if(not name in self.analog_mux_map):
 			print("->  Invalid DAC name")
 			return False
+		if(self.mode == 'MULTIMETER_LAN'):
+			self.multimeter_lan.configure_dc_high_accuracy(nplc_filter=False, nsamples=average)
 		fullscale = 2**nbits
 		#if(not self.initialised):
 		#	self.__multimeter_gpib_initialise()
@@ -177,6 +180,8 @@ class ssa_calibration():
 		if(not name in self.analog_mux_map):
 			print("->  Invalid DAC name")
 			return False
+		if(self.mode == 'MULTIMETER_LAN'):
+			self.multimeter_lan.configure_dc_high_accuracy(nplc_filter=False, nsamples=average)
 		fullscale = 2**nbits
 		self.ssa.ctrl.set_output_mux(name)
 		x = np.linspace(0,fullscale, npoints, dtype=int, endpoint=False)
@@ -264,17 +269,21 @@ class ssa_calibration():
 		return DNL, INL
 
 
-	def get_value_and_voltage(self, name, inst0 = -1, average = 1):
+	def get_value_and_voltage(self, name, inst0 = -1):
+		average = self.get_value_and_voltage_averages
 		if (inst0 == -1):
 			if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):
 				self.__multimeter_gpib_initialise()
 			inst = self.minst
-		else: inst = inst0
+		else:
+			inst = inst0
+
 		self.ssa.ctrl.set_output_mux(name)
 		value = self._d5_value(str(name), 'r')
 		if(self.mode == 'MULTIMETER_GPIB'):
 			measurement = self.multimeter_gpib.measure(inst)
 		elif(self.mode == 'MULTIMETER_LAN'):
+			self.multimeter_lan.configure_dc_high_accuracy(nplc_filter=False, nsamples=average)
 			measurement = self.multimeter_lan.measure()
 		else:
 			measurement = self.pcbadc.measure('SSA', average)
@@ -293,6 +302,7 @@ class ssa_calibration():
 		if(self.mode == 'MULTIMETER_GPIB'):
 			measurement = self.multimeter_gpib.measure(inst)
 		elif(self.mode == 'MULTIMETER_LAN'):
+			self.multimeter_lan.configure_dc_high_accuracy(nplc_filter=False, nsamples=average)
 			measurement = self.multimeter_lan.measure()
 		else:
 			measurement = self.pcbadc.measure('SSA', average)
