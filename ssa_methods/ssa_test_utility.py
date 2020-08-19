@@ -131,6 +131,132 @@ class SSA_test_utility():
 
 
 
+
+	def l1_data(self, mode = "digital", nstrips=8, nruns = 100, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '',profile=False):
+		fo = open(file + "readout_L1-data_" + mode + ".csv", filemode)
+		counter = [[0,0],[0,0], [0,0]]
+		utils.activate_I2C_chip()
+		if(tbconfig.VERSION['SSA'] >= 2): l1_counter_mask = 0b111111111
+		else: l1_counter_mask = 0b1111
+		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
+		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
+		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
+		if(mode == "analog"): shift += 2
+		L1_counter_init, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = True, shift = shift, latency = latency, multi = False)
+		if(L1_counter_init < 0):
+			print(str(L1_counter_init))
+			return 'error'
+		l1hitlistprev = []
+		hiplistprev = []
+		if(profile):
+			pr_start=time.time()
+			pr_cnt=0
+		for H in range(0,2):
+			if(mode == "digital"):
+				self.ssa.inject.digital_pulse(initialise = True)
+			else:
+				self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', threshold = threshold, cal_pulse_amplitude = calpulse[H])
+
+			for i in range(0,nruns):
+				if(profile): pr_cnt+=1
+				err = [False, False, False]; wd = 0;
+				is_error_l1counter = 0;
+
+				cl_hits, cl_centroids = self._generate_clusters(nstrips, 1, 2, 1, 121)
+
+				if(mode == "digital"):
+					if(H): self.ssa.inject.digital_pulse(hit_list = cl_hits, hip_list = cl_hits, initialise = False)
+					else:  self.ssa.inject.digital_pulse(hit_list = cl_hits, hip_list = [],      initialise = False)
+					time.sleep(0.005) ##important to wait complete I2C operations
+				else:
+					self.ssa.inject.analog_pulse(hit_list = cl_hits, initialise = False)
+				counter[H][0] += 1
+				counter[2][0] += 1
+				#self.ssa.inject.digital_pulse(hit_list = cl_hits, initialise = False)
+				#time.sleep(0.001)
+				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = False, shift = shift, latency = latency, multi = False)
+				if (hfi): # for FC7 firmware issue in sending some times the fast command
+					while(l1hitlist == l1hitlistprev):
+						time.sleep(0.001); wd += 1
+						L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = False, shift = shift, latency = latency, multi = False)
+						if(wd>5): break
+				missing_hit=[]; exceding_hit=[];
+				missing_hip=[]; exceding_hip=[];
+
+				if(H): hip_hits = list(range(1,len(cl_hits)+1))
+				else:  hip_hits = []
+
+				if(L1_counter < 0):
+					return 'error'
+				if ((L1_counter & l1_counter_mask) != ((L1_counter_init + 1) & l1_counter_mask) ):
+					err[2] = True
+					is_error_l1counter = True
+				else:
+					for k in cl_hits:
+						if k not in l1hitlist:
+							err[H] = True
+							missing_hit.append(k)
+					for k in l1hitlist:
+						if k not in cl_hits:
+							err[H] = True
+							exceding_hit.append(k)
+					for k in hip_hits:
+						if k not in hiplist:
+							err[H] = True
+							missing_hip.append(k)
+					for k in hiplist:
+						if k not in hip_hits:
+							err[H] = True
+							exceding_hip.append(k)
+				##if(H and (len(hiplist) != len(cl_hits))): err[H] = True
+				#if(not H and (len(hiplist) != 0)): err[1] = True
+				stexpected   = utils.cl2str(cl_hits,   flag=missing_hit,  color_flagged='red', color_others='green');
+				stfound      = utils.cl2str(l1hitlist, flag=exceding_hit, color_flagged='red', color_others='green')
+				flagexpected = utils.cl2str(hip_hits,  flag=missing_hip,  color_flagged='red', color_others='green');
+				flagfound    = utils.cl2str(hiplist,   flag=exceding_hip, color_flagged='red', color_others='green')
+				l1col = 'red' if(err[2]) else 'blue'
+				l1counterref = utils.text_color('{:3d}'.format(L1_counter_init+1), l1col)
+				l1counterout = utils.text_color('{:3d}'.format(L1_counter), l1col)
+				dstr = "->       REF: {:s} {:s}{:s} \n{:s} OUT: {:s} {:s}{:s}".format(
+					l1counterref, stexpected, flagexpected, ' '*26, l1counterout, stfound, flagfound
+				)
+				fstr = "[{:3d}][{:3s}][{:3s}];   \t[{:3d}][{:3s}][{:3s}]".format(
+				        (L1_counter_init+1)&l1_counter_mask,  str(cl_hits),  str(H),
+				        L1_counter,  ', '.join(map(str, l1hitlist)),  ', '.join(map(str, hiplist)))
+				l1hitlistprev = l1hitlist
+				hiplistprev   = hiplist
+				L1_counter_init = L1_counter-1
+				L1_counter_init +=1
+				if(err[H]): counter[H][1] += 1
+				if(err[2]): counter[2][1] += 1
+				if (err[H] or err[2]):
+					fo.write(runname + ' ; ' + fstr + ' \n')
+					utils.print_log( "\n    L1 data error " + dstr + "                                  ")
+				else:
+					if(display == True):
+						utils.print_log( "\n    L1 data Ok    " + dstr + "                                  ")
+				if(display):
+					utils.ShowPercent(counter[0][0]+counter[1][0], nruns, "")
+				else:
+					if(H): utils.ShowPercent(counter[0][0]+counter[1][0], nruns, "Running L1 test with HIP flags")
+					else:  utils.ShowPercent(counter[0][0]+counter[1][0], nruns, "Running L1 test")
+		fo.close()
+		result = [
+			(1.0 - float(counter[0][1])/float(counter[0][0]))*100.0  ,
+			(1.0 - float(counter[1][1])/float(counter[1][0]))*100.0  ,
+			(1.0 - float(counter[2][1])/float(counter[2][0]))*100.0  ]
+		#return "%5.2f%%" % (result)
+		if(result[0] == 100 and result[1] == 100):
+			utils.print_good("->  L1 data test scan with {mode:s} injection -> 100%".format(mode=mode))
+		else:
+			utils.print_error("->  Cluster data test scan with {mode:s} injection -> {res0:5.3f}% hit - {res1:5.3f}% HIP flags".format(mode=mode, res0=result[0], res1=result[1]))
+		if(profile):
+			tres = time.time()-pr_start
+			print('->  Test time = {:0.3f}s - Time per cycle = {:0.3f}ms'.format(tres, 1000*tres/float(pr_cnt)))
+		return result
+
+
+
 	def cluster_data_basic(self, mode = "digital", nruns = 5, shift = 'default', shiftL = 0, display=False, lateral = True, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
 		fo = open(file + "readout_cluster-data-basic_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = ''; stlateralout = '';
@@ -262,6 +388,7 @@ class SSA_test_utility():
 				self.ssa.inject.digital_pulse(initialise = True)
 			else:
 				self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', threshold = threshold, cal_pulse_amplitude = calpulse[H])
+
 			for i in random.sample(range(1, 121), 120)*nruns:
 				if(profile): pr_cnt+=1
 				err = [False, False]; wd = 0;

@@ -467,3 +467,5 @@ mpa_ssa_i2c_reply_data			40021003    00ffffff	1	1 *data back
 *
 mpa_ssa_i2c_wrapper_state		40039000    0000000f    1       0 *state of the I2C wrapper of the mpa ssa board
 mpa_ssa_i2c_fsm_state			40039000    000000f0    1       0 *state of the I2C fsm for the mpa ssa board
+
+trigger_in_counter              40032001    ffffffff    1    1

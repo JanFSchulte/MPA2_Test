@@ -621,6 +621,27 @@ class ssa_ctrl_base:
 				utils.print_good('->  I2C Register check match [{:8b}] - [{:8b}]'.format(d[i], r[i]) )
 		return Result
 
+	def select_memory(self, L, H):
+		sel=[0,0]
+		if(  L in [0, 'sram',  'SRAM']):
+			utils.print_info('->  Selected SRAM memory  for the hit memory')
+			sel[0]=0
+		elif(L in [1, 'latch', 'LATCH']):
+			utils.print_info('->  Selected LATCH memory for the hit memory')
+			sel[0]=1
+		else:
+			sel[0]=0
+		if(  H in [0, 'sram',  'SRAM']):
+			utils.print_info('->  Selected SRAM memory  for the HIP flags memory')
+			sel[1]=0
+		elif(H in [1, 'latch', 'LATCH']):
+			utils.print_info('->  Selected LATCH memory for the HIP flags memory')
+			sel[1]=1
+		select = sel[0]&0b1 | (sel[1]&0b1)<<1
+		rp = self.I2C.peri_write(register = 'control_1', field = 'memory_select', data=select)
+		rp = self.I2C.peri_read( register = 'control_1', field = 'memory_select')
+		return rp
+
 	def SRAM_BIST(self, memory_select=1, configure=True):
 		bisterr = 0
 		bistres = []

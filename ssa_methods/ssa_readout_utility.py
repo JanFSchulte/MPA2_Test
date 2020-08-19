@@ -61,8 +61,8 @@ class SSA_readout():
 		if(send_test_pulse):
 			#self.fc7.SendCommand_CTRL("stop_trigger")
 			self.fc7.SendCommand_CTRL("start_trigger")
-			self.fc7.SendCommand_CTRL("start_trigger")
-			self.fc7.SendCommand_CTRL("start_trigger")
+			self.fc7.SendCommand_CTRL("start_trigger") # repeated for FC7 code timing issue
+			self.fc7.SendCommand_CTRL("start_trigger") # repeated for FC7 code timing issue
 
 		if(profile): print('->  cluster readout 1 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		#### status doesn't get reset in the FC7
