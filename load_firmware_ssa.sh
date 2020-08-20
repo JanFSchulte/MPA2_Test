@@ -50,11 +50,14 @@ else
 	printf '\n->  Starting loading the firmware\n'
 	cd ~/FC7/sw/fc7/tests
 	./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
-	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_11 -f ~/MPA-SSA_Test/bitfiles/SSA_SEU_11.bit
+	#./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_20200819.bit -f ~/MPA-SSA_Test/bitfiles/d19c_SSA_SEU_2020.08.19.bit
+	#./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_20200819.bit
 	cd -
 fi
-
-
+#./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_2020.08.19.bit
+#./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
+#./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_2020.08.19.bit -f ~/MPA-SSA_Test/bitfiles/d19c_SSA_SEU_2020.08.19.bit
+#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_11 -f ~/MPA-SSA_Test/bitfiles/SSA_SEU_11.bit
 #./bin/fc7-d19c.exe  -i $IP -n  D19C_SSA_V-2018-06-12.bin -f ~/D19C/MPA_Test/fw_bitfiles/D19C_SSA_V-2018-06-12.bit
 #./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_7.bin -f ~/D19C/bitfiles/SEU/SSA_SEU_7.bit
 #./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_10.bin -f ~/D19C/bitfiles/SEU/SSA_SEU_10.bit

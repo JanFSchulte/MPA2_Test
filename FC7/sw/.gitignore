@@ -1,0 +1,6 @@
+fc7/fc7/lib/
+fc7/fc7/obj/
+fc7/tests/bin/
+fc7/tests/lib/
+fc7/tests/obj/
+*.pyc

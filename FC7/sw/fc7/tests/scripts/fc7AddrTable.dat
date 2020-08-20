@@ -1,0 +1,585 @@
+*------------------------------------------------------------------------------------------
+* system regs
+*------------------------------------------------------------------------------------------
+* RegName           	RegAddr     RegMask      R     W     Description
+*------------------------------------------------------------------------------------------
+sysregs					00000000    ffffffff     1     0
+board_id				00000000    ffffffff     1     0
+  board_id_char1		00000000    ff000000     1     0
+  board_id_char2		00000000    00ff0000     1     0
+  board_id_char3		00000000    0000ff00     1     0
+  board_id_char4		00000000    000000ff     1     0
+rev_id					00000001    ffffffff     1     0    
+  rev_id_char1			00000001    ff000000     1     0
+  rev_id_char2 			00000001    00ff0000     1     0
+  rev_id_char3			00000001    0000ff00     1     0
+  rev_id_char4			00000001    000000ff     1     0
+firmware_id				00000002    ffffffff     1     0
+  ver_major				00000002    f0000000     1     0
+  ver_minor				00000002    0f000000     1     0
+  ver_build				00000002    00ff0000     1     0
+  firmware_yy			00000002    0000fe00     1     0
+  firmware_mm			00000002    000001e0     1     0
+  firmware_dd			00000002    0000001f     1     0
+*  		                
+test					00000003    ffffffff     1     1
+*		                
+ctrl					00000004    ffffffff     1     1		
+  pcieclk_pll_sel		00000004    00000001     1     1 	
+  pcieclk_mr			00000004    00000002     1     1 	
+  pcieclk_fsel1			00000004    00000004     1     1 	
+  pcieclk_fsel0			00000004    00000008     1     1 	
+  cdce_powerup			00000004    00000010     1     1       
+  cdce_refsel			00000004	00000020	 1	   1	   
+  cdce_sync		    	00000004    00000040     1     1       
+  cdce_ctrl_sel    		00000004    00000080     1     1       		
+  cdce_xpoint_out1		00000004    00400000     1     1       
+  cdce_xpoint_out2		00000004    00000100     1     1  * 
+  cdce_xpoint_out3		00000004    00000200     1     1  * 
+  cdce_xpoint_out4		00000004    00000400     1     1  *      
+  ttc_xpoint_B_out4		00000004    00000800     1     1  * osc_coax_sel     
+  ttc_xpoint_A_out1		00000004    00003000     1     1  * master_xpoint[1:0]		     
+  ttc_xpoint_A_out2		00000004    0000c000     1     1  * master_xpoint[3:2]		     
+  ttc_xpoint_A_out3		00000004    00030000     1     1  * master_xpoint[5:4]		     
+  ttc_xpoint_A_out4		00000004    000c0000     1     1  * master_xpoint[7:6]		     
+  ttc_xpoint_B_out1		00000004    00300000     1     1  * master_xpoint[9:8]		     
+  tclkb_tclkd_en		00000004    00800000     1     1       
+  mgt_xpoint_out1		00000004    03000000     1     1  * osc_xpoint_ctrl[1:0]      
+  mgt_xpoint_out2		00000004    0c000000     1     1  * osc_xpoint_ctrl[3:2]      
+  mgt_xpoint_out3		00000004    30000000     1     1  * osc_xpoint_ctrl[5:4]      
+  mgt_xpoint_out4		00000004    c0000000     1     1  * osc_xpoint_ctrl[7:6]      
+  
+*		                                                       
+ctrl_2					00000005    ffffffff     1     1       
+  icap_page			    00000005    00000003     1     1       
+  icap_trigg			00000005    00000010     1     1 
+  phase_mon_lower   	00000005    0000ff00     1     1
+  phase_mon_upper   	00000005    00ff0000     1     1 
+  phase_mon_strobe   	00000005    01000000     1     1 
+  phase_mon_refclk_sel 	00000005    02000000     1     1 
+  phase_mon_auto	 	00000005    08000000     1     1 
+  fmc_l12_pwr_en        00000005    10000000     1     1
+  fmc_l8_pwr_en         00000005    20000000     1     1
+  fmc_pg_c2m            00000005    40000000     1     1
+*		                                                       
+status          		00000006    ffffffff     1     0       
+  cpld2fpga_gpio   		00000006    0000000f     1     0    
+  pca8574_int      		00000006    00000010     1     0    
+  phase_mon_count  		00000006    0000ff00     1     0    
+  phase_mon_done  		00000006    00010000     1     0    
+  phase_mon_ok  		00000006    00020000     1     0    
+  cdce_sync_busy   		00000006    01000000     1     0    
+  cdce_sync_done   		00000006    02000000     1     0    
+  cdce_lock       		00000006    04000000     1     0    
+  fmc_l12_pg_m2c  		00000006    10000000     1     0    
+  fmc_l12_present  		00000006    20000000     1     0    
+  fmc_l8_pg_m2c  		00000006    40000000     1     0    
+  fmc_l8_present  		00000006    80000000     1     0 
+*		                
+status_2				00000007    ffffffff     1     0
+*		                
+spi_txdata          	0000000a    ffffffff     1     1
+*		                
+spi_command				0000000b    ffffffff     1     1  * autoclear removed
+*		                
+spi_rxdata          	0000000c    ffffffff     1     0
+*		                
+i2c_settings        	0000000d    ffffffff     1     1
+  i2c_enable            0000000d    00000800     1     1
+  i2c_bus_select        0000000d    00000400     1     1
+  i2c_prescaler         0000000d    000003ff     1     1
+*		                
+i2c_command         	0000000e    ffffffff     1     1
+  i2c_strobe 	  		0000000e    80000000     1     1  * autoclear removed
+  i2c_mode16 	  		0000000e    02000000     1     1 
+  i2c_mem	 	  		0000000e    01000000     1     1 
+  i2c_write 	  		0000000e    00800000     1     1 
+  i2c_slvaddr_7b  		0000000e    007f0000     1     1 
+  i2c_regaddr 	  		0000000e    0000ff00     1     1 
+  i2c_wrdata  			0000000e    000000ff     1     1 
+*		                
+i2c_reply				0000000f    ffffffff     1     0
+  i2c_reply_status      0000000f    0c000000     1     0
+  i2c_reply_error       0000000f    08000000     1     0
+  i2c_reply_done        0000000f    04000000     1     0
+  i2c_reply_8b		    0000000f    000000ff     1     0
+  i2c_reply_16b		    0000000f    0000ffff     1     0
+*
+eep_read_done			0000001c   10000000      1     0	
+mac_ip_source			0000001c   0fff0000      1     0	
+mac_b5					0000001c   0000ff00      1     0	
+mac_b4					0000001c   000000ff      1     0	
+mac_b3					0000001d   ff000000      1     0	
+mac_b2					0000001d   00ff0000      1     0	
+mac_b1					0000001d   0000ff00      1     0	
+mac_b0					0000001d   000000ff      1     0	
+dipsw       			0000001e   ff000000      1     0	
+eui48_hi				0000001e   0000ffff      1     0	
+eui_b5					0000001e   0000ff00      1     0	
+eui_b4					0000001e   000000ff      1     0	
+eui48_lo				0000001f   ffffffff      1     0	
+eui_b3					0000001f   ff000000      1     0	
+eui_b2					0000001f   00ff0000      1     0	
+eui_b1					0000001f   0000ff00      1     0	
+eui_b0					0000001f   000000ff      1     0	
+
+*------------------------------------------------------------------------------------------
+* icap memory space
+*------------------------------------------------------------------------------------------
+* RegName          		RegAddr     RegMask      R     W     Description
+*------------------------------------------------------------------------------------------
+icap     				00000200    ffffffff	 1     1	 
+
+*------------------------------------------------------------------------------------------
+* user space
+*------------------------------------------------------------------------------------------
+* RegName           	RegAddr     RegMask      R     W     Description
+*------------------------------------------------------------------------------------------
+user_ipb_regs			40000000    ffffffff     1     1
+
+*		
+*#######################################################
+*#### the declarations below this point refer to the user_logic.vhd example of fc7_basic project 
+*#######################################################
+*
+user_ipb_stat_regs		40000000    ffffffff     1     1
+
+usr_id					40000000    ffffffff     1     0
+    usr_id_char1		40000000    ff000000     1     0
+    usr_id_char2		40000000    00ff0000     1     0
+    usr_id_char3		40000000    0000ff00     1     0
+    usr_id_char4		40000000    000000ff     1     0
+
+usr_ver					40000002    ffffffff     1     0
+  usr_ver_major			40000002    f0000000     1     0
+  usr_ver_minor			40000002    0f000000     1     0
+  usr_ver_build			40000002    00ff0000     1     0
+  usr_firmware_yy		40000002    0000fe00     1     0
+  usr_firmware_mm		40000002    000001e0     1     0
+  usr_firmware_dd		40000002    0000001f     1     0
+	
+user_ipb_ctrl_regs		40000040    ffffffff     1     1
+*
+user_ddr3				60000000    ffffffff     1     1
+
+*************
+* CERN test *
+*************
+
+cern_test_ipb_stat_regs		40000200    ffffffff    1     0
+
+ready_fmcL8_gtx            40000200    ffffffff    1     0 
+   txReady_fmcL8_gtx0      40000200    00000001    1     0
+   rxReady_fmcL8_gtx0      40000200    00000002    1     0
+   txReady_fmcL8_gtx1      40000200    00000004    1     0
+   rxReady_fmcL8_gtx1      40000200    00000008    1     0
+   txReady_fmcL8_gtx2      40000200    00000010    1     0
+   rxReady_fmcL8_gtx2      40000200    00000020    1     0
+   txReady_fmcL8_gtx3      40000200    00000040    1     0
+   rxReady_fmcL8_gtx3      40000200    00000080    1     0
+   txReady_fmcL8_gtx4      40000200    00000100    1     0
+   rxReady_fmcL8_gtx4      40000200    00000200    1     0
+   txReady_fmcL8_gtx5      40000200    00000400    1     0
+   rxReady_fmcL8_gtx5      40000200    00000800    1     0
+   txReady_fmcL8_gtx6      40000200    00001000    1     0
+   rxReady_fmcL8_gtx6      40000200    00002000    1     0
+   txReady_fmcL8_gtx7      40000200    00004000    1     0
+   rxReady_fmcL8_gtx7      40000200    00008000    1     0
+
+ready_fmcL12_gtx           40000201    ffffffff    1     0  
+   txReady_fmcL12_gtx0     40000201    00000001    1     0
+   rxReady_fmcL12_gtx0     40000201    00000002    1     0
+   txReady_fmcL12_gtx1     40000201    00000004    1     0
+   rxReady_fmcL12_gtx1     40000201    00000008    1     0
+   txReady_fmcL12_gtx2     40000201    00000010    1     0
+   rxReady_fmcL12_gtx2     40000201    00000020    1     0
+   txReady_fmcL12_gtx3     40000201    00000040    1     0
+   rxReady_fmcL12_gtx3     40000201    00000080    1     0
+   txReady_fmcL12_gtx4     40000201    00000100    1     0
+   rxReady_fmcL12_gtx4     40000201    00000200    1     0
+   txReady_fmcL12_gtx5     40000201    00000400    1     0
+   rxReady_fmcL12_gtx5     40000201    00000800    1     0
+   txReady_fmcL12_gtx6     40000201    00001000    1     0
+   rxReady_fmcL12_gtx6     40000201    00002000    1     0
+   txReady_fmcL12_gtx7     40000201    00004000    1     0
+   rxReady_fmcL12_gtx7     40000201    00008000    1     0
+   txReady_fmcL12_gtx8     40000201    00010000    1     0
+   rxReady_fmcL12_gtx8     40000201    00020000    1     0
+   txReady_fmcL12_gtx9     40000201    00040000    1     0
+   rxReady_fmcL12_gtx9     40000201    00080000    1     0
+   txReady_fmcL12_gtx10    40000201    00100000    1     0
+   rxReady_fmcL12_gtx10    40000201    00200000    1     0
+   txReady_fmcL12_gtx11    40000201    00400000    1     0
+   rxReady_fmcL12_gtx11    40000201    00800000    1     0
+   
+ready_amc_gtx              40000202    ffffffff    1     0
+   txReady_amc1            40000202    00000001    1     0
+   rxReady_amc1            40000202    00000002    1     0
+   txReady_amc2            40000202    00000004    1     0
+   rxReady_amc2            40000202    00000008    1     0
+   txReady_amc3            40000202    00000010    1     0
+   rxReady_amc3            40000202    00000020    1     0
+   txReady_amc4            40000202    00000040    1     0
+   rxReady_amc4            40000202    00000080    1     0
+   txReady_amc5            40000202    00000100    1     0
+   rxReady_amc5            40000202    00000200    1     0
+   txReady_amc6            40000202    00000400    1     0
+   rxReady_amc6            40000202    00000800    1     0
+   txReady_amc7            40000202    00001000    1     0
+   rxReady_amc7            40000202    00002000    1     0
+   txReady_amc8            40000202    00004000    1     0
+   rxReady_amc8            40000202    00008000    1     0
+   txReady_amc9            40000202    00010000    1     0
+   rxReady_amc9            40000202    00020000    1     0
+   txReady_amc10           40000202    00040000    1     0
+   rxReady_amc10           40000202    00080000    1     0
+   txReady_amc11           40000202    00100000    1     0
+   rxReady_amc11           40000202    00200000    1     0
+                                   
+errCnt_fmcL8_berCnt_L_0    40000203    ffffffff    1     0
+errCnt_fmcL8_berCnt_H_0    40000204    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_L_0   40000205    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_H_0   40000206    ffffffff    1     0
+*
+errCnt_fmcL8_berCnt_L_1    40000207    ffffffff    1     0
+errCnt_fmcL8_berCnt_H_1    40000208    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_L_1   40000209    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_H_1   4000020a    ffffffff    1     0
+*
+errCnt_fmcL8_berCnt_L_2    4000020b    ffffffff    1     0
+errCnt_fmcL8_berCnt_H_2    4000020c    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_L_2   4000020d    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_H_2   4000020e    ffffffff    1     0
+*
+errCnt_fmcL8_berCnt_L_3    4000020f    ffffffff    1     0
+errCnt_fmcL8_berCnt_H_3    40000210    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_L_3   40000211    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_H_3   40000212    ffffffff    1     0
+*
+errCnt_fmcL8_berCnt_L_4    40000213    ffffffff    1     0
+errCnt_fmcL8_berCnt_H_4    40000214    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_L_4   40000215    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_H_4   40000216    ffffffff    1     0
+*
+errCnt_fmcL8_berCnt_L_5    40000217    ffffffff    1     0
+errCnt_fmcL8_berCnt_H_5    40000218    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_L_5   40000219    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_H_5   4000021a    ffffffff    1     0
+*
+errCnt_fmcL8_berCnt_L_6    4000021b    ffffffff    1     0
+errCnt_fmcL8_berCnt_H_6    4000021c    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_L_6   4000021d    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_H_6   4000021e    ffffffff    1     0
+*
+errCnt_fmcL8_berCnt_L_7    4000021f    ffffffff    1     0
+errCnt_fmcL8_berCnt_H_7    40000220    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_L_7   40000221    ffffffff    1     0
+bitsCnt_fmcL8_berCnt_H_7   40000222    ffffffff    1     0
+
+errCnt_fmcL12_berCnt_L_0   40000223    ffffffff    1     0
+errCnt_fmcL12_berCnt_H_0   40000224    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_L_0  40000225    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_H_0  40000226    ffffffff    1     0
+*
+errCnt_fmcL12_berCnt_L_1   40000227    ffffffff    1     0
+errCnt_fmcL12_berCnt_H_1   40000228    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_L_1  40000229    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_H_1  4000022a    ffffffff    1     0
+*
+errCnt_fmcL12_berCnt_L_2   4000022b    ffffffff    1     0
+errCnt_fmcL12_berCnt_H_2   4000022c    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_L_2  4000022d    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_H_2  4000022e    ffffffff    1     0
+*
+errCnt_fmcL12_berCnt_L_3   4000022f    ffffffff    1     0
+errCnt_fmcL12_berCnt_H_3   40000220    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_L_3  40000231    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_H_3  40000232    ffffffff    1     0
+*
+errCnt_fmcL12_berCnt_L_4   40000233    ffffffff    1     0
+errCnt_fmcL12_berCnt_H_4   40000234    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_L_4  40000235    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_H_4  40000236    ffffffff    1     0
+*
+errCnt_fmcL12_berCnt_L_5   40000237    ffffffff    1     0
+errCnt_fmcL12_berCnt_H_5   40000238    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_L_5  40000239    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_H_5  4000023a    ffffffff    1     0
+*
+errCnt_fmcL12_berCnt_L_6   4000023b    ffffffff    1     0
+errCnt_fmcL12_berCnt_H_6   4000023c    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_L_6  4000023d    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_H_6  4000023e    ffffffff    1     0
+*
+errCnt_fmcL12_berCnt_L_7   4000023f    ffffffff    1     0
+errCnt_fmcL12_berCnt_H_7   40000230    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_L_7  40000241    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_H_7  40000242    ffffffff    1     0
+*
+errCnt_fmcL12_berCnt_L_8   40000243    ffffffff    1     0
+errCnt_fmcL12_berCnt_H_8   40000244    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_L_8  40000245    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_H_8  40000246    ffffffff    1     0
+*
+errCnt_fmcL12_berCnt_L_9   40000247    ffffffff    1     0
+errCnt_fmcL12_berCnt_H_9   40000248    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_L_9  40000249    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_H_9  4000024a    ffffffff    1     0
+*
+errCnt_fmcL12_berCnt_L_10  4000024b    ffffffff    1     0
+errCnt_fmcL12_berCnt_H_10  4000024c    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_L_10 4000024d    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_H_10 4000024e    ffffffff    1     0
+*
+errCnt_fmcL12_berCnt_L_11  4000024f    ffffffff    1     0
+errCnt_fmcL12_berCnt_H_11  40000250    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_L_11 40000251    ffffffff    1     0
+bitsCnt_fmcL12_berCnt_H_11 40000252    ffffffff    1     0
+
+errCnt_amc_berCnt_L_1      40000253    ffffffff    1     0
+errCnt_amc_berCnt_H_1      40000254    ffffffff    1     0
+bitsCnt_amc_berCnt_L_1     40000255    ffffffff    1     0
+bitsCnt_amc_berCnt_H_1     40000256    ffffffff    1     0
+*                                   
+errCnt_amc_berCnt_L_2      40000257    ffffffff    1     0
+errCnt_amc_berCnt_H_2      40000258    ffffffff    1     0
+bitsCnt_amc_berCnt_L_2     40000259    ffffffff    1     0
+bitsCnt_amc_berCnt_H_2     4000025a    ffffffff    1     0
+*                                   
+errCnt_amc_berCnt_L_3      4000025b    ffffffff    1     0
+errCnt_amc_berCnt_H_3      4000025c    ffffffff    1     0
+bitsCnt_amc_berCnt_L_3     4000025d    ffffffff    1     0
+bitsCnt_amc_berCnt_H_3     4000025e    ffffffff    1     0
+*                                   
+errCnt_amc_berCnt_L_4      4000025f    ffffffff    1     0
+errCnt_amc_berCnt_H_4      40000260    ffffffff    1     0
+bitsCnt_amc_berCnt_L_4     40000261    ffffffff    1     0
+bitsCnt_amc_berCnt_H_4     40000262    ffffffff    1     0
+*                                   
+errCnt_amc_berCnt_L_5      40000263    ffffffff    1     0
+errCnt_amc_berCnt_H_5      40000264    ffffffff    1     0
+bitsCnt_amc_berCnt_L_5     40000265    ffffffff    1     0
+bitsCnt_amc_berCnt_H_5     40000266    ffffffff    1     0
+*                                   
+errCnt_amc_berCnt_L_6      40000267    ffffffff    1     0
+errCnt_amc_berCnt_H_6      40000268    ffffffff    1     0
+bitsCnt_amc_berCnt_L_6     40000269    ffffffff    1     0
+bitsCnt_amc_berCnt_H_6     4000026a    ffffffff    1     0
+*                                   
+errCnt_amc_berCnt_L_7      4000026b    ffffffff    1     0
+errCnt_amc_berCnt_H_7      4000026c    ffffffff    1     0
+bitsCnt_amc_berCnt_L_7     4000026d    ffffffff    1     0
+bitsCnt_amc_berCnt_H_7     4000026e    ffffffff    1     0
+*                                   
+errCnt_amc_berCnt_L_8      4000026f    ffffffff    1     0
+errCnt_amc_berCnt_H_8      40000270    ffffffff    1     0
+bitsCnt_amc_berCnt_L_8     40000271    ffffffff    1     0
+bitsCnt_amc_berCnt_H_8     40000272    ffffffff    1     0
+*                                   
+errCnt_amc_berCnt_L_9      40000273    ffffffff    1     0
+errCnt_amc_berCnt_H_9      40000274    ffffffff    1     0
+bitsCnt_amc_berCnt_L_9     40000275    ffffffff    1     0
+bitsCnt_amc_berCnt_H_9     40000276    ffffffff    1     0
+*                                   
+errCnt_amc_berCnt_L_10     40000277    ffffffff    1     0
+errCnt_amc_berCnt_H_10     40000278    ffffffff    1     0
+bitsCnt_amc_berCnt_L_10    40000279    ffffffff    1     0
+bitsCnt_amc_berCnt_H_10    4000027a    ffffffff    1     0
+*                                   
+errCnt_amc_berCnt_L_11     4000027b    ffffffff    1     0
+errCnt_amc_berCnt_H_11     4000027c    ffffffff    1     0
+bitsCnt_amc_berCnt_L_11    4000027d    ffffffff    1     0
+bitsCnt_amc_berCnt_H_11    4000027e    ffffffff    1     0
+
+fmcL8_p_user_io            4000027f    ffffffff    1     0
+   fmcL8_p_user_io_err     4000027f    0001ffff    1     0
+   fmcL8_p_user_io_corr    4000027f    00020000    1     0
+
+fmcL8_n_user_io            40000280    ffffffff    1     0
+   fmcL8_n_user_io_err     40000280    0001ffff    1     0
+   fmcL8_n_user_io_corr    40000280    00020000    1     0   
+  
+fmcL12_p_user_io           40000281    ffffffff    1     0
+   fmcL12_p_user_io_err    40000281    0001ffff    1     0
+   fmcL12_p_user_io_corr   40000281    00020000    1     0   
+
+fmcL12_n_user_io           40000282    ffffffff    1     0
+   fmcL12_n_user_io_err    40000282    0001ffff    1     0
+   fmcL12_n_user_io_corr   40000282    00020000    1     0
+
+amc_p_user_io              40000283    ffffffff    1     0
+   amc_p_user_io_err       40000283    0000000f    1     0
+   amc_p_user_io_corr      40000283    00000010    1     0   
+
+amc_n_user_io              40000284    ffffffff    1     0
+   amc_n_user_io_err       40000284    0000000f    1     0
+   amc_n_user_io_corr      40000284    00000010    1     0      
+   
+cern_test_ipb_ctrl_regs		40000300    ffffffff    1     1 
+                                       
+gtx_loopback		         40000300    00000007    1     1
+
+gtx_pll_pd                 40000301    ffffffff    1     1 
+   fmcL8Bank112_qpll_pd    40000301    00000001    1     1 
+   fmcL8Bank111_qpll_pd    40000301    00000002    1     1 
+*   
+   fmcL12Bank118_qpll_pd   40000301    00000004    1     1 
+   fmcL12Bank117_qpll_pd   40000301    00000008    1     1 
+   fmcL12Bank116_qpll_pd   40000301    00000010    1     1 
+*
+   amc_cpll_pd1            40000301    00000020    1     1
+   amc_cpll_pd2            40000301    00000040    1     1
+   amc_cpll_pd3            40000301    00000080    1     1
+   amc_cpll_pd4            40000301    00000100    1     1
+   amc_cpll_pd5            40000301    00000200    1     1
+   amc_cpll_pd6            40000301    00000400    1     1
+   amc_cpll_pd7            40000301    00000800    1     1
+   amc_cpll_pd8            40000301    00001000    1     1
+   amc_cpll_pd9            40000301    00002000    1     1
+   amc_cpll_pd10           40000301    00004000    1     1
+   amc_cpll_pd11           40000301    00008000    1     1
+
+fmc_l8_gtx_pd              40000302    ffffffff    1     1    
+   fmc_l8_gtx_tx_pd0       40000302    00000001    1     1                            
+   fmc_l8_gtx_rx_pd0       40000302    00000002    1     1                        
+   fmc_l8_gtx_tx_pd1       40000302    00000004    1     1       
+   fmc_l8_gtx_rx_pd1       40000302    00000008    1     1    
+   fmc_l8_gtx_tx_pd2       40000302    00000010    1     1      
+   fmc_l8_gtx_rx_pd2       40000302    00000020    1     1                        
+   fmc_l8_gtx_tx_pd3       40000302    00000040    1     1    
+   fmc_l8_gtx_rx_pd3       40000302    00000080    1     1    
+   fmc_l8_gtx_tx_pd4       40000302    00000100    1     1     
+   fmc_l8_gtx_rx_pd4       40000302    00000200    1     1                       
+   fmc_l8_gtx_tx_pd5       40000302    00000400    1     1        
+   fmc_l8_gtx_rx_pd5       40000302    00000800    1     1        
+   fmc_l8_gtx_tx_pd6       40000302    00001000    1     1              
+   fmc_l8_gtx_rx_pd6       40000302    00002000    1     1                     
+   fmc_l8_gtx_tx_pd7       40000302    00004000    1     1 
+   fmc_l8_gtx_rx_pd7       40000302    00008000    1     1 
+                                   
+fmc_l12_gtx_pd             40000303    ffffffff    1     1                     
+   fmc_l12_gtx_tx_pd0      40000303    00000001    1     1
+   fmc_l12_gtx_rx_pd0      40000303    00000002    1     1 
+   fmc_l12_gtx_tx_pd1      40000303    00000004    1     1 
+   fmc_l12_gtx_rx_pd1      40000303    00000008    1     1 
+   fmc_l12_gtx_tx_pd2      40000303    00000010    1     1 
+   fmc_l12_gtx_rx_pd2      40000303    00000020    1     1 
+   fmc_l12_gtx_tx_pd3      40000303    00000040    1     1 
+   fmc_l12_gtx_rx_pd3      40000303    00000080    1     1 
+   fmc_l12_gtx_tx_pd4      40000303    00000100    1     1 
+   fmc_l12_gtx_rx_pd4      40000303    00000200    1     1 
+   fmc_l12_gtx_tx_pd5      40000303    00000400    1     1 
+   fmc_l12_gtx_rx_pd5      40000303    00000800    1     1 
+   fmc_l12_gtx_tx_pd6      40000303    00001000    1     1 
+   fmc_l12_gtx_rx_pd6      40000303    00002000    1     1 
+   fmc_l12_gtx_tx_pd7      40000303    00004000    1     1 
+   fmc_l12_gtx_rx_pd7      40000303    00008000    1     1 
+   fmc_l12_gtx_tx_pd8      40000303    00010000    1     1
+   fmc_l12_gtx_rx_pd8      40000303    00020000    1     1
+   fmc_l12_gtx_tx_pd9      40000303    00040000    1     1
+   fmc_l12_gtx_rx_pd9      40000303    00080000    1     1
+   fmc_l12_gtx_tx_pd10     40000303    00100000    1     1
+   fmc_l12_gtx_rx_pd10     40000303    00200000    1     1
+   fmc_l12_gtx_tx_pd11     40000303    00400000    1     1
+   fmc_l12_gtx_rx_pd11     40000303    00800000    1     1
+
+amc_gtx_pd                 40000304    ffffffff    1     1      
+   amc_gtx_tx_powerDown1   40000304    00000001    1     1  
+   amc_gtx_rx_powerDown1   40000304    00000002    1     1 
+   amc_gtx_tx_powerDown2   40000304    00000004    1     1 
+   amc_gtx_rx_powerDown2   40000304    00000008    1     1 
+   amc_gtx_tx_powerDown3   40000304    00000010    1     1 
+   amc_gtx_rx_powerDown3   40000304    00000020    1     1 
+   amc_gtx_tx_powerDown4   40000304    00000040    1     1 
+   amc_gtx_rx_powerDown4   40000304    00000080    1     1 
+   amc_gtx_tx_powerDown5   40000304    00000100    1     1 
+   amc_gtx_rx_powerDown5   40000304    00000200    1     1 
+   amc_gtx_tx_powerDown6   40000304    00000400    1     1 
+   amc_gtx_rx_powerDown6   40000304    00000800    1     1 
+   amc_gtx_tx_powerDown7   40000304    00001000    1     1 
+   amc_gtx_rx_powerDown7   40000304    00002000    1     1 
+   amc_gtx_tx_powerDown8   40000304    00004000    1     1 
+   amc_gtx_rx_powerDown8   40000304    00008000    1     1 
+   amc_gtx_tx_powerDown9   40000304    00010000    1     1
+   amc_gtx_rx_powerDown9   40000304    00020000    1     1
+   amc_gtx_tx_powerDown10  40000304    00040000    1     1
+   amc_gtx_rx_powerDown10  40000304    00080000    1     1
+   amc_gtx_tx_powerDown11  40000304    00100000    1     1
+   amc_gtx_rx_powerDown11  40000304    00200000    1     1
+                       
+fmc_l8_gtx_reset           40000305    ffffffff    1     1
+   fmcl8_gtx_tx_reset0     40000305    00000001    1     1
+   fmcl8_gtx_rx_reset0     40000305    00000002    1     1
+   fmcl8_gtx_tx_reset1     40000305    00000004    1     1
+   fmcl8_gtx_rx_reset1     40000305    00000008    1     1
+   fmcl8_gtx_tx_reset2     40000305    00000010    1     1
+   fmcl8_gtx_rx_reset2     40000305    00000020    1     1
+   fmcl8_gtx_tx_reset3     40000305    00000040    1     1
+   fmcl8_gtx_rx_reset3     40000305    00000080    1     1
+   fmcl8_gtx_tx_reset4     40000305    00000100    1     1
+   fmcl8_gtx_rx_reset4     40000305    00000200    1     1
+   fmcl8_gtx_tx_reset5     40000305    00000400    1     1
+   fmcl8_gtx_rx_reset5     40000305    00000800    1     1
+   fmcl8_gtx_tx_reset6     40000305    00001000    1     1
+   fmcl8_gtx_rx_reset6     40000305    00002000    1     1
+   fmcl8_gtx_tx_reset7     40000305    00004000    1     1
+   fmcl8_gtx_rx_reset7     40000305    00008000    1     1
+
+fmc_l12_gtx_reset          40000306    ffffffff    1     1
+   fmcl12_gtx_tx_reset0    40000306    00000001    1     1  
+   fmcl12_gtx_rx_reset0    40000306    00000002    1     1
+   fmcl12_gtx_tx_reset1    40000306    00000004    1     1
+   fmcl12_gtx_rx_reset1    40000306    00000008    1     1
+   fmcl12_gtx_tx_reset2    40000306    00000010    1     1
+   fmcl12_gtx_rx_reset2    40000306    00000020    1     1 
+   fmcl12_gtx_tx_reset3    40000306    00000040    1     1
+   fmcl12_gtx_rx_reset3    40000306    00000080    1     1
+   fmcl12_gtx_tx_reset4    40000306    00000100    1     1
+   fmcl12_gtx_rx_reset4    40000306    00000200    1     1
+   fmcl12_gtx_tx_reset5    40000306    00000400    1     1
+   fmcl12_gtx_rx_reset5    40000306    00000800    1     1
+   fmcl12_gtx_tx_reset6    40000306    00001000    1     1
+   fmcl12_gtx_rx_reset6    40000306    00002000    1     1
+   fmcl12_gtx_tx_reset7    40000306    00004000    1     1
+   fmcl12_gtx_rx_reset7    40000306    00008000    1     1
+   fmcl12_gtx_tx_reset8    40000306    00010000    1     1
+   fmcl12_gtx_rx_reset8    40000306    00020000    1     1
+   fmcl12_gtx_tx_reset9    40000306    00040000    1     1
+   fmcl12_gtx_rx_reset9    40000306    00080000    1     1
+   fmcl12_gtx_tx_reset10   40000306    00100000    1     1
+   fmcl12_gtx_rx_reset10   40000306    00200000    1     1
+   fmcl12_gtx_tx_reset11   40000306    00400000    1     1
+   fmcl12_gtx_rx_reset11   40000306    00800000    1     1
+   
+amc_gtx_reset              40000307    ffffffff    1     1
+   amc_gtx_tx_reset1       40000307    00000001    1     1
+   amc_gtx_rx_reset1       40000307    00000002    1     1
+   amc_gtx_tx_reset2       40000307    00000004    1     1
+   amc_gtx_rx_reset2       40000307    00000008    1     1
+   amc_gtx_tx_reset3       40000307    00000010    1     1
+   amc_gtx_rx_reset3       40000307    00000020    1     1
+   amc_gtx_tx_reset4       40000307    00000040    1     1
+   amc_gtx_rx_reset4       40000307    00000080    1     1
+   amc_gtx_tx_reset5       40000307    00000100    1     1
+   amc_gtx_rx_reset5       40000307    00000200    1     1
+   amc_gtx_tx_reset6       40000307    00000400    1     1
+   amc_gtx_rx_reset6       40000307    00000800    1     1
+   amc_gtx_tx_reset7       40000307    00001000    1     1
+   amc_gtx_rx_reset7       40000307    00002000    1     1
+   amc_gtx_tx_reset8       40000307    00004000    1     1
+   amc_gtx_rx_reset8       40000307    00008000    1     1
+   amc_gtx_tx_reset9       40000307    00010000    1     1
+   amc_gtx_rx_reset9       40000307    00020000    1     1
+   amc_gtx_tx_reset10      40000307    00040000    1     1
+   amc_gtx_rx_reset10      40000307    00080000    1     1                                      
+   amc_gtx_tx_reset11      40000307    00100000    1     1                                      
+   amc_gtx_rx_reset11      40000307    00200000    1     1
+
+gtx_bert_ctrl              40000308    ffffffff    1     1
+   gtx_bert_trigger        40000308    00000001    1     1	
+   gtx_bert_reset	       40000308    00000002    1     1	
+
+io_test_ctrl               40000309    ffffffff    1     1
+   io_test_trigger         40000309    00000001    1     1
+   io_test_reset	       40000309    00000002    1     1  
+   

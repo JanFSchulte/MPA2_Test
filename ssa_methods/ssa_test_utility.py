@@ -22,7 +22,7 @@ class SSA_test_utility():
 		self.striplist = []
 
 
-	def cluster_data(self, mode = "digital",  nstrips = 8, min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = False):
+	def cluster_data(self, mode = "digital",  nstrips = 'random', min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = False):
 		fo = open(file + "readout_cluster-data_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = '';
 		utils.activate_I2C_chip()
@@ -35,7 +35,7 @@ class SSA_test_utility():
 		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
 		self.ssa.ctrl.set_cal_pulse_delay(0)
-		prev = [0xff]*nstrips
+		prev = [0xff]*8
 		if(mode == "digital"):
 			self.ssa.inject.digital_pulse(initialise = True, times = 1)
 		elif(mode == "analog"):
@@ -52,10 +52,14 @@ class SSA_test_utility():
 		timeinit = time.time()
 		for i in range(0,nruns):
 			#clrange = np.array( random.sample(range(1, 60), nstrips)) * 2
-			if(lateral):
-				cl_hits, cl_centroids = self._generate_clusters(nstrips, min_clsize, max_clsize, -2, 124)
+			if(isinstance(nstrips, int)):
+				nclusters_generated = nstrips
 			else:
-				cl_hits, cl_centroids = self._generate_clusters(nstrips, min_clsize, max_clsize, 1, 121)
+				nclusters_generated = random.randint(1, 8)
+			if(lateral):
+				cl_hits, cl_centroids = self.generate_clusters(nclusters_generated, min_clsize, max_clsize, -2, 124)
+			else:
+				cl_hits, cl_centroids = self.generate_clusters(nclusters_generated, min_clsize, max_clsize, 1, 121)
 			wd = 0;
 			err = [False]*3
 			if(mode == "digital"):
@@ -126,13 +130,13 @@ class SSA_test_utility():
 			utils.print_good("->  Cluster data test with {mode:s} injection -> 100%".format(mode=mode))
 		else:
 			utils.print_error("->  Cluster data test with {mode:s} injection -> {res:5.3f}%".format(mode=mode, res=rt))
-		print(time.time()-timeinit)
+		#print(time.time()-timeinit)
 		return rt
 
 
 
 
-	def l1_data(self, mode = "digital", nstrips=8, nruns = 100, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '',profile=False):
+	def l1_data(self, mode = "digital", nstrips='random', nruns = 100, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '',profile=False):
 		fo = open(file + "readout_L1-data_" + mode + ".csv", filemode)
 		counter = [[0,0],[0,0], [0,0]]
 		utils.activate_I2C_chip()
@@ -156,24 +160,21 @@ class SSA_test_utility():
 				self.ssa.inject.digital_pulse(initialise = True)
 			else:
 				self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', threshold = threshold, cal_pulse_amplitude = calpulse[H])
-
 			for i in range(0,nruns):
 				if(profile): pr_cnt+=1
 				err = [False, False, False]; wd = 0;
 				is_error_l1counter = 0;
-
-				cl_hits, cl_centroids = self._generate_clusters(nstrips, 1, 2, 1, 121)
-
+				if(isinstance(nstrips, int)): nclusters_generated = nstrips
+				else: nclusters_generated = random.randint(1, 24)
+				cl_hits, cl_centroids = self.generate_clusters(nclusters_generated, 1, 2, 1, 121)
 				if(mode == "digital"):
 					if(H): self.ssa.inject.digital_pulse(hit_list = cl_hits, hip_list = cl_hits, initialise = False)
 					else:  self.ssa.inject.digital_pulse(hit_list = cl_hits, hip_list = [],      initialise = False)
-					time.sleep(0.005) ##important to wait complete I2C operations
 				else:
 					self.ssa.inject.analog_pulse(hit_list = cl_hits, initialise = False)
 				counter[H][0] += 1
 				counter[2][0] += 1
-				#self.ssa.inject.digital_pulse(hit_list = cl_hits, initialise = False)
-				#time.sleep(0.001)
+				time.sleep(0.005) ##important to wait complete I2C operations
 				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = False, shift = shift, latency = latency, multi = False)
 				if (hfi): # for FC7 firmware issue in sending some times the fast command
 					while(l1hitlist == l1hitlistprev):
@@ -638,7 +639,7 @@ class SSA_test_utility():
 #		dstr = "[%3d][%3d][%3s][%3s]" % (L1_counter, BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
 #		print(dstr)
 
-	def _generate_clusters(self, nclusters, min_clsize = 1, max_clsize = 4, smin=-2, smax=124):
+	def generate_clusters(self, nclusters, min_clsize = 1, max_clsize = 4, smin=-2, smax=124):
 		hit = []; c = []; exc = [];
 		for i in range(nclusters):
 			size = random.sample(range(min_clsize, max_clsize), 1)[0]
