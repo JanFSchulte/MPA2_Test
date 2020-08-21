@@ -1,0 +1,643 @@
+*------------------------------------------------------------------------------------------
+*--------------------------------------------- System Registers ---------------------------
+*------------------------------------------------------------------------------------------
+*------------------------------------------------------------------------------------------
+* RegName           	        RegAddr     RegMask      R     W     Description
+*------------------------------------------------------------------------------------------
+clock_source			00000004    00030000	 1     1   *selecting the source of the clock (system-wise: 0 - AMC13, 2 - backplane, 3 - internal oscillator(default))
+*
+system_fmc_l12_pwr_en		00000005    10000000	 1     1   *power to the l12 fmc
+system_fmc_l8_pwr_en		00000005    20000000	 1     1   *power to the l8 fmc
+system_fmc_pg_c2m		00000005    40000000     1     1   *c2m
+*
+i2c_settings        		0000000d    ffffffff     1     1   * SYS I2C: settings
+  i2c_enable            	0000000d    00000800     1     1   * SYS I2C: enable
+  i2c_bus_select        	0000000d    00000400     1     1   * SYS I2C: select the bus
+  i2c_prescaler         	0000000d    000003ff     1     1   * SYS I2C: speed
+*
+i2c_command         		0000000e    ffffffff     1     1   * SYS I2C: i2c command
+  i2c_strobe 	  		0000000e    80000000     1     1   * SYS I2C: mode
+  i2c_mode16 	  		0000000e    02000000     1     1   * SYS I2C: -
+  i2c_mem	 	  	0000000e    01000000     1     1   * SYS I2C: -
+  i2c_write 	  		0000000e    00800000     1     1   * SYS I2C: write/read
+  i2c_slvaddr_7b  		0000000e    007f0000     1     1   * SYS I2C: address of the slave
+  i2c_regaddr 	  		0000000e    0000ff00     1     1   * SYS I2C: register
+  i2c_wrdata  			0000000e    000000ff     1     1   * SYS I2C: data
+*
+i2c_reply			0000000f    ffffffff     1     0   * SYS I2C: i2c reply
+  i2c_reply_status      	0000000f    0c000000     1     0   * SYS I2C: status
+  i2c_reply_error       	0000000f    08000000     1     0   * SYS I2C: error
+  i2c_reply_done        	0000000f    04000000     1     0   * SYS I2C: done
+  i2c_reply_8b		    	0000000f    000000ff     1     0   * SYS I2C: short reply
+  i2c_reply_16b		    	0000000f    0000ffff     1     0   * SYS I2C: long reply
+*
+spi_txdata		    		0000000a    ffffffff     1     1
+*
+spi_command		    		0000000b    ffffffff     1     1   * autoclear removed
+*
+spi_rxdata		    		0000000c    ffffffff     1     0
+*cdce related commands
+  cdce_powerup			00000004    00000010     1     1
+  cdce_sync		    	00000004    00000040     1     1
+  cdce_sync_busy   		00000006    01000000     1     0
+  cdce_sync_done   		00000006    02000000     1     0
+*
+*------------------------------------------------------------------------------------------
+*----------------------------------------------- Cnfg Registers ---------------------------
+*------------------------------------------------------------------------------------------
+*------------------------------------------------------------------------------------------
+* RegName           	                RegAddr     RegMask      R     W     Description
+*------------------------------------------------------------------------------------------
+ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configuration registers
+* Clock
+   cnfg_clock_ext_clk_en		40010001    00000001	 1     1     *1 - using external clock, 0 - using clock from clock\_source register
+* TTC Block
+   cnfg_ttc_enable			40010002    00000001     1     1     *Enable the TTC handling (disabled by default)
+* AMC13
+   cnfg_amc13_sw_TTS_state_valid	40010003    00000002	 1     1     *Enable the AMC13
+   cnfg_amc13sw_TTS_state		40010003    000000f0	 1     1     *Set the AMC13 state(??)
+* Hybrid Enable Block
+   cnfg_hybrid_enable			40010005    0000ffff     1     1     *Mask of the enabled hybrids: 0x0021 would mean that hybrids 1 and 5 are enabled. By default all enabled.
+   cnfg_chips_enable_hyb_00		40010006    000000ff     1     1     *Chips enable mask for hybrid 0
+   cnfg_chips_enable_hyb_01		40010006    0000ff00     1     1     *Chips enable mask for hybrid 1
+   cnfg_chips_enable_hyb_02		40010006    00ff0000     1     1     *Chips enable mask for hybrid 2
+   cnfg_chips_enable_hyb_03		40010006    ff000000     1     1     *Chips enable mask for hybrid 3
+   cnfg_chips_enable_hyb_04		40010007    000000ff     1     1     *Chips enable mask for hybrid 4
+   cnfg_chips_enable_hyb_05		40010007    0000ff00     1     1     *Chips enable mask for hybrid 5
+   cnfg_chips_enable_hyb_06		40010007    00ff0000     1     1     *Chips enable mask for hybrid 6
+   cnfg_chips_enable_hyb_07		40010007    ff000000     1     1     *Chips enable mask for hybrid 7
+   cnfg_chips_enable_hyb_08		40010008    000000ff     1     1     *Chips enable mask for hybrid 8
+   cnfg_chips_enable_hyb_09		40010008    0000ff00     1     1     *Chips enable mask for hybrid 9
+   cnfg_chips_enable_hyb_10		40010008    00ff0000     1     1     *Chips enable mask for hybrid 10
+   cnfg_chips_enable_hyb_11		40010008    ff000000     1     1     *Chips enable mask for hybrid 11
+   cnfg_chips_enable_hyb_12		40010009    000000ff     1     1     *Chips enable mask for hybrid 12
+   cnfg_chips_enable_hyb_13		40010009    0000ff00     1     1     *Chips enable mask for hybrid 13
+   cnfg_chips_enable_hyb_14		40010009    00ff0000     1     1     *Chips enable mask for hybrid 14
+   cnfg_chips_enable_hyb_15		40010009    ff000000     1     1     *Chips enable mask for hybrid 15
+* I2C (Command Processor) Block
+   cnfg_i2c_settings_map_slave_0_config                             40011000	ffffffff	1     1		*Configuration of the I2C Slave 0
+   cnfg_i2c_settings_map_slave_0_config_i2c_address                 40011000	fe000000	1     1		*mask: i2c address of the slave
+   cnfg_i2c_settings_map_slave_0_config_stop_for_rd_en              40011000	01000000	1     1		*mask: enables stop condition before sending repated start
+   cnfg_i2c_settings_map_slave_0_config_nack_en                     40011000	00800000	1     1		*mask: negative ACK of the I2C slave (for the CBC, MPA, SSA should be 0)
+   cnfg_i2c_settings_map_slave_0_config_register_address_nbytes     40011000	00000C00	1     1		*mask: number of bytes in the register address
+   cnfg_i2c_settings_map_slave_0_config_data_wr_nbytes              40011000	000003E0	1     1		*mask: number of bytes for write transactions
+   cnfg_i2c_settings_map_slave_0_config_data_rd_nbytes              40011000	0000001F	1     1		*mask: number of bytes for read transactions
+   cnfg_i2c_settings_map_slave_1_config                             40011001	ffffffff	1     1		*Configuration of the I2C Slave 1
+   cnfg_i2c_settings_map_slave_1_config_i2c_address                 40011001    fe000000	1     1		*mask: i2c address of the slave
+   cnfg_i2c_settings_map_slave_1_config_stop_for_rd_en              40011001    01000000	1     1		*mask: enables stop condition before sending repated start
+   cnfg_i2c_settings_map_slave_1_config_nack_en                     40011001    00800000	1     1		*mask: negative ACK of the I2C slave (for the CBC, MPA, SSA should be 0)
+   cnfg_i2c_settings_map_slave_1_config_register_address_nbytes     40011001    00000C00	1     1		*mask: number of bytes in the register address
+   cnfg_i2c_settings_map_slave_1_config_data_wr_nbytes              40011001    000003E0	1     1		*mask: number of bytes for write transactions
+   cnfg_i2c_settings_map_slave_1_config_data_rd_nbytes         	    40011001    0000001F	1     1		*mask: number of bytes for read transactions
+   cnfg_i2c_settings_map_slave_2_config                             40011002	ffffffff	1     1		*Configuration of the I2C Slave 2
+   cnfg_i2c_settings_map_slave_2_config_i2c_address                 40011002    fe000000	1     1		*mask: i2c address of the slave
+   cnfg_i2c_settings_map_slave_2_config_stop_for_rd_en              40011002    01000000    1     1     *mask: enables stop condition before sending repated start
+   cnfg_i2c_settings_map_slave_2_config_nack_en                     40011002    00800000    1     1     *mask: negative ACK of the I2C slave (for the CBC, MPA, SSA should be 0)
+   cnfg_i2c_settings_map_slave_2_config_register_address_nbytes     40011002    00000C00    1     1     *mask: number of bytes in the register address
+   cnfg_i2c_settings_map_slave_2_config_data_wr_nbytes              40011002    000003E0    1     1     *mask: number of bytes for write transactions
+   cnfg_i2c_settings_map_slave_2_config_data_rd_nbytes              40011002    0000001F    1     1     *mask: number of bytes for read transactions
+   cnfg_i2c_settings_map_slave_3_config                             40011003	ffffffff	1     1		*Configuration of the I2C Slave 3
+   cnfg_i2c_settings_map_slave_3_config_i2c_address                 40011003    fe000000    1     1     *mask: i2c address of the slave
+   cnfg_i2c_settings_map_slave_3_config_stop_for_rd_en              40011003    01000000    1     1     *mask: enables stop condition before sending repated start
+   cnfg_i2c_settings_map_slave_3_config_nack_en                     40011003    00800000    1     1     *mask: negative ACK of the I2C slave (for the CBC, MPA, SSA should be 0)
+   cnfg_i2c_settings_map_slave_3_config_register_address_nbytes     40011003    00000C00    1     1     *mask: number of bytes in the register address
+   cnfg_i2c_settings_map_slave_3_config_data_wr_nbytes              40011003    000003E0    1     1     *mask: number of bytes for write transactions
+   cnfg_i2c_settings_map_slave_3_config_data_rd_nbytes              40011003    0000001F    1     1     *mask: number of bytes for read transactions
+   cnfg_i2c_settings_map_slave_4_config                             40011004	ffffffff	1     1		*Configuration of the I2C Slave 4
+   cnfg_i2c_settings_map_slave_4_config_i2c_address                 40011004    fe000000    1     1     *mask: i2c address of the slave
+   cnfg_i2c_settings_map_slave_4_config_stop_for_rd_en              40011004    01000000    1     1     *mask: enables stop condition before sending repated start
+   cnfg_i2c_settings_map_slave_4_config_nack_en                     40011004    00800000    1     1     *mask: negative ACK of the I2C slave (for the CBC, MPA, SSA should be 0)
+   cnfg_i2c_settings_map_slave_4_config_register_address_nbytes     40011004    00000C00    1     1     *mask: number of bytes in the register address
+   cnfg_i2c_settings_map_slave_4_config_data_wr_nbytes              40011004    000003E0    1     1     *mask: number of bytes for write transactions
+   cnfg_i2c_settings_map_slave_4_config_data_rd_nbytes              40011004    0000001F    1     1     *mask: number of bytes for read transactions
+   cnfg_i2c_settings_map_slave_5_config                             40011005	ffffffff	1     1		*Configuration of the I2C Slave 5
+   cnfg_i2c_settings_map_slave_5_config_i2c_address                 40011005    fe000000    1     1     *mask: i2c address of the slave
+   cnfg_i2c_settings_map_slave_5_config_stop_for_rd_en              40011005    01000000    1     1     *mask: enables stop condition before sending repated start
+   cnfg_i2c_settings_map_slave_5_config_nack_en                     40011005    00800000    1     1     *mask: negative ACK of the I2C slave (for the CBC, MPA, SSA should be 0)
+   cnfg_i2c_settings_map_slave_5_config_register_address_nbytes     40011005    00000C00    1     1     *mask: number of bytes in the register address
+   cnfg_i2c_settings_map_slave_5_config_data_wr_nbytes              40011005    000003E0    1     1     *mask: number of bytes for write transactions
+   cnfg_i2c_settings_map_slave_5_config_data_rd_nbytes              40011005    0000001F    1     1     *mask: number of bytes for read transactions
+   cnfg_i2c_settings_map_slave_6_config                             40011006	ffffffff	1     1		*Configuration of the I2C Slave 6
+   cnfg_i2c_settings_map_slave_6_config_i2c_address                 40011006    fe000000    1     1     *mask: i2c address of the slave
+   cnfg_i2c_settings_map_slave_6_config_stop_for_rd_en              40011006    01000000    1     1     *mask: enables stop condition before sending repated start
+   cnfg_i2c_settings_map_slave_6_config_nack_en                     40011006    00800000    1     1     *mask: negative ACK of the I2C slave (for the CBC, MPA, SSA should be 0)
+   cnfg_i2c_settings_map_slave_6_config_register_address_nbytes     40011006    00000C00    1     1     *mask: number of bytes in the register address
+   cnfg_i2c_settings_map_slave_6_config_data_wr_nbytes              40011006    000003E0    1     1     *mask: number of bytes for write transactions
+   cnfg_i2c_settings_map_slave_6_config_data_rd_nbytes              40011006    0000001F    1     1     *mask: number of bytes for read transactions
+   cnfg_i2c_settings_map_slave_7_config                             40011007	ffffffff	1     1		*Configuration of the I2C Slave 7
+   cnfg_i2c_settings_map_slave_7_config_i2c_address                 40011007    fe000000    1     1     *mask: i2c address of the slave
+   cnfg_i2c_settings_map_slave_7_config_stop_for_rd_en              40011007    01000000    1     1     *mask: enables stop condition before sending repated start
+   cnfg_i2c_settings_map_slave_7_config_nack_en                     40011007    00800000    1     1     *mask: negative ACK of the I2C slave (for the CBC, MPA, SSA should be 0)
+   cnfg_i2c_settings_map_slave_7_config_register_address_nbytes     40011007    00000C00    1     1     *mask: number of bytes in the register address
+   cnfg_i2c_settings_map_slave_7_config_data_wr_nbytes              40011007    000003E0    1     1     *mask: number of bytes for write transactions
+   cnfg_i2c_settings_map_slave_7_config_data_rd_nbytes              40011007    0000001F    1     1     *mask: number of bytes for read transactions
+   cnfg_i2c_settings_map_slave_8_config                             40011008	ffffffff	1     1		*Configuration of the I2C Slave 8
+   cnfg_i2c_settings_map_slave_8_config_i2c_address                 40011008    fe000000    1     1     *mask: i2c address of the slave
+   cnfg_i2c_settings_map_slave_8_config_stop_for_rd_en              40011008    01000000    1     1     *mask: enables stop condition before sending repated start
+   cnfg_i2c_settings_map_slave_8_config_nack_en                     40011008    00800000    1     1     *mask: negative ACK of the I2C slave (for the CBC, MPA, SSA should be 0)
+   cnfg_i2c_settings_map_slave_8_config_register_address_nbytes     40011008    00000C00    1     1     *mask: number of bytes in the register address
+   cnfg_i2c_settings_map_slave_8_config_data_wr_nbytes              40011008    000003E0    1     1     *mask: number of bytes for write transactions
+   cnfg_i2c_settings_map_slave_8_config_data_rd_nbytes              40011008    0000001F    1     1     *mask: number of bytes for read transactions
+   cnfg_i2c_settings_map_slave_9_config				40011009	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_10_config			4001100A	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_11_config			4001100B	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_12_config			4001100C	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_13_config			4001100D	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_14_config			4001100E	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_15_config			4001100F	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_16_config			40011010	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_17_config			40011011	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_18_config			40011012	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_19_config			40011013	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_20_config			40011014	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_21_config			40011015	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_22_config			40011016	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_23_config			40011017	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_24_config			40011018	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_25_config			40011019	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_26_config			4001101A	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_27_config			4001101B	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_28_config			4001101C	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_29_config			4001101D	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_30_config			4001101E	ffffffff	1     1		*...
+   cnfg_i2c_settings_map_slave_31_config			4001101F	ffffffff	1     1		*Configuration of the I2C Slave 31
+* Fast Command Block
+   cnfg_fast_triggers_to_accept 	40012000    ffffffff	 1     1 *number of triggers to accepted (0 - continuous triggering)
+   cnfg_fast_user_frequency     	40012001    ffffffff	 1     1 *frequency of the trigger\_source=3 (1...1000 kHz range).
+   cnfg_fast_source             	40012002    0000000f	 1     1 *trigger source: 1 - TTC, 2 - Stubs, 3 - User Trigger, 4 - TLU, 5 - External trigger, 6 - test pulse FSM, 7 - UIB antenna FSM, 8 - Consecutive triggers FSM
+   cnfg_fast_stub_mask               	40012003    0000ffff	 1     1 *mask of the hybrids to trigger stubs (useful for coincidence)
+   cnfg_fast_stub_veto_length           40012003    01ff0000	 1     1 *on stubs self-triggering: number of 40MHz clock cycles to raise VETO and ignore the coming triggers
+   cnfg_fast_delay_after_fast_reset	40012004    ffffffff	 1     1 *trigger source 6: delay after the fast reset command
+   cnfg_fast_delay_after_test_pulse	40012005    ffffffff	 1     1 *trigger source 6: delay after the test pulse
+   cnfg_fast_delay_before_next_pulse	40012006    ffffffff	 1     1 *trigger source 6: delay after the l1a before the next fast reset (if enabled)
+   cnfg_fast_stub_trigger_delay		40012007    000001ff	 1     1 *setting the delay of the stub trigger (trigger source 2)
+   cnfg_fast_ext_trigger_delay_value    40012007    0003fe00     1     1 *delay of the external trigger (trigger source 4,5)
+   cnfg_fast_delay_after_antenna_trigger	40012007    07fc0000	 1     1 *antenna FSM: delay after antenna trigger
+   cnfg_fast_delay_between_consecutive_trigeers 40012008    0000ffff	 1     1 *consecutive FSM: delay between two consecutive L1A signals
+   cnfg_fast_backpressure_enable	40012009    00000001     1     1 *enable internal backpressure handling. should be enabled by default, and disabled only if triggering system knows howto handle d19c backpressure
+   cnfg_fast_stubor_enable		40012009    00000002     1     1 *trigger source 2: 1 - trigger on StubOR, 0 - trigger on HitOR
+   cnfg_fast_initial_fast_reset_enable  40012009    00000004     1     1 *enable initial fast reset after sending start\_trigger command
+   cnfg_fast_tp_fsm_fast_reset_en	40012009    00000010     1     1 *trigger source 6: enable fast reset signal
+   cnfg_fast_tp_fsm_test_pulse_en	40012009    00000020     1     1 *trigger source 6: enable cal pulse signal
+   cnfg_fast_tp_fsm_l1a_en		40012009    00000040     1     1 *trigger source 6: enable l1a signal
+   cnfg_fast_tp_fsm_shutter_en		40012009    00000080     1     1 *trigger source 6: enable open-close shutter signals
+   cnfg_fast_seu_ntriggers_to_skip	4001200A    ffffffff     1     1 *trigger source 6: number of l1a to skip
+   cnfg_fast_number_of_genfcmd_series   4001200B    00003fff    1   1 *number of gen fcmd series to send
+   cnfg_fast_number_of_genfcmd_series_repetitions   4001200B    000f0000    1   1 *number of repetitions
+   cnfg_fast_genfcmd_data_bram  4001200C    0000000f    1   1   *data to be loaded to the BRAM
+   cnfg_fast_genfcmd_address_bram   4001200D    00003fff    1   1   *BRAM address to load gen fcmd
+
+* Physical Interface Abstraction Layer
+   cnfg_phy_slvs_raw_mode_en		40013000    00000001     1     1 *1 - outputs 20000 clock cycles of the raw data from the stub lines, 0 - outputs parsed counters for the MPA/SSA chips
+   cnfg_phy_cic_2s_spars		40013000    00000002     1     1 *enable 2s sparsified
+   cnfg_phy_cic_clock_en		40013000    00000004     1     1 *enable cic clock
+   cnfg_phy_cic_power_en		40013000    00000008     1     1 *enable cic power
+   cnfg_phy_cic_fast_en 		40013000    00000010     1     1 *enable cic fast commands
+   cnfg_phy_slvs_debug_chip_switch 		40013000    000f0000     1     1 *configure which chip should send data to the slvs debug block
+   cnfg_phy_i2c_freq                    40013001    0000000f     1     1 *setting of the i2c frequency clock. (d0, 0.1MHz), (d1,0.5MHz), (d2,0.4MHz), (d3,0.8MHz), (d4,1MHz), (d5,2MHz), (d6,4MHz), (d7,5MHz), (d8,8MHz), (d9,10MHz)
+   cnfg_phy_i2c_master_en		40013001    00000100     1     1 *enable I2C master, 1 by default
+   cnfg_phy_SSA_gen_delay_trig_data     40013004    00001f00     1     1 *For testing of the single MPA chip. Register controls the delay (25ns units) with which the fake SSA like l1 data is send with respect to the l1 trigger.
+   cnfg_phy_SSA_gen_delay_stub_data     40013004    001f0000     1     1 *For testing of the single MPA chip. Register controls the delay (25ns units) with which the fake SSA like stub data is send with respect to the test pulse trigger.
+   cnfg_phy_SSA_enable_gen_l1_data      40013004    01000000     1     1 *For testing of the single MPA chip. When 1 the sending of SSA like l1 data is enabled.
+   cnfg_phy_SSA_gen_left_lateral_data_format 	40013005    000000ff     1     1 *For testing of the single SSA chip. Register contains the value that will be send to the left lateral data line on reception of a test pulse trigger.
+   cnfg_phy_SSA_gen_right_lateral_data_format 	40013005    0000ff00     1     1 *For testing of the single SSA chip Register contains the value that will be send to the right lateral data line on reception of a test pulse trigger.
+   cnfg_phy_SSA_gen_delay_lateral_data  	40013005    001f0000     1     1 *For testing of the single SSA chip. Register controls the delay (25ns units) with which the fake SSA like lateral data is send with respect to the test pulse trigger.
+   cnfg_phy_SSA_gen_stub_data_format_0_0	40013006    ffffffff	 1     1 *For testing of the single MPA chip. Register to change the data content of the stub data send by the SSA data generator. What you put here as content will be put on the stub data line. For every line (there are 8 in total) you can configure an event which is 64 bits long, so this is 8 25ns clock cycles. the MSB from i$\_0$ will be outputted first until the LSB of i$\_0$ and followed by i$\_1$ MSB until i$\_1$ LSB, this for every line.
+   cnfg_phy_SSA_gen_stub_data_format_0_1	40013007    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_1_0	40013008    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_1_1	40013009    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_2_0	4001300a    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_2_1	4001300b    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_3_0	4001300c    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_3_1	4001300d    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_4_0	4001300e    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_4_1	4001300f    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_5_0	40013010    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_5_1	40013011    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_6_0	40013012    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_6_1	40013013    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_7_0	40013014    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_stub_data_format_7_1	40013015    ffffffff	 1     1 *See above
+   cnfg_phy_SSA_gen_l1_data_format_0		40013016    00ffffff     1     1 *For testing of the single MPA chip. Registers to change the data content of the L1 data send by the SSA data generator on arrival of l1 trigger. Channel data 119 until 96, so 8 MSBs are not used in this register
+   cnfg_phy_SSA_gen_l1_data_format_1		40013017    ffffffff     1     1 *See above. Channel data 95 downto 64.
+   cnfg_phy_SSA_gen_l1_data_format_2		40013018    ffffffff     1     1 *See above. Channel data 63 downto 32.
+   cnfg_phy_SSA_gen_l1_data_format_3		40013019    ffffffff     1     1 *See above. Channel data 31 downto 0.
+   cnfg_phy_SSA_gen_HIP_data_format		4001301a    00ffffff     1     1 *See above. Content of the HIP flags.
+   cnfg_phy_SSA_gen_offset_SSA_BX_cnt_format	4001301b    000001ff     1     1 *For testing of the single MPA chip. Register to change the offset value of the BX counter of the L1 data send by the SSA data generator. After a resync = fast reset this counter comes to the value defined here. After a reset of the FW the counter starts also at this value.
+   cnfg_phy_MPA_SSA_SEU_check_patterns1	4001301c    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA stub/centroid data during SEU tests
+   cnfg_phy_MPA_SSA_SEU_check_patterns2	4001301d    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA stub/centroid data during SEU tests
+   cnfg_phy_MPA_SSA_SEU_check_patterns3	4001301e    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA stub/centroid data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns1	4001301f    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns2	40013020    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns3	40013021    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns4	40013022    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns5	40013023    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns6	40013024    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_l1_MPA_SSA_SEU_check_patterns7	40013025    ffffffff     1     1 *patterns to load. These will be compared to the MPA and SSA l1 data during SEU tests
+   cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC	40013026    000000ff     1     1 *BXs to wait before starting to do the automatic comparison
+   cnfg_phy_l1_MPA_SSA_SEU_check_misc_enable_first_error_bit_check	40013026    00000100     1     1 *if one also the first error bit from the MPA package is compared to the check pattern
+   cnfg_phy_lateral_MPA_SSA_SEU_check_patterns1	40013027    0000ffff     1     1 *patterns to load. These will be compared to the SSA lateral data during SEU tests
+   cnfg_phy_fe_data_player_stop_phase_alignment_CIC_fixed_time_enabled	40013028    00000001	 1     1 *if 1 then the sending of the phase tuning pattern will be stopped after cnfg_phy_fe_data_counter_phase_alignment 40MHz clock cycles are passed
+   cnfg_phy_fe_data_player_stop_word_alignment_CIC_fixed_time_enabled	40013028    00000002	 1     1 *if 1 then the sending of the phase tuning pattern will be stopped after cnfg_phy_fe_data_counter_word_alignment 40MHz clock cycles are passed
+   cnfg_phy_fe_data_player_fe_chip_select	40013028    00000004	 1     1 *if 1 then send the phase and word tuning for an MPA chip, otherwise for a CBC chip
+   cnfg_phy_fe_data_player_skip_phase_alignment_CIC			40013028    00000010	 1     1 *if 1 then the sending of the phase alignment patterns to the CIC is skipped
+   cnfg_phy_fe_data_player_skip_word_alignment_CIC			40013028    00000020	 1     1 *if 1 then the sending of the word alignment patterns to the CIC is skipped
+   cnfg_phy_fe_data_player_rolling_fe_data_player_enable		40013028    00000040	 1     1 *if 1 then the data player will keep rolling the content of the BRAM and will keep outputting it to the CIC
+   cnfg_phy_fe_data_player_depth_fe_data_player	40013028    003fff80	 1     1 *define the depth of the BRAM which should be played in the fe_data_player
+   cnfg_phy_fe_data_player_fast_command_from_fe_data_player	40013028    00800000	 1     1 *to mux the fast command if 0 it comes from the fast command block (default) if 1 it comes from the fe data player
+   cnfg_phy_fe_data_player_counter_phase_alignment		40013029    0000ffff	 1     1 *this specifies the number of 40MHz clock cycles the fe_data_player will stay in the state where it sends the phase alignment pattern before going to the next state. Is only considered when cnfg_phy_fe_data_player_stop_phase_alignment_CIC_fixed_time_enabled is 1
+   cnfg_phy_fe_data_player_counter_word_alignment		40013029    ffff0000	 1     1 *this specifies the number of 40MHz clock cycles the fe_data_player will stay in the state where it sends the word alignment pattern before going to the next state. Is only considered when cnfg_phy_fe_data_player_stop_word_alignment_CIC_fixed_time_enabled is 1
+   cnfg_phy_fe_data_player_BRAM_1		4001302A    ffffffff	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_BRAM_2		4001302B    ffffffff	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_BRAM_3		4001302C    ffffffff	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_BRAM_4		4001302D    ffffffff	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_BRAM_5		4001302E    ffffffff	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_BRAM_6		4001302F    ffffffff	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_BRAM_7		40013030    ffffffff	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_BRAM_8		40013031    ffffffff	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_BRAM_9		40013032    ffffffff	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_BRAM_10		40013033    ffffffff	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_BRAM_11		40013034    ffffffff	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_BRAM_12		40013035    ffffffff	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_BRAM_13		40013036    0000000f	 1     1 *data to be written to the BRAM for the playing of the FE data
+   cnfg_phy_fe_data_player_counter_sync_bit	40013037    0000ffff	 1     1 *this specifies the number of 40MHz clock cycles the fe_data_player will stay in the state where it sends the sync bit. Note: to guarantee a good transition from the state where it sends the sync bit to the state where it sends the data this should be an odd value.
+   cnfg_phy_fe_data_player_sync_bit_after_resync	40013037    00010000	 1     1 *this specifies wether after the sending of the resync the sync bit will be missing for a few clock cycles or not. In the CBCs for example the sync bit dissapears for a few clock cycles. (if = 1 the sync bit will not be disabled)
+   cnfg_phy_mux_bp_setup_configure_sel		40013038    ffffffff	 1     1 *common register
+   cnfg_phy_mux_bp_setup_backplane_sel		40013038    0000000f	 1     1 *configure backplane for ps hybrid tests
+   cnfg_phy_mux_bp_setup_card_sel		40013038    000000f0	 1     1 *configure card for ps hybrid tests
+   cnfg_phy_ps_ssa_pair_sel			40013038    00000f00	 1     1 *configure ssa pair for ps hybrid tests
+   cnfg_phy_ps_rtn_fcmd_test			40013038    00001000	 1     1 *return fast commands from SSAs test regime, predefined number of trigger commands is sent
+   cnfg_phy_bwr                                 40013038    00002000     1     1 *tristate buffer backplane select control
+   cnfg_phy_cwr                                 40013038    00004000     1     1 *tristate buffer card select control
+   cnfg_phy_fe_data_player_BRAM_ADDRESS         40013039    00007fff     1     1 *defines the BRAM address for the front-end data player you are addressing
+
+* Readout Block
+   cnfg_readout_packet_nbr		40015000    0000ffff	 1     1 *number of events in one packet, 0 means 1 event
+   cnfg_readout_data_handshake_enable	40015001    00000001	 1     1 *enable data handshake - should be enabled
+   cnfg_readout_int_trig_enable		40015001    00000004	 1     1 *enabling internal emulator to generate trigger to the backend processor block
+   cnfg_readout_int_trig_rate		40015001    000001f0	 1     1 *internal emulator trigger rate
+   cnfg_readout_zero_suppression_enable	40015001    00000200	 1     1 *enable zero suppression
+   cnfg_readout_trigger_type		40015001    0000f000	 1     1 *selecting the internal emulator as the trigger source (0 - normal l1a, 1 - emulated trigger)
+   cnfg_readout_data_type		40015001    000f0000	 1     1 *0 - normal data, 1 - pattern generated internally in the readout block
+   cnfg_readout_common_stubdata_delay	40015001    1ff00000	 1     1 *latency of the stub data
+   cnfg_readout_l1a_timeout             40015002    00000fff	 1     1 *maximal delay for the l1a
+*
+   cnfg_dio5_en				40016005    00000001     1     1 *enable DIO5 block - disabled by default
+   cnfg_dio5_ch1_sel			40016000    ffffffff	 1     1 *Configuration of the channel 1
+     cnfg_dio5_ch1_out_en		40016000    00000001	 1     1 *1 - Output, 0 - Input
+     cnfg_dio5_ch1_term_en		40016000    00000002	 1     1 *Enable 50 Ohm termination
+     cnfg_dio5_ch1_threshold		40016000    0000ff00	 1     1 *0-255 threshold
+   cnfg_dio5_ch2_sel			40016001    ffffffff	 1     1 *Configuration of the channel 2
+   cnfg_dio5_ch3_sel			40016002    ffffffff	 1     1 *Configuration of the channel 3
+   cnfg_dio5_ch4_sel			40016003    ffffffff	 1     1 *Configuration of the channel 4
+   cnfg_dio5_ch5_sel			40016004    ffffffff	 1     1 *Configuration of the channel 5
+*
+   cnfg_tlu_handshake_mode		40017000    00000003     1     1 *TLU handhsake mode: 0 - no handshake, 1 - simple handshake, 2 - data handshake
+   cnfg_tlu_enabled			40017000    00000010     1     1 *Enable TLU block
+   cnfg_tlu_trigger_id_delay            40017000    00000f00     1     1 *Set trigger id delay
+*
+   cnfg_ddr3_stub_debug_enable          40018000    00000001     1     1 *enable stub debug mode
+* Optical Block
+   cnfg_optical_general                 4001D000    ffffffff     1     1 *General configuration sel
+* Optical GBTSC Block
+cnfg_gbtsc_0_sel                        4001d001    ffffffff     1     1
+   cnfg_gbtsc_sca_tx_addr               4001d001    000000ff     1     1
+   cnfg_gbtsc_sca_tx_trans_id           4001d001    0000ff00     1     1
+   cnfg_gbtsc_sca_tx_ch                 4001d001    00ff0000     1     1
+   cnfg_gbtsc_sca_tx_cmd                4001d001    ff000000     1     1
+cnfg_gbtsc_1_sel                        4001d002    ffffffff     1     1
+   cnfg_gbtsc_ic_register_addr_to_gbtic 4001d002    0000ffff     1     1
+   cnfg_gbtsc_ic_nb_to_be_read_to_gbtic 4001d002    ffff0000     1     1
+cnfg_gbtsc_2_sel                        4001d003    ffffffff     1     1
+   cnfg_gbtsc_sca_tx_data               4001d003    ffffffff     1     1
+cnfg_gbtsc_3_sel                        4001d004    ffffffff     1     1
+   cnfg_gbtsc_ic_gbtx_address_to_gbtic  4001d004    000000ff     1     1
+   cnfg_gbtsc_ic_data_to_gbtic          4001D004    0000ff00     1     1
+*------------------------------------------------------------------------------------------
+*----------------------------------------------- Ctrl Registers ---------------------------
+*------------------------------------------------------------------------------------------
+*------------------------------------------------------------------------------------------
+* RegName           	                RegAddr     RegMask      R     W     Description
+*------------------------------------------------------------------------------------------
+ipb_daq_system_ctrl			40020000    ffffffff     1     1     *Base for the control registers
+* Global Clock Sel
+   clk_40_reset				40020001    00000001	 1     1     *Clock generator block reset 40MHz clock
+   ref_clk_reset			40020001    00000004	 1     1     *Reset Reference clock generator
+* TTC Control
+   ttc_dec_reset			40020002    00000001	 1     1     *Reset TTC counters
+* AMC13 Sel
+   amc13_link_reset			40020003    00000001	 1     1     *Reset AMC13 link
+* Command Processor Block
+   ctrl_command_global_reset	        40021000    00000001     1     1     *Global FC7 reset
+   ctrl_command_i2c			40021001    ffffffff	 1     1     *I2C Master control
+   ctrl_command_i2c_reset		40021001    00000001     1     1     *Reset I2C master
+   ctrl_command_i2c_reset_fifos		40021001    00000004     1     1     *Reset I2C command/reply FIFOs
+   ctrl_command_i2c_command_fifo	40021002    ffffffff	 1     1     *Command FIFO
+     ctrl_command_i2c_command_type	40021002    f0000000	 1     1     *Command type: 0 - send command to certain chip/hybrid, 1 - send to all chips of certain hybrid, 2 - send to all chips/hybrids, 3 - send native broadcast to certain hybrid, 4 - send native broadcast to all hybrids, 8 - send command to the MPA SSA Board Master
+     ctrl_command_i2c_command_word_id	40021002    08000000	 1     1     *word id: 0/1 alternating
+     ctrl_command_i2c_command_hybrid_id	40021002    07800000	 1     1     *the id of the hybrid
+     ctrl_command_i2c_command_chip_id	40021002    007C0000	 1     1     *slave id
+     ctrl_command_i2c_command_readback	40021002    00020000	 1     1     *readback the write command
+     ctrl_command_i2c_command_read	40021002    00010000	 1     1     *1 - read, 0 - write
+     ctrl_command_i2c_command_register	40021002    0000ffff	 1     1     *register address
+     ctrl_command_i2c_command_page	40021002    00000100	 1     1     *CBC page
+     ctrl_command_i2c_command_data	40021002    00ffffff	 1     1     *data to write
+   ctrl_command_i2c_reply_fifo          40021003    ffffffff     1     0     *Reply FIFO
+     ctrl_command_i2c_reply_type	40021003    f0000000	 1     0     *command type
+     ctrl_command_i2c_reply_hybrid_id	40021003    07800000	 1     0     *hybrid id
+     ctrl_command_i2c_reply_chip_id	40021003    007C0000	 1     0     *chip id
+     ctrl_command_i2c_reply_error	40021003    00010000	 1     0     *error bit
+     ctrl_command_i2c_reply_register	40021003    0000ff00	 1     0     *register address
+     ctrl_command_i2c_reply_data	40021003    000000ff	 1     0     *data byte 1
+* Fast Command Block
+   ctrl_fast				40022000    ffffffff     1     1
+   ctrl_fast_reset			40022000    00000001     1     1     *reset fast block
+   ctrl_fast_start			40022000    00000002     1     1     *start triggering
+   ctrl_fast_stop			40022000    00000004     1     1     *stop triggering
+   ctrl_fast_load_config		40022000    00000008     1     1     *load the configuration from the ipbus registers
+   ctrl_fast_reset_test_pulse		40022000    00000010     1     1     *reset test pulse FSM
+   ctrl_fast_signal_fast_reset  	40022000    00010000     1     1     *send single fast reset from ipbus
+   ctrl_fast_signal_test_pulse  	40022000    00020000     1     1     *send single cal pulse from ipbus
+   ctrl_fast_signal_trigger     	40022000    00040000     1     1     *send single l1a from ipbus
+   ctrl_fast_signal_orbit_reset 	40022000    00080000     1     1     *send single bc0 from ipbus
+   ctrl_fast_signal_i2c_refresh 	40022000    00100000     1     1     *send i2c refresh to CBC2
+   ctrl_fast_signal_duration		40022000    f0000000     1     1     *duration of the fast signal 0 to 15, has to be encoded in parallel
+   ctrl_fast_start_genfcmd_serie    40022000    00000010     1     1     *start sending gen fcmd
+   ctrl_fast_stop_genfcmd_serie     40022000    00000020     1     1     *interuption of sending genfcmd
+   ctrl_fast_genfcmd_write_bram     40022000    00000040     1     1     *enable writing data to the BRAM
+* Physical Interface Abstraction Layer
+   ctrl_phy_main                40023000    ffffffff     1     1
+   ctrl_phy_chip_hard_reset		40023000    00000001     1     1     *hard reset of the chip
+   ctrl_phy_phase_tune_again		40023000    00000002     1     1     *do the phase tuning again
+   ctrl_phy_cic_hard_reset		40023000    00000004     1     1     *cic hard reset of the chip
+   ctrl_slvs_debug_fifo1_data           40023001    ffffffff     1     0     *slvs debug fifo 1
+   ctrl_slvs_debug_fifo2_data           40023002    ffffffff     1     0     *slvs debug fifo 2
+   ctrl_phy_fast_cmd_phase              40023003    000000ff     1     1 *Change the phase of the fast cmd wrt the 320MHz clock going to the chip. The unit of the phase 1/168th of the 320MHz clock cycle. Whatch out: this is an incremental process.
+   ctrl_phy_ssa_gen_trig_phase          40023003    0000ff00     1     1 *For testing of single MPA chip. Change the phase of the fake L1 like data going to the MPA wrt the 320MHz clock going to the chip. The unit of the phase 1/168th of the 320MHz clock cycle. Whatch out: this is an incremental process.
+   ctrl_phy_ssa_gen_stub_phase          40023003    00ff0000     1     1 *For testing of the single MPA chip. Change the phase of the fake stub data going to the MPA wrt the 320MHz clock going to the chip. All 8 lines are phase shifted with the same amount. The unit of the phase 1/168th of the 320MHz clock cycle. Whatch out: this is an incremental process.
+   ctrl_phy_ssa_gen_lateral_phase_1     40023004    000000ff     1     1 *For testing of the single SSA chip. Change the phase of the fake left lateral data going to the SSA chip. The unit of the phase 1/168th of the 320MHz clock cycle. Whatch out: this is an incremental process.
+   ctrl_phy_ssa_gen_lateral_phase_2     40023004    0000ff00     1     1 *For testing of the single SSA chip. Change the phase of the fake right lateral data going to the SSA chip. The unit of the phase 1/168th of the 320MHz clock cycle. Whatch out: this is an incremental process.
+   ctrl_phy_SLVS_compare_start     40023005    00000001     1     1 *start the comparison of stub/centroid data for MPA/SSA SEU tests
+   ctrl_phy_SLVS_compare_stop     40023005    00000002     1     1 *stop the comparison of stub/centroid and l1 data for MPA/SSA SEU tests
+   ctrl_phy_l1_SLVS_compare_start     40023005    00000004     1     1 *start the comparison of l1 data for MPA/SSA SEU tests
+   ctrl_phy_SLVS_compare_read_data1_fifo     40023006    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
+   ctrl_phy_SLVS_compare_read_data2_fifo     40023007    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
+   ctrl_phy_SLVS_compare_read_data3_fifo     40023008    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
+   ctrl_phy_SLVS_compare_read_data4_fifo     40023009    ffffffff     1     0 *read out part of the FIFO containing mismatched stub/centroid data for MPA/SSA SEU tests
+   ctrl_phy_l1_SLVS_compare_read_data1_fifo     4002300a    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
+   ctrl_phy_l1_SLVS_compare_read_data2_fifo     4002300b    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
+   ctrl_phy_l1_SLVS_compare_read_data3_fifo     4002300c    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
+   ctrl_phy_l1_SLVS_compare_read_data4_fifo     4002300d    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
+   ctrl_phy_l1_SLVS_compare_read_data5_fifo     4002300e    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
+   ctrl_phy_l1_SLVS_compare_read_data6_fifo     4002300f    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
+   ctrl_phy_l1_SLVS_compare_read_data7_fifo     40023010    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests
+   ctrl_phy_l1_SLVS_compare_read_data8_fifo     40023011    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests: FC7 BX counter
+   ctrl_phy_l1_SLVS_compare_read_data9_fifo     40023012    ffffffff     1     0 *read out part of the FIFO containing mismatched l1 data for MPA/SSA SEU tests: MPA/SSA 9/4 LSBs: mirror L1 counter
+   ctrl_phy_lateral_SLVS_compare_read_data1_fifo  40023013    ffffffff     1     0 *read out part of the FIFO containing mismatched lateral data for MPA/SSA SEU tests
+   ctrl_phy_lateral_SLVS_compare_read_data2_fifo  40023014    ffffffff     1     0 *read out part of the FIFO containing mismatched lateral data for MPA/SSA SEU tests
+   ctrl_phy_phase_tuning                        40023015    ffffffff     1     1 *used to control the phase tuning fsm
+   ctrl_phy_fe_player                           40023016    ffffffff     1     1 *control of the front-end data player
+   ctrl_phy_cic_decoder_start_bx0_alignment     40023017    00000001     1     1 *starts the bx0 alignment
+   ctrl_phy_cic_backend_alignment_pattern_disable     40023017    00000002     1     1 *disable backed alignment pattern
+   ctrl_phy_muxbp_setup_main    		40023018    ffffffff     1     1 *to control mux bp setup
+   ctrl_phy_muxbp_setup_configure		40023018    00000001     1     1 *user request to configure the setup
+   ctrl_phy_muxbp_setup_disconnect              40023018    00000002     1     1 *user request to disconnect cards and backplanes
+   ctrl_phy_ps_rtn_ssa_clk_test			40023018    00000004     1     1 *user request to check the return clock from SSAs
+   ctrl_phy_ps_rtn_ssa_fcmd_test_payload_num_triggers	40023018    00000ff0     1     1 *user required number of trigger commands to test the paylaod of the return fast command from SSAs
+
+* Readout Block
+   ctrl_readout_reset			40025000    00000001	 1     1 *reset readout block. WARNING: it is not clearing
+   ctrl_readout_done			40025000    00000002	 1     1 *...
+   ctrl_readout_run_fifo		40025001    ffffffff	 1     1 *fifo readout
+* DIO5 Block
+   ctrl_dio5_load_config		40026000    00000001	 1     1 *set dio5 thresholds
+* DDR3 Block
+   ctrl_ddr3_traffic_str		40028000    00000001	 1     1 *ddr3 self check
+* Optical Block
+   ctrl_optical_general                 4002D000    ffffffff     1     1 *general control sel
+* Optical GBTSC Block
+ctrl_gbtsc_0_sel                        4002d001    ffffffff     1     1
+   ctrl_gbtsc_sca_reset                 4002d001    00000001     1     1
+   ctrl_gbtsc_sca_start_reset_cmd       4002d001    00000002     1     1
+   ctrl_gbtsc_sca_start_connect_cmd     4002d001    00000004     1     1
+   ctrl_gbtsc_sca_start_cmd             4002d001    00000008     1     1
+   ctrl_gbtsc_ic_reset                  4002d001    00000010     1     1
+   ctrl_gbtsc_ic_wr_to_gbtic            4002d001    00000020     1     1
+   ctrl_gbtsc_ic_rd_to_gbtic            4002d001    00000040     1     1
+   ctrl_gbtsc_ic_start_write_to_gbtic   4002d001    00000080     1     1
+   ctrl_gbtsc_ic_start_read_to_gbtic    4002d001    00000100     1     1
+*------------------------------------------------------------------------------------------
+*----------------------------------------------- Stat Registers ---------------------------
+*------------------------------------------------------------------------------------------
+*------------------------------------------------------------------------------------------
+* RegName           	                RegAddr     RegMask      R     W     Description
+*------------------------------------------------------------------------------------------
+ipb_daq_system_stat			40030000    ffffffff     1     0     *Base for the status registers
+* I2C Error FIFO
+   stat_error_full			40030001    00000fff     1     0     *i2c error block FIFO
+   stat_error_block_id			40030001    0000000f     1     0     *block id
+   stat_error_code			40030001    00000ff0     1     0     *error code
+   stat_error_counter			40030002    000001ff	 1     0     *number of errors in the FIFO
+* Firmware Info Sel
+   stat_firmware_implementation		40030003    00000003     1     0     *implementation type: 0 - optical, 1 - electrical, 2 - emulation
+   stat_firmware_chip_type		40030003    0000003c     1     0     *chip type: 0 - CBC2, 1 - CBC3, 2 - MPA, 3 - SSA
+   stat_firmware_num_hybrids		40030003    00003fc0     1     0     *number of hybrids
+   stat_firmware_num_chips		40030003    003fc000     1     0     *number of chips per hybrid
+   stat_firmware_fmc1_type		40030003    07c00000     1     0     *fmc1(top) type: 0 - none, 1 - DIO5, 2 - 2xCBC2, 3 - 8xCBC2, 4 - 2xCBC3, 5 - 8xCBC3 FMC1, 6 - 8xCBC3 FMC2, 7 - 1xCBC3, 8 - MPA SSA Board (Rutgers), 9 - Fermi Trigger Board, 10 - FMC_CIC1_FMC1, 11 - FMC_CIC1_FMC2, 12 - FMC_PS_FMC1, 13 - FMC_PS_FMC2, 14 - FMC_2S_FMC1, 15 - FMC_2S_FMC2, 16 - FMC_2S_STAND_ALONE, 17 - OptoQuad
+   stat_firmware_fmc2_type		40030003    f800000     1     0     *fmc2(bottom) type, see above
+* Global Clock
+   stat_clk_40_locked			40030004    00000001	 1     0     *locked the MMCM
+   stat_ref_clk_locked			40030004    00000002	 1     0     *reference clock MMCM locked
+* TTC BLOCK
+   stat_ttc_rdy				40030005    00000001	 1     0     *TTC block ready
+   stat_ttc_dec_single_err_cnt		40030006    0000ffff	 1     0     *...
+   stat_ttc_dec_double_err_cnt		40030006    ffff0000	 1     0     *...
+* FIRMWARE Timestamp
+   stat_implementation_timestamp	40030007    ffffffff     1     0     *the date of image creation
+* Command Block (I2C)
+   stat_command_i2c_fsm			40031001    0000000f	 1     0     *Status of the I2C FSM
+   stat_command_i2c_fifo_commands_empty	40031002    00000001     1     0     *I2C Commands FIFO Empty
+   stat_command_i2c_fifo_commands_full	40031002    00000002     1     0     *I2C Commands FIFO Full
+   stat_command_i2c_fifo_replies_empty	40031003    00000001     1     0     *I2C Replies FIFO Empty
+   stat_command_i2c_fifo_replies_full	40031003    00000002     1     0     *I2C Replies FIFO Full
+   stat_command_i2c_nreplies_present    40031004    ffffffff     1     0     *Number of I2C replies available
+* Fast Command Block
+   stat_fast_fsm_configured 		40032000    00000040     1     0     *1 when fast command block is configured
+   stat_fast_fsm_state			40032000    00000030     1     0     *status of the triggering FSM
+   stat_fast_fsm_source     		40032000    0000000f     1     0     *trigger source
+   stat_fast_sending_gen_fcmd_done  40032000    00000040     1     0     *sending of genfcmd is done
+   stat_fast_trigger_in_counter		40032001    ffffffff     1     0     *trigger in counter - not considering backpressure, so may be bigger than real amounts of triggers sent
+* Physical Interface Abstraction Layer
+   stat_phy_phase_tuning                40033001    ffffffff     1     0     *status of the phase tuning
+   stat_phy_hardware_ready  		40033002    00010000   	 1     0     *phase tuning done signal (for all chips)
+   stat_phy_phase_tuning_done  		40033002    00010000   	 1     0
+*
+   stat_phy_slvs_compare_data_ready     40033003    00000001	 1     0 *data ready flag for the data stored in the FIFO for MPA/SSA SEU testing (goes to 1 when state machine is finished with comparing and back to 0 when FIFO empty)
+   stat_phy_slvs_compare_state_machine 40033003    0000001E	 1     0 *gives you back the number of the state where the state machine to compare stub/centroid data for MPA/SSA SEU testing is located
+   stat_phy_slvs_compare_fifo_almost_full 40033003    00000020	 1     0 *almost full flag for the FIFO storing the mismatches in stub/centroid data for MPA/SSA SEU testing
+   stat_phy_slvs_compare_fifo_bx_indicator 40033003    00000040	 1     0 *status bit saying if the data is arriving in the even or the odd BX
+   stat_phy_slvs_compare_fifo_empty 40033003    00000080	 1     0 *empty flag for the FIFO storing the mismatches in stub/centroid data for MPA/SSA SEU testing
+   stat_phy_slvs_compare_numbere_events_written_to_fifo 40033003    003fff00	 1     0 *counter counting the number of events written to the fifo during the running of the compare state machine
+   stat_phy_slvs_compare_number_good_data 40033004    ffffffff	 1     0 *32 bit counter saying how many BXs matched the check pattern (counter stops at it's max, is reset when starting the SEU compare state machine again or on reset)
+   stat_phy_l1_slvs_compare_data_ready     40033005    00000001	 1     0 *data ready flag for the l1 data stored in the FIFO for MPA/SSA SEU testing (goes to 1 when state machine is finished with comparing and back to 0 when FIFO empty)
+   stat_phy_l1_slvs_compare_state_machine 40033005    0000001E	 1     0 *gives you back the number of the state where the state machine to compare l1 data for MPA/SSA SEU testing is located
+   stat_phy_l1_slvs_compare_fifo_almost_full 40033005    00000020	 1     0 *almost full flag for the FIFO storing the mismatches in l1 data for MPA/SSA SEU testing
+   stat_phy_l1_slvs_compare_fifo_empty 40033005    00000040	 1     0 *empty flag for the FIFO storing the mismatches in l1 data for MPA/SSA SEU testing
+   stat_phy_l1_slvs_compare_numbere_events_written_to_fifo 40033005    003fff00	 1     0 *counter counting the number of l1 events written to the fifo during the running of the compare state machine
+   stat_phy_l1_slvs_compare_number_good_data 40033006    ffffffff	 1     0 *32 bit counter saying how many l1 frames matched the check pattern (counter stops at it's max, is reset when starting the SEU compare state machine again or on reset)
+   stat_phy_l1_slvs_compare_number_l1_triggers 40033007    ffffffff	 1     0 *32 bit counter saying how many l1 triggers were sent during running of the state machine
+   stat_phy_l1_slvs_compare_number_l1_headers_found 40033008    ffffffff	 1     0 *32 bit counter saying how many l1 headers were found during the running of the state machine
+   stat_phy_lateral_slvs_compare_data_ready             40033009    00000001	 1     0 *data ready flag for the data stored in the FIFO for MPA/SSA SEU testing (goes to 1 when state machine is finished with comparing and back to 0 when FIFO empty)
+   stat_phy_lateral_slvs_compare_state_machine          40033009    0000001E	 1     0 *gives you back the number of the state where the state machine to compare stub/centroid data for MPA/SSA SEU testing is located
+   stat_phy_lateral_slvs_compare_fifo_almost_full       40033009    00000020	 1     0 *almost full flag for the FIFO storing the mismatches in lateral data for MPA/SSA SEU testing
+   stat_phy_lateral_slvs_compare_fifo_empty             40033009    00000040	 1     0 *empty flag for the FIFO storing the mismatches in lateral data for MPA/SSA SEU testing
+   stat_phy_lateral_slvs_compare_numbere_events_written_to_fifo 40033009    003fff00	 1     0 *counter counting the number of events written to the fifo during the running of the compare state machine
+   stat_phy_lateral_slvs_compare_number_good_data       4003300A    ffffffff	 1     0 *32 bit counter saying how many BXs matched the check pattern (counter stops at it's max, is reset when starting the SEU compare state machine again or on reset)
+   stat_phy_fe_data_player_state	4003300B    0000000f    1     0 *Giving the state of the fe_data_player state machine
+   stat_phy_cic_decoder_bx0_alignment_state 4003300C    0000000f    1   0 *state of the bx alignment machine
+*
+   stat_phy_mux_bp_setup_backplane_power_good	4003300D    00000001	 1     0     *backplane power good signal for ps hybrid tests
+   stat_phy_mux_bp_setup_card_power_good	4003300D    00000002	 1     0     *card power good signal for ps hybrid tests
+   stat_phy_mux_bp_setup_configuration_req	4003300D    00000004	 1     0     *in this state configuration is required
+   stat_phy_mux_bp_setup_scanned		4003300D    00000008	 1     0     *setup scanned for available backplanes and cards
+   stat_phy_mux_bp_setup_configured		4003300D    00000010	 1     0     *setup configured
+   stat_phy_mux_bp_setup_backplane_valid	4003300D    00000020	 1     0     *requested backplane configuration is valid
+   stat_phy_mux_bp_setup_card_valid		4003300D    00000040	 1     0     *requested card configuration is valid
+   stat_phy_mux_bp_setup_available_bps_cards	4003300D    0fffff00	 1     0     *list of all available backplanes and cards
+   stat_phy_mux_bp_setup_bwr            	4003300D    10000000	 1     0     *backplane tristate buffer driving signal
+   stat_phy_mux_bp_setup_cwr            	4003300D    20000000	 1     0     *card tristate buffer driving signal
+   stat_phy_mux_bp_setup_bps_disconnect_done    4003300D    40000000     1     0     *backplanes are disconnected after running
+   stat_phy_mux_bp_setup_cards_disconnect_done  4003300D    80000000     1     0     *cards are disconnected after running
+
+   stat_phy_mux_bp_setup_bsel_i                 400330B4    0000000f     1     0     *backplanes available
+   stat_phy_mux_bp_setup_csel_i                 400330B4    000000f0     1     0     *cards available
+   stat_phy_mux_bp_setup_bsel_o                 400330B4    00000f00     1     0     *backplane to connect
+   stat_phy_mux_bp_setup_csel_o                 400330B4    0000f000     1     0     *card to connect
+*
+   stat_phy_ps_rtn_clock_from_ssa1_test_done	4003300E    00000001	 1     0     *test of the return clock from SSA1 done
+   stat_phy_ps_rtn_clock_from_ssa2_test_done	4003300E    00000002	 1     0     *test of the return clock from SSA2 done
+   stat_phy_ps_rtn_clock_from_ssa1_test_stat	4003300E    00000004	 1     0     *status of the return clock from SSA1
+   stat_phy_ps_rtn_clock_from_ssa2_test_stat	4003300E    00000008	 1     0     *status of the return clock from SSA2
+   stat_phy_ps_rtn_fcmd_from_ssa1_test_done	4003300E    00000010	 1     0     *test of the return fast command from SSA1 done
+   stat_phy_ps_rtn_fcmd_from_ssa2_test_done	4003300E    00000020	 1     0     *test of the return fast command from SSA2 done
+   stat_phy_ps_rtn_fcmd_from_ssa1_test_stat	4003300E    00000040	 1     0     *status of the return fast command from SSA1
+   stat_phy_ps_rtn_fcmd_from_ssa2_test_stat	4003300E    00000080	 1     0     *status of the return fast command from SSA2
+   stat_phy_ps_rtn_fcmd_from_ssa1_test_is_pattern_error		4003300E    00000100	 1     0     *pattern error in the return fast command from SSA1
+   stat_phy_ps_rtn_fcmd_from_ssa2_test_is_pattern_error		4003300E    00000200	 1     0     *pattern error in the return fast command from SSA2
+   stat_phy_ps_rtn_fcmd_from_ssa1_test_is_payload_error		4003300E    00000400	 1     0     *payload error in the return fast command from SSA1
+   stat_phy_ps_rtn_fcmd_from_ssa2_test_is_payload_error		4003300E    00000800	 1     0     *payload error in the return fast command from SSA2
+*
+   stat_slvs_debug_general              4003300F    ffffffff     1     0
+   stat_slvs_debug_mpa_l1_ready		4003300F    00000001	 1     0     *SLVS debug L1 line buffered
+   stat_slvs_debug_mpa_stub_ready	4003300F    00000002	 1     0     *SLVS debug stub data buffered
+   stat_slvs_debug_mpa_counters_ready	4003300F    00000004	 1     0     *SLVS debug - counters buffering done
+   stat_slvs_debug_mpa_counters_store_fsm_state		4003300F    000000f0	 1     0
+   stat_slvs_debug_mpa_l1_0             40033010    ffffffff     1     0     *L1 data first register - next 49 are booked
+   stat_slvs_debug_mpa_stub_0           40033042    ffffffff     1     0     *Stub data - next 79 are booked
+   stat_slvs_debug_lateral_0		40033092    ffffffff	 1     0     *Lateral data
+   stat_phy_fe_data_player_read_BRAM1   400330A7    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+   stat_phy_fe_data_player_read_BRAM2   400330A8    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+   stat_phy_fe_data_player_read_BRAM3   400330A9    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+   stat_phy_fe_data_player_read_BRAM4   400330AA    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+   stat_phy_fe_data_player_read_BRAM5   400330AB    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+   stat_phy_fe_data_player_read_BRAM6   400330AC    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+   stat_phy_fe_data_player_read_BRAM7   400330AD    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+   stat_phy_fe_data_player_read_BRAM8   400330AE    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+   stat_phy_fe_data_player_read_BRAM9   400330AF    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+   stat_phy_fe_data_player_read_BRAM10   400330B0    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+   stat_phy_fe_data_player_read_BRAM11   400330B1    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+   stat_phy_fe_data_player_read_BRAM12   400330B2    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+   stat_phy_fe_data_player_read_BRAM13   400330B3    ffffffff     1     0     *read the entries in the BRAM of the fe_data_player
+* Readout Block
+   evnt_cnt				40034000    00ffffff	1     0	     *L1 counter (last value)
+   evnt_cnt_buf_empty			40034000    01000000	1     0	     *L1 counter FIFO empty
+   data_payload_buf_empty		40034000    02000000	1     0	     *Data Payload FIFO empty (all FIFO's together)
+   trigdata_buf_empty			40034000    04000000	1     0      *Triggered data buffer empty
+   frame_cnt_chip1			40034001    ffffffff	1     0	     *frame counters for chip 0
+   frame_cnt_chip2			40034002    ffffffff	1     0	     *...
+   frame_cnt_chip3			40034003    ffffffff	1     0	     *...
+   frame_cnt_chip4			40034004    ffffffff	1     0	     *...
+   frame_cnt_chip5			40034005    ffffffff	1     0	     *...
+   frame_cnt_chip6			40034006    ffffffff	1     0	     *...
+   frame_cnt_chip7			40034007    ffffffff	1     0	     *...
+   frame_cnt_chip8			40034008    ffffffff	1     0	     *...
+   rate_measurement_bx_counter		4003400C    ffffffff    1     0      * counter to measure the packing rate
+   readout_req				40035000    00000001	1     0	     *Readout Requirement for the handshake mode
+   fsm_status				40035000    00000ff0	1     0      *Readout FSM Status
+   words_cnt				40035001    ffffffff	1     0      *Number of words in the readout FIFO
+* DIO5 Block
+   stat_dio5_not_ready			40036000    00000001	 1     0     *Still configuring the DIO5 thresholds
+   stat_dio5_error			40036000    00000002	 1     0     *Error when configuring thresholds via I2C
+* DDR3 Block
+   stat_ddr3_readout			40038000    00000001	 1     0     *DDR3 readout
+   stat_ddr3_initial_calibration_done	40038000    00000002	 1     0     *Initial calibration complete
+   stat_ddr3_self_check_done		40038000    00000004	 1     0     *DDR3 self check complete
+   stat_ddr3_num_errors			40038001    ffffffff	 1     0     *Number of errors obtained during self test
+   stat_ddr3_num_words			40038002    ffffffff	 1     0     *Number of words examined during self test
+* DDR3 Readout (direct access to the DDR3)
+   ddr3_readout                         C0000000    ffffffff     1     0     *the ddr3 address zero itself
+* Optical Block
+  stat_optical_general                  4003D000    ffffffff     1     0     *status optical general
+* Optical GBTSC Block
+stat_gbtsc_0_sel                        4003d001    ffffffff     1     0
+   stat_gbtsc_sca_rx_addr               4003d001    000000ff     1     0
+   stat_gbtsc_sca_rx_trans_id           4003d001    0000ff00     1     0
+   stat_gbtsc_sca_rx_ch                 4003d001    00ff0000     1     0
+   stat_gbtsc_sca_rx_len                4003d001    ff000000     1     0
+stat_gbtsc_1_sel                        4003d002    ffffffff     1     0
+   stat_gbtsc_sca_rx_err                4003d002    000000ff     1     0
+   stat_gbtsc_ic_rd_gbtx_addr           4003d002    0000ff00     1     0
+   stat_gbtsc_ic_rd_nb_of_words         4003d002    ffff0000     1     0
+stat_gbtsc_2_sel                        4003d003    ffffffff     1     0
+   stat_gbtsc_sca_rx_data               4003d003    ffffffff     1     0
+stat_gbtsc_3_sel                        4003d004    ffffffff     1     0
+   stat_gbtsc_ic_data_from_gbtic        4003d004    000000ff     1     0
+   stat_gbtsc_ic_rd_mem_ptr             4003d004    00ffff00     1     0
+   stat_gbtsc_ic_ready                  4003d004    01000000     1     0
+   stat_gbtsc_ic_empty                  4003d004    02000000     1     0
+   stat_gbtsc_sca_rx_done               4003d004    04000000     1     0
+*--------------------------------------------------------------------
+*---------------------------- MPA SSA BOARD -------------------------
+*--------------------------------------------------------------------
+cnfg_mpa_ssa_board_i2c_master_en				40019000	00000001	1     1	*Enabled bit of the MPA SSA Board I2C master
+cnfg_mpa_ssa_board_i2c_freq					40019000	0000003C	1     1	*I2C Frequency - same as for the Phy Block Master
+cnfg_mpa_ssa_board_slave_0_config				40019002	ffffffff	1     1 *Config of the Slave 0
+cnfg_mpa_ssa_board_slave_0_config_i2c_address			40019002	fe000000	1     1 *I2C Address
+cnfg_mpa_ssa_board_slave_0_config_register_address_nbytes   	40019002	000000C0	1     1 *Register address number of bytes
+cnfg_mpa_ssa_board_slave_0_config_data_wr_nbytes		40019002	00000030	1     1 *Number of write data bytes
+cnfg_mpa_ssa_board_slave_0_config_data_rd_nbytes		40019002	0000000C	1     1 *Number of read data bytes
+cnfg_mpa_ssa_board_slave_0_config_stop_for_rd_en		40019002	00000002	1     1 *Stop for RD enable
+cnfg_mpa_ssa_board_slave_0_config_nack_en			40019002	00000001	1     1 *negative ack at the end
+cnfg_mpa_ssa_board_slave_1_config				40019003	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_2_config				40019004	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_3_config				40019005	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_4_config				40019006	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_5_config				40019007	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_6_config				40019008	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_7_config				40019009	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_8_config				4001900A	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_9_config				4001900B	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_10_config				4001900C	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_11_config				4001900D	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_12_config				4001900E	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_13_config				4001900F	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_14_config				40019010	ffffffff	1     1	*...
+cnfg_mpa_ssa_board_slave_15_config				40019011	ffffffff	1     1	*...
+*
+ctrl_mpa_ssa_board_reset					40029000	00000001	1     1 *board reset signal(is it used??)
+*
+mpa_ssa_i2c_request_command_type	40021002    f0000000	1	1 *MPA ssa reques command type
+mpa_ssa_i2c_request_word_id		40021002    0C000000	1	1 *word id
+mpa_ssa_i2c_request_word0_slave_id	40021002    03E00000	1	1 *slave id
+mpa_ssa_i2c_request_word0_board_id	40021002    00100000	1	1 *board id
+mpa_ssa_i2c_request_word0_read		40021002    00010000	1	1 *read
+mpa_ssa_i2c_request_word0_register	40021002    0000ffff	1	1 *register address
+mpa_ssa_i2c_request_word1_data		40021002    00ffffff	1	1 *data to write
+*
+mpa_ssa_i2c_reply_slave_id		40021003    f8000000	1	1 *reply slave id
+mpa_ssa_i2c_reply_board_id		40021003    04000000	1	1 *board id
+mpa_ssa_i2c_reply_err			40021003    01000000	1	1 *error
+mpa_ssa_i2c_reply_data			40021003    00ffffff	1	1 *data back
+*
+mpa_ssa_i2c_wrapper_state		40039000    0000000f    1       0 *state of the I2C wrapper of the mpa ssa board
+mpa_ssa_i2c_fsm_state			40039000    000000f0    1       0 *state of the I2C fsm for the mpa ssa board

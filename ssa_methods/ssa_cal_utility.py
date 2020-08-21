@@ -127,7 +127,7 @@ class SSA_cal_utility():
 		return (-t_threshold_mv-t_thrdac[1]+t_thrdac[2])/np.float(t_thrdac[0])
 
 	########################################Configure_TestPulse_SSA(50,50,500,1000,0,0,0)###################
-	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2, countershift = 0, set_trim = False, d19c_firmware_issue_repeat = True, start_threshold = 0):
+	def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2, countershift = 'auto', set_trim = False, d19c_firmware_issue_repeat = True, start_threshold = 0):
 		'''	cal_ampl  -> int |'baseline'  -> Calibration pulse charge (in CALDAC LSBs)
 			mode      -> 'all' | 'sbs'   -> All strips together or one by one
 			nevents   -> int number      -> Number of calibration pulses (default 1000)
@@ -140,6 +140,13 @@ class SSA_cal_utility():
 			msg       -> internal use
 		'''
 		#self.fc7.reset()
+		[cr_ok, cr_countershift, cr_mean] = self.align_counters_readout(threshold=100, amplitude=200, duration=1)
+		if(not cr_ok):
+			utils.print_error('->  Asyncronous counters not working properly')
+			return False
+		else:
+			if(isinstance(countershift, int)): apply_counter_shift = countershift
+			else: apply_counter_shift = cr_countershift
 		evaluate_sc = True
 		evaluate_cn = 0
 		while(evaluate_sc):
@@ -1062,6 +1069,35 @@ class SSA_cal_utility():
 			plt.plot(latency, thlist, 'o')
 			plt.show()
 		return latency, thlist
+
+	def align_counters_readout(self, threshold=100, amplitude=200, duration=1):
+		#utils.activate_I2C_chip()
+		self.fc7.SendCommand_CTRL("stop_trigger")
+		self.ssa.readout.cluster_data(initialize=True)
+		self.ssa.ctrl.activate_readout_async(ssa_first_counter_delay='keep')
+		time.sleep(0.001)
+		#self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
+		Configure_TestPulse_SSA(50,50,500,1000,0,0,0)
+		self.ssa.strip.set_cal_strips(mode = 'counter', strip = 'all')
+		self.ssa.ctrl.set_cal_pulse(amplitude=amplitude, duration=duration, delay='keep')
+		self.ssa.ctrl.set_threshold(threshold);  # set the threshold
+		self.fc7.clear_counters(1)
+		self.fc7.open_shutter(1, 1)
+		self.fc7.SendCommand_CTRL("start_trigger")
+		time.sleep(0.1)
+		self.fc7.close_shutter(1,1)
+		successfull = False
+		for countershift in range(-5,5):
+			failed, counters = self.ssa.readout.read_counters_fast(range(1,121), shift = countershift, initialize = 1)
+			mean = np.mean(counters)
+			#print([countershift, counters])
+			if((not failed) and (mean>990) and (mean<1100)):
+				successfull = True
+				break
+		#failed, couters = self.ssa.readout.read_counters_i2c(range(1,121))
+		return [successfull, countershift, mean]
+
+
 
 	###########################################################
 	def __set_variables(self):

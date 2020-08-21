@@ -61,7 +61,7 @@ class ssa_i2c_conf:
 		return True
 
 	def enable(self):
-		activate_I2C_chip()
+		utils.activate_I2C_chip()
 
 	def get_freq(self, value):
 		return self.freq

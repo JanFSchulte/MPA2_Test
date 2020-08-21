@@ -196,16 +196,7 @@ def BIST_LOOP():
         print(error)
 
 
-BIST_LOOP()
-
-
-
-
-
-
-
-
-
+BIST_LOO
 
 
 
@@ -219,3 +210,216 @@ BIST_LOOP()
 #		for k in range(8):
 #			field = 'b{:0d}'.format(k)
 #			w.append( self.I2C.peri_write(register = 'configuration_test', field = field, data = data))
+
+
+
+
+
+
+
+
+
+
+utils.activate_I2C_chip()
+self.fc7.SendCommand_CTRL("stop_trigger")
+self.ssa.readout.cluster_data(initialize=True)
+self.ssa.ctrl.activate_readout_async()
+time.sleep(0.001)
+self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
+
+self.fc7.close_shutter(8)
+self.fc7.clear_counters(8)
+self.ssa.strip.set_cal_strips(mode = 'counter', strip = 'all')
+self.ssa.ctrl.set_cal_pulse(amplitude = cal_val, duration = 15, delay = 'keep')
+self.ssa.ctrl.set_threshold(threshold);  # set the threshold
+
+self.fc7.clear_counters(8, 5)
+self.fc7.open_shutter(8, 5)
+self.fc7.SendCommand_CTRL("start_trigger")
+self.fc7.close_shutter(8,5)
+
+failed, couters = self.ssa.readout.read_counters_fast(striplist, shift = countershift, initialize = 0)
+#failed, couters = self.ssa.readout.read_counters_i2c(striplist)
+
+
+
+def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast', display = False, plot = True, filename = 'TestLogs/Chip-0', filename2 = '', msg = "", striplist = range(1,121), speeduplevel = 2, countershift = 0, set_trim = False, d19c_firmware_issue_repeat = True, start_threshold = 0):
+    '''	cal_ampl  -> int |'baseline'  -> Calibration pulse charge (in CALDAC LSBs)
+        mode      -> 'all' | 'sbs'   -> All strips together or one by one
+        nevents   -> int number      -> Number of calibration pulses (default 1000)
+        striplist -> [list 1:120]    -> Select specific strip (default all)
+        rdmode    -> 'fast' | 'i2c'  -> Select if use fast readout or I2C readout
+        display   -> True | False    -> Display additional informations
+        plot      -> True | False    -> Plot S-Curve
+        filename  -> False | string  -> If not False the data is vritten in the file named by 'string'
+        filename2 -> 'string'        -> Additional string to complete the filename
+        msg       -> internal use
+    '''
+    #self.fc7.reset()
+    evaluate_sc = True
+    evaluate_cn = 0
+    while(evaluate_sc):
+        evaluate_cn += 1
+        time_init = time.time()
+        utils.activate_I2C_chip()
+        # first go to the async mode
+        self.fc7.SendCommand_CTRL("stop_trigger")
+        self.ssa.readout.cluster_data(initialize=True)
+        self.ssa.ctrl.activate_readout_async()
+        ermsg = ''
+        baseline = False
+        if isinstance(cal_ampl, int):
+            cal_ampl = [cal_ampl]
+        elif cal_ampl == 'baseline':
+            baseline = True
+            cal_ampl = [0]
+            if(set_trim):
+                self.set_trimming(0, display=False)
+                self.set_trimming(31, striplist, display=False)
+                time.sleep(0.001)
+        elif not isinstance(cal_ampl, list):
+            utils.print_error("-> ssa_cal_utility/scurves wrong cal_alpl parameter")
+            return False
+        if(rdmode == 'fast'):
+            self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
+        #Configure_TestPulse_MPA_SSA(200, nevents)# init firmware cal pulse
+        Configure_TestPulse_SSA(50,50,500,nevents,0,0,0)
+
+        for cal_val in  cal_ampl:
+            # close shutter and clear counters
+            self.fc7.close_shutter(8)
+            self.fc7.clear_counters(8)
+            # init chip cal pulse
+            self.ssa.strip.set_cal_strips(mode = 'counter', strip = 'all')
+            self.ssa.ctrl.set_cal_pulse(amplitude = cal_val, duration = 15, delay = 'keep')
+
+            #Configure_TestPulse_MPA_SSA(200, nevents)
+            #Configure_TestPulse_SSA(50,50,500,1000,0,0,0)
+
+            # then let's try to measure the scurves
+            scurves = np.zeros((256,120), dtype=np.int)
+            threshold = start_threshold
+            utils.ShowPercent(0, 256, "Calculating S-Curves "+msg+" ")
+            while (threshold < 256):
+                time_cur = time.time()
+                strout = ""
+                error = False
+                #print("Setting the threshold to ", threshold, ", sending the test pulse and reading the counters")
+                strout += "threshold = " + str(threshold) + ".   "
+                self.ssa.ctrl.set_threshold(threshold);  # set the threshold
+                #time.sleep(0.05);
+                if (not baseline and (mode == 'all')):	# provide cal pulse to all strips together
+                    self.fc7.clear_counters(8, 5)
+                    self.fc7.open_shutter(8, 5)
+                    #Configure_TestPulse_SSA(50,50,500,1000,0,0,0)
+                    #Configure_TestPulse_MPA(200, 200, 200, nevents, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
+                    self.fc7.SendCommand_CTRL("start_trigger") # send sequence of NEVENTS pulses
+                    test = 1
+                    t = time.time()
+                    timeout = 500
+                    while (test):
+                        timeout-=1
+                        if(timeout<=0):
+                            test=0; break
+                        test = (self.fc7.read("stat_fast_fsm_state"))
+                        time.sleep(0.001)
+                        #print(test,)
+                        if((not test) and (((time.time()-t)*1E3)<2) ): # D19C firmware issue
+                            time.sleep(0.005)
+                            test = self.fc7.read("stat_fast_fsm_state")
+                            if(not test):
+                                self.fc7.SendCommand_CTRL("start_trigger")
+                                t = time.time()
+                                test = 1
+                    #print(((time.time()-t)*1E3))
+                    self.fc7.close_shutter(8,5)
+                elif(not baseline and (mode == 'sbs')): # provide cal pulse strip by strip
+                    self.fc7.clear_counters(1)
+                    for s in striplist:
+                        self.ssa.strip.set_cal_strips(mode = 'counter', strip = s )
+                        time.sleep(0.01);
+                        self.fc7.open_shutter(2); time.sleep(0.01);
+                        self.fc7.SendCommand_CTRL("start_trigger"); time.sleep(0.01); # send sequence of NEVENTS pulses
+                        while(self.fc7.read("stat_fast_fsm_state") != 0):
+                            time.sleep(0.01)
+                        self.fc7.close_shutter(2); time.sleep(0.01);
+
+                elif(baseline and (mode == 'all')):
+                    self.fc7.clear_counters(2); #time.sleep(0.01);
+                    self.fc7.open_shutter(2);   #time.sleep(0.01);
+                    self.fc7.close_shutter(2);  #time.sleep(0.01);
+
+                elif(baseline and (mode == 'sbs')):
+                    # with this method, the time between open and close shutter
+                    # change from strip to strip due to the communication time
+                    # so do not use to compare the counters value,
+                    # from the point of view of the atandard deviation is not influent
+                    self.fc7.clear_counters(2); time.sleep(0.01);
+                    for s in striplist:
+                        # all trims at 0 and one at 31 to remove the crosstalks effect
+                        if(set_trim):
+                            self.ssa.strip.set_trimming('all', 0)
+                            self.ssa.strip.set_trimming(s, 31)
+                        time.sleep(0.01);
+                        self.fc7.open_shutter(2);  time.sleep(0.01);
+                        self.fc7.close_shutter(2); time.sleep(0.01);
+                if(rdmode == 'fast'):
+                    failed, scurves[threshold] = self.ssa.readout.read_counters_fast(striplist, shift = countershift, initialize = 0)
+                elif(rdmode == 'i2c'):
+                    failed, scurves[threshold] = self.ssa.readout.read_counters_i2c(striplist)
+                else:
+                    failed = True
+
+                if (failed):
+                    error = True; ermsg = '[Counters readout]';
+                else:
+                    if(d19c_firmware_issue_repeat):
+                        for s in range(0,120):
+                            if ((threshold > 0) and (scurves[threshold,s])==0 and (scurves[threshold-1,s]>(nevents*0.8)) ) :
+                                error = True; ermsg = '[Condition 1]' + str(scurves[threshold,s]) +'  ' + str(scurves[threshold-1,s])
+                            elif ((not baseline) and (threshold > 10) and (scurves[threshold,s])== 2*scurves[threshold-1,s] and (scurves[threshold,s] != 0)):
+                                error = True; ermsg = '[Condition 2]'
+
+                if (error == True):
+                    threshold = (threshold-1) if (threshold>0) else 0
+                    utils.ShowPercent(threshold, 256, "Failed to read counters for threshold " + str(threshold) + ". Redoing. " +  ermsg)
+                    #time.sleep(0.5)
+                    continue
+                else:
+                    strout += "Counters samples = 1->[" + str(scurves[threshold][0]) + "]  30->[" + str(scurves[threshold][29]) + "]  60->[" + str(scurves[threshold][59]) + "]  90->[" + str(scurves[threshold][89]) + "]  120->[" + str(scurves[threshold][119]) + "]"
+
+                if(speeduplevel >= 2 and threshold > 32):
+                    if( (scurves[threshold-8: threshold ] == np.zeros((8,120), dtype=np.int)).all() ):
+                        break
+
+                if (display == True):
+                    utils.ShowPercent(threshold, 256, strout)
+                else:
+                    utils.ShowPercent(threshold, 256, "Calculating S-Curves "+msg+"                                      ")
+                threshold = threshold + 1
+
+            utils.ShowPercent(256, 256, "Done calculating S-Curves "+msg+"                                            ")
+
+            if( isinstance(filename, str) ):
+                fo = "../SSA_Results/" + filename + "_scurve_" + filename2 + "__cal_" + str(cal_val) + ".csv"
+                CSV.ArrayToCSV (array = scurves, filename = fo, transpose = True)
+                utils.print_log( "->  Data saved in" + fo)
+
+        if(np.sum(scurves[:,10:110] )<100):
+            if(evaluate_cn>4):
+                utils.print_error("-X\tError in S-Curve evaluation {:d}".format(np.sum(scurves[50:100,:])))
+                return False
+            utils.print_warning("-X\tIssue in S-Curve evaluation. Reiterating.. {:d}".format(np.sum(scurves[50:100,:])))
+        else: evaluate_sc = False
+    for i in range(120):
+        if(np.sum(scurves[:,i])==0):
+            utils.print_warning("X>\tScurve consant to 0 for strip {:d}".format(i))
+    #### print("\n\n" , (time.time()-time_init))
+    if(plot == True): plt.clf()
+    plt.ylim(0,3000); plt.xlim(0,150);
+    plt.plot(scurves)
+    if(plot == True): plt.show()
+    self.scurve_data     = scurves
+    self.scurve_nevents  = nevents
+    self.scurve_calpulse = cal_ampl
+    return scurves

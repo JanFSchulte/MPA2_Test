@@ -123,7 +123,7 @@ class SSA_ASIC:
 		return self.ctrl.phase_tuning()
 
 	def alignment_cluster_data_word(self, display=False):
-		tv = [10,20,30,40,50,60,70,80]
+		tv = [10,20,30,40]
 		self.ctrl.set_lateral_data(left=0, right=0)
 		status = {'digital':False, 'analog':False}
 		for mode in ['digital', 'analog']:

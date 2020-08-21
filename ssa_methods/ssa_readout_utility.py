@@ -306,7 +306,8 @@ class SSA_readout():
 		#t = time.time()
 		if(initialize):
 			self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
-			self.I2C.peri_write('AsyncRead_StartDel_LSB', (11 + shift) )
+			#self.I2C.peri_write('AsyncRead_StartDel_LSB', (11 + shift) )
+			self.ctrl.set_async_readout_start_delay(delay=8, fc7_correction=shift)
 
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
@@ -348,8 +349,8 @@ class SSA_readout():
 		count = [0]*120
 		for s in striplist:
 			if(tbconfig.VERSION['SSA'] >= 2):
-				rmsb  = self.I2C.strip_read(register="ReadCounter_MSB", field=False, strip=s)
-				rlsb  = self.I2C.strip_read(register="ReadCounter_LSB", field=False, strip=s)
+				rmsb  = self.I2C.strip_read(register="AC_ReadCounterMSB", field=False, strip=s)
+				rlsb  = self.I2C.strip_read(register="AC_ReadCounterLSB", field=False, strip=s)
 				count[s-1] = ((rmsb << 8) | rlsb)
 			else:
 				count[s-1] = (self.I2C.strip_read("ReadCounter_MSB", s) << 8) | self.I2C.strip_read("ReadCounter_LSB", s)

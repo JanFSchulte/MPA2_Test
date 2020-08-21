@@ -299,7 +299,7 @@ class SSA_measurements():
 			self.scurve_trim_plot(filename = filename, charge = charge_fc)
 		return std
 
-	def scurve_trim_plot(self, filename = '../SSA_Results/TestLogs/Chip_0_', charge = []):
+	def scurve_trim_plot(self, filename = '../SSA_Results/TestLogs/Chip_0_', charge = 2.0):
 		scurves = {}
 		fi = (filename + "frontend_Q_{c:1.3f}_scurve_trim-{t:0d}_.csv".format(c=charge, t=0))
 		scurves['0'] = np.transpose( CSV.csv_to_array(filename = fi) )
@@ -316,28 +316,30 @@ class SSA_measurements():
 		bn = np.round(np.arange(cmin-7, cmax+5, 1)).astype(int)
 		bn = np.arange(cmin-7, cmax+5, 1)
 		gs = gridspec.GridSpec(2, 1, height_ratios=[2, 1])
-		fig = plt.figure(figsize=(18,18))
+		fig = plt.figure(figsize=(12,8))
 		plt.style.use('seaborn-deep')
 		color=iter(sns.color_palette('deep')) #iter(cm.summer(np.linspace(0,1, len(scurves) )))
 		ax0 = plt.subplot(gs[1])
 		ax0.spines["top"].set_visible(False); ax0.spines["right"].set_visible(False)
 		ax0.get_xaxis().tick_bottom(); ax0.get_yaxis().tick_left()
-		plt.xticks(fontsize=32); plt.yticks(fontsize=32)
-		plt.xlim(min(bn), max(bn)); plt.ylim(0, 1100)
+		plt.xticks(fontsize=16); plt.yticks(fontsize=16)
+		plt.xlim(min(bn)-10, max(bn)+10);
+		plt.ylim(0, 1100)
 		for i in scurves:
 			c=next(color)
 			plt.plot( scurves[i] , color = c)
 		ax1 = plt.subplot(gs[0])
-		plt.xticks(fontsize=32)
-		plt.yticks(fontsize=32)
+		plt.xticks(fontsize=16)
+		plt.yticks(fontsize=16)
 		plt.setp(ax1.get_xticklabels(), visible=False)
-		plt.xlim(min(bn), max(bn));
-		plt.ylim(0, 1)
+		plt.xlim(min(bn)-10, max(bn)+10);
+		plt.ylim(0, 1.1)
 		ax1.spines["top"].set_visible(False); ax1.spines["right"].set_visible(False)
 		ax1.get_xaxis().tick_bottom(); ax1.get_yaxis().tick_left()
 		labels = ["Optimal trimming values", "Not trimmed: THDAC = MIN", "Not trimmed: THDAC = MAX"]
 		cnt = 0
 		stds = []
+		plot_scale = 1.2
 		color=iter(sns.color_palette('deep'))
 		for i in scurves:
 			c=next(color)
@@ -347,17 +349,22 @@ class SSA_measurements():
 			lnspc = np.linspace(xmin, xmax, len(c_thresholds[i]))
 			m, s = stats.norm.fit(c_thresholds[i]) # get mean and standard deviation
 			stds.append(s)
-			pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
+			pdf_g = stats.norm.pdf(lnspc, m, s*plot_scale) # now get theoretical values in our interval
 
 			xnew = np.linspace(np.min(lnspc), np.max(lnspc), 1000, endpoint=True)
 
 			#pdf_l = interpolate.BSpline(lnspc, pdf_g, xnew)
 			helper_y3 = interpolate.make_interp_spline(lnspc, pdf_g)
 			pdf_l = helper_y3(xnew)
+			print(m)
+			print('----------')
+			print(s)
+			print('==========')
+
 
 			plt.plot(xnew, pdf_l, c = 'darkred', lw = 2) # plot i
 			cnt += 1
-		leg = ax1.legend(fontsize = 24, )
+		leg = ax1.legend(fontsize = 16, )
 		leg.get_frame().set_linewidth(0.0)
 		plt.show()
 

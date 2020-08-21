@@ -456,7 +456,7 @@ def ReadStatus(name = "Current Status"):
   elif temp_state == 2:
     temp_state_name = "Paused. Waiting for readout"
   print("   -> trigger state:" + str(temp_state_name))
-  print("   -> trigger configured:",  + str(fc7.read("stat_fast_fsm_configured")))
+  print("   -> trigger configured:"  + str(fc7.read("stat_fast_fsm_configured")))
   print(   "   -> --------------------------------")
   print("   -> i2c commands fifo empty:" + str( fc7.read("stat_command_i2c_fifo_commands_empty")))
   print("   -> i2c replies fifo empty:" + str( fc7.read("stat_command_i2c_fifo_replies_empty")))

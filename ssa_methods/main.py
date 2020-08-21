@@ -72,3 +72,5 @@ def reset_ssa():
 def set_clock(val = 'internal'):
 	ssa_pwr.set_clock_source(val)
 	sleep(0.1);  ssa.init(reset_board = False, reset_chip = False, display = True)
+
+self = ssa_cal

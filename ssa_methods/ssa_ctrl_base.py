@@ -255,13 +255,17 @@ class ssa_ctrl_base:
 			self.I2C.peri_write(register="control_1", field='ReadoutMode', data=0b001)
 		else:
 			self.I2C.peri_write('ReadoutMode',0b01)
+		if(isinstance(ssa_first_counter_delay, int)):
+			self.set_async_readout_start_delay(delay=ssa_first_counter_delay, fc7_correction=correction)
 
-		self.I2C.peri_write("AsyncRead_StartDel_MSB", ((ssa_first_counter_delay >> 8) & 0x01))
-		self.I2C.peri_write("AsyncRead_StartDel_LSB", (ssa_first_counter_delay & 0xff))
-		if (self.I2C.peri_read("AsyncRead_StartDel_LSB") != ssa_first_counter_delay & 0xff):
+
+	def set_async_readout_start_delay(self, delay='keep', fc7_correction=0):
+		self.I2C.peri_write("AsyncRead_StartDel_MSB", ((delay >> 8) & 0x01))
+		self.I2C.peri_write("AsyncRead_StartDel_LSB", (delay & 0xff))
+		if (self.I2C.peri_read("AsyncRead_StartDel_LSB") != delay & 0xff):
 			print("Error! I2C did not work properly")
 		# ssa set delay of the counters
-		fwdel = ssa_first_counter_delay + 24 + correction
+		fwdel = delay + 20 + fc7_correction
 		if(fwdel >= 255):
 			print('->  The counters delay value selected is not supposrted by the firmware [> 255]')
 		self.fc7.write("cnfg_phy_slvs_ssa_first_counter_del", fwdel & 0xff)
@@ -380,7 +384,7 @@ class ssa_ctrl_base:
 	def set_cal_pulse(self, amplitude = 255, duration = 5, delay = 'keep'):
 		if(tbconfig.VERSION['SSA'] >= 2):
 			self.I2C.peri_write("Bias_CALDAC", amplitude)
-			self.I2C.peri_write(register="control_2", field='CalPulse_duration', data=15)
+			self.I2C.peri_write(register="control_2", field='CalPulse_duration', data=duration)
 			self.set_cal_pulse_delay(delay)
 		else:
 			self.I2C.peri_write("Bias_CALDAC", amplitude) # init cal pulse itself
