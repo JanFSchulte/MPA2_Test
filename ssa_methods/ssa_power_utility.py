@@ -142,6 +142,17 @@ class ssa_power_utility:
 		else:
 			return pret
 
+	def get_dvdd(self):
+		utils.print_enable(False)
+		Configure_MPA_SSA_I2C_Master(1, 2)
+		Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08)  # to SC3 on PCA9646
+		ret  = Send_MPA_SSA_I2C_Command(self.ina226_6, 0, self.pcbread, 0x02, 0)  # read V on shunt
+		vret = 0.00125 * ret
+		pret = float(round(vret, 3))
+		utils.activate_I2C_chip()
+		utils.print_enable(True)
+		return pret
+
 
 	def get_power_analog(self, display = True, i2cact = True, rtv1 = False):
 		utils.print_enable(False)

@@ -279,12 +279,13 @@ class ssa_i2c_conf:
 		if  (chip == 'MPA'): self.SendCommand_I2C(0, 0, 0, 0, write, address, data, readback)
 		elif(chip == 'SSA'): self.SendCommand_I2C(0, 0, 1, 0, write, address, data, readback)
 
-	def read_I2C (self, chip, address, timeout = 0.001):
+	def read_I2C (self, chip, address, timeout = 0.0):
 		read = 1; write = 0; readback = 0
 		data = 0
+		tinit=time.time()
 		if   (chip == 'MPA'): self.SendCommand_I2C(0, 0, 0, 0, read, address, data, readback)
 		elif (chip == 'SSA'): self.SendCommand_I2C(0, 0, 1, 0, read, address, data, readback)
-		time.sleep(timeout)
+		time.sleep(self.delay)
 		read_data = ReadChipDataNEW()
 		return read_data
 

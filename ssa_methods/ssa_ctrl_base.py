@@ -27,6 +27,7 @@ class ssa_ctrl_base:
 		self.dll_chargepump = 0b00;
 		self.bias_dl_enable = False
 		self.seu_check_time = -1
+		self.testpad_is_enable = -1
 		self.seu_cntr = { 'A':{'peri':[0]*2, 'strip':[0]*8, 'all':0}, 'S':{'peri':[0]*2, 'strip':[0]*8, 'all':0} }
 
 	def resync(self, display=True):
@@ -646,36 +647,36 @@ class ssa_ctrl_base:
 		rp = self.I2C.peri_read( register = 'control_1', field = 'memory_select')
 		return rp
 
-	def SRAM_BIST(self, memory_select=1, configure=True):
+	def SRAM_BIST(self, memory_select=1, configure=True, display=1):
 		bisterr = 0
 		bistres = []
 		if(memory_select == 1):   ctrl = 0x0f
 		elif(memory_select == 2): ctrl = 0xf0
 		else: return False
 		if(configure):
-			self.reset(display=False)
+			#self.reset(display=False)
 			self.I2C.peri_write(register = 'mask_strip',  field = False, data=0xff)
 			self.I2C.peri_write(register = 'mask_peri_D', field = False, data=0xff)
 			self.I2C.peri_write(register = 'mask_peri_A', field = False, data=0xff)
 			self.I2C.peri_write(register = 'ClkTree_control', field = False, data=0b01010100)
 		self.I2C.peri_write(register = 'bist_memory_sram_mode',  field = False, data= 0x00 )
 		self.I2C.peri_write(register = 'bist_memory_sram_start', field = False, data= 0x00 )
-		flag = self.I2C.peri_read( register = "bist_output", field=False)
-		if(flag == 'Null'): starterror = True
-		elif( (flag>>2) != 0): starterror = True
-		else:  starterror = False
-		if(starterror):
-			utils.print_error("->  BIST memory {:d} test not working (init).".format(memory_select) )
-			return -1
-		print(flag)
+		#flag = self.I2C.peri_read( register = "bist_output", field=False)
+		#if(flag == 'Null'): starterror = True
+		#elif( (flag>>2) != 0): starterror = True
+		#else:  starterror = False
+		#if(starterror):
+		#	utils.print_error("->  BIST memory {:d} test not working (init).".format(memory_select) )
+		#	return -1
+		#print(flag)
 		self.I2C.peri_write(register = 'bist_memory_sram_mode',  field = False, data= ctrl )
 		self.I2C.peri_write(register = 'bist_memory_sram_start', field = False, data= ctrl )
-		time.sleep(0.010);
+		time.sleep(0.010); #Time needed byt the BIST
 		flag = self.I2C.peri_read( register = "bist_output", field=False)
 		status = ((flag>>(1+memory_select))&0b1)
-		print(flag)
+		#print(flag)
 		if( status == 0):
-			utils.print_error("->  BIST memory {:d} test not working. Return status {:2b}: ".format(memory_select, (flag>>2) ))
+			if(display): utils.print_error("->  BIST memory {:d} test not working. Return status {:2b}: ".format(memory_select, (flag>>2) ))
 			bisterr=-1
 		else:
 			for N in range(0,16):
@@ -688,12 +689,14 @@ class ssa_ctrl_base:
 				if(r != 0):
 					bisterr += 1
 			if( bisterr > 0 ):
-				utils.print_warning("->  BIST memory {:d} test error: ".format(memory_select))
+				if(display):
+					utils.print_warning("->  BIST memory {:d} test error: ".format(memory_select))
 				for N in range(0,16):
 					prstr = bin(bistres[N]) if isinstance(bistres[N], int) else str(bistres[N])
-					print('    |- ' + prstr )
+					if(display): print('    |- ' + prstr )
 			else:
-				utils.print_good("->  BIST memory {:d} test OK".format(memory_select))
+				if(display):
+					utils.print_good("->  BIST memory {:d} test OK".format(memory_select))
 		return bisterr
 
 
@@ -719,6 +722,7 @@ class ssa_ctrl_base:
 			return True
 
 	def _adc_measeure(self, testline = 'highimpedence', fast=True):
+		#tinit=time.time()
 		input_sel = self.analog_mux_map[testline]
 		if(fast):
 			r =    self.I2C.peri_write( register="ADC_control", field=False, data=(0b11100000 | (input_sel & 0b00011111)) )
@@ -738,10 +742,20 @@ class ssa_ctrl_base:
 			res = False
 		else:
 			res = ((msb<<8) | lsb)
+		#print((time.time()-tinit)*1000); tinit=time.time()
 		return res
 
-	def adc_measeure(self, testline = 'highimpedence', nsamples=1, fast=True):
+	def adc_measeure(self, testline = 'highimpedence', testpad_enable=False, nsamples=1, fast=True):
 		r1 = []
+		# default: self.testpad_is_enable = -1
+		if(testpad_enable or (testline=='TESTPAD')):
+			if(self.testpad_is_enable!=1): #to speedup
+				self.I2C.peri_write( register="ADC_trimming", field='TestPad_Enable', data=0b1 )
+				self.testpad_is_enable = 1
+		else:
+			if(self.testpad_is_enable!=0): #to speedup
+				self.I2C.peri_write( register="ADC_trimming", field='TestPad_Enable', data=0b0)
+				self.testpad_is_enable = 0
 		for i in range(nsamples):
 			r1.append( self._adc_measeure(testline=testline, fast=fast) )
 		if(nsamples>1):
@@ -749,6 +763,13 @@ class ssa_ctrl_base:
 		else:
 			r = r1[0]
 		return r
+
+	def adc_set_trimming(self, value, trimsel=0b1):
+		data = ((value & 0b111111) | trimsel<<6)
+		r = self.I2C.peri_write( register="ADC_trimming", field='ADC_trimming_trim', data=data )
+		r = self.I2C.peri_read(  register="ADC_trimming", field='ADC_trimming_trim' )
+		return r
+
 
 	def adc_measure_temperature(self, nsamples=10):
 		return self.adc_measeure('Temperature', nsamples=nsamples)

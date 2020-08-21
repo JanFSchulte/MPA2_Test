@@ -757,6 +757,43 @@ class SSA_test_utility():
 		self.ssa.ctrl.set_shift_pattern_all(pattern)
 		self.ssa.readout.all_lines(trigger = True, configure = True, cluster = True, l1data = False, lateral = False)
 
+	##############################################################
+	def BIST_LOOP(self, nruns=3, display=True, note=''):
+		rv = [0,0]
+		for memory in [1,2]:
+			for i in range(nruns):
+				try:
+					result = self.ssa.ctrl.SRAM_BIST(memory_select=memory, configure=(i==0), display=0)
+				except:
+					result = -1
+				if(result >= 0):
+					rv[memory-1] += result #readout working, checking memory errors
+				else:
+					rv[memory-1] = -1 #readout NOT working
+		if(display):
+			if(rv[0]<0):   utils.print_error(   "->  {:s}BIST memory 1 test : NOT WORKING".format(note))
+			elif(rv[0]>0): utils.print_warning( "->  {:s}BIST memory 1 test : FAIL ({:d}) ".format(note, rv[0]))
+			else:          utils.print_good(    "->  {:s}BIST memory 1 test : PASS".format(note))
+			if(rv[1]<0):   utils.print_error(   "->  {:s}BIST memory 2 test : NOT WORKING".format(note))
+			elif(rv[1]>0): utils.print_warning( "->  {:s}BIST memory 2 test : FAIL ({:d}) ".format(note, rv[1]))
+			else:          utils.print_good(    "->  {:s}BIST memory 2 test : PASS".format(note))
+		return rv
+
+	def BIST_vs_DVDD(self, npoints = 101, dvdd_max=0.85, dvdd_min=0.75, nruns_per_point=100):
+		self.ssa.pwr.set_dvdd(1.0)
+		time.sleep(0.01)
+		self.ssa.reset()
+		result = {}
+		dvdd_range = np.linspace(dvdd_max, dvdd_min, npoints)
+		for dvdd in dvdd_range:
+			self.ssa.pwr.set_dvdd(dvdd)
+			time.sleep(0.1)
+			self.ssa.reset()
+			res = self.BIST_LOOP(nruns=nruns_per_point, note='[DVDD={:5.5f}] '.format(dvdd), display=True )
+			rdv = self.ssa.pwr.get_dvdd()
+			result[dvdd] = [rdv, res[0], res[1]]
+		return result
+
 
 '''
 def prova(i):
