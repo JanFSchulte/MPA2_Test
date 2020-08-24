@@ -41,13 +41,13 @@ class SSA_SEU_utilities():
 		self.ssa.init(edge = 'negative', display = False)
 
 		s1, s2, s3 = self.Stub_Evaluate_Pattern(strip)
-		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern([33], [33])
+		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern(strip, [])
 
 		self.Configure_Injection(
 			strip_list = strip, hipflag_list = hipflags, analog_injection = 0,
 			latency = latency, create_errors = create_errors)
 
-		self.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = display)
+		self.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = 2)
 
 		self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = display)
 
@@ -278,10 +278,10 @@ class SSA_SEU_utilities():
 
 	##############################################################
 	def Stub_loadCheckPatternOnFC7(self, pattern1, pattern2, pattern3, lateral = 0, display = 2):
-		self.fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns1",pattern1)
-		self.fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns2",pattern2)
-		self.fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns3",pattern3)
-		self.fc7.write("cnfg_phy_lateral_MPA_SSA_SEU_check_patterns1",lateral)
+		self.fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns1",pattern1); time.sleep(0.01)
+		self.fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns2",pattern2); time.sleep(0.01)
+		self.fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns3",pattern3); time.sleep(0.01)
+		self.fc7.write("cnfg_phy_lateral_MPA_SSA_SEU_check_patterns1",lateral); time.sleep(0.01)
 		###### time.sleep(0.5)
 		if(display>1):
 			print("Content of the patterns1 cnfg register: " + str(self.fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns1")))
@@ -313,7 +313,7 @@ class SSA_SEU_utilities():
 		if(display>1):
 			print("->  State of FSM after starting: " + str(state))
 			print("->  Almost full flag of FIFO after starting: " + str(full))
-		self.fc7.self.fc7.SendCommand_CTRL("start_trigger")
+		self.fc7.SendCommand_CTRL("start_trigger")
 		timer = 0
 		FIFO_almost_full = self.fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 		while(FIFO_almost_full != 1 and timer < run_time):
