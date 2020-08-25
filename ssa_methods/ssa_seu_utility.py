@@ -31,9 +31,9 @@ class SSA_SEU_utilities():
 
 	##############################################################
 	def Run_Test_SEU(self,
-			check_stub=True, check_l1=True, check_lateral=True,
+			check_stub=True, check_l1=False, check_lateral=True,
 			strip =[10,20,30,40], hipflags = [], cal_pulse_period = 1, l1a_period = 39,
-			latency = 101, run_time = 30, display = 1, filename = '', runname = '',
+			latency = 101, run_time = 2, display = 1, filename = '', runname = '',
 			delay = 73, create_errors = False, stop_if_fifo_full = True, read_seu_counter=True):
 
 		self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
@@ -167,7 +167,7 @@ class SSA_SEU_utilities():
 			if(st>0 and st<121):
 				if(tbconfig.VERSION['SSA'] >= 2):
 					self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=st, data=0b01001)
-					self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip=st, data=0x1)
+					self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip=st, data=0b00000001)
 				else:
 					self.I2C.strip_write("ENFLAGS", st, 0b01001)
 					self.I2C.strip_write("DigCalibPattern_L", st, 0x1)

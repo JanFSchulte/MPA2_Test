@@ -629,12 +629,12 @@
                 "TestPad_Enable"        : "0b10000000"
             }
         },
-        "ADC_ref": {
+        "ADC_VREF": {
             "adr": "0x103B",
             "permissions": "RW",
             "mask_reg"   : "mask_peri_A",
             "fields_mask": {
-                "ADC_ref" : "0b00011111"
+                "ADC_VREF" : "0b00011111"
             }
         },
         "Async_SEUcnt_blk1": {

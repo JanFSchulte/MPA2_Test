@@ -31,7 +31,7 @@ class SSA_cal_utility():
 		self.ssa = ssa; self.I2C = I2C;	self.fc7 = fc7;
 		self.__set_variables()
 
-	def trimming_scurves_2(self,
+	def trimming_scurves_2(self, ####### use this method! not the other!
 		charge_fc = 2,             # Input charge in fC
 		threshold_mv = 'mean',     # Threshold in mV
 		caldac = 'default',        # 'default' | 'evaluate' | value [gain, offset]

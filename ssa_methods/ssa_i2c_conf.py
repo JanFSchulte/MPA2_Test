@@ -1,7 +1,7 @@
 import json
 import time
 from myScripts.BasicD19c import *
-#from myScripts.Utilities import *
+from myScripts.Utilities import *
 from utilities.tbsettings import *
 from ssa_methods.Configuration.ssa1_reg_map import *
 
@@ -99,7 +99,7 @@ class ssa_i2c_conf:
 					rep  = self.write_I2C('SSA', mask_adr, mask_val, self.freq)
 					rep  = self.write_I2C('SSA', reg_adr, tdata, self.freq)
 				else:
-					readreg  = self.read_I2C('SSA', reg_adr, timeout)
+					readreg  = self.read_I2C('SSA', reg_adr)
 					if(readreg != None):
 						wdata = (readreg & (~int(mask, 2))) | (tdata & int(mask, 2))
 						rep  = self.write_I2C('SSA', reg_adr, wdata, self.freq)
@@ -129,7 +129,7 @@ class ssa_i2c_conf:
 			#	st = 'Null'
 		return st
 
-	def peri_read(self, register, field=False, timeout = 0.01):
+	def peri_read(self, register, field=False):
 		cnt = 0; rep = True;
 		time.sleep(self.delay)
 		#while cnt < 4:
@@ -144,10 +144,10 @@ class ssa_i2c_conf:
 			else:
 				base = self.ssa_peri_reg_map[register]
 				adr  = (base & 0xfff) | 0b0001000000000000
-			repd = self.read_I2C('SSA', adr, timeout)
+			repd = self.read_I2C('SSA', adr)
 			if(repd == None):
 				#utils.activate_I2C_chip()
-				#rep  = self.read_I2C('SSA', adr, timeout)
+				#rep  = self.read_I2C('SSA', adr)
 				rep  = 'Null'
 				print('X>  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(adr, 'NOVALUE'))
 				#self.utils.activate_I2C_chip()
@@ -168,7 +168,7 @@ class ssa_i2c_conf:
 		return rep
 
 
-	def strip_write(self, register, strip, data, field=False, timeout = 0.01, use_onchip_mask = True):
+	def strip_write(self, register, strip, data, field=False, use_onchip_mask = True):
 		#example: ssa.i2c.strip_write('StripControl2',0, 0xff, 'HipCut')
 		cnt = 0; st = True;
 		V = tbconfig.VERSION['SSA']
@@ -180,13 +180,24 @@ class ssa_i2c_conf:
 			rep = 'Null'
 		else:
 
-			if(V>=2): strip_id = strip-1 if (strip is not 'all') else 0x7f
-			else:     strip_id = strip   if (strip is not 'all') else 0x00
+			if(V>=2):
+				if(isinstance(strip, str)):
+					if(strip != 'all'):
+						utils.print_error('->  Requested to write on strip ID {:s} is invalid. Valid range 1:120 or "all" '.format(strip))
+						return 'Null'
+				elif(strip<1 or strip>120):
+					utils.print_error('->  Requested to write on strip ID {:d} is invalid. Valid range 1:120 or "all" '.format(strip))
+					return 'Null'
+				strip_id = strip-1 if (strip is not 'all') else 0x7f
+			else:
+				strip_id = strip   if (strip is not 'all') else 0x00
 
 			if(V>=2): base = self.tonumber(self.ssa_strip_reg_map[register]['adr'],0)
 			else:     base = self.tonumber(self.ssa_strip_reg_map[register],0)
 
 			reg_adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
+
+			if(V>=2): strip_id+=1 # for print purposes only
 
 			if(field):
 				if(V<2):
@@ -203,8 +214,8 @@ class ssa_i2c_conf:
 					rep  = self.write_I2C('SSA', mask_adr, mask_val, self.freq)
 					rep  = self.write_I2C('SSA', reg_adr, tdata, self.freq)
 				else:
-					if(strip=='all'): readreg  = self.read_I2C('SSA', 1, timeout)
-					else: readreg  = self.read_I2C('SSA', reg_adr, timeout)
+					if(strip=='all'): readreg  = self.read_I2C('SSA', 1)
+					else: readreg  = self.read_I2C('SSA', reg_adr)
 					if(readreg != None):
 						wdata = (readreg & (~int(mask, 2))) | (tdata & int(mask, 2))
 						rep  = self.write_I2C('SSA', reg_adr, wdata, self.freq)
@@ -237,23 +248,30 @@ class ssa_i2c_conf:
 		#		st = 'Null'
 		return st
 
-	def strip_read(self, register, strip, field=False, timeout = 0.01):
+	def strip_read(self, register, strip, field=False):
 		cnt = 0; rep = True;
-		#while cnt < 4:
-		#	try:
+		V = tbconfig.VERSION['SSA']
 		cnt += 1
 		if register not in self.ssa_strip_reg_map.keys():
 			print("'X>  I2C Strip register name not found")
 			rep = 'Null'
 		else:
-			if(tbconfig.VERSION['SSA'] >= 2):
+			if(V >= 2):
+				if(isinstance(strip, str)):
+					if(strip != 'all'):
+						utils.print_error('->  Requested to read from strip ID {:s} is invalid. Valid range 1:120 or "all" '.format(strip))
+						return 'Null'
+				elif(strip<1 or strip>120):
+					utils.print_error('->  Requested to read from strip ID {:d} is invalid. Valid range 1:120 or "all" '.format(strip))
+					return 'Null'
 				strip_id = strip-1 if (strip is not 'all') else 0x7f
 				base = self.tonumber(self.ssa_strip_reg_map[register]['adr'],0)
 			else:
 				strip_id = strip if (strip is not 'all') else 0x00
 				base = self.tonumber(self.ssa_strip_reg_map[register],0)
 			adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
-			repd = self.read_I2C('SSA', adr, timeout)
+			repd = self.read_I2C('SSA', adr)
+			if(V>=2): strip_id+=1 # for print purposes only
 			if(repd == None):
 				rep  = 'Null'
 				print('X>  I2C Strip {:3d} read  -  Adr=[{:s}][0x{:x}], Value=[{:s}] - ERROR'.format(strip_id, register, adr, 'NOVALUE'))
@@ -279,7 +297,7 @@ class ssa_i2c_conf:
 		if  (chip == 'MPA'): self.SendCommand_I2C(0, 0, 0, 0, write, address, data, readback)
 		elif(chip == 'SSA'): self.SendCommand_I2C(0, 0, 1, 0, write, address, data, readback)
 
-	def read_I2C (self, chip, address, timeout = 0.0):
+	def read_I2C (self, chip, address):
 		read = 1; write = 0; readback = 0
 		data = 0
 		tinit=time.time()

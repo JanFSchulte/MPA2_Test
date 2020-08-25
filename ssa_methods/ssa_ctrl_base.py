@@ -764,12 +764,16 @@ class ssa_ctrl_base:
 			r = r1[0]
 		return r
 
-	def adc_set_trimming(self, value, trimsel=0b1):
-		data = ((value & 0b111111) | trimsel<<6)
-		r = self.I2C.peri_write( register="ADC_trimming", field='ADC_trimming_trim', data=data )
-		r = self.I2C.peri_read(  register="ADC_trimming", field='ADC_trimming_trim' )
+	def adc_set_trimming(self, value):
+		r = self.I2C.peri_write( register="ADC_trimming", field='TestPad_Enable',        data=0b1 )
+		r = self.I2C.peri_write( register="ADC_trimming", field='ADC_trimming_trim_sel', data=0b1 )
+		r = self.I2C.peri_write( register="ADC_trimming", field='ADC_trimming_trim_val', data=value )
+		r = self.I2C.peri_read(  register="ADC_trimming", field='ADC_trimming_trim_val' )
 		return r
 
+	def adc_get_trimming(self):
+		r = self.I2C.peri_read(  register="ADC_trimming", field='ADC_trimming_trim_val' )
+		return r
 
 	def adc_measure_temperature(self, nsamples=10):
 		return self.adc_measeure('Temperature', nsamples=nsamples)

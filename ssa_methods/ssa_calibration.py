@@ -35,6 +35,7 @@ class ssa_calibration():
 		#self.__multimeter_gpib_initialise()
 		#self.multimeter_lan  = Multimeter_LAN_Keithley()
 		self.multimeter_lan = multimeter_lan
+		self.get_value_and_voltage_averages = 1
 		self.par_list = [
 			self.Parameter("Analog Ground Interal ", "GND",                   0.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Bandgap Voltage       ", "VBG",                   0.3, -1, -1, 'set_dont_calibrate'),
@@ -47,7 +48,8 @@ class ssa_calibration():
 			self.Parameter("DAC for th and cal    ", "Bias_D5DAC8",          86.0, -1, -1, 'set_calibrate'),
 			self.Parameter("Threshold Low DAC     ", "Bias_THDAC",          622.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Threshold High DAC    ", "Bias_THDACHIGH",      622.0, -1, -1, 'set_dont_calibrate'),
-			self.Parameter("Calibration DAC       ", "Bias_CALDAC",         100.0, -1, -1, 'set_dont_calibrate')]
+			self.Parameter("Calibration DAC       ", "Bias_CALDAC",         100.0, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("ADC_VREF              ", "ADC_VREF",            858.0, -1, -1, 'set_calibrate') ]
 
 	def SetMode(self, mode = 'MULTIMETER_LAN'):
 		if(mode not in ['ADC', 'MULTIMETER_GPIB', 'MULTIMETER_LAN']):
