@@ -91,9 +91,9 @@ class SSA_Measurements():
 		self.test_routine_measure_bias( filename=fo, mode='calibrated')
 		self.test_routine_dacs(         filename=fo)
 		self.test_routine_analog(       filename=fo)
-		self.test_routine_stub_data(    filename=fo)
 		self.test_routine_save_config   (filename=fo)
 		self.test_routine_L1_data(      filename=fo, vlist=[self.dvdd,1.2])
+		self.test_routine_stub_data(    filename=fo)
 
 		## Save summary ######################
 		self.summary.save(directory=self.DIR, filename=("Chip_{c:s}_v{v:d}/".format(c=str(chip_info), v=version)), runname='')
@@ -215,7 +215,7 @@ class SSA_Measurements():
 		en = self.runtest.is_active('Cluster_Data')
 		while (en and wd < 3):
 			try:
-				r1 = self.test.cluster_data(mode = 'digital', nstrips=8, nruns = 1000, shift='default', display=False, file=filename, filemode='a', runname=runname)
+				r1 = self.test.cluster_data(mode = 'digital', nstrips='random', nruns = 100, shift='default', display=False, file=filename, filemode='a', runname=runname)
 				self.summary.set('ClusterData_DigitalPulses',  r1, '%', '',  runname)
 				utils.print_good("->  Cluster Data with Digital Pulses test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 				if(r1<100.0): self.test_good = False
@@ -234,7 +234,7 @@ class SSA_Measurements():
 		en = self.runtest.is_active('Pulse_Injection')
 		while (en and wd < 3):
 			try:
-				r1 = self.test.cluster_data(mode = 'analog', nstrips=8, nruns = 100, shift='default', display=False, file=filename, filemode='a', runname=runname)
+				r1 = self.test.cluster_data(mode = 'analog', lateral=0, nstrips='random', nruns = 100, shift='default', display=False, file=filename, filemode='a', runname=runname)
 				self.summary.set('ClusterData_ChargeInjection',  r1, '%', '',  runname)
 				utils.print_good("->  Cluster Data with ChargeInjection test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 				if(r1<100.0): self.test_good = False
@@ -251,7 +251,7 @@ class SSA_Measurements():
 				if(wd>=3): self.test_good = False
 
 
-	def test_routine_L1_data(self, vlist = [1.0, 1.2], filename = '../SSA_Results/Chip0/Chip_0', runname = '', shift = [0,0,0,0,0,0,0]):
+	def test_routine_L1_data(self, vlist = [1.0, 1.2], filename = '../SSA_Results/Chip0/Chip_0', runname = '', shift = -1):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		wd = 0
@@ -265,16 +265,17 @@ class SSA_Measurements():
 					if(v != self.dvdd_curr):
 						self.pwr.set_dvdd(v)
 						self.dvdd_curr = v
-						self.ssa.init(display=0)
-					r1, r2 = self.test.memory(
-						memory = [1,2], runname = str(v)+'V',
-						latency = 199, display = 1,
-						file = filename, filemode = 'a')
+						#self.ssa.init(display=0)
+					r1, r2 = self.test.BIST_LOOP(nruns=5, note='[DVDD={:5.5f}] '.format(v))
+					#r1, r2 = self.test.memory(
+					#	memory = [1,2], runname = str(v)+'V',
+					#	latency = 199, display = 1,
+					#	file = filename, filemode = 'a')
 					memres[v] = [r1, r2]
 					self.summary.set('Memory1_{:d}V'.format(int(v*1000)), r1, '%', '',  runname)
 					self.summary.set('Memory2_{:d}V'.format(int(v*1000)), r2, '%', '',  runname)
-					if(r1<100): self.test_good = False
-					if(r2<100): self.test_good = False
+					if(r1>0): self.test_good = False
+					if(r2>0): self.test_good = False
 				break
 			except Exception as error:
 				utils.print_warning("X>\tMemory test error. Reiterating...")
@@ -288,25 +289,24 @@ class SSA_Measurements():
 				if(wd>=3): self.test_good = False
 		wd  = 0
 		en = self.runtest.is_active('L1_Data')
+		#print(memres)
+
 		while (en and wd < 3):
 			try:
+				self.pwr.set_dvdd(self.dvdd)
+				self.ssa.init(reset_chip=1, display=0)
 				self.summary.set('L1_data',   0, '%', '',  runname)
 				self.summary.set('HIP_flags', 0, '%', '',  runname)
-				for v in vlist:
-					if(memres[v]==[100,100]):
-						print("->  L1 data test will run ad DVDD={:1.3f}V".format(v))
-						if(v != self.dvdd_curr):
-							self.pwr.set_dvdd(v)
-							self.ssa.init(display=0)
-						r1, r2 = self.test.l1_data_basic(
-							mode = 'digital', runname =  str(v)+'V',
-							shift = shift[5], filemode = 'a',
-							file = filename)
-						self.summary.set('L1_data',   r1, '%', '',  runname)
-						self.summary.set('HIP_flags', r2, '%', '',  runname)
-						if(r1<100): self.test_good = False
-						if(r2<100): self.test_good = False
-						break
+				if(memres[v]==[0,0]):
+					print("->  L1 data test will run at DVDD={:1.3f}V".format(v))
+					r1, r2, r3 = self.test.l1_data(
+						mode = 'digital', runname =  str(v)+'V',
+						shift = shift, filemode = 'a', file = filename)
+					self.summary.set('L1_data',   r1, '%', '',  runname)
+					self.summary.set('HIP_flags', r2, '%', '',  runname)
+					if(r1<100): self.test_good = False
+					if(r2<100): self.test_good = False
+					break
 				break
 			except Exception as error:
 				exc_info = sys.exc_info()
@@ -371,7 +371,7 @@ class SSA_Measurements():
 					iterative_step_trim = 1,        # Iterative steps to acheive lower variability
 					caldac = self.caldac,           # 'default' | 'evaluate' | value [gain, offset]
 					thrdac = self.thdac,            # 'default' | 'evaluate' | value [gain, offset]
-					nevents = 100,                 # Number of calibration pulses
+					nevents = 1000,                 # Number of calibration pulses
 					plot = False,                    # Fast plot of the results
 					filename = filename)
 
@@ -418,7 +418,7 @@ class SSA_Measurements():
 		self.test = ssa_test;
 		self.measure = ssa_measure;
 		self.dvdd = 1.05; #for the offset of the board
-		self.pvdd = 1.20;
+		self.pvdd = 1.15;
 		self.avdd = 1.20;
 		self.thdac = False
 		self.caldac = False

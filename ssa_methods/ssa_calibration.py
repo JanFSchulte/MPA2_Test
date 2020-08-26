@@ -66,7 +66,7 @@ class ssa_calibration():
 		self.minst = self.multimeter_gpib.init_keithley(address = self.gpib_address, avg = 0)
 		self.initialised = True
 
-	def calibrate_to_nominals(self, measure = True, naverages=10):
+	def calibrate_to_nominals(self, measure = True, naverages=1):
 		self.get_value_and_voltage_averages = naverages
 		try:
 			if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):

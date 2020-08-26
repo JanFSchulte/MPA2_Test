@@ -40,7 +40,7 @@ class SSA_test_utility():
 		if(mode == "digital"):
 			self.ssa.inject.digital_pulse(initialise = True, times = 1)
 		elif(mode == "analog"):
-			self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', cal_pulse_amplitude = 200, threshold = [30, 100])
+			self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', cal_pulse_amplitude = 130, threshold = [100, 150])
 		else:
 			return False
 		time.sleep(0.01)
