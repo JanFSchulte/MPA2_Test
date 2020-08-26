@@ -123,45 +123,75 @@ class SSA_ASIC:
 		return self.ctrl.phase_tuning()
 
 	def alignment_cluster_data_word(self, display=False):
-		tv = [10,20,30,40]
+		tv = [1,3,5,116,118,120]
 		self.ctrl.set_lateral_data(left=0, right=0)
-		status = {'digital':False, 'analog':False}
+		sstatus = {'digital':False, 'analog':False}
+		lstatus = {'digital':False, 'analog':False}
 		for mode in ['digital', 'analog']:
 			if(mode == 'digital'):
 				self.inject.digital_pulse(initialise = True)
 			elif(mode == 'analog'):
 				self.inject.analog_pulse(initialise = True)
 			self.readout.cluster_data(initialize = True)
-			for shift in range(-5,6):
+
+			if(mode == 'digital'):
+				self.inject.digital_pulse(tv, initialise = False)
+			elif(mode == 'analog'):
+				self.inject.analog_pulse(tv, initialise = False)
+
+			for shift in range(-4,6):
 				ext = False
 				self.readout.cl_shift[mode] = shift
-				if(mode == 'digital'):
-					self.inject.digital_pulse(tv, initialise = False)
-				elif(mode == 'analog'):
-					self.inject.analog_pulse(tv, initialise = False)
-				time.sleep(0.1)
 				rp = []
-				for i in range(20):
+				for i in range(10):
 					rp.append(self.readout.cluster_data(initialize = False, shift = 'default'))
 					# with shift=='default', the shift value is the one set by "self.readout.cl_shift[mode]"
 					if(display):
 						print("->  Word alignment. Shift value = {:d}. Read Value = {:s}. Iteration = {:d}.".format(shift, str(list(map(float,rp[-1]))), i))
 					if(rp[-4:] == rp[-5:-1]):
 						if(list(map(float, rp[-1])) == list(map(float, tv))):
-							utils.print_info('->  Cluster-data word alignment {m:7s} successfull ({r:d})'.format(m=mode, r=self.readout.cl_shift[mode]))
+							utils.print_info('->  Stub-data word alignment {m:7s} successfull ({r:d})'.format(m=mode, r=self.readout.cl_shift[mode]))
 							self.generic_parameters['cl_word_alignment_{m:s}'.format(m=mode)] = True
-							status[mode] = True
+							sstatus[mode] = True
 							ext = True
 							break
+						elif(list(map(float, rp[-1])) == list(map(float, []))):
+							break
 				if(ext): break
-		if(not status['digital']):
-			utils.print_error('->  Cluster-data word alignment digital injection error')
+			for shift in range(-4,6):
+				ext = False
+				self.readout.lateral_shift[mode] = shift
+				rp = []
+				for i in range(10):
+					rp.append(self.readout.lateral_data(initialize = False, shift = 'default'))
+					# with shift=='default', the shift value is the one set by "self.readout.lateral_shift[mode]"
+					if(display):
+						print("->  Word alignment. Shift value = {:d}. Read Value = {:s}. Iteration = {:d}.".format(shift, str(list(map(float,rp[-1]))), i))
+					if(rp[-4:] == rp[-5:-1]):
+						if(list(map(float, rp[-1])) == list(map(float, tv))):
+							utils.print_info('->  Lateral-data word alignment {m:7s} successfull ({r:d})'.format(m=mode, r=self.readout.lateral_shift[mode]))
+							self.generic_parameters['cl_word_alignment_{m:s}'.format(m=mode)] = True
+							lstatus[mode] = True
+							ext = True
+							break
+						elif(list(map(float, rp[-1])) == list(map(float, []))):
+							break
+				if(ext): break
+		if(not sstatus['digital']):
+			utils.print_error('->  Stub-data word alignment digital injection error')
 			self.generic_parameters['cl_word_alignment_{m:s}'.format(m='digital')] = True
-		if(not status['analog']):
-			utils.print_error('->  Cluster-data word alignment analog injection error')
+		if(not sstatus['analog']):
+			utils.print_error('->  Stub-data word alignment analog injection error')
 			self.generic_parameters['cl_word_alignment_{m:s}'.format(m='analog')] = True
+		if(not lstatus['digital']):
+			utils.print_error('->  Lateral-data word alignment digital injection error')
+			self.generic_parameters['lateral_word_alignment_{m:s}'.format(m='digital')] = True
+		if(not lstatus['analog']):
+			utils.print_error('->  Lateral-data word alignment analog injection error')
+			self.generic_parameters['lateral_word_alignment_{m:s}'.format(m='analog')] = True
+
 		#print(self.readout.cl_shift)
-		return (status['digital'] and status['analog'])
+		return (sstatus['digital'] and sstatus['analog'])
 
 
 	def alignment_lateral_input(self, display = False, timeout = 256*3, delay = 4, shift = 'default', init = False, file = "../SSA_Results/TestLogs/Chip-0", filemode = 'w', runname = ''):
@@ -174,15 +204,15 @@ class SSA_ASIC:
 		self.readout.cluster_data(initialize = True)
 		alined_left  = False; alined_right = False; cnt = 0;
 		self.fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay)
-		self.inject.digital_pulse([100, 123], initialise = True)
+		self.inject.digital_pulse([100, 120, 123], initialise = True)
 		#self.ctrl.set_lateral_data(0b00001001, 0)
 		while ((alined_left == False) and (cnt < timeout)):
 			clusters = self.readout.cluster_data(initialize = False, shift = shift)
 			if len(clusters) == 3:
-				if(clusters[0] == 100 and clusters[1] == 123):
+				if(clusters[0] == 100 and clusters[1] == 120 and clusters[2] == 123):
 					alined_left = True
 			utils.ShowPercent(cnt, timeout+1, "Aligning left input line\t\t" + str(clusters) + "           ")
-			time.sleep(0.1)
+			####### time.sleep(0.1)
 			#if  (cnt==256): self.fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay+1)
 			#elif(cnt==512): self.fc7.write("cnfg_phy_SSA_gen_delay_lateral_data", delay+2)
 			self.ctrl.set_lateral_data_phase(0,5)

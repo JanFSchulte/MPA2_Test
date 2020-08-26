@@ -22,7 +22,7 @@ class SSA_test_utility():
 		self.striplist = []
 
 
-	def cluster_data(self, mode = "digital",  nstrips = 'random', min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = False):
+	def cluster_data(self, mode = "digital",  nstrips = 'random', min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = True):
 		fo = open(file + "readout_cluster-data_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = '';
 		utils.activate_I2C_chip()
@@ -31,6 +31,7 @@ class SSA_test_utility():
 			self.ssa.init(reset_board = False, reset_chip = False, display = False)
 		if(not self.ssa.cl_word_aligned()):
 			self.ssa.alignment_cluster_data_word()
+			self.ssa.alignment_lateral_input()
 		time.sleep(0.1)
 		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
@@ -258,13 +259,14 @@ class SSA_test_utility():
 
 
 
-	def cluster_data_basic(self, mode = "digital", nruns = 5, shift = 'default', shiftL = 0, display=False, lateral = True, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
+	def cluster_data_basic(self, mode = "digital", nruns = 1, shift='default', shiftL='default' , display=False, lateral = True, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
 		fo = open(file + "readout_cluster-data-basic_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = ''; stlateralout = '';
 		#print("->  Remember to call test.lateral_input_phase_tuning() before to run this test")
 		utils.activate_I2C_chip()
 		if(not self.ssa.cl_word_aligned()):
 			self.ssa.alignment_cluster_data_word()
+			self.ssa.alignment_lateral_input()
 		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
 		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
@@ -348,7 +350,7 @@ class SSA_test_utility():
 
 	def lateral_input_phase_tuning(self, display = False, timeout = 256*3, delay = 4, shift = 'default', init = False, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = ''):
 		return self.ssa.alignment_cluster_data_word(
-			display = display, timeout = timeout, delay = delay,
+			display = display, delay = delay,
 			shift = shift, init = init, file = file,
 			filemode = filemode, runname = runname)
 

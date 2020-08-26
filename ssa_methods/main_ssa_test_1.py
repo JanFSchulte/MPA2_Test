@@ -24,7 +24,7 @@ class SSA_test_top():
 		self.runtest = RunTest('default')
 		self.config_file = ''; self.dvdd = 1.05; self.pvdd = 1.20; #for the offset of the board
 		self.filename = False
-
+		self.configure_tests()
 
 	def run_caracterization(self):
 		self.initialise(filename)

@@ -55,8 +55,8 @@ class SSA_inject():
 						self.I2C.strip_write("ENFLAGS", cl, 0b01001)
 
 		if(self.data_l != leftdata or self.data_r != rightdata):#to speedup
-			print(bin(rightdata))
-			print(bin(leftdata))
+			#print(bin(rightdata))
+			#print(bin(leftdata))
 			self.ctrl.set_lateral_data(left = leftdata, right = rightdata)
 			self.data_l = leftdata;
 			self.data_r = rightdata;

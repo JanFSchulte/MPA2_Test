@@ -27,6 +27,7 @@ class SSA_readout():
 		self.strip = ssastrip; self.utils = utils;
 		self.ofs_initialised = False;  self.ofs = [0]*6;
 		self.cl_shift = {'digital':0, 'analog':0}
+		self.lateral_shift = {'digital':0, 'analog':0}
 		self.countershift = {'state':False, 'value':0}
 
 	def status(self, display=True):
@@ -250,6 +251,13 @@ class SSA_readout():
 
 
 	def lateral_data(self, display = False, shift = 0, initialize = True, raw = False):
+		if(shift == 'default'):
+			ishift = self.lateral_shift['digital']
+			if('ssa_inject_utility_mode') in utils.generic_parameters:
+				if(utils.generic_parameters['ssa_inject_utility_mode'] == 'analog'):
+					ishift = self.lateral_shift['analog']
+		else:
+			ishift = shift
 		if(initialize == True):
 			#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
 			Configure_TestPulse_SSA(    number_of_test_pulses = 1, delay_before_next_pulse = 500, delay_after_test_pulse = 0, delay_after_fast_reset = 0, enable_rst_L1 = 0)
@@ -288,8 +296,8 @@ class SSA_readout():
 				right = right | (tmp << (32*i))
 			else:
 				left = left | (tmp << (32*(i-10)))
-		left  = (left  >> ((shift+9)*8)) & 0xff
-		right = (right >> ((shift+9)*8)) & 0xff
+		left  = (left  >> ((ishift+9)*8)) & 0xff
+		right = (right >> ((ishift+9)*8)) & 0xff
 		if(raw):
 			return bin(left), bin(right)
 		for i in range(1,9):
