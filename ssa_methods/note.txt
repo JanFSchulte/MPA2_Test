@@ -225,7 +225,7 @@ self.fc7.SendCommand_CTRL("stop_trigger")
 self.ssa.readout.cluster_data(initialize=True)
 self.ssa.ctrl.activate_readout_async()
 time.sleep(0.001)
-self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
+self.ssa.readout.counters_fast([], shift=0, initialize=True)
 
 self.fc7.close_shutter(8)
 self.fc7.clear_counters(8)
@@ -238,8 +238,8 @@ self.fc7.open_shutter(8, 5)
 self.fc7.SendCommand_CTRL("start_trigger")
 self.fc7.close_shutter(8,5)
 
-failed, couters = self.ssa.readout.read_counters_fast(striplist, shift = countershift, initialize = 0)
-#failed, couters = self.ssa.readout.read_counters_i2c(striplist)
+failed, couters = self.ssa.readout.counters_fast(striplist, shift = countershift, initialize = 0)
+#failed, couters = self.ssa.readout.counters_via_i2c(striplist)
 
 
 
@@ -281,7 +281,7 @@ def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast'
             utils.print_error("-> ssa_cal_utility/scurves wrong cal_alpl parameter")
             return False
         if(rdmode == 'fast'):
-            self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
+            self.ssa.readout.counters_fast([], shift=0, initialize=True)
         #Configure_TestPulse_MPA_SSA(200, nevents)# init firmware cal pulse
         Configure_TestPulse_SSA(50,50,500,nevents,0,0,0)
 
@@ -364,9 +364,9 @@ def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast'
                         self.fc7.open_shutter(2);  time.sleep(0.01);
                         self.fc7.close_shutter(2); time.sleep(0.01);
                 if(rdmode == 'fast'):
-                    failed, scurves[threshold] = self.ssa.readout.read_counters_fast(striplist, shift = countershift, initialize = 0)
+                    failed, scurves[threshold] = self.ssa.readout.counters_fast(striplist, shift = countershift, initialize = 0)
                 elif(rdmode == 'i2c'):
-                    failed, scurves[threshold] = self.ssa.readout.read_counters_i2c(striplist)
+                    failed, scurves[threshold] = self.ssa.readout.counters_via_i2c(striplist)
                 else:
                     failed = True
 

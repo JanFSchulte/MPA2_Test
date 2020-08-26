@@ -140,13 +140,13 @@ class SSA_cal_utility():
 			msg       -> internal use
 		'''
 		#self.fc7.reset()
-		[cr_ok, cr_countershift, cr_mean] = self.align_counters_readout(threshold=100, amplitude=200, duration=1)
-		if(not cr_ok):
-			utils.print_error('->  Asyncronous counters not working properly')
-			return False
-		else:
-			if(isinstance(countershift, int)): apply_counter_shift = countershift
-			else: apply_counter_shift = cr_countershift
+		#[cr_ok, cr_countershift, cr_mean] = self.align_counters_readout(threshold=100, amplitude=200, duration=1)
+		#if(not cr_ok):
+		#	utils.print_error('->  Asyncronous counters not working properly')
+		#	return False
+		#else:
+		#	if(isinstance(countershift, int)): apply_counter_shift = countershift
+		#	else: apply_counter_shift = cr_countershift
 		evaluate_sc = True
 		evaluate_cn = 0
 		while(evaluate_sc):
@@ -172,7 +172,7 @@ class SSA_cal_utility():
 				utils.print_error("-> ssa_cal_utility/scurves wrong cal_alpl parameter")
 				return False
 			if(rdmode == 'fast'):
-				self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
+				self.ssa.readout.counters_fast([], shift='auto', initialize=True)
 			#Configure_TestPulse_MPA_SSA(200, nevents)# init firmware cal pulse
 			Configure_TestPulse_SSA(50,50,500,nevents,0,0,0)
 
@@ -255,9 +255,9 @@ class SSA_cal_utility():
 							self.fc7.open_shutter(2);  time.sleep(0.01);
 							self.fc7.close_shutter(2); time.sleep(0.01);
 					if(rdmode == 'fast'):
-						failed, scurves[threshold] = self.ssa.readout.read_counters_fast(striplist, shift = countershift, initialize = 0)
+						failed, scurves[threshold] = self.ssa.readout.counters_fast(striplist, shift = countershift, initialize = 0)
 					elif(rdmode == 'i2c'):
-						failed, scurves[threshold] = self.ssa.readout.read_counters_i2c(striplist)
+						failed, scurves[threshold] = self.ssa.readout.counters_via_i2c(striplist)
 					else:
 						failed = True
 
@@ -301,6 +301,7 @@ class SSA_cal_utility():
 					utils.print_error("-X\tError in S-Curve evaluation {:d}".format(np.sum(scurves[50:100,:])))
 					return False
 				utils.print_warning("-X\tIssue in S-Curve evaluation. Reiterating.. {:d}".format(np.sum(scurves[50:100,:])))
+				utils.print_warning("  \tTry to call: ssa_cal.align_counters_readout() to align the readout")
 			else: evaluate_sc = False
 		for i in range(120):
 			if(np.sum(scurves[:,i])==0):
@@ -327,7 +328,7 @@ class SSA_cal_utility():
 		ratio = 'default', # evaluate | default | ratio between Threshold DAC and Trimming DAC
 		iterations = 5, nevents = 1000,
 		plot = True, display = False, reevaluate = True,
-		countershift = 0, filename = False):
+		countershift = 'auto', filename = False):
 		utils.activate_I2C_chip()
 		if(isinstance(th_dac_gain, float) or isinstance(th_dac_gain, int)):
 			gain_th_dac = float(th_dac_gain)
@@ -1070,32 +1071,6 @@ class SSA_cal_utility():
 			plt.show()
 		return latency, thlist
 
-	def align_counters_readout(self, threshold=100, amplitude=200, duration=1):
-		#utils.activate_I2C_chip()
-		self.fc7.SendCommand_CTRL("stop_trigger")
-		self.ssa.readout.cluster_data(initialize=True)
-		self.ssa.ctrl.activate_readout_async(ssa_first_counter_delay='keep')
-		time.sleep(0.001)
-		#self.ssa.readout.read_counters_fast([], shift=0, initialize=True)
-		Configure_TestPulse_SSA(50,50,500,1000,0,0,0)
-		self.ssa.strip.set_cal_strips(mode = 'counter', strip = 'all')
-		self.ssa.ctrl.set_cal_pulse(amplitude=amplitude, duration=duration, delay='keep')
-		self.ssa.ctrl.set_threshold(threshold);  # set the threshold
-		self.fc7.clear_counters(1)
-		self.fc7.open_shutter(1, 1)
-		self.fc7.SendCommand_CTRL("start_trigger")
-		time.sleep(0.1)
-		self.fc7.close_shutter(1,1)
-		successfull = False
-		for countershift in range(-5,5):
-			failed, counters = self.ssa.readout.read_counters_fast(range(1,121), shift = countershift, initialize = 1)
-			mean = np.mean(counters)
-			#print([countershift, counters])
-			if((not failed) and (mean>990) and (mean<1100)):
-				successfull = True
-				break
-		#failed, couters = self.ssa.readout.read_counters_i2c(range(1,121))
-		return [successfull, countershift, mean]
 
 
 

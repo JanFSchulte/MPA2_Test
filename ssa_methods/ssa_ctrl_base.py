@@ -212,7 +212,7 @@ class ssa_ctrl_base:
 		return rt
 
 	def align_out(self):
-		fc7.write("ctrl_phy_phase_tune_again", 1)
+		self.fc7.write("ctrl_phy_phase_tune_again", 1)
 		timeout_max = 3
 		timeout = 0
 		time.sleep(0.1)
@@ -223,6 +223,52 @@ class ssa_ctrl_base:
 			if (timeout == timeout_max):
 				return False
 		return True
+
+	def set_line_mode(self,
+		line        = 0,
+		pMode       = 0,
+		pDelay      = 0,
+		pBitSlip    = 0,
+		pEnableL1   = 0,
+		pMasterLine = 0 ):
+		# select FE
+		pHybrid = 0
+		pChip   = 0
+		fHybrid = (pHybrid & 0xF) << 28;
+		fChip   = (pChip & 0xF) << 24;
+		fLine   = (line & 0xF) << 20;
+		# command
+		command_type = 2
+		fCommand = (command_type & 0xF) << 16;
+		# shift payload
+		mode_raw = (pMode & 0x3) << 12
+		# set defaults
+		l1a_en_raw         = ((pEnableL1 & 0x1) << 11)  if (pMode == 0) else 0
+		master_line_id_raw = ((pMasterLine & 0xF) << 8) if (pMode == 1) else 0
+		delay_raw          = ((pDelay & 0x1F) << 3)     if (pMode == 2) else 0
+		bitslip_raw        = ((pBitSlip & 0x7) << 0)    if (pMode == 2) else 0
+
+		command_final = fHybrid + fChip + fLine + fCommand + mode_raw + l1a_en_raw + master_line_id_raw + delay_raw + bitslip_raw
+		utils.print_info(  "Line " + str(line) + " setting line mode to " + str(command_final) )
+		self.fc7.write("ctrl_phy_phase_tuning", command_final)
+
+	def set_line_shift_stubs(self, value, line='all'):
+		if(line == 'all'): linesel = range(1,9)
+		elif(isinstance(line, int)): linesel = [line]
+		else: return False
+		for ll in linesel:
+			self.set_line_mode(line=ll, pMode=2, pDelay=0, pBitSlip=value, pEnableL1=0, pMasterLine=0)
+		return True
+
+
+#	def set_l1_shift(self, delay=0 ):
+#		cMode = 2
+#		cDelay = delay
+#		cEnableL1 = 0
+#
+#		cBitslip = pTuner.fBitslip + (uint8_t)(fFirmwareFrontEndType == FrontEndType::SSA || fFirmwareFrontEndType == FrontEndType::MPA);
+#
+#		self.set_line_mode(pMode=cMode, pDelay=cDelay, pBitSlip=cBitslip, pMasterLine=0)
 
 	def set_t1_sampling_edge(self, edge):
 		V = tbconfig.VERSION['SSA']

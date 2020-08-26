@@ -67,7 +67,7 @@ class SSA_measurements():
 
 		scurves['l_trim'] = self.cal.scurves(
 			cal_ampl = cal_ampl, nevents = nevents,
-			display = False, plot = False, speeduplevel = 2, countershift = 0,
+			display = False, plot = False, speeduplevel = 2, countershift = 'auto',
 			filename = False, mode = 'all', rdmode = 'fast')
 
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_trim))

@@ -31,7 +31,7 @@ class SSA_SEU_utilities():
 
 	##############################################################
 	def Run_Test_SEU(self,
-			check_stub=True, check_l1=False, check_lateral=True,
+			check_stub=True, check_l1=True, check_lateral=True,
 			strip =[10,20,30,40], hipflags = [], cal_pulse_period = 1, l1a_period = 39,
 			latency = 101, run_time = 2, display = 1, filename = '', runname = '',
 			delay = 73, create_errors = False, stop_if_fifo_full = True, read_seu_counter=True):
@@ -491,6 +491,11 @@ class SSA_SEU_utilities():
 		n_correct  = self.fc7.read("stat_phy_l1_slvs_compare_number_good_data")
 		n_triggers = self.fc7.read("stat_phy_l1_slvs_compare_number_l1_triggers") - 1
 		n_headers  = self.fc7.read("stat_phy_l1_slvs_compare_number_l1_headers_found")
+		#print('=========================')
+		#print(n_triggers)
+		#print(n_headers)
+		#print('=========================')
+
 		if(header and display>0):
 			print("________________________________________________________________________________________")
 		if(display==2):

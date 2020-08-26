@@ -52,8 +52,12 @@ else
 	./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
 	#./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_P2.bit -f ~/MPA-SSA_Test/bitfiles/d19c_SSA_SEU_P1.bit
 	#./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_P2.bit
-	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_20200824b.bit -f ~/MPA-SSA_Test/bitfiles/uDTC_SSA2_SEU_20200824b.bit
-	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_20200824b.bit 
+	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_20200825.bit -f ~/MPA-SSA_Test/bitfiles/uDTC_SSA2_SEU_20200825.bit
+	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_20200825.bit 
+	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_20200824.bit
+	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_20200824.bit -f ~/MPA-SSA_Test/bitfiles/uDTC_SSA_SEU_20200824.bit
+	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit -f ~/MPA-SSA_Test/bitfiles/uDTC_SSA_SEU_master.bit
+	
 	cd -
 fi
 #./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_2020.08.19.bit

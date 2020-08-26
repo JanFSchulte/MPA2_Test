@@ -27,6 +27,7 @@ class SSA_readout():
 		self.strip = ssastrip; self.utils = utils;
 		self.ofs_initialised = False;  self.ofs = [0]*6;
 		self.cl_shift = {'digital':0, 'analog':0}
+		self.countershift = {'state':False, 'value':0}
 
 	def status(self, display=True):
 		status = self.fc7.read("stat_slvs_debug_general")
@@ -302,13 +303,21 @@ class SSA_readout():
 		return coordinates
 
 
-	def read_counters_fast(self, striplist = range(1,121), raw_mode_en = 0, shift = 0, initialize = True):
+	def counters_fast(self, striplist = range(1,121), raw_mode_en = 0, shift = 'auto', initialize = True, silent=0):
 		#t = time.time()
 		if(initialize):
 			self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
 			#self.I2C.peri_write('AsyncRead_StartDel_LSB', (11 + shift) )
+		if(isinstance(shift, int) and (shift != self.countershift['value'])):
 			self.ctrl.set_async_readout_start_delay(delay=8, fc7_correction=shift)
-
+			self.countershift['state'] = True
+			self.countershift['value'] = shift
+			if(not silent): print('->  Updating the counters alignment value to {:d}'.format(shift))
+		else:
+			if(self.countershift['state']):
+				self.ctrl.set_async_readout_start_delay(delay=8, fc7_correction=self.countershift['value'])
+			else:
+				self.align_counters_readout()
 		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
 		self.fc7.start_counters_read(1)
@@ -344,8 +353,34 @@ class SSA_readout():
 		#print((time.time()-t)*1E3)
 		return failed, count
 
+	def align_counters_readout(self, threshold=100, amplitude=200, duration=1):
+		print('->  Running counters readout alignment procedure')
+		self.fc7.SendCommand_CTRL("stop_trigger")
+		self.cluster_data(initialize=True)
+		self.ctrl.activate_readout_async(ssa_first_counter_delay='keep')
+		time.sleep(0.001)
+		Configure_TestPulse_SSA(50,50,500,1000,0,0,0)
+		self.strip.set_cal_strips(mode = 'counter', strip = 'all')
+		self.ctrl.set_cal_pulse(amplitude=amplitude, duration=duration, delay='keep')
+		self.ctrl.set_threshold(threshold);  # set the threshold
+		self.fc7.clear_counters(1)
+		self.fc7.open_shutter(1, 1)
+		self.fc7.SendCommand_CTRL("start_trigger")
+		time.sleep(0.1)
+		self.fc7.close_shutter(1,1)
+		successfull = False
+		for countershift in range(-5,5):
+			failed, counters = self.counters_fast(range(1,121), shift = countershift, initialize = 1, silent=True)
+			mean = np.mean(counters)
+			if((not failed) and (mean>990) and (mean<1100)):
+				successfull = True
+				break
+		self.countershift['state'] = True
+		self.countershift['value'] = countershift
+		return [successfull, countershift, mean]
 
-	def read_counters_i2c(self, striplist = range(1,120)):
+
+	def counters_via_i2c(self, striplist = range(1,120)):
 		count = [0]*120
 		for s in striplist:
 			if(tbconfig.VERSION['SSA'] >= 2):
@@ -356,7 +391,7 @@ class SSA_readout():
 				count[s-1] = (self.I2C.strip_read("ReadCounter_MSB", s) << 8) | self.I2C.strip_read("ReadCounter_LSB", s)
 		return False, count
 
-	def all_lines(self, trigger = True, configure = True, cluster = True, l1data = True, lateral = False):
+	def all_lines_debug(self, trigger = True, configure = True, cluster = True, l1data = True, lateral = False):
 		if(configure):
 			self.fc7.SendCommand_CTRL("fast_test_pulse")
 			self.fc7.SendCommand_CTRL("fast_trigger")
