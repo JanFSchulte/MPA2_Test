@@ -120,7 +120,9 @@
             "permissions": "RW",
             "mask_reg"   : "mask_peri_D",
             "fields_mask": {
-                "Ring_oscillator_ctrl" : "0b11111111"
+                "start"  : "0b10000000",
+                "lenght" : "0b01111111",
+                "ctrl"   : "0b11111111"
             }
         },
         "control_1": {

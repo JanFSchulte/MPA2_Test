@@ -64,6 +64,9 @@ class Utilities:
 		r = int(b[::-1], 2)
 		return r
 
+	def byte2int(self, b3=0, b2=0, b1=0, b0=0):
+		return ((b3&0xff)<<24) | ((b2&0xff)<<16) | ((b1&0xff)<<8) | ((b0&0xff)<<0)
+
 	def ShowPercent(self, val , max = 100, message = ""):
 		i = int( (float(val)/max) * 100.0) - 1
 		row = "\t" + message

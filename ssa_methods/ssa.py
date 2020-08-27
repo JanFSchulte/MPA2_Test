@@ -9,18 +9,23 @@ from ssa_methods.ssa_ctrl_base import *
 from ssa_methods.ssa_ctrl_strip import *
 from ssa_methods.ssa_readout_utility import *
 from ssa_methods.ssa_inject_utility import *
+from ssa_methods.ssa_ctrl_builtin_selftest import *
+
 
 
 class SSA_ASIC:
 
 	def __init__(self, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
 		self.i2c     = I2C
-		self.ctrl    = ssa_ctrl_base(I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
-		self.strip   = ssa_ctrl_strip(I2C, FC7)
-		self.inject  = SSA_inject(I2C, FC7, self.ctrl, self.strip)
-		self.readout = SSA_readout(I2C, FC7, self.ctrl, self.strip)
 		self.pwr     = pwr
 		self.fc7     = FC7
+
+		self.ctrl    = ssa_ctrl_base( self.i2c, self.fc7, self.pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map )
+		self.strip   = ssa_ctrl_strip( self.i2c, self.fc7 )
+		self.inject  = SSA_inject( self.i2c, self.fc7, self.ctrl, self.strip )
+		self.readout = SSA_readout( self.i2c, self.fc7, self.ctrl, self.strip )
+		self.bist    = ssa_ctrl_builtin_selftest( self.i2c, self.fc7, self.ctrl, self.strip, self.pwr, self.inject, self.readout, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
+
 		self.generic_parameters = {}
 		self.cap = 52E-15
 

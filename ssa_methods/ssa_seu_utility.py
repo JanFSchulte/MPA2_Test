@@ -38,6 +38,7 @@ class SSA_SEU_utilities():
 
 		self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
+		self.fc7.write("ctrl_fast", 0x10000)
 		self.ssa.init(edge = 'negative', display = False)
 
 		s1, s2, s3 = self.Stub_Evaluate_Pattern(strip)

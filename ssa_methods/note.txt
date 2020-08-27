@@ -433,8 +433,8 @@ result = {0.85: [0.851, 0, 0], 0.849: [0.851, 0, 0], 0.848: [0.85, 0, 0], 0.847:
 
 
 for i in range(0, 63):
-    r = ssa.ctrl.adc_set_trimming(i, 1)
-    print(ssa.ctrl.adc_measeure('DVDD', nsamples=10))
+    r = ssa.analog.adc_set_trimming(i, 1)
+    print(ssa.analog.adc_measeure('DVDD', nsamples=10))
 
 
 
@@ -445,15 +445,15 @@ def f():
     for vin in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
         print("set input voltage to {:5.3f}".format(vin))
         time.sleep(3)
-        result[vin] = ssa.ctrl.adc_measeure('TESTPAD', nsamples=100)
+        result[vin] = ssa.analog.adc_measeure('TESTPAD', nsamples=100)
         print('-------------------------------------------------')
     return result
 
 a = f()
 
 for i in range(0, 63):
-    r = ssa.ctrl.adc_set_trimming(i, 1)
-    print(ssa.ctrl.adc_measeure('DVDD', nsamples=10))
+    r = ssa.analog.adc_set_trimming(i, 1)
+    print(ssa.analog.adc_measeure('DVDD', nsamples=10))
 
 
 
@@ -464,15 +464,15 @@ def f():
     for vin in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
         print("set input voltage to {:5.3f}".format(vin))
         time.sleep(3)
-        result[vin] = ssa.ctrl.adc_measeure('TESTPAD', nsamples=100)
+        result[vin] = ssa.analog.adc_measeure('TESTPAD', nsamples=100)
         print('-------------------------------------------------')
     return result
 
 v00 = f()
 
 for i in range(0, 63):
-    r = ssa.ctrl.adc_set_trimming(i, 1)
-    print(ssa.ctrl.adc_measeure('DVDD', nsamples=10))
+    r = ssa.analog.adc_set_trimming(i, 1)
+    print(ssa.analog.adc_measeure('DVDD', nsamples=10))
 
 
 
@@ -483,15 +483,15 @@ def f():
     for vin in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
         print("set input voltage to {:5.3f}".format(vin))
         time.sleep(3)
-        result[vin] = ssa.ctrl.adc_measeure('TESTPAD', nsamples=100)
+        result[vin] = ssa.analog.adc_measeure('TESTPAD', nsamples=100)
         print('-------------------------------------------------')
     return result
 
 a = f()
 
 for i in range(0, 63):
-    r = ssa.ctrl.adc_set_trimming(i, 1)
-    print(ssa.ctrl.adc_measeure('DVDD', nsamples=10))
+    r = ssa.analog.adc_set_trimming(i, 1)
+    print(ssa.analog.adc_measeure('DVDD', nsamples=10))
 
 
 
@@ -503,7 +503,7 @@ def f():
     for vin in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
         print("set input voltage to {:5.3f}".format(vin))
         time.sleep(3)
-        result[vin] = ssa.ctrl.adc_measeure('TESTPAD', nsamples=100)
+        result[vin] = ssa.analog.adc_measeure('TESTPAD', nsamples=100)
         print('-------------------------------------------------')
     return result
 

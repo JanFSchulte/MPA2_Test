@@ -765,7 +765,7 @@ class SSA_test_utility():
 		for memory in [1,2]:
 			for i in range(nruns):
 				try:
-					result = self.ssa.ctrl.SRAM_BIST(memory_select=memory, configure=(i==0), display=0)
+					result = self.ssa.bist.SRAM_BIST(memory_select=memory, configure=(i==0), display=0)
 				except:
 					result = -1
 				if(result >= 0):

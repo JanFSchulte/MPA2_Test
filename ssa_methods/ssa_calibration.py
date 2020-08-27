@@ -37,6 +37,7 @@ class ssa_calibration():
 		self.multimeter_lan = multimeter_lan
 		self.get_value_and_voltage_averages = 1
 		self.par_list = [
+			######  FUNCTION | NAME| TARGET CALIB VALUE | .. | .. | Enable Autocalibration 
 			self.Parameter("Analog Ground Interal ", "GND",                   0.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Bandgap Voltage       ", "VBG",                   0.3, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Bandgap Voltage       ", "Bias_BOOSTERBASELINE",  0.6, -1, -1, 'set_dont_calibrate'),
@@ -84,7 +85,7 @@ class ssa_calibration():
 			print("\n\nSummary of tuning (tuned values):")
 			if(measure):
 				self.measure_bias()
-			self.ssa.ctrl.set_output_mux('highimpedence')
+			self.ssa.analog.set_output_mux('highimpedence')
 			return True
 		except:
 			return False
@@ -98,7 +99,7 @@ class ssa_calibration():
 			voltage = voltage*1E3
 			utils.print_log( "->  " + par.full_name + ": " + (" [%3d] %7.3f mV") % (value, voltage) )
 			par.curr_value = voltage
-		self.ssa.ctrl.set_output_mux('highimpedence')
+		self.ssa.analog.set_output_mux('highimpedence')
 		if return_data:
 			data = []
 			for par in self.par_list:
@@ -119,7 +120,7 @@ class ssa_calibration():
 		fullscale = 2**nbits
 		#if(not self.initialised):
 		#	self.__multimeter_gpib_initialise()
-		self.ssa.ctrl.set_output_mux(name)
+		self.ssa.analog.set_output_mux(name)
 		data = np.zeros(fullscale, dtype=np.float);
 		for i in range(0, fullscale):
 			self.I2C.peri_write(name, i)
@@ -138,7 +139,7 @@ class ssa_calibration():
 		inl_max = np.max(np.abs(inl))
 		dnl_max = np.max(np.abs(dnl))
 		g, ofs, sigma = utils.linear_fit(range(0,2**nbits), data)
-		self.ssa.ctrl.set_output_mux('highimpedence')
+		self.ssa.analog.set_output_mux('highimpedence')
 		print("")
 		print("DAC "+name+'['+str(nbits)+'-bit]:')
 		print("->  GAIN    = {:6.3f} mV/cnt".format(g*1000.0))
@@ -185,7 +186,7 @@ class ssa_calibration():
 		if(self.mode == 'MULTIMETER_LAN'):
 			self.multimeter_lan.configure_dc_high_accuracy(nplc_filter=False, nsamples=average)
 		fullscale = 2**nbits
-		self.ssa.ctrl.set_output_mux(name)
+		self.ssa.analog.set_output_mux(name)
 		x = np.linspace(0,fullscale, npoints, dtype=int, endpoint=False)
 		data = np.zeros(len(x), dtype=np.float);
 		for i in range(len(x)):
@@ -203,7 +204,7 @@ class ssa_calibration():
 			fo = "../SSA_Results/" + filename + "_" + str(runname) + "_Caracteristics_" + name + filename2
 			CSV.ArrayToCSV (array = data, filename = fo + ".csv", transpose = True)
 		g, ofs, sigma = utils.linear_fit(x, data)
-		self.ssa.ctrl.set_output_mux('highimpedence')
+		self.ssa.analog.set_output_mux('highimpedence')
 		#print("DAC "+name+'['+str(nbits)+'-bit]:')
 		utils.print_good("->  Gain({:12s}) = {:9.3f} mV/cnt".format(name, g*1000.0))
 		utils.print_good("->  Offs({:12s}) = {:9.3f} mV    ".format(name, ofs*1000.0))
@@ -233,7 +234,7 @@ class ssa_calibration():
 		data = np.zeros(len(x), dtype=np.float);
 		for i in range(len(x)):
 			self.I2C.peri_write(name, x[i])
-			data[i] = self.ssa.ctrl.adc_measeure(name)
+			data[i] = self.ssa.analog.adc_measeure(name)
 			utils.ShowPercent(x[i], fullscale-1, "Measuring "+name+" linearity                         ")
 		utils.ShowPercent(1,1,"Measuring "+name+" linearity                         ")
 		if( isinstance(filename, str) ):
@@ -280,7 +281,7 @@ class ssa_calibration():
 		else:
 			inst = inst0
 
-		self.ssa.ctrl.set_output_mux(name)
+		self.ssa.analog.set_output_mux(name)
 		value = self._d5_value(str(name), 'r')
 		if(self.mode == 'MULTIMETER_GPIB'):
 			measurement = self.multimeter_gpib.measure(inst)
@@ -289,7 +290,7 @@ class ssa_calibration():
 			measurement = self.multimeter_lan.measure()
 		else:
 			measurement = self.pcbadc.measure('SSA', average)
-		#self.ssa.ctrl.set_output_mux('highimpedence')
+		#self.ssa.analog.set_output_mux('highimpedence')
 		return value, measurement
 
 
@@ -300,7 +301,7 @@ class ssa_calibration():
 			inst = self.minst
 		else:
 			inst = inst0
-		self.ssa.ctrl.set_output_mux(name)
+		self.ssa.analog.set_output_mux(name)
 		if(self.mode == 'MULTIMETER_GPIB'):
 			measurement = self.multimeter_gpib.measure(inst)
 		elif(self.mode == 'MULTIMETER_LAN'):
@@ -308,7 +309,7 @@ class ssa_calibration():
 			measurement = self.multimeter_lan.measure()
 		else:
 			measurement = self.pcbadc.measure('SSA', average)
-		self.ssa.ctrl.set_output_mux('highimpedence')
+		self.ssa.analog.set_output_mux('highimpedence')
 		return measurement
 
 
