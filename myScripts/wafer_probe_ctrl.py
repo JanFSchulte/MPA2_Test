@@ -22,7 +22,7 @@ AP.MSR_ALL()
 try:
     import Gpib
 except:
-    print("->  Impossible to access Wafer Prober Machine via GPIB")
+    print("->  Impossible to access Wafer Prober Machine via GPIB. Missing gpib.")
 
 
 class tmperrgpib:

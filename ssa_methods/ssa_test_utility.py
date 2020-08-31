@@ -781,12 +781,14 @@ class SSA_test_utility():
 			else:          utils.print_good(    "->  {:s}BIST memory 2 test : PASS".format(note))
 		return rv
 
-	def BIST_vs_DVDD(self, npoints = 101, dvdd_max=0.85, dvdd_min=0.75, nruns_per_point=100):
+	##############################################################
+	def SRAM_BIST_vs_DVDD(self, step=0.001, dvdd_max=0.850, dvdd_min=0.750, nruns_per_point=100):
 		self.ssa.pwr.set_dvdd(1.0)
 		time.sleep(0.01)
 		self.ssa.reset()
 		result = {}
-		dvdd_range = np.linspace(dvdd_max, dvdd_min, npoints)
+		#dvdd_range = np.linspace(dvdd_max, dvdd_min, npoints)
+		dvdd_range = np.linspace(dvdd_max, dvdd_min, (-1)*step)
 		for dvdd in dvdd_range:
 			self.ssa.pwr.set_dvdd(dvdd)
 			time.sleep(0.1)
@@ -796,6 +798,18 @@ class SSA_test_utility():
 			result[dvdd] = [rdv, res[0], res[1]]
 		return result
 
+	##############################################################
+	def ring_oscillators_vs_DVDD(self, dvdd_step=0.05, dvdd_max=1.3, dvdd_min=0.8):
+		result = {}
+		dvdd_range = np.arange(dvdd_min, dvdd_max, dvdd_step)
+		for dvdd in dvdd_range:
+			self.ssa.pwr.set_dvdd(dvdd)
+			time.sleep(0.1)
+			res = self.ssa.bist.ring_oscilaltor(64, raw=1, display=1, note=' at DVDD={:5.3f}V'.format(dvdd) )
+			#rdv = self.ssa.pwr.get_dvdd()
+			result[dvdd] = res
+		self.ssa.pwr.set_dvdd(1.0)
+		return result
 
 '''
 def prova(i):

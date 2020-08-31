@@ -75,43 +75,66 @@ class ssa_ctrl_builtin_selftest:
 
 
 	#######################################################################
-	def ring_oscilaltor(self, value=64, raw=0):
-		if(value>127): value=127
-		elif(value<0): value=0
-		ringval = {'top-right':[0,0] , 'bottom-right':[0,0], 'bottom-center':[0,0], 'bottom-left':[0,0]}
+	def ring_oscilaltor(self, resolution_inv=127, resolution_del=127, raw=False, aslist=False, display=True, note=''):
+		ringval   = {'top-right':[0,0] , 'bottom-right':[0,0], 'bottom-center':[0,0], 'bottom-left':[0,0]}
+		frequency = {'top-right':[0,0] , 'bottom-right':[0,0], 'bottom-center':[0,0], 'bottom-left':[0,0]}
+
+		if(resolution_inv<0 or resolution_inv>127 or resolution_del<0 or resolution_del>127):
+			print("->  Ring oscillators resolution setting out of range ")
+			return False
 		self.i2c.peri_write(register='Ring_oscillator_ctrl',  field ='start',  data=0b0)
-		self.i2c.peri_write(register='Ring_oscillator_ctrl',  field ='lenght', data=value)
+		self.i2c.peri_write(register='Ring_oscillator_ctrl',  field ='lenght', data=resolution_inv)
 		self.i2c.peri_write(register='Ring_oscillator_ctrl',  field ='start',  data=0b1)
-		time.sleep(0.1)
-		ringval['bottom-right'][0] = utils.byte2int(
-			b1=self.i2c.peri_read(register='Ring_oscillator_out_locBR_T1_H'),
-			b0=self.i2c.peri_read(register='Ring_oscillator_out_locBR_T1_L'))
-		ringval['bottom-right'][1] = utils.byte2int(
-			b1=self.i2c.peri_read(register='Ring_oscillator_out_locBR_T2_H'),
-			b0=self.i2c.peri_read(register='Ring_oscillator_out_locBR_T2_L'))
-		ringval['top-right'][0] = utils.byte2int(
-			b1=self.i2c.peri_read(register='Ring_oscillator_out_locTR_T1_H'),
-			b0=self.i2c.peri_read(register='Ring_oscillator_out_locTR_T1_L'))
-		ringval['top-right'][1] = utils.byte2int(
-			b1=self.i2c.peri_read(register='Ring_oscillator_out_locTR_T2_H'),
-			b0=self.i2c.peri_read(register='Ring_oscillator_out_locTR_T2_L'))
-		ringval['bottom-center'][0] = utils.byte2int(
-			b1=self.i2c.peri_read(register='Ring_oscillator_out_locBC_T1_H'),
-			b0=self.i2c.peri_read(register='Ring_oscillator_out_locBC_T1_L'))
-		ringval['bottom-center'][1] = utils.byte2int(
-			b1=self.i2c.peri_read(register='Ring_oscillator_out_locBC_T2_H'),
-			b0=self.i2c.peri_read(register='Ring_oscillator_out_locBC_T2_L'))
-		ringval['bottom-left'][0] = utils.byte2int(
-			b1=self.i2c.peri_read(register='Ring_oscillator_out_locBL_T1_H'),
-			b0=self.i2c.peri_read(register='Ring_oscillator_out_locBL_T1_L'))
-		ringval['bottom-left'][1] = utils.byte2int(
-			b1=self.i2c.peri_read(register='Ring_oscillator_out_locBL_T2_H'),
-			b0=self.i2c.peri_read(register='Ring_oscillator_out_locBL_T2_L'))
+		time.sleep(0.001)
 		self.i2c.peri_write(register='Ring_oscillator_ctrl',  field ='start',  data=0b0)
+
+		ringval['bottom-right'][0] = utils.byte2int(
+			b1 = self.i2c.peri_read(register='Ring_oscillator_out_locBR_T1_H'),
+			b0 = self.i2c.peri_read(register='Ring_oscillator_out_locBR_T1_L'))
+		ringval['top-right'][0] = utils.byte2int(
+			b1 = self.i2c.peri_read(register='Ring_oscillator_out_locTR_T1_H'),
+			b0 = self.i2c.peri_read(register='Ring_oscillator_out_locTR_T1_L'))
+		ringval['bottom-center'][0] = utils.byte2int(
+			b1 = self.i2c.peri_read(register='Ring_oscillator_out_locBC_T1_H'),
+			b0 = self.i2c.peri_read(register='Ring_oscillator_out_locBC_T1_L'))
+		ringval['bottom-left'][0] = utils.byte2int(
+			b1 = self.i2c.peri_read(register='Ring_oscillator_out_locBL_T1_H'),
+			b0 = self.i2c.peri_read(register='Ring_oscillator_out_locBL_T1_L'))
+
+		self.i2c.peri_write(register='Ring_oscillator_ctrl',  field ='lenght', data=resolution_del)
+		self.i2c.peri_write(register='Ring_oscillator_ctrl',  field ='start',  data=0b1)
+		time.sleep(0.001)
+		self.i2c.peri_write(register='Ring_oscillator_ctrl',  field ='start',  data=0b0)
+
+		ringval['bottom-right'][1] = utils.byte2int(
+			b1 = self.i2c.peri_read(register='Ring_oscillator_out_locBR_T2_H'),
+			b0 = self.i2c.peri_read(register='Ring_oscillator_out_locBR_T2_L'))
+		ringval['top-right'][1] = utils.byte2int(
+			b1 = self.i2c.peri_read(register='Ring_oscillator_out_locTR_T2_H'),
+			b0 = self.i2c.peri_read(register='Ring_oscillator_out_locTR_T2_L'))
+		ringval['bottom-center'][1] = utils.byte2int(
+			b1 = self.i2c.peri_read(register='Ring_oscillator_out_locBC_T2_H'),
+			b0 = self.i2c.peri_read(register='Ring_oscillator_out_locBC_T2_L'))
+		ringval['bottom-left'][1] = utils.byte2int(
+			b1 = self.i2c.peri_read(register='Ring_oscillator_out_locBL_T2_H'),
+			b0 = self.i2c.peri_read(register='Ring_oscillator_out_locBL_T2_L'))
+		if(raw):
+			retval = ringval
+		else:
+			for i in ringval:
+				frequency[i][0] = np.float(ringval[i][0])/( (resolution_inv*8)*25.0E-3 ) #MHz
+				frequency[i][1] = np.float(ringval[i][1])/( (resolution_del*8)*25.0E-3 ) #MHz
+			retval = frequency
+		if(display):
+			sret = '->  Ring oscillators ' + note
+			for i in ringval:
+				if(raw): sret += '\n    {:16s} : INV -> {:5d}     DEL -> {:5d}]'.format(i, ringval[i][0], ringval[i][1])
+				else:    sret += '\n    {:16s} : INV -> {:5.3f} MHz     DEL -> {:5.3f} MHz'.format(i, frequency[i][0], frequency[i][1])
+			utils.print_info(sret)
 		if(not raw):
 			rv = ringval
 		else:
 			rv = []
-			for i in ringval: rv.append(ringval[i][0])
-			for i in ringval: rv.append(ringval[i][1])
+			for i in ringval: rv.append(retval[i][0])
+			for i in ringval: rv.append(retval[i][1])
 		return rv

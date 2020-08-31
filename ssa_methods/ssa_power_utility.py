@@ -202,8 +202,9 @@ class ssa_power_utility:
 
 	def set_dvdd(self, targetvoltage):
 		utils.print_enable(False)
-		if (targetvoltage > 1.25): targetvoltage = 1.25
-		diffvoltage = 1.5 - targetvoltage
+		if (targetvoltage > 1.3): targetvoltage = 1.3
+		if (targetvoltage < 0):   targetvoltage = 0
+		diffvoltage = 1.470 - targetvoltage
 		setvoltage = int(round(diffvoltage / self.Vc))
 		if (setvoltage > 4095): setvoltage = 4095
 		setvoltage = setvoltage << 4
@@ -217,8 +218,9 @@ class ssa_power_utility:
 
 	def set_avdd(self, targetvoltage):
 		utils.print_enable(False)
-		if (targetvoltage > 1.25): targetvoltage = 1.25
-		diffvoltage = 1.5 - targetvoltage
+		if (targetvoltage > 1.3): targetvoltage = 1.3
+		if (targetvoltage < 0):   targetvoltage = 0
+		diffvoltage = 1.470 - targetvoltage
 		setvoltage = int(round(diffvoltage / self.Vc))
 		if (setvoltage > 4095): setvoltage = 4095
 		setvoltage = setvoltage << 4
@@ -232,8 +234,9 @@ class ssa_power_utility:
 
 	def set_pvdd(self, targetvoltage):
 		utils.print_enable(False)
-		if (targetvoltage > 1.25): targetvoltage = 1.25
-		diffvoltage = 1.5 - targetvoltage
+		if (targetvoltage > 1.3): targetvoltage = 1.3
+		if (targetvoltage < 0):   targetvoltage = 0
+		diffvoltage = 1.470 - targetvoltage
 		setvoltage = int(round(diffvoltage / self.Vc))
 		if (setvoltage > 4095): setvoltage = 4095
 		setvoltage = setvoltage << 4

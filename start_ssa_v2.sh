@@ -38,7 +38,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 ping -c 1 -W 1 $IP; rep=$?
 
 if ! (( $rep == 0 )); then
-	printf   '\n->  SSA Testbench unrichable\n    '
+	printf '\n=>  SSA Testbench unrichable\n    '
 	if (! ifconfig | grep ${eth}:'1'); then
 		read -r -p "    Do you want to configure the communication? [y/N] " response
 		if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
@@ -48,33 +48,37 @@ if ! (( $rep == 0 )); then
 			sudo modprobe ni_usb_gpib
 			ping -c 1 -W 1 $IP; rep=$?
 			if ! (( $rep == 0 )); then
-				printf   '\n->  SSA Testbench unrichable\n'
+				printf '=>  SSA Testbench unrichable'
 			else
-				printf '\n->  SSA Testbench correctly found on %s\n' "$IP"
-				printf '______________________________________________________\n'
+				printf '=>  SSA Testbench correctly found on %s' "$IP"
+				#printf '______________________________________________________\n'
+				printf '=>  Loading scripts\n'
 				$start_tb
 			fi
 		fi
 	else
-		printf "\n-> Communication configured  "
+		printf '=>  The communication is configured  '
 		echo ${eth}
-		printf '\n'
 	fi
 
 	if [ -z "$1" ]; then
-		read -r -p "    Do you want to proceed anyways? [y/N] " response
+		#read -r -p "    Do you want to proceed anyways? [y/N] " response
+		response='y'
 		if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
-			printf '______________________________________________________\n'
+			#printf '______________________________________________________\n'
+			printf '=>  Loading scripts\n'
 			$start_tb
 		else
-			printf '\nExiting.\n\n'
-			printf '______________________________________________________\n'
+			printf '=> Exiting.\n\n'
+			#printf '______________________________________________________\n'
 		fi
 	elif [[  $1 == y ]]; then
-			printf '______________________________________________________\n'
+			#printf '______________________________________________________\n'
+			printf '=>  Loading scripts\n'
 			$start_tb
 	fi
 else
-	printf '\n->  SSA Testbench correctly found on %s\n' "$IP"
+	printf '=>  SSA Testbench correctly found at address %s\n' "$IP"
+	printf '=>  Loading scripts\n'
 	$start_tb
 fi

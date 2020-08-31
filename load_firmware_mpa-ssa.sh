@@ -46,7 +46,7 @@ else
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_11.bit -f ~/Desktop/SSA_SEU_11.bit
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_7.bin  
 	#./bin/fc7-d19c.exe  -i $IP -n  SSA_SEU_11.bin 
-	./bin/fc7-d19c.exe  -i $IP -n  MPA_SEU_L1_9.bin -f /home/acaratel/D19C/MPA_Test/fw_bitfiles/MPA_SEU_L1_9.bit
+	./bin/fc7-d19c.exe  -i $IP -n  MPA_SEU_L1_9.bin  #-f /home/acaratel/D19C/MPA_Test/fw_bitfiles/MPA_SEU_L1_9.bit
 
 fi
 
