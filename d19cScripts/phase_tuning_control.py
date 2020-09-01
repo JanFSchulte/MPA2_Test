@@ -1,4 +1,5 @@
-from fc7_daq_methods import *
+from d19cScripts.fc7_daq_methods import *
+import time
 #import matplotlib.pyplot as plt
 
 def ConfigureL1ATuning():
@@ -15,9 +16,9 @@ def ConfigureL1ATuning():
     fc7.write("cnfg_fast_delay_before_next_pulse", 50) # actually the only one important
     fc7.write("cnfg_fast_triggers_to_accept", 0)
     fc7.write("cnfg_fast_source", 6)
-    sleep(0.01)
+    time.sleep(0.01)
     SendCommand_CTRL("load_trigger_config")
-    sleep(0.01)
+    time.sleep(0.01)
 
 def SendPhaseTuningCommand(value):
     fc7.write("ctrl_phy_phase_tuning", value)
@@ -31,39 +32,38 @@ def GetPhaseTuningStatus(printStatus = True):
     output_type = (data & 0x0F000000) >> 24
 
     # line configuration
-    if output_type == 0:
+    if(output_type == 0):
         mode = (data & 0x00003000) >> 12
         master_line_id = (data & 0x00000F00) >> 8
         delay = (data & 0x000000F8) >> 3
         bitslip = (data & 0x00000007) >> 0
         if printStatus:
-            print "Line Configuration: "
-            print "\tLine ID: ", line_id, ",\tMode: ", mode, ",\tMaster line ID: ", master_line_id, ",\tIdelay: ", delay, ",\tBitslip: ", bitslip
+            print("Line Configuration: ")
+            print("\tLine ID: "+ str(line_id) +",\tMode: "+ str(mode)+ ",\tMaster line ID: "+ str(master_line_id)+ ",\tIdelay: "+ str(delay)+ ",\tBitslip: "+ str(bitslip))
         return -1
-
     # tuning status
-    elif output_type == 1:
+    elif(output_type == 1):
         delay = (data & 0x00F80000) >> 19
         bitslip = (data & 0x00070000) >> 16
         done = (data & 0x00008000) >> 15
         wa_fsm_state = (data & 0x00000F00) >> 8
         pa_fsm_state = (data & 0x0000000F) >> 0
         if printStatus:
-            print "Line Status: "
-            print "\tTuning done/applied: ", done
-            print "\tLine ID: ", line_id, ",\tIdelay: ", delay, ",\tBitslip: ", bitslip, ",\tWA FSM State: ", wa_fsm_state, ",\tPA FSM State: ", pa_fsm_state
+            print("Line Status: ")
+            print("\tTuning done/applied: "+ done)
+            print("\tLine ID: "+str(line_id)+ ",\tIdelay: " +str(delay)+ ",\tBitslip: " +str(bitslip)+ ",\tWA FSM State: " +str(wa_fsm_state)+ ",\tPA FSM State: "+str( pa_fsm_state))
         return done
 
     # tuning status
     elif output_type == 6:
         default_fsm_state = (data & 0x000000FF) >> 0
         if printStatus:
-            print "Default tuning FSM state: ", hex(default_fsm_state)
+            print("Default tuning FSM state: "+ hex(default_fsm_state))
         return -1
 
     # unknown
     else:
-        print "Error! Unknown status message!"
+        print("Error! Unknown status message!")
         return -2
 
 def GetDefaultFSMState():
@@ -73,7 +73,7 @@ def GetDefaultFSMState():
     # final command 6
     command_final = command_raw
     SendPhaseTuningCommand(command_final)
-    sleep(0.01)
+    time.sleep(0.01)
     GetPhaseTuningStatus()
 
 def GetLineStatus(hybrid_id, chip_id, line_id):
@@ -88,7 +88,7 @@ def GetLineStatus(hybrid_id, chip_id, line_id):
     # final command 0
     command_final = hybrid_raw + chip_raw + line_raw + command_raw
     SendPhaseTuningCommand(command_final)
-    sleep(0.01)
+    time.sleep(0.01)
     GetPhaseTuningStatus()
 
     # command 1
@@ -97,7 +97,7 @@ def GetLineStatus(hybrid_id, chip_id, line_id):
     # final command 1
     command_final = hybrid_raw + chip_raw + line_raw + command_raw
     SendPhaseTuningCommand(command_final)
-    sleep(0.01)
+    time.sleep(0.01)
     done = GetPhaseTuningStatus()
 
     return done
@@ -114,13 +114,13 @@ def CheckLineDone(hybrid_id, chip_id, line_id):
     # final command 1
     command_final = hybrid_raw + chip_raw + line_raw + command_raw
     SendPhaseTuningCommand(command_final)
-    sleep(0.01)
+    time.sleep(0.01)
 
     line_done = GetPhaseTuningStatus(printStatus = False)
     if line_done >= 0:
         pass
     else:
-        print "Tuning Failed or Wrong Status"
+        print("Tuning Failed or Wrong Status")
     return line_done
 
 def SetLineMode(hybrid_id, chip_id, line_id, mode, delay = 0, bitslip = 0, l1_en = 0, master_line_id = 0):
@@ -196,17 +196,17 @@ def TuneLine(line_id, pattern, pattern_period, changePattern = True, printStatus
     if changePattern:
         SetLineMode(0,0,line_id,mode = 0)
         SetLinePattern(0,0,line_id,pattern, pattern_period)
-        sleep(0.01)
+        time.sleep(0.01)
     # do phase alignment
     SendControl(0,0,line_id,"do_phase")
-    sleep(0.1)
+    time.sleep(0.01)
     # do word alignment
     SendControl(0,0,line_id,"do_word")
-    sleep(0.1)
+    time.sleep(0.01)
 
     if printStatus:
         GetLineStatus(0,0,line_id)
-        print "\n"
+        print( "\n")
 
     return CheckLineDone(0,0,line_id)
 
@@ -221,8 +221,8 @@ def TuneMPA():
     for line in range(0,6):
         TuneLine(line, np.array([0b10100000]),1,True,False)
         if CheckLineDone(0,0,line) != 1:
-            print "Failed tuning line ", line
-	    return False
+            print( "Failed tuning line " + str(line) )
+        return False
     # l1a
     #SetLineMode(0,0, line_id = 0, mode = 1, master_line_id = 1)
     #if CheckLineDone(0,0,0) == 1:
@@ -244,9 +244,9 @@ def TuneCBC3():
     line = 5
     TuneLine(line, 0b10000000, 1, True, True)
     if CheckLineDone(0,0,line) == 1:
-        print "Line ", line, " was tuned succesfully"
+        print("Line " + str(line) + " was tuned succesfully")
     else:
-        print "Failed tuning line ", line
+        print("Failed tuning line " + str(line))
 
     # set stub lines as slaves
     for line in range(1,5):
@@ -260,12 +260,12 @@ def TuneCBC3():
         ConfigureL1ATuning()
         SendCommand_CTRL("start_trigger")
         TuneLine(0, 0b11000000, 38)
-        sleep(1)
+        time.sleep(1)
         SendCommand_CTRL("stop_trigger")
     if CheckLineDone(0,0,0) == 1:
-        print "line delay was applied succesfully"
+        print( "line delay was applied succesfully")
     else:
-        print "Failed applying delay for line 0(L1)"
+        print( "Failed applying delay for line 0(L1)")
     # here it is
 
 def GetDistribution(line_id, npoints = 100):
@@ -273,19 +273,18 @@ def GetDistribution(line_id, npoints = 100):
     command_type = 1
     command_raw = (command_type & 0xF) << 16
     command_final = line_raw + command_raw
-
     delay_data = np.zeros(npoints)
-    print "Progress:"
+    print( "Progress:")
     for i in range(0,npoints):
         percentage = 100*i/npoints
         if percentage%10 == 0:
-            print "\t", percentage, " %"
+            print( "\t" +str(percentage)+ " %")
         SendControl(0,0,line_id,"do_phase")
-        sleep(0.01)
+        time.sleep(0.01)
         pa_fsm_state = 0
         while (pa_fsm_state != 14):
             SendPhaseTuningCommand(command_final)
-            sleep(0.01)
+            time.sleep(0.01)
             data = fc7.read("stat_phy_phase_tuning")
             delay = (data & 0x00F80000) >> 19
             bitslip = (data & 0x00070000) >> 16

@@ -298,10 +298,10 @@ class ssa_ctrl_base:
 	def TuneSSA(self, pattern=0b10100000):
 		self.setup_readout_chip_id()
 		state = True
-		for line in range(1,9):
-			TuneLine(line, np.array([pattern]),1,True,False)
+		for line in range(0,9):
+			TuneLine(line, np.array(pattern),1,True,False)
 			if CheckLineDone(0,0,line) != 1:
-				print "Failed tuning line ", line
+				print("Failed tuning line {:d}".format(line))
 				state = False
 		return state
 
