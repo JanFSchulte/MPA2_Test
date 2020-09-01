@@ -7,10 +7,12 @@ from ssa_methods.Configuration.ssa1_reg_map import *
 
 class ssa_i2c_conf:
 
-	def __init__(self, fc7, debug=False):
+	def __init__(self, fc7, debug=False, index=0, address=0):
 		self.__load_reg_map(version=tbconfig.VERSION['SSA'])
 		self.__set_parameters(debug=debug)
 		self.fc7 = fc7
+		self.chip_adr = "SSA{:0d}".format(index)
+		self.i2c_address = address
 
 	def __load_reg_map(self, version):
 		if(version >= 2):
@@ -33,8 +35,6 @@ class ssa_i2c_conf:
 		self.debug = debug
 		self.readback = False
 		##### for 2SSA
-		self.chip_adr = "SSA{:0d}".format(index)
-		self.i2c_address = address
 		self.delay = 0.0005
 		self.mask_active = {'mask_strip':True, 'mask_peri_A':True, 'mask_peri_D':True, 'None':False}
 
@@ -297,18 +297,22 @@ class ssa_i2c_conf:
 	# Using FC7 class in SSA methods to handel tipical IP bus communication losses (firmware issue)
 	def write_I2C (self, chip, address, data, frequency = 0):
 		read = 1; write = 0; readback = 0
-		if  (chip == 'MPA'): self.SendCommand_I2C(0, 0, 0, 0, write, address, data, readback)
-		elif(chip == 'SSA'): self.SendCommand_I2C(0, 0, 1, 0, write, address, data, readback)
-		else: print('ERROR I2C Chip Name')
+		if  (chip == 'MPA'):  self.SendCommand_I2C(0, 0, 0, 0, write, address, data, readback)
+		elif(chip == 'SSA'):  self.SendCommand_I2C(0, 0, 1, 0, write, address, data, readback)
+		elif(chip == 'SSA0'): self.SendCommand_I2C(0, 0, 1, 0, write, address, data, readback)
+		elif(chip == 'SSA1'): self.SendCommand_I2C(0, 0, 2, 0, write, address, data, readback)
+		else: print('ERROR I2C Chip Name ' + str(chip))
 
 
 	def read_I2C (self, chip, address):
 		read = 1; write = 0; readback = 0
 		data = 0
 		tinit=time.time()
-		if   (chip == 'MPA'): self.SendCommand_I2C(0, 0, 0, 0, read, address, data, readback)
-		elif (chip == 'SSA'): self.SendCommand_I2C(0, 0, 1, 0, read, address, data, readback)
-		else: print('ERROR I2C Chip Name')
+		if   (chip == 'MPA'):  self.SendCommand_I2C(0, 0, 0, 0, read, address, data, readback)
+		elif (chip == 'SSA'):  self.SendCommand_I2C(0, 0, 1, 0, read, address, data, readback)
+		elif (chip == 'SSA0'): self.SendCommand_I2C(0, 0, 1, 0, read, address, data, readback)
+		elif (chip == 'SSA1'): self.SendCommand_I2C(0, 0, 2, 0, read, address, data, readback)
+		else: print('ERROR I2C Chip Name ' + str(chip))
 		time.sleep(self.delay)
 		read_data = ReadChipDataNEW()
 		return read_data

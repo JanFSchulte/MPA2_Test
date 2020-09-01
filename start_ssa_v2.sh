@@ -2,7 +2,7 @@
 
 start_tb='python3 -i LaunchPy.py'
 
-source ~/FC7/sw/fc7/setup.sh
+source ./FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export LC_ALL=C; unset LANGUAGE
 

@@ -34,7 +34,7 @@ class SSA_SEU_utilities():
 			check_stub=True, check_l1=True, check_lateral=True,
 			strip =[10,20,30,40], hipflags = [], cal_pulse_period = 1, l1a_period = 39,
 			latency = 101, run_time = 2, display = 1, filename = '', runname = '',
-			delay = 73, create_errors = False, stop_if_fifo_full = True, read_seu_counter=True):
+			delay = 74, create_errors = False, stop_if_fifo_full = True, read_seu_counter=True):
 
 		self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);

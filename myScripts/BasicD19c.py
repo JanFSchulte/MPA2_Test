@@ -424,13 +424,12 @@ def SetMainSlaveMap(verbose = 1):
 	i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA",  "MPA0")
 	i2c_slave_map[1].SetValues(0b0100001, 2, 1, 1, 1, 0, "SSA",  "SSA0")
 	i2c_slave_map[2].SetValues(0b0100111, 2, 1, 1, 1, 0, "SSA1", "SSA1")
-
-
 	# updating the slave id table
-	if verbose: print "---> Updating the Slave ID Map"
+	if verbose: print("---> Updating the Slave ID Map")
 	for slave_id in range(3):
 		fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
-		if verbose: print "Writing","cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", hex(EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
+		if verbose:
+			print("Writing","cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", hex(EncodeMainSlaveMapItem(i2c_slave_map[slave_id])))
 
 def activate_I2C_chip(frequency = 0, verbose = 1):
     i2cmux = 0
