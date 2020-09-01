@@ -12,12 +12,13 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
+from d19cScripts.phase_tuning_control import *
 
 
 
 class ssa_ctrl_base:
 
-	def __init__(self, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
+	def __init__(self, index, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
 		self.ssa_strip_reg_map = ssa_strip_reg_map;
 		self.analog_mux_map = analog_mux_map;
 		self.ssa_peri_reg_map = ssa_peri_reg_map;
@@ -29,6 +30,12 @@ class ssa_ctrl_base:
 		self.seu_check_time = -1
 		self.testpad_is_enable = -1
 		self.seu_cntr = { 'A':{'peri':[0]*2, 'strip':[0]*8, 'all':0}, 'S':{'peri':[0]*2, 'strip':[0]*8, 'all':0} }
+		self.index = index
+		self.r = []
+
+	#####################################################################
+	def setup_readout_chip_id(self):
+		self.fc7.set_active_readout_chip(self.index)
 
 	#####################################################################
 	def resync(self, display=True):
@@ -188,6 +195,7 @@ class ssa_ctrl_base:
 
 	#####################################################################
 	def __do_phase_tuning(self):
+		self.setup_readout_chip_id()
 		cnt = 0; done = True
 		#print(self.fc7.read("stat_phy_phase_tuning_done"))
 		self.fc7.write("ctrl_phy_phase_tune_again", 1)
@@ -202,18 +210,23 @@ class ssa_ctrl_base:
 			done = False
 		return  done
 
-	#####################################################################
-	def phase_tuning(self):
+	def phase_tuning(self, method = 'new'):
+		self.setup_readout_chip_id()
 		self.activate_readout_shift()
 		if(self.fc7.invert):
-			self.set_shift_pattern_all(0b01111111) #128 #0b01111111
+			self.set_shift_pattern_all(0b01111111)
+		elif(method == 'old'):
+			self.set_shift_pattern_all(0b10000000)
 		else:
-			self.set_shift_pattern_all(128) #128 #0b01111111
+			self.set_shift_pattern_all(0b10100000)
+
 		time.sleep(0.01)
 		self.set_lateral_lines_alignament()
 		time.sleep(0.01)
-		#rt = self.__do_phase_tuning()
-		rt = self.align_out()
+		if(method == 'old' or self.fc7.invert):
+			rt = self.align_out()
+		else:
+			rt = self.TuneSSA(0b10100000)
 		if(tbconfig.VERSION['SSA']==1):
 			self.I2C.peri_write('OutPattern7/FIFOconfig', 7)
 		self.reset_pattern_injection()
@@ -226,7 +239,7 @@ class ssa_ctrl_base:
 		timeout_max = 3
 		timeout = 0
 		time.sleep(0.1)
-		while(fc7.read("stat_phy_phase_tuning_done") == 0):
+		while(self.fc7.read("stat_phy_phase_tuning_done") == 0):
 			time.sleep(0.1)
 			utils.print_warning("->  Waiting for the phase tuning")
 			timeout+=1
@@ -282,6 +295,17 @@ class ssa_ctrl_base:
 		#		self.set_line_mode(pMode=cMode, pDelay=cDelay, pBitSlip=cBitslip, pMasterLine=0)
 
 	#####################################################################
+	def TuneSSA(self, pattern=0b10100000):
+		self.setup_readout_chip_id()
+		state = True
+		for line in range(1,9):
+			TuneLine(line, np.array([pattern]),1,True,False)
+			if CheckLineDone(0,0,line) != 1:
+				print "Failed tuning line ", line
+				state = False
+		return state
+
+	#####################################################################
 	def set_t1_sampling_edge(self, edge):
 		V = tbconfig.VERSION['SSA']
 		if edge == "rising" or edge == "positive":
@@ -310,6 +334,7 @@ class ssa_ctrl_base:
 
 	#####################################################################
 	def activate_readout_async(self, ssa_first_counter_delay = 8, correction = 0):
+		self.setup_readout_chip_id()
 		if(tbconfig.VERSION['SSA'] >= 2):
 			self.I2C.peri_write(register="control_1", field='ReadoutMode', data=0b001)
 		else:
@@ -540,11 +565,13 @@ class ssa_ctrl_base:
 
 	#####################################################################
 	def set_lateral_data_phase(self, left, right):
+		self.setup_readout_chip_id()
 		self.fc7.write("ctrl_phy_ssa_gen_lateral_phase_1", right)
 		self.fc7.write("ctrl_phy_ssa_gen_lateral_phase_2", left)
 
 	#####################################################################
 	def set_lateral_data(self, left, right):
+		self.setup_readout_chip_id()
 		self.fc7.write("cnfg_phy_SSA_gen_right_lateral_data_format", right)
 		self.fc7.write("cnfg_phy_SSA_gen_left_lateral_data_format", left)
 
@@ -565,6 +592,7 @@ class ssa_ctrl_base:
 
 	#####################################################################
 	def write_fuses(self, val = 0, pulse = True, display = False, confirm = False):
+		self.setup_readout_chip_id()
 		d0 = (val >>  0) & 0xFF
 		d1 = (val >>  8) & 0xFF
 		d2 = (val >> 16) & 0xFF

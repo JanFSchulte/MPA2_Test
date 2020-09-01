@@ -22,8 +22,9 @@ fc7.read("stat_slvs_debug_general")
 
 class SSA_readout():
 
-	def __init__(self, I2C, FC7, ssactrl, ssastrip):
-		self.I2C = I2C;	self.fc7 = FC7;self.ctrl = ssactrl;
+	def __init__(self, index, I2C, FC7, ssactrl, ssastrip):
+		self.index = index
+		self.I2C = I2C;	self.fc7 = FC7; self.ctrl = ssactrl;
 		self.strip = ssastrip; self.utils = utils;
 		self.ofs_initialised = False;  self.ofs = [0]*6;
 		self.cl_shift = {'digital':0, 'analog':0}
@@ -54,6 +55,7 @@ class SSA_readout():
 		counter = 0; data_loc = 21 + ishift;
 		status = [0]*3; timeout = 10;
 		if(initialize):
+			self.ctrl.setup_readout_chip_id()
 			#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
 			Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 0, delay_before_next_pulse = 500, number_of_test_pulses = 1, enable_rst_L1 = 0)
 			time.sleep(0.005)
@@ -114,6 +116,8 @@ class SSA_readout():
 		if(display_pattern):
 			ctmp = np.array(data[0]).astype(bool).astype(int)
 			print( "[{:5s}]".format( '|'.join(map(str, ctmp)) ) )
+		if(self.index==1): # 2xSSA test board has inverted lines for chip 1
+			coordinates.sort()
 		if return_as_pattern:
 			ctmp = np.zeros([8,40])
 			for i in range(0,8):
@@ -125,6 +129,7 @@ class SSA_readout():
 			return coordinates
 
 	def cluster_data_delay(self, shift = 'default', display = False, debug = False):
+		self.ctrl.setup_readout_chip_id()
 		if(shift == 'default'):
 			ishift = self.cl_shift
 		cl_array = self.cluster_data(lookaround = True, display = display, display_pattern = debug)
@@ -143,6 +148,7 @@ class SSA_readout():
 	def l1_data(self, latency = 50, shift = 0, initialise = True, mipadapterdisable = True, trigger = True, multi = True, display = False, display_raw = False, profile=False):
 		#disable_pixel(0,0)
 		if(initialise == True):
+			self.ctrl.setup_readout_chip_id()
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
@@ -260,6 +266,7 @@ class SSA_readout():
 			ishift = shift
 		if(initialize == True):
 			#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 0)
+			self.ctrl.setup_readout_chip_id()
 			Configure_TestPulse_SSA(    number_of_test_pulses = 1, delay_before_next_pulse = 500, delay_after_test_pulse = 0, delay_after_fast_reset = 0, enable_rst_L1 = 0)
 			time.sleep(0.001)
 		self.fc7.SendCommand_CTRL("start_trigger")
@@ -314,6 +321,7 @@ class SSA_readout():
 	def counters_fast(self, striplist = range(1,121), raw_mode_en = 0, shift = 'auto', initialize = True, silent=0):
 		#t = time.time()
 		if(initialize):
+			self.ctrl.setup_readout_chip_id()
 			self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
 			#self.I2C.peri_write('AsyncRead_StartDel_LSB', (11 + shift) )
 		if(isinstance(shift, int) and (shift != self.countershift['value'])):
@@ -401,6 +409,7 @@ class SSA_readout():
 
 	def all_lines_debug(self, trigger = True, configure = True, cluster = True, l1data = True, lateral = False):
 		if(configure):
+			self.ctrl.setup_readout_chip_id()
 			self.fc7.SendCommand_CTRL("fast_test_pulse")
 			self.fc7.SendCommand_CTRL("fast_trigger")
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)

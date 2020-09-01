@@ -47,7 +47,7 @@ class ssa_wp_analyze():
             summary = CSV.csv_to_array(self.folder+'/'+wafername+'/GlobalSummary.csv', noheader=True)
             expvect = CSV.csv_to_array('ssa_methods/Configuration/expected_values.csv')
         except:
-            print("x>  \tSkipping directory " + wafername)
+            print("x>  \tMissing log files. Skipping directory " + wafername)
             return False
         if not os.path.exists(self.folder+'/'+wafername+'/plots'):
             os.makedirs(self.folder+'/'+wafername+'/plots')

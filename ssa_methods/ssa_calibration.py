@@ -37,10 +37,10 @@ class ssa_calibration():
 		self.multimeter_lan = multimeter_lan
 		self.get_value_and_voltage_averages = 1
 		self.par_list = [
-			######  FUNCTION | NAME| TARGET CALIB VALUE | .. | .. | Enable Autocalibration 
+			######  FUNCTION | NAME| TARGET CALIB VALUE | .. | .. | Enable Autocalibration
 			self.Parameter("Analog Ground Interal ", "GND",                   0.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Bandgap Voltage       ", "VBG",                   0.3, -1, -1, 'set_dont_calibrate'),
-			self.Parameter("Bandgap Voltage       ", "Bias_BOOSTERBASELINE",  0.6, -1, -1, 'set_dont_calibrate'),
+			self.Parameter("Booster baseline      ", "Bias_BOOSTERBASELINE",  0.6, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Booster Feedback Bias ", "Bias_D5BFEED",         82.0, -1, -1, 'set_calibrate'),
 			self.Parameter("Preamplifier Bias     ", "Bias_D5PREAMP",        82.0, -1, -1, 'set_calibrate'),
 			self.Parameter("TRIM DAC range        ", "Bias_D5TDR",          115.0, -1, -1, 'set_calibrate'),

@@ -417,19 +417,20 @@ def EncodeMainSlaveMapItem(slave_item):
 i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
 # setting the i2c slave map
 def SetMainSlaveMap(verbose = 1):
-    # define the map itself
-    #i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
-    # set the values
-    # --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
-    i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA", "MPA0")
-    i2c_slave_map[1].SetValues(0b0100000, 2, 1, 1, 1, 0, "SSA", "SSA0")
+	# define the map itself
+	#i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
+	# set the values
+	# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
+	i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA",  "MPA0")
+	i2c_slave_map[1].SetValues(0b0100001, 2, 1, 1, 1, 0, "SSA",  "SSA0")
+	i2c_slave_map[2].SetValues(0b0100111, 2, 1, 1, 1, 0, "SSA1", "SSA1")
 
-    # updating the slave id table
-    if verbose: print("---> Updating the Slave ID Map")
-    for slave_id in range(2):
-        fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
-        if verbose:
-            print("Writing","cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config" + hex(EncodeMainSlaveMapItem(i2c_slave_map[slave_id])))
+
+	# updating the slave id table
+	if verbose: print "---> Updating the Slave ID Map"
+	for slave_id in range(3):
+		fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
+		if verbose: print "Writing","cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", hex(EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 
 def activate_I2C_chip(frequency = 0, verbose = 1):
     i2cmux = 0
@@ -441,34 +442,44 @@ def activate_I2C_chip(frequency = 0, verbose = 1):
     SetMainSlaveMap(verbose = verbose)
 
 def write_I2C (chip, address, data, frequency = 0):
-    MPA = 0
-    SSA = 1
-    command_type = 0
-    read = 1
-    write = 0
-    readback = 0
-    if (chip == 'MPA'):
-        SendCommand_I2C  (command_type, 0, MPA, 0, write, address, data, readback)
-    elif (chip == 'SSA'):
-        #print('DEBUG: Sending I2C WRITE command ADR=[{:4X}] DATA=[{:8b}]'.format(address, data))
-        SendCommand_I2C  (command_type, 0, SSA, 0, write, address, data, readback)
+	MPA = 0
+	SSA0 = 1
+	SSA1 = 2
+	command_type = 0
+	read = 1
+	write = 0
+	readback = 0
+	#print("I2C Write")
+	if (chip == 'MPA'):
+		SendCommand_I2C  (command_type, 0, MPA, 0, write, address, data, readback)
+	elif (chip == 'SSA' or chip == 'SSA0'):
+		SendCommand_I2C  (command_type, 0, SSA0, 0, write, address, data, readback)
+		#print('w i2c on ssa0 adr ' + str(bin(i2c_slave_map[SSA0].i2c_address)) )
+	elif (chip == 'SSA1'):
+		SendCommand_I2C  (command_type, 0, SSA1, 0, write, address, data, readback)
+		#print('w i2c on ssa1 adr ' + str(bin(i2c_slave_map[SSA1].i2c_address)) )
 
 def read_I2C (chip, address, timeout = 0.001):
-    MPA = 0
-    SSA = 1
-    command_type = 0
-    read = 1
-    write = 0
-    readback = 0
-    data = 0
-    if (chip == 'MPA'):
-        SendCommand_I2C(command_type, 0, MPA, 0, read, address, data, readback)
-    elif (chip == 'SSA'):
-        #print('DEBUG: Sending I2C READ command ADR=[{:4X}] DATA=[{:8b}]'.format(address, data))
-        SendCommand_I2C(command_type, 0, SSA, 0, read, address, data, readback)
-    time.sleep(timeout)
-    read_data = ReadChipDataNEW()
-    return read_data
+	MPA = 0
+	SSA0 = 1
+	SSA1 = 2
+	command_type = 0
+	read = 1
+	write = 0
+	readback = 0
+	data = 0
+	if (chip == 'MPA'):
+		SendCommand_I2C(command_type, 0, MPA, 0, read, address, data, readback)
+	elif (chip == 'SSA' or chip == 'SSA0'):
+		SendCommand_I2C(command_type, 0, SSA0, 0, read, address, data, readback)
+		#print('r i2c on ssa0 adr ' + str(bin(i2c_slave_map[SSA0].i2c_address)) )
+	elif (chip == 'SSA1'):
+		SendCommand_I2C(command_type, 0, SSA1, 0, read, address, data, readback)
+		#print('r i2c on ssa1 adr ' + str(bin(i2c_slave_map[SSA1].i2c_address)) )
+	sleep(timeout)
+	read_data = ReadChipDataNEW()
+	#print("I2C Read")
+	return read_data
 
 #def align_out(verbose = 1):
 #    fc7.write("ctrl_phy_phase_tune_again", 1)

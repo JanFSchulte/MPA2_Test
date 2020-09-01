@@ -20,18 +20,24 @@ It run most of tests on the SSA ASIC in ~2min.
 This class is used in th ewafer probing mpl_toolkits
 
 Example:
-ssa_main_measure = SSA_Measurements()
+ssa_main_measure = SSA_Measurements_All()
 ssa_main_measure.RUN()
 '''
+try:
+	ssa
+except:
+	ssa = False
 
-class SSA_Measurements():
+class SSA_Measurements_All():
 
-	def __init__(self, tag="ChipN_0", runtest='default', directory='../SSA_Results/Wafer0/'):
-		self._init()
-		self.summary = results()
-		self.runtest = RunTest('default')
-		self.tag = tag
-		self.Configure(directory=directory, runtest=runtest)
+	def __init__(self, tag="ChipN_0", runtest='default', directory='../SSA_Results/Wafer0/', chip = ssa, mode_2xSSA=False):
+		self.mode_2xSSA = mode_2xSSA
+		if(chip):
+			self._init(chip)
+			self.summary = results()
+			self.runtest = RunTest('default')
+			self.tag = tag
+			self.Configure(directory=directory, runtest=runtest)
 
 	def Configure(self, directory = '../SSA_Results/Wafer0/', runtest = 'default'):
 		self.DIR = directory
@@ -78,16 +84,18 @@ class SSA_Measurements():
 		utils.set_log_files(curdir+'/OperationLog.txt',curdir+'/ErrorLog.txt')
 
 		## Main test routine ##################
-		self.pwr.set_supply(mode='on', display=False, d=self.dvdd, a=self.avdd, p=self.pvdd)
-		self.pwr.reset(False, 0)
-		self.test_routine_power(        filename=fo, mode='reset')
-		self.pwr.reset(False, 1)
-		self.test_routine_power(        filename=fo, mode='startup')
-		self.test_routine_initialize(   filename=fo)
-		self.test_routine_power(        filename=fo, mode='uncalibrated')
+		if(not self.mode_2xSSA):
+			self.pwr.set_supply(mode='on', display=False, d=self.dvdd, a=self.avdd, p=self.pvdd)
+			self.pwr.reset(False, 0)
+			self.test_routine_power(        filename=fo, mode='reset')
+			self.pwr.reset(False, 1)
+			self.test_routine_power(        filename=fo, mode='startup')
+			self.test_routine_initialize(   filename=fo)
+			self.test_routine_power(        filename=fo, mode='uncalibrated')
 		self.test_routine_measure_bias( filename=fo, mode='uncalibrated')
 		self.test_routine_calibrate(    filename=fo)
-		self.test_routine_power(        filename=fo, mode='calibrated')
+		if(not self.mode_2xSSA):
+			self.test_routine_power(        filename=fo, mode='calibrated')
 		self.test_routine_measure_bias( filename=fo, mode='calibrated')
 		self.test_routine_dacs(         filename=fo)
 		self.test_routine_analog(       filename=fo)
@@ -98,7 +106,8 @@ class SSA_Measurements():
 		## Save summary ######################
 		self.summary.save(directory=self.DIR, filename=("Chip_{c:s}_v{v:d}/".format(c=str(chip_info), v=version)), runname='')
 		self.summary.display()
-		self.ssa.pwr.off(display=False)
+		if(not self.mode_2xSSA):
+			self.ssa.pwr.off(display=False)
 		utils.close_log_files()
 		return self.test_good
 
@@ -408,15 +417,15 @@ class SSA_Measurements():
 				if(wd>=3): self.test_good = False
 		wd = 0
 
-	def _init(self):
-		self.ssa = ssa;
-		self.I2C = ssa_i2c;
-		self.fc7 = ssa.fc7;
-		self.cal = ssa_cal;
-		self.pwr = ssa_pwr;
-		self.biascal = ssa_biascal;
-		self.test = ssa_test;
-		self.measure = ssa_measure;
+	def _init(self, chip):
+		self.ssa = chip;
+		self.I2C = chip.i2c;
+		self.fc7 = chip.chip.fc7;
+		self.cal = chip.cal;
+		self.pwr = chip.pwr;
+		self.biascal = chip.biascal;
+		self.test = chip.test;
+		self.measure = chip.measure;
 		self.dvdd = 1.05; #for the offset of the board
 		self.pvdd = 1.15;
 		self.avdd = 1.20;

@@ -126,6 +126,7 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
 * Physical Interface Abstraction Layer
    cnfg_phy_slvs_ssa_first_counter_del  40013000    0000ff00	 1     1
    cnfg_phy_slvs_raw_mode_en		40013000    00000001     1     1 *1 - outputs 20000 clock cycles of the raw data from the stub lines, 0 - outputs parsed counters for the MPA/SSA chips
+   cnfg_phy_slvs_chip_switch 40013000 000f0000 1 1 *switch the chip connected to the slvs debug
    cnfg_phy_i2c_freq                    40013001    0000000f     1     1 *setting of the i2c frequency clock. (d0, 0.1MHz), (d1,0.5MHz), (d2,0.4MHz), (d3,0.8MHz), (d4,1MHz), (d5,2MHz), (d6,4MHz), (d7,5MHz), (d8,8MHz), (d9,10MHz)
    cnfg_phy_i2c_master_en		40013001    00000100     1     1 *enable I2C master, 1 by default
    cnfg_phy_EYE_SCAN_CNTVALUEIN_idelay_eye     40013002    0000001f     1     1 *configure the idelay for the eye scan. This will load the delay value.

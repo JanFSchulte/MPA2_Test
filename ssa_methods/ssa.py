@@ -15,15 +15,16 @@ from ssa_methods.ssa_ctrl_builtin_selftest import *
 
 class SSA_ASIC:
 
-	def __init__(self, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
+	def __init__(self, index, I2C, FC7, pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map):
+		self.index   = index
 		self.i2c     = I2C
 		self.pwr     = pwr
 		self.fc7     = FC7
 
-		self.ctrl    = ssa_ctrl_base( self.i2c, self.fc7, self.pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map )
+		self.ctrl    = ssa_ctrl_base(index, self.i2c, self.fc7, self.pwr, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map )
 		self.strip   = ssa_ctrl_strip( self.i2c, self.fc7 )
 		self.inject  = SSA_inject( self.i2c, self.fc7, self.ctrl, self.strip )
-		self.readout = SSA_readout( self.i2c, self.fc7, self.ctrl, self.strip )
+		self.readout = SSA_readout(index, self.i2c, self.fc7, self.ctrl, self.strip )
 		self.bist    = ssa_ctrl_builtin_selftest( self.i2c, self.fc7, self.ctrl, self.strip, self.pwr, self.inject, self.readout, ssa_peri_reg_map, ssa_strip_reg_map, analog_mux_map)
 
 		self.generic_parameters = {}
@@ -32,16 +33,16 @@ class SSA_ASIC:
 	####### Initialize functions ###############
 
 	def reset(self, display=True):
-		self.ctrl.reset(display = display)
+		self.fc7.reset_chip(self.index)
 
 	def resync(self):
 		self.ctrl.resync()
 
 	def disable(self, display=True):
-		self.pwr._disable_ssa(display = display)
+		self.fc7.disable_chip(self.index)
 
 	def enable(self, display=True):
-		self.pwr._enable_ssa(display = display)
+		self.fc7.enable_chip(self.index)
 
 	def debug(self, value = True):
 		self.i2c.set_debug_mode(value)

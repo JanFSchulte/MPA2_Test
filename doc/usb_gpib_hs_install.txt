@@ -36,6 +36,9 @@ USB-GPIB-HS with CentOS + Python:
 11. 
 sudo chown acaratel  /dev/gpib*  
 sudo chown acaratel /dev/usb_gpib
+sudo /usr/local/sbin/gpib_config --minor 0
+sudo /usr/local/sbin/gpib_config --minor 1
+
 11. try to run in python:
 python
 import Gpib

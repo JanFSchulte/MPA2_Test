@@ -32,6 +32,9 @@ class ssa_i2c_conf:
 		self.freq = 0
 		self.debug = debug
 		self.readback = False
+		##### for 2SSA
+		self.chip_adr = "SSA{:0d}".format(index)
+		self.i2c_address = address
 		self.delay = 0.0005
 		self.mask_active = {'mask_strip':True, 'mask_peri_A':True, 'mask_peri_D':True, 'None':False}
 
@@ -96,13 +99,13 @@ class ssa_i2c_conf:
 
 				if(use_onchip_mask): ### this is the procedure to use
 					self.mask_active[mask_name] = True
-					rep  = self.write_I2C('SSA', mask_adr, mask_val, self.freq)
-					rep  = self.write_I2C('SSA', reg_adr, tdata, self.freq)
+					rep  = self.write_I2C(self.chip_adr, mask_adr, mask_val, self.freq)
+					rep  = self.write_I2C(self.chip_adr, reg_adr, tdata, self.freq)
 				else:
-					readreg  = self.read_I2C('SSA', reg_adr)
+					readreg  = self.read_I2C(self.chip_adr, reg_adr)
 					if(readreg != None):
 						wdata = (readreg & (~int(mask, 2))) | (tdata & int(mask, 2))
-						rep  = self.write_I2C('SSA', reg_adr, wdata, self.freq)
+						rep  = self.write_I2C(self.chip_adr, reg_adr, wdata, self.freq)
 					else:
 						print('X>  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(reg_adr, 'NOVALUE'))
 						st = 'Null';
@@ -111,9 +114,9 @@ class ssa_i2c_conf:
 					print('->  I2C Periphery write - Adr=[0x{:4x}], Value=[{:d}]'.format(reg_adr, tdata))
 			else:
 				if(self.mask_active[mask_name] and (tbconfig.VERSION['SSA']>=2) ):
-					rep  = self.write_I2C('SSA', mask_adr, 0xff, self.freq)
+					rep  = self.write_I2C(self.chip_adr, mask_adr, 0xff, self.freq)
 					self.mask_active[mask_name] = False
-				rep  = self.write_I2C('SSA', reg_adr, data, self.freq)
+				rep  = self.write_I2C(self.chip_adr, reg_adr, data, self.freq)
 				if(self.debug):
 					print('->  I2C Periphery write - Adr=[0x{:4x}], Value=[{:d}]'.format(reg_adr, data))
 		if(self.readback):
@@ -144,10 +147,10 @@ class ssa_i2c_conf:
 			else:
 				base = self.ssa_peri_reg_map[register]
 				adr  = (base & 0xfff) | 0b0001000000000000
-			repd = self.read_I2C('SSA', adr)
+			repd = self.read_I2C(self.chip_adr, adr)
 			if(repd == None):
 				#utils.activate_I2C_chip()
-				#rep  = self.read_I2C('SSA', adr)
+				#rep  = self.read_I2C(self.chip_adr, adr)
 				rep  = 'Null'
 				print('X>  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(adr, 'NOVALUE'))
 				#self.utils.activate_I2C_chip()
@@ -211,14 +214,14 @@ class ssa_i2c_conf:
 				if(use_onchip_mask):  ### this is the procedure to use
 					self.mask_active['mask_strip'] = True
 					mask_adr = self.tonumber(self.ssa_peri_reg_map['mask_strip']['adr'],0)
-					rep  = self.write_I2C('SSA', mask_adr, mask_val, self.freq)
-					rep  = self.write_I2C('SSA', reg_adr, tdata, self.freq)
+					rep  = self.write_I2C(self.chip_adr, mask_adr, mask_val, self.freq)
+					rep  = self.write_I2C(self.chip_adr, reg_adr, tdata, self.freq)
 				else:
-					if(strip=='all'): readreg  = self.read_I2C('SSA', 1)
-					else: readreg  = self.read_I2C('SSA', reg_adr)
+					if(strip=='all'): readreg  = self.read_I2C(self.chip_adr, 1)
+					else: readreg  = self.read_I2C(self.chip_adr, reg_adr)
 					if(readreg != None):
 						wdata = (readreg & (~int(mask, 2))) | (tdata & int(mask, 2))
-						rep  = self.write_I2C('SSA', reg_adr, wdata, self.freq)
+						rep  = self.write_I2C(self.chip_adr, reg_adr, wdata, self.freq)
 					else:
 						print('X>  I2C Strip {:3d} read  -  Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(strip_id, reg_adr, 'NOVALUE'))
 						st = 'Null';
@@ -228,10 +231,10 @@ class ssa_i2c_conf:
 			else:
 				if(self.mask_active['mask_strip'] and (tbconfig.VERSION['SSA']>=2) ):
 					mask_adr  = self.tonumber(self.ssa_peri_reg_map['mask_strip']['adr'], 0)
-					rep  = self.write_I2C('SSA', mask_adr, 0xff, self.freq)
+					rep  = self.write_I2C(self.chip_adr, mask_adr, 0xff, self.freq)
 					self.mask_active['mask_strip'] = False
 				wdata = data
-				rep  = self.write_I2C('SSA', reg_adr, wdata, self.freq)
+				rep  = self.write_I2C(self.chip_adr, reg_adr, wdata, self.freq)
 				if(self.debug):
 					print('->  I2C Strip {:3d} write - Adr=[0x{:4x}], Value=[{:d}]'.format(strip_id, reg_adr, wdata))
 		if(self.readback):
@@ -270,7 +273,7 @@ class ssa_i2c_conf:
 				strip_id = strip if (strip is not 'all') else 0x00
 				base = self.tonumber(self.ssa_strip_reg_map[register],0)
 			adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
-			repd = self.read_I2C('SSA', adr)
+			repd = self.read_I2C(self.chip_adr, adr)
 			if(V>=2): strip_id+=1 # for print purposes only
 			if(repd == None):
 				rep  = 'Null'
@@ -296,6 +299,8 @@ class ssa_i2c_conf:
 		read = 1; write = 0; readback = 0
 		if  (chip == 'MPA'): self.SendCommand_I2C(0, 0, 0, 0, write, address, data, readback)
 		elif(chip == 'SSA'): self.SendCommand_I2C(0, 0, 1, 0, write, address, data, readback)
+		else: print('ERROR I2C Chip Name')
+
 
 	def read_I2C (self, chip, address):
 		read = 1; write = 0; readback = 0
@@ -303,6 +308,7 @@ class ssa_i2c_conf:
 		tinit=time.time()
 		if   (chip == 'MPA'): self.SendCommand_I2C(0, 0, 0, 0, read, address, data, readback)
 		elif (chip == 'SSA'): self.SendCommand_I2C(0, 0, 1, 0, read, address, data, readback)
+		else: print('ERROR I2C Chip Name')
 		time.sleep(self.delay)
 		read_data = ReadChipDataNEW()
 		return read_data

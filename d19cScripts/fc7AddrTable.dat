@@ -190,6 +190,7 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
 * Physical Interface Abstraction Layer
    cnfg_phy_slvs_ssa_first_counter_del  40013000    0000ff00	 1     1
    cnfg_phy_slvs_raw_mode_en		40013000    00000001     1     1 *1 - outputs 20000 clock cycles of the raw data from the stub lines, 0 - outputs parsed counters for the MPA/SSA chips
+   cnfg_phy_slvs_chip_switch 40013000 000f0000 1 1 *switch the chip connected to the slvs debug
    cnfg_phy_cic_2s_spars		40013000    00000002     1     1 *enable 2s sparsified
    cnfg_phy_cic_clock_en		40013000    00000004     1     1 *enable cic clock
    cnfg_phy_cic_power_en		40013000    00000008     1     1 *enable cic power
