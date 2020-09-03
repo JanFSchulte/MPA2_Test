@@ -43,7 +43,7 @@ class SSAwp:
 		self.chip          = SSA_ASIC(index, self.i2c, FC7, self.pwr, self.peri_reg_map, self.strip_reg_map, self.ana_mux_map)
 		self.cal           = SSA_cal_utility(self.chip, self.i2c, FC7)
 		self.pcbadc        = onboard_adc()
-		self.biascal       = ssa_calibration(self.chip, self.i2c, FC7, multimeter_gpib, multimeter_lan, self.pcbadc, self.peri_reg_map, self.strip_reg_map, self.ana_mux_map)
+		self.biascal       = ssa_calibration(self.chip, self.i2c, FC7, self.pcbadc, self.peri_reg_map, self.strip_reg_map, self.ana_mux_map, multimeter_gpib, multimeter_lan)
 		self.measure       = SSA_measurements(self.chip, self.i2c, FC7, self.cal, self.ana_mux_map, self.pwr, self.biascal)
 		self.seuutil       = SSA_SEU_utilities(self.chip, self.i2c, FC7, self.pwr)
 		self.test          = SSA_test_utility(self.chip, self.i2c, FC7, self.cal, self.pwr, self.seuutil)

@@ -5,3 +5,4 @@ d19cScripts/ipaddr.dat
 vivado*
 fw_bitfiles/
 *.swp
+*ssa_utils_adc.py

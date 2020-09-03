@@ -4,6 +4,7 @@ import inspect
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import datetime
 
 from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
@@ -69,26 +70,26 @@ class ssa_calibration():
 
 	def calibrate_to_nominals(self, measure = True, naverages=1):
 		self.get_value_and_voltage_averages = naverages
-		try:
-			if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):
-				self.__multimeter_gpib_initialise()
-			for par in self.par_list:
-				if(par.docalibrate == 'set_calibrate'):
-					value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
-					voltage = voltage*1E3
-					utils.print_log( par.full_name, ": " )
-					utils.print_log( "\tCheck the initial value: ")
-					utils.print_log( ("\t\t DAC: %4d\t V: %8.3f mV") % (value, voltage) )
-					utils.print_log( "\tTune the value (" + str( par.nominal ) + "):" )
-					best_dac = self.__tune_parameter(self.minst, par.par_name, par.nominal)
-					par.best_dac = best_dac
-			print("\n\nSummary of tuning (tuned values):")
-			if(measure):
-				self.measure_bias()
-			self.ssa.analog.set_output_mux('highimpedence')
-			return True
-		except:
-			return False
+		#try:
+		if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):
+			self.__multimeter_gpib_initialise()
+		for par in self.par_list:
+			if(par.docalibrate == 'set_calibrate'):
+				value, voltage = self.get_value_and_voltage(par.par_name, self.minst)
+				voltage = voltage*1E3
+				utils.print_log( par.full_name, ": " )
+				utils.print_log( "\tCheck the initial value: ")
+				utils.print_log( ("\t\t DAC: %4d\t V: %8.3f mV") % (value, voltage) )
+				utils.print_log( "\tTune the value (" + str( par.nominal ) + "):" )
+				best_dac = self.__tune_parameter(self.minst, par.par_name, par.nominal)
+				par.best_dac = best_dac
+		print("\n\nSummary of tuning (tuned values):")
+		if(measure):
+			self.measure_bias()
+		self.ssa.analog.set_output_mux('highimpedence')
+		return True
+		#except:
+		#	return False
 
 
 	def measure_bias(self, return_data = False):

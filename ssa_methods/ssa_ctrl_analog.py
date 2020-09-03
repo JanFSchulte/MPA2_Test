@@ -52,7 +52,27 @@ class ssa_ctrl_analog:
 			return True
 
 	#####################################################################
-	def _adc_measeure(self, testline = 'highimpedence', fast=True):
+	def adc_measure(self, testline = 'highimpedence', testpad_enable=False, nsamples=1, fast=True):
+		r1 = []
+		# default: self.testpad_is_enable = -1
+		if(testpad_enable or (testline=='TESTPAD')):
+			if(self.testpad_is_enable!=1): #to speedup
+				self.I2C.peri_write( register="ADC_trimming", field='TestPad_Enable', data=0b1 )
+				self.testpad_is_enable = 1
+		else:
+			if(self.testpad_is_enable!=0): #to speedup
+				self.I2C.peri_write( register="ADC_trimming", field='TestPad_Enable', data=0b0)
+				self.testpad_is_enable = 0
+		for i in range(nsamples):
+			r1.append( self._adc_measure(testline=testline, fast=fast) )
+		if(nsamples>1):
+			r = np.sum(r1) / float(nsamples)
+		else:
+			r = r1[0]
+		return r
+
+	#####################################################################
+	def _adc_measure(self, testline = 'highimpedence', fast=True):
 		#tinit=time.time()
 		input_sel = self.analog_mux_map[testline]
 		if(fast):
@@ -69,32 +89,16 @@ class ssa_ctrl_analog:
 			return False
 		msb = self.I2C.peri_read( register="ADC_out_H", field=False )
 		lsb = self.I2C.peri_read( register="ADC_out_L", field=False )
-		if((msb==None) or (lsb==None)):
-			res = False
-		else:
-			res = ((msb<<8) | lsb)
+		if((msb==None) or (lsb==None) or (msb=='Null') or (lsb=='Null') ):
+			utils.activate_I2C_chip()
+			msb = self.I2C.peri_read( register="ADC_out_H", field=False )
+			lsb = self.I2C.peri_read( register="ADC_out_L", field=False )
+		if((msb==None) or (lsb==None) or (msb=='Null') or (lsb=='Null') ):
+			return False
+		res = ((msb<<8) | lsb)
 		#print((time.time()-tinit)*1000); tinit=time.time()
 		return res
 
-	#####################################################################
-	def adc_measeure(self, testline = 'highimpedence', testpad_enable=False, nsamples=1, fast=True):
-		r1 = []
-		# default: self.testpad_is_enable = -1
-		if(testpad_enable or (testline=='TESTPAD')):
-			if(self.testpad_is_enable!=1): #to speedup
-				self.I2C.peri_write( register="ADC_trimming", field='TestPad_Enable', data=0b1 )
-				self.testpad_is_enable = 1
-		else:
-			if(self.testpad_is_enable!=0): #to speedup
-				self.I2C.peri_write( register="ADC_trimming", field='TestPad_Enable', data=0b0)
-				self.testpad_is_enable = 0
-		for i in range(nsamples):
-			r1.append( self._adc_measeure(testline=testline, fast=fast) )
-		if(nsamples>1):
-			r = np.sum(r1) / float(nsamples)
-		else:
-			r = r1[0]
-		return r
 
 	#####################################################################
 	def adc_set_trimming(self, value):
@@ -111,28 +115,103 @@ class ssa_ctrl_analog:
 
 	#####################################################################
 	def adc_measure_temperature(self, nsamples=10):
-		return self.adc_measeure('Temperature', nsamples=nsamples)
+		return self.adc_measure('Temperature', nsamples=nsamples)
 
 	#####################################################################
 	def adc_measure_THDAC(self, nsamples=10):
-		r1 = self.adc_measeure('Bias_THDAC', nsamples=nsamples)
-		r2 = self.adc_measeure('Bias_THDACHIGH', nsamples=nsamples)
+		r1 = self.adc_measure('Bias_THDAC', nsamples=nsamples)
+		r2 = self.adc_measure('Bias_THDACHIGH', nsamples=nsamples)
 		return [r1, r2]
 
 	#####################################################################
 	def adc_measure_CALDAC(self, nsamples=10):
-		return self.adc_measeure('Bias_CALDAC', nsamples=nsamples)
+		return self.adc_measure('Bias_CALDAC', nsamples=nsamples)
 
 	#####################################################################
 	def adc_measure_supply(self, nsamples=1, raw = True):
 		r = np.zeros(4)
-		r[0] = self.adc_measeure('DVDD', nsamples=nsamples)
-		r[1] = self.adc_measeure('AVDD', nsamples=nsamples)
-		r[2] = self.adc_measeure('PVDD', nsamples=nsamples)
-		r[3] = self.adc_measeure('GND',  nsamples=nsamples)
+		r[0] = self.adc_measure('DVDD', nsamples=nsamples)
+		r[1] = self.adc_measure('AVDD', nsamples=nsamples)
+		r[2] = self.adc_measure('PVDD', nsamples=nsamples)
+		r[3] = self.adc_measure('GND',  nsamples=nsamples)
 		if(not raw):
 			r = r/(2**11) # 12 bit ADC e partitore 1/2
 		return r
+
+	#####################################################################
+	def adc_measure_ext_pad(self, nsamples=10):
+		return self.adc_measure(testline='TESTPAD', testpad_enable=True, nsamples=nsamples, fast=True)
+
+	#####################################################################
+	def adc_sample_histogram(self, runtime=3600, freq=0.1, show=1, filename='../SSA_Results/ADC_samples.csv'):
+		self.adc_measure_ext_pad()
+		runtime = round(float(runtime)*freq)/freq #to have n copleate cycles
+		#ret = self.WVF.SetWaveform(func='ramp', freq=freq, offset=-0.1, vpp=1.1)
+		#if ret is False: return False
+		if(filename == False):
+			filename = '../SSA_Results/ADC_samples_'+str(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H-%M-%S')+'.csv')
+		with open(filename, 'w') as fo:
+			fo.write('\n')
+		cnt  = 0
+		told = 0
+		wd = 0
+		timestart = time.time()
+		while ((time.time()-timestart) < runtime):
+			while(wd < 3):
+				try:
+					res = int(np.round(self.adc_measure_ext_pad(1)))
+					break
+				except:
+					wd +=1;
+			if res is False: return False
+			with open(filename, 'a') as fo:
+				fo.write('{:8d},\n'.format(res))
+			cnt+=1
+			tstep = int(int(time.time()-timestart)/5)
+			#time.sleep(0.0001*random.randint(0,4))
+			if tstep>told:
+				print('->  ADC collected '+str(cnt)+' samples')
+				told=tstep
+		f.close()
+		print('->  ADC total number of samples taken is '+str(cnt))
+		dnlh, inlh, adchist = self.adc_dnl_inl_histogram(filename=filename)
+		return dnlh, inlh, adchist
+
+	#####################################################################
+	def adc_dnl_inl_histogram(self, filename='../SSA_Results/ADC_samples.csv', minc=2, maxc=4093):
+		if filename is None:
+			try: filename = self.filename
+			except: return False
+		f = open(filename)
+		adchist = [0]*8192
+		self.dnlh = np.zeros(4096)
+		self.inlh = np.zeros(4096)
+		maxim = 0
+		value=[]
+		for l in f.readlines():
+			if len(l)<2: continue
+			steps = l.split(",")[:-1]
+			steps = map(int,steps)
+			for s in steps:
+				#s = int(np.floor(float(s)*4095.0/5999.0 ))
+				adchist[s]+=1
+				if s > maxim: maxim = s
+				value.append(s)
+		#self.adchist, b = np.histogram(value, max(value)-min(value))
+		print(maxim)
+		f.close()
+		fo=open("../SSA_Results//adc_dnl_inl.csv","w")
+		stepsize = float(np.sum(adchist[minc:maxc]))/(maxc-minc)
+		inl=0.0
+		for i in range(minc,maxc+1):
+			dnl=float(adchist[i])/ stepsize -1.0
+			self.dnlh[i] = dnl
+			fo.write("{:8d}, {:9.6f}, {:9.6f}, {:9.6f}\n".format(i, dnl, inl, float(adchist[i])) )
+			inl+=dnl
+			self.inlh[i] = inl
+		fo.close()
+		self.adchist = adchist[1:4095]
+		return self.dnlh, self.inlh, self.adchist
 
 
 
