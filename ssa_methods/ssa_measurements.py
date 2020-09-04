@@ -20,9 +20,10 @@ import re
 
 class SSA_measurements():
 
-	def __init__(self, ssa, I2C, fc7, cal, analog_mux_map, pwr, biascal = False):
+	def __init__(self, ssa, I2C, fc7, cal, analog_mux_map, pwr, seuutil, biascal = False):
 		self.ssa = ssa; self.I2C = I2C; self.fc7 = fc7; self.utils = utils;
-		self.cal = cal; self.bias = biascal; self.muxmap = analog_mux_map; self.pwr = pwr;
+		self.cal = cal; self.bias = biascal; self.muxmap = analog_mux_map;
+		self.pwr = pwr; self.seuutil = seuutil;
 		self.__set_variables()
 
 	###########################################################
@@ -96,14 +97,6 @@ class SSA_measurements():
 		fe_offs_mean        = np.mean(offsets)
 
 		return threshold_std_init, threshold_std_trim, threshold_std_test, threshold_mean_trim, threshold_mean_test, noise_mean_trim, noise_mean_test, fe_gain_mean, fe_gain_mVfC_mean, fe_offs_mean
-
-
-	###########################################################
-	##### def gain_offset_noise_eval(self,
-	##### 	filename = '../SSA_Results/Chip0/Chip_0_'
-	##### 	charge = [1,2]
-	##### 	):
-
 
 	###########################################################
 	def scurves(self, cal_list = [50], trim_list = 'keep', mode = 'all', rdmode = 'fast', filename = False, runname = '', plot = True, nevents = 1000, speeduplevel = 2, countershift = 0, d19c_firmware_issue_repeat=0):
@@ -226,6 +219,90 @@ class SSA_measurements():
 		return calpulses, thresholds, noise, thmean, sigmamean, gains, gains_mV_fC, offsets
 
 
+	###########################################################
+	def power_vs_occupancy(self, maxclusters=8, l1rates=[0, 250, 500, 750, 1000], nsamples=5, filename = '../SSA_Results/power_vs_occupancy/', plot=False):
+		self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
+		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
+		self.fc7.write("ctrl_fast", 0x10000)
+		self.ssa.init(edge = 'negative', display = False)
+		results = {}
+		for lr in l1rates:
+			res=np.zeros([33,3])
+			if(lr != 0):  l1a_period = np.int( (40E3/lr)-1)
+			else: l1a_period = 0xffff
+			for nclusters in range(maxclusters+1):
+				cl_hits, cl_centroids = self.generate_clusters(
+					nclusters=nclusters,
+					min_clsize=1, max_clsize=2, smin=1, smax=121)
+				self.seuutil.Configure_Injection(
+					strip_list = cl_hits, hipflag_list = [],
+					analog_injection = 0, latency = 501)
+				Configure_SEU(
+					cal_pulse_period=1,
+					l1a_period=l1a_period,
+					number_of_cal_pulses=0,
+					initial_reset = 1)
+				self.fc7.write("cnfg_fast_backpressure_enable", 0)
+				self.fc7.SendCommand_CTRL("start_trigger")
+				pret, vret, iret = self.pwr.get_power_digital_average(nsamples=nsamples)
+				res[nclusters] = [pret, vret, iret]
+				self.fc7.SendCommand_CTRL("stop_trigger")
+				print('L1 rate = {:6.1f}, Occupancy = {:d} cl  ->  Current = {:5.3f}'.format(lr, nclusters, iret))
+			CSV.array_to_csv(array=res, filename = filename+'power_vs_occupancy_l1rate_{:0.0f}MHz'.format(lr))
+			results[lr] = res
+		self.fc7.SendCommand_CTRL("global_reset");time.sleep(0.1);
+		if(plot):
+			self.power_vs_occupancy_plot(maxclusters=8, l1rates=l1rates, filename=filename,)
+		return results
+
+	def power_vs_occupancy_plot(self, maxclusters=8, l1rates=[250, 500, 750, 1000], filename='../SSA_Results/power_vs_occupancy/', fit=0):
+		results = {}
+		plt.clf()
+		for lr in l1rates:
+			res = CSV.csv_to_array(filename = (filename+'power_vs_occupancy_l1rate_{:0.0f}MHz'.format(lr)) )
+			results[lr] = res
+			current = res[:,3]
+			ax = plt.subplot(111)
+			ax.spines["top"].set_visible(False)
+			ax.spines["right"].set_visible(False)
+			ax.get_xaxis().tick_bottom()
+			ax.get_yaxis().tick_left()
+			plt.xticks(range(0,maxclusters+1,1), fontsize=16)
+			plt.yticks(fontsize=16)
+			plt.ylabel("Digital power consuption [ mA ]", fontsize=16)
+			plt.xlabel("Strip Occupancy [Hit/Bx]", fontsize=16)
+			print(len(current))
+			if(fit>0):
+				p = np.poly1d(np.polyfit(list(range(maxclusters+1)), current[0:maxclusters+1], fit))
+				t = np.linspace(0, 8, 1000)
+				plt.plot(range(0,maxclusters+1,1), current[0:maxclusters+1], 'o', t, p(t), '-')
+			else:
+				plt.plot(range(0,maxclusters+1,1), current[0:maxclusters+1], '-o')
+		plt.show()
+		return res
+
+
+#		self.ssa.ctrl.set_threshold(100)
+#		if print_file:
+#			CSV.ArrayToCSV (data, '../SSA_Results/'+filename+'_PowerVsOccupancy.csv')
+#		if plot:
+#			plt.clf()
+#			w, h = plt.figaspect(1/1.5)
+#			fig = plt.figure(figsize=(8,5.2))
+#			ax = plt.subplot(111)
+#			ax.spines["top"].set_visible(False)
+#			ax.spines["right"].set_visible(False)
+#			ax.get_xaxis().tick_bottom()
+#			ax.get_yaxis().tick_left()
+#			plt.xticks(range(0,9,1), fontsize=16)
+#			plt.yticks(fontsize=16)
+#			plt.ylabel("Digital power consuption [ mW ]", fontsize=16)
+#			plt.xlabel("Strip Occupancy [Hit/Bx]", fontsize=16)
+#			p = np.poly1d(np.polyfit(data[:,1], data[:,2], 3))
+#			t = np.linspace(0, 8, 1000)
+#			plt.plot(data[:,1], data[:,2], 'o', t, p(t), '-')
+#			plt.show()
+#		return data
 
 
 	###########################################################
@@ -656,8 +733,10 @@ class SSA_measurements():
 		else:
 			return [g*1E3, ofs*1E3, baseline*1E3]
 
+
+
 	###########################################################
-	def power_vs_occupancy(self, th = range(2,13), trim = False, plot = 1, print_file =1, filename = "pwr1", itr = 1000, rp= 1):
+	def power_vs_occupancy_old(self, th = range(2,13), trim = False, plot = 1, print_file =1, filename = "pwr1", itr = 1000, rp= 1):
 		self.ssa.inject.analog_pulse(initialise = True)
 		if trim:
 			cal.trimming_scurves(method = 'highest', iterations = 3)
@@ -780,6 +859,21 @@ class SSA_measurements():
 		self.dll_resolution = 1.3157894736842106;
 		self.thdac_gain = 2.01 # mv/cnt
 		self.caldac_q = 0.04305 #fC/cnts
+
+	###########################################################
+	def generate_clusters(self, nclusters, min_clsize = 1, max_clsize = 4, smin=-2, smax=124):
+		hit = []; c = []; exc = [];
+		for i in range(nclusters):
+			size = random.sample(range(min_clsize, max_clsize), 1)[0]
+			rangelist = list( set(range(smin, smax-size)) - set(exc) )
+			adr = random.sample(rangelist, 1)[0]
+			cll = range(adr, adr+size)
+			hit += cll
+			c.append( np.mean(cll) )
+			exc += range(min(cll)-max_clsize-1, max(cll)+2)
+		hit.sort()
+		c.sort()
+		return hit, c
 
 
 '''

@@ -87,6 +87,7 @@ class ssa_ctrl_analog:
 		if(not r):
 			print("Error. Failed to use the ADC")
 			return False
+		time.sleep(0.001)
 		msb = self.I2C.peri_read( register="ADC_out_H", field=False )
 		lsb = self.I2C.peri_read( register="ADC_out_L", field=False )
 		if((msb==None) or (lsb==None) or (msb=='Null') or (lsb=='Null') ):
@@ -160,14 +161,16 @@ class ssa_ctrl_analog:
 			while(wd < 3):
 				try:
 					res = int(np.round(self.adc_measure_ext_pad(1)))
+					time.sleep( randint(0,3)*0.001 )
 					break
 				except:
 					wd +=1;
+
 			if res is False: return False
 			with open(filename, 'a') as fo:
 				fo.write('{:8d},\n'.format(res))
 			cnt+=1
-			tstep = int(int(time.time()-timestart)/5)
+			tstep = int(int(time.time()-timestart)/1)
 			#time.sleep(0.0001*random.randint(0,4))
 			if tstep>told:
 				print('->  ADC collected '+str(cnt)+' samples')
@@ -182,23 +185,19 @@ class ssa_ctrl_analog:
 		if filename is None:
 			try: filename = self.filename
 			except: return False
-		f = open(filename)
 		adchist = [0]*8192
 		self.dnlh = np.zeros(4096)
 		self.inlh = np.zeros(4096)
 		maxim = 0
-		value=[]
-		for l in f.readlines():
-			if len(l)<2: continue
-			steps = l.split(",")[:-1]
-			steps = map(int,steps)
-			for s in steps:
-				#s = int(np.floor(float(s)*4095.0/5999.0 ))
-				adchist[s]+=1
-				if s > maxim: maxim = s
-				value.append(s)
+		#value=[]
+		samples = CSV.csv_to_array(filename)[:,0]
+		for s in samples:
+			#s = int(np.floor(float(s)*4095.0/5999.0 ))
+			adchist[int(s)]+=1
+			#if s > maxim: maxim = s
+			#value.append(s)
 		#self.adchist, b = np.histogram(value, max(value)-min(value))
-		print(maxim)
+		#print(maxim)
 		f.close()
 		fo=open("../SSA_Results//adc_dnl_inl.csv","w")
 		stepsize = float(np.sum(adchist[minc:maxc]))/(maxc-minc)
@@ -211,7 +210,7 @@ class ssa_ctrl_analog:
 			self.inlh[i] = inl
 		fo.close()
 		self.adchist = adchist[1:4095]
-		return self.dnlh, self.inlh, self.adchist
+		return self.dnlh, self.inlh, adchist
 
 
 

@@ -142,6 +142,21 @@ class ssa_power_utility:
 		else:
 			return pret
 
+	def get_power_digital_average(self, nsamples=10):
+		isample = []
+		vsample = []
+		psample = []
+		utils.activate_I2C_chip()
+		for i in range(nsamples):
+			pret, vret, iret = self.get_power_digital(display=0, i2cact=0, rtv1=1)
+			isample.append(iret)
+			vsample.append(vret)
+			psample.append(pret)
+		vmean = np.mean(vsample)
+		imean = np.mean(isample)
+		pmean = np.mean(psample)
+		return pmean, vmean, imean
+
 	def get_dvdd(self):
 		utils.print_enable(False)
 		Configure_MPA_SSA_I2C_Master(1, 2)
@@ -343,7 +358,7 @@ class ssa_power_utility:
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, val, setvoltage)  # tx to DAC C
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
-		
+
 	def __initialise_constants(self):
 		self.pcbwrite = 0;
 		self.pcbread = 1;
