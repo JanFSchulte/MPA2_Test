@@ -720,7 +720,7 @@ class ssa_ctrl_base:
 		return Result
 
 	#####################################################################
-	def select_memory(self, L, H):
+	def set_active_memory(self, L, H):
 		sel=[0,0]
 		if(  L in [0, 'sram',  'SRAM']):
 			utils.print_info('->  Selected SRAM memory  for the hit memory')
@@ -737,9 +737,19 @@ class ssa_ctrl_base:
 			utils.print_info('->  Selected LATCH memory for the HIP flags memory')
 			sel[1]=1
 		select = sel[0]&0b1 | (sel[1]&0b1)<<1
-		rp = self.I2C.peri_write(register = 'control_1', field = 'memory_select', data=select)
-		rp = self.I2C.peri_read( register = 'control_1', field = 'memory_select')
+		self.I2C.peri_write(register = 'control_1', field = 'memory_select', data=select)
+		rp = self.get_active_memory()
 		return rp
+
+	def get_active_memory(self):
+		active = ['','']
+		rp = self.I2C.peri_read( register = 'control_1', field = 'memory_select_0')
+		if(rp): active[0] = 'LATCH'
+		else  : active[0] = 'SRAM'
+		rp = self.I2C.peri_read( register = 'control_1', field = 'memory_select_1')
+		if(rp): active[1] = 'LATCH'
+		else  : active[1] = 'SRAM'
+		return active
 
 
 # ssa_peri_reg_map['Fuse_Mode']              = 43

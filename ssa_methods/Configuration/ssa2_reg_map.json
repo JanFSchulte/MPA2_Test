@@ -134,6 +134,8 @@
                 "EdgeSel_T1"       : "0b00001000",
                 "L1_Latency_msb"   : "0b00010000",
                 "memory_select"    : "0b01100000",
+                "memory_select_0"  : "0b00100000",
+                "memory_select_1"  : "0b01000000",
                 "T1_or_CLK_select" : "0b10000000"
             }
         },

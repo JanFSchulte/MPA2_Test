@@ -5,6 +5,13 @@ from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from itertools import product as itertools_product
 import seaborn as sns
+import re
+from scipy import stats
+from scipy import constants as ph_const
+from scipy import signal as scypy_signal
+from scipy import interpolate
+import matplotlib.gridspec as gridspec
+from mpl_toolkits.mplot3d import Axes3D
 from collections import OrderedDict
 import time
 import sys
@@ -54,36 +61,29 @@ class SSA_measurements():
 		scurves['h_0']  = sc[0];
 		scurves['h_31'] = sc[1];
 		scurves['h_trim'] = sc[-1];
-
 		if(caldac=='evaluate'):  t_caldac = self.measure.dac_linearity(name='Bias_CALDAC', eval_inl_dnl=False, nbits=8, npoints=10, plot=False, runname='')
 		elif(caldac=='default'): t_caldac = self.cal.caldac
 		elif(isinstance(caldac, list)): t_caldac = caldac
 		else: return False
-
 		if(thrdac=='evaluate'):  t_thrdac = self.measure.dac_linearity(name='Bias_THDAC', eval_inl_dnl=False, nbits=8, npoints=10, plot=False, runname='')
 		elif(thrdac=='default'): t_thrdac = self.cal.thrdac
 		elif(isinstance(thrdac, list)): t_thrdac = thrdac
 		else: return False
-
 		cal_ampl = self.cal.evaluate_caldac_ampl(charge_fc_test, t_caldac)
-
 		scurves['l_trim'] = self.cal.scurves(
 			cal_ampl = cal_ampl, nevents = nevents,
 			display = False, plot = False, speeduplevel = 2, countershift = 'auto',
 			filename = False, mode = 'all', rdmode = 'fast')
-
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_trim))
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_test))
 		CSV.ArrayToCSV (array = scurves['l_trim'], filename = fo[1], transpose = True)
 		utils.print_log("->  Scurve data saved in {:s}".format(fo[1]))
-
 		rp = self.FE_Gain_Noise_Std__Calculate(
 			input_files = fo,
 			output_file = (filename),
 			nevents=nevents,
 			thdac_gain = np.abs(t_thrdac[0]),
 			plot = False )
-
 		calpulses, thresholds, noise, thmean, sigmamean, gains, gains_mVfC, offsets = rp
 		threshold_std_init  = np.std(thstd[0])
 		threshold_std_trim  = np.std(thresholds[str(charge_fc_trim)])
@@ -123,6 +123,7 @@ class SSA_measurements():
 					data.append(d)
 		return data
 
+	###########################################################
 	def scurves_plot(self, data):
 		plt.clf()
 		fig = plt.figure(figsize=(15,5))
@@ -208,19 +209,19 @@ class SSA_measurements():
 				gains[strip] = par[0]
 				offsets[strip] = par[1]
 			gains_mV_fC[strip] = np.abs(t_thrdac)*gains[strip]
-
 		gainmean = np.average(gains)
-
 		CSV.array_to_csv(gains,       output_file + 'frontend_gain.csv')
 		CSV.array_to_csv(gains_mV_fC, output_file + 'frontend_gain_mVfC.csv')
 		CSV.array_to_csv([gainmean],  output_file + 'frontend_gain-mean.csv')
 		CSV.array_to_csv(offsets,     output_file + 'frontend_offset.csv')
-
 		return calpulses, thresholds, noise, thmean, sigmamean, gains, gains_mV_fC, offsets
 
 
 	###########################################################
-	def power_vs_occupancy(self, maxclusters=8, l1rates=[0, 250, 500, 750, 1000], nsamples=5, filename = '../SSA_Results/power_vs_occupancy/', plot=False):
+	def power_vs_occupancy(self,
+		maxclusters=8, l1rates=[0, 250, 500, 750, 1000],
+		nsamples=5, filename = '../SSA_Results/power_vs_occupancy/', plot=False):
+
 		self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
 		self.fc7.write("ctrl_fast", 0x10000)
@@ -248,39 +249,73 @@ class SSA_measurements():
 				res[nclusters] = [pret, vret, iret]
 				self.fc7.SendCommand_CTRL("stop_trigger")
 				print('L1 rate = {:6.1f}, Occupancy = {:d} cl  ->  Current = {:5.3f}'.format(lr, nclusters, iret))
-			CSV.array_to_csv(array=res, filename = filename+'power_vs_occupancy_l1rate_{:0.0f}MHz'.format(lr))
+			CSV.array_to_csv(array=res, filename = filename+'/power_vs_occupancy_l1rate_{:0.0f}MHz'.format(lr))
 			results[lr] = res
 		self.fc7.SendCommand_CTRL("global_reset");time.sleep(0.1);
 		if(plot):
 			self.power_vs_occupancy_plot(maxclusters=8, l1rates=l1rates, filename=filename,)
 		return results
 
-	def power_vs_occupancy_plot(self, maxclusters=8, l1rates=[250, 500, 750, 1000], filename='../SSA_Results/power_vs_occupancy/', fit=0):
+	###########################################################
+	def power_vs_occupancy_plot(self,
+		maxclusters=8, l1rates=[250, 500, 750, 1000], save=1, show=1,
+		filename='../SSA_Results/power_vs_occupancy', fit=12, label=''):
+
 		results = {}
-		plt.clf()
+		color=iter(sns.color_palette('deep'))
+		if(save or show):
+			plt.clf()
+			fig = plt.figure(figsize=(18,12))
 		for lr in l1rates:
-			res = CSV.csv_to_array(filename = (filename+'power_vs_occupancy_l1rate_{:0.0f}MHz'.format(lr)) )
+			res = CSV.csv_to_array(filename = (filename+'/power_vs_occupancy_l1rate_{:0.0f}MHz'.format(lr)) )
 			results[lr] = res
 			current = res[:,3]
 			ax = plt.subplot(111)
-			ax.spines["top"].set_visible(False)
-			ax.spines["right"].set_visible(False)
-			ax.get_xaxis().tick_bottom()
-			ax.get_yaxis().tick_left()
-			plt.xticks(range(0,maxclusters+1,1), fontsize=16)
-			plt.yticks(fontsize=16)
-			plt.ylabel("Digital power consuption [ mA ]", fontsize=16)
-			plt.xlabel("Strip Occupancy [Hit/Bx]", fontsize=16)
-			print(len(current))
+			ax.spines["top"].set_visible(True)
+			ax.spines["right"].set_visible(True)
+			x = list(range(maxclusters+1))
+			y = current[0:maxclusters+1]
+			#plt.ylim(15, 25)
 			if(fit>0):
-				p = np.poly1d(np.polyfit(list(range(maxclusters+1)), current[0:maxclusters+1], fit))
-				t = np.linspace(0, 8, 1000)
-				plt.plot(range(0,maxclusters+1,1), current[0:maxclusters+1], 'o', t, p(t), '-')
+				xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
+				c = next(color);
+				#y_smuth = interpolate.BSpline(x, np.array([y, xnew]))
+				helper_y3 = interpolate.make_interp_spline(x, np.array(y) )
+				y_smuth = helper_y3(xnew)
+				y_hat = scypy_signal.savgol_filter(x = y_smuth , window_length = 1001, polyorder = fit)
+				plt.plot(xnew, y_smuth , color=c, lw=1, alpha = 0.5)
+				#plt.plot(xnew, y_hat   , color=c, lw=1, alpha = 0.8)
+				plt.plot(range(0,maxclusters+1,1), current[0:maxclusters+1], 'o', label=label + "(L1 rate = {:4d} kHz)".format(lr), color=c)
+				#p = np.poly1d(np.polyfit(list(range(maxclusters+1)), current[0:maxclusters+1], fit))
+				#t = np.linspace(0, 8, 1000)
+				#plt.plot(range(0,maxclusters+1,1), current[0:maxclusters+1], 'o', t, p(t), '-')
 			else:
-				plt.plot(range(0,maxclusters+1,1), current[0:maxclusters+1], '-o')
-		plt.show()
+				plt.plot(range(0,maxclusters+1,1), current[0:maxclusters+1], 'o')
+		leg = ax.legend(fontsize = 12, loc=('lower right'), frameon=True )
+		leg.get_frame().set_linewidth(1.0)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.ylabel("Digital power consuption [ mA ]", fontsize=16)
+		plt.xlabel("Strip Occupancy [Hit/Bx]", fontsize=16)
+		plt.xticks(range(0,maxclusters+1,1), fontsize=12)
+		plt.yticks(np.arange(19,24.5,0.5), fontsize=12)
+		if(save): plt.savefig(filename+'/power_vs_occupancy.png', bbox_inches="tight");
+		if(show): plt.show()
 		return res
 
+	###########################################################
+	def power_vs_occupancy_plot_sram_latch(self,
+		l1rates=[250, 500, 750, 1000], maxclusters = 8, fit=12,
+		file_sram  ='../SSA_Results/power_vs_occupancy/sram/',
+		file_latch ='../SSA_Results/power_vs_occupancy/latch/',
+		file_out   ='../SSA_Results/power_vs_occupancy/' ):
+
+		plt.clf()
+		fig = plt.figure(figsize=(18,12))
+		self.power_vs_occupancy_plot(label='SRAM ', maxclusters=maxclusters, l1rates=l1rates, save=0, show=0, filename=file_sram,  fit=fit)
+		self.power_vs_occupancy_plot(label='Latch ', maxclusters=maxclusters, l1rates=l1rates, save=0, show=0, filename=file_latch, fit=fit)
+		plt.savefig(file_out+'/power_vs_occupancy_sram_latch.png', bbox_inches="tight");
+		plt.show()
 
 #		self.ssa.ctrl.set_threshold(100)
 #		if print_file:
@@ -791,23 +826,23 @@ class SSA_measurements():
 		data = OrderedDict()
 		self.ssa.disable(display=False)
 		data['reset'] = self.pwr.get_power(display = False)
-		self._display_power_value(data.items()[-1], display)
 		self.ssa.enable(display=False)
 		data['enable'] = self.pwr.get_power(display = False)
-		self._display_power_value(data.items()[-1], display)
 		self.ssa.ctrl.init_slvs(0b100)
 		data['min-pad'] = self.pwr.get_power(display = False)
-		self._display_power_value(data.items()[-1], display)
 		self.ssa.ctrl.init_slvs(0b111)
 		data['max-pad'] = self.pwr.get_power(display = False)
-		self._display_power_value(data.items()[-1], display)
 		self.ssa.ctrl.activate_readout_async(ssa_first_counter_delay = 0xffff, correction = 0)
 		self.fc7.start_counters_read(1)
 		data['async'] = self.pwr.get_power(display = False)
-		self._display_power_value(data.items()[-1], display)
 		self.bias.calibrate_to_nominals()
 		data['calib'] = self.pwr.get_power(display = False)
-		self._display_power_value(data.items()[-1], display)
+		self._display_power_value(data, 'reset',   display)
+		self._display_power_value(data, 'enable',  display)
+		self._display_power_value(data, 'min-pad', display)
+		self._display_power_value(data, 'max-pad', display)
+		self._display_power_value(data, 'async',   display)
+		self._display_power_value(data, 'calib',   display)
 		return data
 
 	###########################################################
@@ -850,9 +885,9 @@ class SSA_measurements():
 		return thresholds_list, shapervalues_list
 
 	###########################################################
-	def _display_power_value(self, data, display):
+	def _display_power_value(self, data, field, display):
 		if(display):
-			print("->  %8s : Digital = {:7.3f}, Analog = {:7.3f}, Pads = {:7.3f}".format( (data[0], data[1][0], data[1][1], data[1][2]) ))
+			print("->  {:8s} : Digital = {:7.3f}, Analog = {:7.3f}, Pads = {:7.3f}".format( field, data[field][0], data[field][1], data[field][2]))
 
 	###########################################################
 	def __set_variables(self):
