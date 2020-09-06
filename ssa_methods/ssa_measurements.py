@@ -9,7 +9,7 @@ import re
 from scipy import stats
 from scipy import constants as ph_const
 from scipy import signal as scypy_signal
-from scipy import interpolate
+from scipy import interpolate as scipy_interpolate
 import matplotlib.gridspec as gridspec
 from mpl_toolkits.mplot3d import Axes3D
 from collections import OrderedDict
@@ -21,7 +21,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from scipy import stats
-from scipy import interpolate
 import re
 
 
@@ -279,8 +278,8 @@ class SSA_measurements():
 			if(fit>0):
 				xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
 				c = next(color);
-				#y_smuth = interpolate.BSpline(x, np.array([y, xnew]))
-				helper_y3 = interpolate.make_interp_spline(x, np.array(y) )
+				#y_smuth = scipy_interpolate.BSpline(x, np.array([y, xnew]))
+				helper_y3 = scipy_interpolate.make_interp_spline(x, np.array(y) )
 				y_smuth = helper_y3(xnew)
 				y_hat = scypy_signal.savgol_filter(x = y_smuth , window_length = 1001, polyorder = fit)
 				plt.plot(xnew, y_smuth , color=c, lw=1, alpha = 0.5)
@@ -466,8 +465,8 @@ class SSA_measurements():
 
 			xnew = np.linspace(np.min(lnspc), np.max(lnspc), 1000, endpoint=True)
 
-			#pdf_l = interpolate.BSpline(lnspc, pdf_g, xnew)
-			helper_y3 = interpolate.make_interp_spline(lnspc, pdf_g)
+			#pdf_l = scipy_interpolate.BSpline(lnspc, pdf_g, xnew)
+			helper_y3 = scipy_interpolate.make_interp_spline(lnspc, pdf_g)
 			pdf_l = helper_y3(xnew)
 			print(m)
 			print('----------')
@@ -600,13 +599,12 @@ class SSA_measurements():
 			plt.figure(3)
 			plt.bar(range(0,120), noise)
 			plt.show()
-
-		fo = open("../SSA_Results/" + file + "_Measure_Noise_SCurve.csv", filemode)
-		fo.write( "\n%s ; Noise S-Curve ; %s" % (runname, '; '.join(map(str, noise)) ))
-		fo = open("../SSA_Results/" + file + "_Measure_Gain_SCurve.csv", filemode)
-		fo.write( "\n%s ; Gain          ; %s" % (runname, '; '.join(map(str, gain)) ))
-		fo = open("../SSA_Results/" + file + "_Measure_Offset_SCurve.csv", filemode)
-		fo.write( "\n%s ; Offset        ; %s" % (runname, '; '.join(map(str, offset)) ))
+		with open("../SSA_Results/" + file + "_Measure_Noise_SCurve.csv", filemode) as fo:
+			fo.write( "\n%s ; Noise S-Curve ; %s" % (runname, '; '.join(map(str, noise)) ))
+		with open("../SSA_Results/" + file + "_Measure_Gain_SCurve.csv", filemode) as fo:
+			fo.write( "\n%s ; Gain          ; %s" % (runname, '; '.join(map(str, gain)) ))
+		with open("../SSA_Results/" + file + "_Measure_Offset_SCurve.csv", filemode) as fo:
+			fo.write( "\n%s ; Offset        ; %s" % (runname, '; '.join(map(str, offset)) ))
 
 		if(ret_average):
 			highnoise = np.concatenate([np.where( noise < 0 )[0], np.where( noise > 3 )[0]])
@@ -822,7 +820,7 @@ class SSA_measurements():
 		return data
 
 	###########################################################
-	def power_vs_state(self, display = True):
+	def power_vs_state(self, display = True, ):
 		data = OrderedDict()
 		self.ssa.disable(display=False)
 		data['reset'] = self.pwr.get_power(display = False)

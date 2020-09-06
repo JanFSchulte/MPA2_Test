@@ -145,17 +145,14 @@ class ssa_ctrl_analog:
 
 	#####################################################################
 	def adc_sample_histogram(self, runtime=3600, freq=0.1, show=1, filename='../SSA_Results/ADC_samples.csv'):
+		adchist = np.zeros(2**13)
+		cnt  = 0; told = 0; wd = 0
 		self.adc_measure_ext_pad()
 		runtime = round(float(runtime)*freq)/freq #to have n copleate cycles
 		#ret = self.WVF.SetWaveform(func='ramp', freq=freq, offset=-0.1, vpp=1.1)
 		#if ret is False: return False
 		if(filename == False):
 			filename = '../SSA_Results/ADC_samples_'+str(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H-%M-%S')+'.csv')
-		with open(filename, 'w') as fo:
-			fo.write('\n')
-		cnt  = 0
-		told = 0
-		wd = 0
 		timestart = time.time()
 		while ((time.time()-timestart) < runtime):
 			while(wd < 3):
@@ -165,19 +162,19 @@ class ssa_ctrl_analog:
 					break
 				except:
 					wd +=1;
-
 			if res is False: return False
-			with open(filename, 'a') as fo:
-				fo.write('{:8d},\n'.format(res))
+			else: adchist[int(res)]+=1
 			cnt+=1
-			tstep = int(int(time.time()-timestart)/1)
-			#time.sleep(0.0001*random.randint(0,4))
-			if tstep>told:
+			tcur = time.time()
+			if ((tcur-told)>1): #update histogram every second
+				told = tcur
 				print('->  ADC collected '+str(cnt)+' samples')
-				told=tstep
+				with open(filename, 'w') as fo:
+					fo.write('{:8d},\n'.format(res))
+				CSV.array_to_csv(adchist, filename=filename)
 		f.close()
 		print('->  ADC total number of samples taken is '+str(cnt))
-		dnlh, inlh, adchist = self.adc_dnl_inl_histogram(filename=filename)
+		dnlh, inlh = self.adc_dnl_inl_histogram(filename=filename)
 		return dnlh, inlh, adchist
 
 	#####################################################################
@@ -185,32 +182,20 @@ class ssa_ctrl_analog:
 		if filename is None:
 			try: filename = self.filename
 			except: return False
-		adchist = [0]*8192
 		self.dnlh = np.zeros(4096)
 		self.inlh = np.zeros(4096)
-		maxim = 0
-		#value=[]
-		samples = CSV.csv_to_array(filename)[:,0]
-		for s in samples:
-			#s = int(np.floor(float(s)*4095.0/5999.0 ))
-			adchist[int(s)]+=1
-			#if s > maxim: maxim = s
-			#value.append(s)
-		#self.adchist, b = np.histogram(value, max(value)-min(value))
-		#print(maxim)
-		f.close()
+		maxim = 0; inl=0.0;
+		adchist = CSV.csv_to_array(filename)[:,1]
 		fo=open("../SSA_Results//adc_dnl_inl.csv","w")
 		stepsize = float(np.sum(adchist[minc:maxc]))/(maxc-minc)
-		inl=0.0
 		for i in range(minc,maxc+1):
-			dnl=float(adchist[i])/ stepsize -1.0
+			dnl = (float(adchist[i])/stepsize)-1.0
 			self.dnlh[i] = dnl
-			fo.write("{:8d}, {:9.6f}, {:9.6f}, {:9.6f}\n".format(i, dnl, inl, float(adchist[i])) )
 			inl+=dnl
 			self.inlh[i] = inl
+			fo.write("{:8d}, {:9.6f}, {:9.6f}, {:9.6f}\n".format(i, dnl, inl, float(adchist[i])) )
 		fo.close()
-		self.adchist = adchist[1:4095]
-		return self.dnlh, self.inlh, adchist
+		return self.dnlh, self.inlh
 
 
 

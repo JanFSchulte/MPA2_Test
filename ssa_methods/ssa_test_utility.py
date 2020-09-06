@@ -1,17 +1,20 @@
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
-from myScripts.ArrayToCSV import *
-from myScripts.Utilities import *
-import seaborn as sns
+
 import time
 import sys
 import inspect
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from threading import Thread
+
 from utilities.tbsettings import *
+from scipy import interpolate as scipy_interpolate
+from d19cScripts.fc7_daq_methods import *
+from d19cScripts.MPA_SSA_BoardControl import *
+from myScripts.BasicD19c import *
+from myScripts.ArrayToCSV import *
+from myScripts.Utilities import *
 
 
 class SSA_test_utility():
@@ -21,15 +24,15 @@ class SSA_test_utility():
 		self.cal = cal; self.pwr = pwr; self.seuutil = seuutil;
 		self.striplist = []
 
-
-	def cluster_data(self, mode = "digital",  nstrips = 'random', min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = True):
+	##############################################################
+	def cluster_data(self, mode = "digital",  nstrips = 'random', min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = True, word_alignment='auto'):
 		fo = open(file + "readout_cluster-data_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = '';
 		utils.activate_I2C_chip()
 		SendCommand_CTRL("stop_trigger")
 		if (init):
 			self.ssa.init(reset_board = False, reset_chip = False, display = False)
-		if(not self.ssa.cl_word_aligned()):
+		if( (word_alignment=='auto' and (not self.ssa.cl_word_aligned())) or (word_alignment==True) or (word_alignment==1)):
 			self.ssa.alignment_cluster_data_word()
 			self.ssa.alignment_lateral_input()
 		time.sleep(0.1)
@@ -134,9 +137,7 @@ class SSA_test_utility():
 		#print(time.time()-timeinit)
 		return rt
 
-
-
-
+	##############################################################
 	def l1_data(self, mode = "digital", nstrips='random', nruns = 100, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '',profile=False):
 		fo = open(file + "readout_L1-data_" + mode + ".csv", filemode)
 		counter = [[0,0],[0,0], [0,0]]
@@ -257,8 +258,7 @@ class SSA_test_utility():
 			print('->  Test time = {:0.3f}s - Time per cycle = {:0.3f}ms'.format(tres, 1000*tres/float(pr_cnt)))
 		return result
 
-
-
+	##############################################################
 	def cluster_data_basic(self, mode = "digital", nruns = 1, shift='default', shiftL='default' , display=False, lateral = True, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False):
 		fo = open(file + "readout_cluster-data-basic_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = ''; stlateralout = '';
@@ -348,25 +348,14 @@ class SSA_test_utility():
 		rt = [100*(1-cnt['cl_err']/float(cnt['cl_sum'])) , 100*(1-cnt['li_err']/float(cnt['li_sum'])) , 100*(1-cnt['lo_err']/float(cnt['lo_sum'])) ]
 		return rt
 
+	##############################################################
 	def lateral_input_phase_tuning(self, display = False, timeout = 256*3, delay = 4, shift = 'default', init = False, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = ''):
 		return self.ssa.alignment_cluster_data_word(
 			display = display, delay = delay,
 			shift = shift, init = init, file = file,
 			filemode = filemode, runname = runname)
 
-
-	#def lateral_output_phase_tuning(self):
-	#	for i in range(16):
-	#		self.ssa.set_lateral_sampling_shift(i,0)
-	#		self.ssa.inject.digital_pulse([1,2,3,4,5,6,7,8])
-	#		a, b = self.ssa.readout.lateral_data(shift =-1, raw = True)
-	#		print( bin(a) + '  ' + bin(b))
-	#		a, b = self.ssa.readout.lateral_data(shift = 0, raw = True)
-	#		print( bin(a) + '  ' + bin(b))
-	#		a, b = self.ssa.readout.lateral_data(shift = 1, raw = True)
-	#		print( bin(a) + '  ' + bin(b))
-
-
+	##############################################################
 	def l1_data_basic(self, mode = "digital", nruns = 1, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '',profile=False):
 		fo = open(file + "readout_L1-data_" + mode + ".csv", filemode)
 		counter = [[0,0],[0,0]]
@@ -449,9 +438,241 @@ class SSA_test_utility():
 			print('->  Test time = {:0.3f}s - Time per cycle = {:0.3f}ms'.format(tres, 1000*tres/float(pr_cnt)))
 		return result
 
+	##############################################################
+	def measure_dynamic_power(self, NHits = 5, L1_rate = 1000, display_errors = False, slvs_current=7):
+		self.striplist = random.sample([item for item in range(0,61) if item not in self.striplist], NHits)
+		#self.striplist = random.sample(range(0,60), NHits)
+		striplist = list(np.sort(self.striplist)*2)
+		#print(self.striplist)
+		hiplist = self.striplist
+		display = 0 if display_errors else -1
+		sleep(0.01); SendCommand_CTRL("global_reset")
+		sleep(0.01);  SendCommand_CTRL("fast_fast_reset")
+		sleep(0.01); self.seuutil.ssa.init(edge = 'negative', display = False, slvs_current=slvs_current)
+		s1, s2, s3 = self.seuutil.Stub_Evaluate_Pattern(striplist)
+		p1, p2, p3, p4, p5, p6, p7 = self.seuutil.L1_Evaluate_Pattern(striplist, hiplist)
+		sleep(0.01); self.seuutil.Configure_Injection(strip_list = striplist, hipflag_list = hiplist, analog_injection = 0, latency = 501, create_errors = False)
+		sleep(0.01); self.seuutil.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = 0)
+		sleep(0.01); Configure_SEU(1, int(40000.0/L1_rate-1), number_of_cal_pulses = 0, initial_reset = 1)
+		sleep(0.01); fc7.write("cnfg_fast_backpressure_enable", 0)
+		sleep(0.01); self.seuutil.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", 73)
+		sleep(0.01); SendCommand_CTRL("start_trigger")
+		sleep(0.50); pw = self.pwr.get_power(display = False, return_all = True)
+		sleep(0.01); SendCommand_CTRL("stop_trigger")
+		return pw
 
+	##############################################################
+	def power_vs_occupancy(self, L1_rate = 1000, display_errors = False, slvs_current = 7):
+		#self.pwr.set_supply(mode='on', d=DVDD, a=AVDD, p=PVDD, bg = 0.270, display = True)
+		I = []
+		for nclusters in range(0,32,1):
+			[Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip] = self.measure_dynamic_power(NHits = nclusters, L1_rate = L1_rate, display_errors = display_errors, slvs_current=slvs_current)
+			I.append([nclusters, Id, Ia, Ip])
+			print("->  N Clusters %5.1f  -> Current = %7.3f - %7.3f - %7.3f" % (nclusters/2.0, Id, Ia, Ip ))
+		return I
 
-	def memory(self, memory = [1,2], delay = [10], shift = 0, latency = 199, display = 1, file = '../SSA_Results/Chip0/Chip_0', filemode = 'w', runname = '1.2V'):
+	##############################################################
+	def shift(self, pattern = 0b00011000):
+		self.ssa.ctrl.activate_readout_shift()
+		self.ssa.ctrl.set_shift_pattern_all(pattern)
+		self.ssa.readout.all_lines(trigger = True, configure = True, cluster = True, l1data = False, lateral = False)
+
+	##############################################################
+	def ring_oscillators_vs_dvdd(self,
+		dvdd_step=0.05, dvdd_max=1.3, dvdd_min=0.8, plot=False,
+		filename = '../SSA_Results/ring_oscillator_vs_dvdd/', filemode='w', runname = ''):
+		result = []
+		if not os.path.exists(filename): os.makedirs(filename)
+		fout = filename + 'ring_oscillator_vs_dvdd.csv'
+		with open(fout, filemode)  as fo:
+			fo.write("    RUN ,   DVDD , INV BR , INV TR , INV BC , INV BL , DEL BR , DEL TR , DEL BC , DEL BL ,  \n")
+		dvdd_range = np.arange(dvdd_min, dvdd_max, dvdd_step)
+		for dvdd in dvdd_range:
+			self.ssa.pwr.set_dvdd(dvdd)
+			time.sleep(0.1)
+			res = self.ssa.bist.ring_oscilaltor(
+				resolution_inv=127, resolution_del=127,
+				raw=0, asarray=1, display=1, note=' at DVDD={:5.3f}V'.format(dvdd) )
+			#rdv = self.ssa.pwr.get_dvdd()
+			result.append( np.append(dvdd , res) )
+			with open(fout, 'a')  as fo:
+				fo.write("{:8s}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f},\n".format(
+					runname, dvdd, res[0], res[1], res[2], res[3], res[4], res[5], res[6], res[7]))
+		self.ssa.pwr.set_dvdd(1.0)
+		if(plot):
+			self.ring_oscillators_vs_dvdd_plot()
+		return result
+
+	##############################################################
+	def ring_oscillators_vs_dvdd_plot(self,
+		filename = '../SSA_Results/ring_oscillator_vs_dvdd/', runname = '', label=''):
+
+		fout = filename + "ring_oscillator_vs_dvdd.csv"
+		res = CSV.csv_to_array(filename = fout)
+		measurement = np.array(res[:,1:-1], dtype=float)
+		measurement = measurement[np.argsort(measurement[:,0])]
+		x = np.array( measurement[:,0], dtype=float)
+		for mode in ['Inverter', 'Delay_cell']:
+			fig = plt.figure(figsize=(12,8))
+			ax = plt.subplot(111)
+			ax.spines["top"].set_visible(True)
+			ax.spines["right"].set_visible(True)
+			color = iter(sns.color_palette('deep'))
+			for i in range(4):
+				if(mode == 'Inverter'):
+					y = np.array( measurement[:,1+i], dtype=float)
+				else:
+					y = np.array( measurement[:,5+i], dtype=float)
+				xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
+				helper_y = scipy_interpolate.make_interp_spline(x, y)
+				ynew = helper_y(xnew)
+				c = next(color);
+				if  (i==0): lb = 'Bottom-Right'
+				elif(i==1): lb = 'Top-Right'
+				elif(i==2): lb = 'Bottom-Center (ref)'
+				elif(i==3): lb = 'Bottom-Left'
+				plt.plot(x, y, 'x', label=(label+lb), color=c)
+				plt.plot(xnew, ynew , color=c, lw=1, alpha = 0.5)
+			leg = ax.legend(fontsize = 12, loc=('lower right'), frameon=True )
+			leg.get_frame().set_linewidth(1.0)
+			ax.get_xaxis().tick_bottom()
+			ax.get_yaxis().tick_left()
+			plt.ylabel("Frequency [ MHz ]", fontsize=16)
+			plt.xlabel("DVDD [V]", fontsize=16)
+			plt.xticks(np.arange(0.75,1.3,0.05), fontsize=12)
+			if(mode == 'Inverter'):
+				plt.yticks(range(0,701,50), fontsize=12)
+			else:
+				plt.yticks(range(10,36,2), fontsize=12)
+			plt.savefig(filename+'/ring_oscillator_vs_dvdd_{:s}.png'.format(mode), bbox_inches="tight");
+		plt.show()
+
+	##############################################################
+	def SRAM_BIST(self, nruns=3, display=1, note=''):
+		rv = np.array([0,0])
+		for memory in [1,2]:
+			for i in range(nruns):
+				try:    result = self.ssa.bist.SRAM(memory_select=memory, configure=0, display=(display>=2))
+				except: result = 0
+				rv[memory-1] += result
+		rv = rv/np.float(nruns)
+		if(display>=1):
+			if(rv[0]<100): utils.print_warning( "->  {:s}BIST memory 1 test : FAIL ({:6.3f}) ".format(note, rv[0]))
+			else:          utils.print_good(    "->  {:s}BIST memory 1 test : PASS ({:6.3f}) ".format(note, rv[0]))
+			if(rv[1]<100): utils.print_warning( "->  {:s}BIST memory 2 test : FAIL ({:6.3f}) ".format(note, rv[1]))
+			else:          utils.print_good(    "->  {:s}BIST memory 2 test : PASS ({:6.3f}) ".format(note, rv[1]))
+		return rv
+
+	##############################################################
+	def SRAM_BIST_vs_DVDD(self,
+		step=0.001, dvdd_max=0.800, dvdd_min=0.700, nruns_per_point=10, plot=False,
+		filename = '../SSA_Results/memory_bist_vs_dvdd/', filemode='w', runname = ''):
+
+		self.ssa.pwr.set_dvdd(1.0)
+		self.ssa.reset()
+		result = {}
+		if not os.path.exists(filename): os.makedirs(filename)
+		fout = filename + "memory_bist_vs_dvdd.csv"
+		with open(fout, filemode)  as fo:
+			fo.write("\n     RUN ,   DVDD   , MEM0   , MEM1   , \n")
+		#dvdd_range = np.linspace(dvdd_max, dvdd_min, npoints)
+		fine_range = np.arange(dvdd_max, dvdd_min-step, (-1)*step)
+		coarse_renge = np.arange(1.3, dvdd_max+step, -0.1)
+		dvdd_range = np.append(coarse_renge, fine_range)
+
+		for dvdd in dvdd_range:
+			self.ssa.pwr.set_dvdd(dvdd)
+			time.sleep(0.1)
+			#self.ssa.reset()
+			res = self.SRAM_BIST(nruns=nruns_per_point, note='[DVDD={:5.3f}] '.format(dvdd), display=True )
+			if(res[0]<0): res[0]=0
+			if(res[1]<0): res[1]=0
+			#rdv = self.ssa.pwr.get_dvdd()
+			result[dvdd] = [res[0], res[1]]
+			with open(fout, 'a')  as fo:
+				fo.write("{:8s} , {:7.3f} , {:7.3f}, {:7.3f}, \n".format(runname, dvdd, res[0], res[1]))
+		if(plot):
+			self.SRAM_BIST_vs_DVDD_plot()
+		return result
+
+	##############################################################
+	def SRAM_BIST_vs_DVDD_plot(self,
+		filename = '../SSA_Results/memory_bist_vs_dvdd/', runname = '', label=''):
+
+		fout = "../SSA_Results/" + filename + "memory_bist_vs_dvdd.csv"
+		res = CSV.csv_to_array(filename = fout)
+		measurement = np.array(res[:,1:-1], dtype=float)
+		measurement = measurement[np.argsort(measurement[:,0])]
+		x = np.array( measurement[:,0], dtype=float)
+		y_m0 = np.array( measurement[:,1], dtype=float)
+		y_m1 = np.array( measurement[:,2], dtype=float)
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(True)
+		ax.spines["right"].set_visible(True)
+		color = iter(sns.color_palette('deep'))
+		xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
+		helper_y_m0 = scipy_interpolate.make_interp_spline(x, y_m0)
+		helper_y_m1 = scipy_interpolate.make_interp_spline(x, y_m1)
+		y0new = helper_y_m0(xnew)
+		y1new = helper_y_m1(xnew)
+		c = next(color);
+		plt.plot(x, y_m0, 'x', label=(label+"SRAM 1"), color=c)
+		plt.plot(xnew, y0new , color='red', lw=1, alpha = 0.5)
+		#c = next(color);
+		#c = next(color);
+		#plt.plot(x, y_m0, 'x', label=(label+"SRAM 2"), color=c)
+		#plt.plot(xnew, y1new , color=c, lw=1, alpha = 0.5)
+		plt.show()
+
+	##############################################################
+	def power_vs_occupancy_plot(self,
+		maxclusters=8, l1rates=[250, 500, 750, 1000], save=1, show=1,
+		filename='../SSA_Results/power_vs_occupancy', fit=12, label=''):
+
+		results = {}
+		color=iter(sns.color_palette('deep'))
+		if(save or show):
+			plt.clf()
+			fig = plt.figure(figsize=(18,12))
+		for lr in l1rates:
+			res = CSV.csv_to_array(filename = (filename+'/power_vs_occupancy_l1rate_{:0.0f}MHz'.format(lr)) )
+			results[lr] = res
+			current = res[:,3]
+			ax = plt.subplot(111)
+			ax.spines["top"].set_visible(True)
+			ax.spines["right"].set_visible(True)
+			x = list(range(maxclusters+1))
+			y = current[0:maxclusters+1]
+			#plt.ylim(15, 25)
+			if(fit>0):
+				xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
+				c = next(color);
+				#y_smuth = interpolate.BSpline(x, np.array([y, xnew]))
+				helper_y3 = interpolate.make_interp_spline(x, np.array(y) )
+				y_smuth = helper_y3(xnew)
+				y_hat = scypy_signal.savgol_filter(x = y_smuth , window_length = 1001, polyorder = fit)
+				plt.plot(xnew, y_smuth , color=c, lw=1, alpha = 0.5)
+				#plt.plot(xnew, y_hat   , color=c, lw=1, alpha = 0.8)
+				plt.plot(range(0,maxclusters+1,1), current[0:maxclusters+1], 'o', label=label + "(L1 rate = {:4d} kHz)".format(lr), color=c)
+				#p = np.poly1d(np.polyfit(list(range(maxclusters+1)), current[0:maxclusters+1], fit))
+				#t = np.linspace(0, 8, 1000)
+				#plt.plot(range(0,maxclusters+1,1), current[0:maxclusters+1], 'o', t, p(t), '-')
+			else:
+				plt.plot(range(0,maxclusters+1,1), current[0:maxclusters+1], 'o')
+		leg = ax.legend(fontsize = 12, loc=('lower right'), frameon=True )
+		leg.get_frame().set_linewidth(1.0)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.ylabel("Digital power consuption [ mA ]", fontsize=16)
+		plt.xlabel("Strip Occupancy [Hit/Bx]", fontsize=16)
+		plt.xticks(range(0,maxclusters+1,1), fontsize=12)
+		plt.yticks(np.arange(19,24.5,0.5), fontsize=12)
+		if(save): plt.savefig(filename+'/power_vs_occupancy.png', bbox_inches="tight");
+		if(show): plt.show()
+		return res
+
+	##############################################################
+	def memory_with_l1(self, memory = [1,2], delay = [10], shift = 0, latency = 199, display = 1, file = '../SSA_Results/Chip0/Chip_0', filemode = 'w', runname = '1.2V'):
 		utils.activate_I2C_chip()
 		if(isinstance(memory, int)):
 			if(memory in [1,2]): HIPrun = [memory-1]
@@ -527,12 +748,13 @@ class SSA_test_utility():
 		self.memerrlist = errlist
 		return efflist
 
-
-
-	def memory_vs_voltage(self, memory = 1, step = 0.005, start = 1.25, stop = 0.9, latency = 200, shift = 0, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = ''):
+	##############################################################
+	def memory_with_l1_vs_voltage(self, memory = 1, step = 0.005, start = 1.25, stop = 0.9, latency = 200, shift = 0, file = '../SSA_Results/memory_bist_vs_dvdd/', filemode = 'w', runname = ''):
 		utils.activate_I2C_chip()
-		fo = open("../SSA_Results/" + file + "_Test_Memory-Supply_" + str(memory) + ".csv", filemode)
-		fo.write("\n    RUN ; DVDD;       EFFICIENCY;    ERROR LIST; \n")
+		if not os.path.exists(file):
+			os.makedirs(file)
+		with open("../SSA_Results/" + file + "_Test_Memory-Supply_" + str(memory) + ".csv", filemode)  as fo:
+			fo.write("\n    RUN ; DVDD;       EFFICIENCY;    ERROR LIST; \n")
 		for dvdd in np.arange(start, stop, -step):
 			self.pwr.set_dvdd( dvdd )
 			rt = self.ssa.init(reset_board = True, reset_chip = False, display = False) #alignement
@@ -540,13 +762,14 @@ class SSA_test_utility():
 				eff = 0; erlist = [];
 			eff = self.memory(memory = memory, display = 0, latency = latency, shift = shift)
 			erlist = self.memerrlist
-			fo.write("%8s ; %4.3fV ;     %7.2f%% ;       %s ; \n" % (runname, dvdd, eff, erlist))
+			with open("../SSA_Results/" + file + "_Test_Memory-Supply_" + str(memory) + ".csv", 'a')  as fo:
+				fo.write("%8s ; %4.3fV ;     %7.2f%% ;       %s ; \n" % (runname, dvdd, eff, erlist))
 			print("->  {:4.3f}V ;  {:7.2f}% ;".format(dvdd, eff))
 			if eff == 0:
 				break
 		fo.close()
 
-
+	##############################################################
 	def mem_test_gen(self, init = True, patternL = range(10,90,10), patternH = [30,40,50], sequence = 0xff, npulses = 1, shift = 0, delay = 10, l1_duration = 2, calpulse_duration = 1, latency = 0, fc_resync = 1, fc_test = 1, fc_l1 = 1, clean = True, display = False, display_raw = False, delay_before_next_pulse = 1, delay_between_consecutive_trigeers = 1):
 		latency = latency + 2
 		if clean:
@@ -563,9 +786,7 @@ class SSA_test_utility():
 				sleep(0.01); self.I2C.strip_write("DigCalibPattern_H", 0, 0)
 				sleep(0.01); self.I2C.peri_write('L1_Latency_msb', 0)
 				sleep(0.01); self.I2C.peri_write('L1_Latency_lsb', latency)
-
 			self.ssa.ctrl.set_cal_pulse_duration(duration = calpulse_duration)
-
 			if(tbconfig.VERSION['SSA'] >= 2):
 				self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b01001)
 			else:
@@ -599,7 +820,7 @@ class SSA_test_utility():
 		print(dstr)
 		#return dstr
 
-
+	##############################################################
 	def mem_test_inputs(self, fix_adr = 0, fix_data_before = 0, fix_data_after = 0, fix_ren = 0, npulses = 5,  pattern = range(30,90,5), display = False, latency = 10, sequence = 0xff):
 		self.ssa.init(reset_board = True, reset_chip = False, display = False)
 		if fix_adr:  latency = 0
@@ -723,93 +944,22 @@ class SSA_test_utility():
 		t1.join()
 		return [Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip]
 
-	def measure_dynamic_power(self, NHits = 5, L1_rate = 1000, display_errors = False, slvs_current=7):
-		self.striplist = random.sample([item for item in range(0,61) if item not in self.striplist], NHits)
-		#self.striplist = random.sample(range(0,60), NHits)
-		striplist = list(np.sort(self.striplist)*2)
-		#print(self.striplist)
-		hiplist = self.striplist
-		display = 0 if display_errors else -1
-		sleep(0.01); SendCommand_CTRL("global_reset")
-		sleep(0.01);  SendCommand_CTRL("fast_fast_reset")
-		sleep(0.01); self.seuutil.ssa.init(edge = 'negative', display = False, slvs_current=slvs_current)
-		s1, s2, s3 = self.seuutil.Stub_Evaluate_Pattern(striplist)
-		p1, p2, p3, p4, p5, p6, p7 = self.seuutil.L1_Evaluate_Pattern(striplist, hiplist)
-		sleep(0.01); self.seuutil.Configure_Injection(strip_list = striplist, hipflag_list = hiplist, analog_injection = 0, latency = 501, create_errors = False)
-		sleep(0.01); self.seuutil.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = 0)
-		sleep(0.01); Configure_SEU(1, int(40000.0/L1_rate-1), number_of_cal_pulses = 0, initial_reset = 1)
-		sleep(0.01); fc7.write("cnfg_fast_backpressure_enable", 0)
-		sleep(0.01); self.seuutil.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", 73)
-		sleep(0.01); SendCommand_CTRL("start_trigger")
-		sleep(0.50); pw = self.pwr.get_power(display = False, return_all = True)
-		sleep(0.01); SendCommand_CTRL("stop_trigger")
-		return pw
-
-	def power_vs_occupancy(self, L1_rate = 1000, display_errors = False, slvs_current = 7):
-		#self.pwr.set_supply(mode='on', d=DVDD, a=AVDD, p=PVDD, bg = 0.270, display = True)
-		I = []
-		for nclusters in range(0,32,1):
-			[Pd, Pa, Pp, Vd, Va, Vp, Id, Ia, Ip] = self.measure_dynamic_power(NHits = nclusters, L1_rate = L1_rate, display_errors = display_errors, slvs_current=slvs_current)
-			I.append([nclusters, Id, Ia, Ip])
-			print("->  N Clusters %5.1f  -> Current = %7.3f - %7.3f - %7.3f" % (nclusters/2.0, Id, Ia, Ip ))
-		return I
-
-	def shift(self, pattern = 0b00011000):
-		self.ssa.ctrl.activate_readout_shift()
-		self.ssa.ctrl.set_shift_pattern_all(pattern)
-		self.ssa.readout.all_lines(trigger = True, configure = True, cluster = True, l1data = False, lateral = False)
-
 	##############################################################
-	def BIST_LOOP(self, nruns=3, display=True, note=''):
-		rv = [0,0]
-		for memory in [1,2]:
-			for i in range(nruns):
-				try:
-					result = self.ssa.bist.SRAM_BIST(memory_select=memory, configure=(i==0), display=0)
-				except:
-					result = -1
-				if(result >= 0):
-					rv[memory-1] += result #readout working, checking memory errors
-				else:
-					rv[memory-1] = -1 #readout NOT working
-		if(display):
-			if(rv[0]<0):   utils.print_error(   "->  {:s}BIST memory 1 test : NOT WORKING".format(note))
-			elif(rv[0]>0): utils.print_warning( "->  {:s}BIST memory 1 test : FAIL ({:d}) ".format(note, rv[0]))
-			else:          utils.print_good(    "->  {:s}BIST memory 1 test : PASS".format(note))
-			if(rv[1]<0):   utils.print_error(   "->  {:s}BIST memory 2 test : NOT WORKING".format(note))
-			elif(rv[1]>0): utils.print_warning( "->  {:s}BIST memory 2 test : FAIL ({:d}) ".format(note, rv[1]))
-			else:          utils.print_good(    "->  {:s}BIST memory 2 test : PASS".format(note))
-		return rv
-
-	##############################################################
-	def SRAM_BIST_vs_DVDD(self, step=0.001, dvdd_max=0.850, dvdd_min=0.750, nruns_per_point=100):
-		self.ssa.pwr.set_dvdd(1.0)
-		time.sleep(0.01)
+	def fast_digital_test(self, run='0'):
+		self.fc7.reset()
+		time.sleep(0.5)
+		self.ssa.pwr.on()
 		self.ssa.reset()
-		result = {}
-		#dvdd_range = np.linspace(dvdd_max, dvdd_min, npoints)
-		dvdd_range = np.linspace(dvdd_max, dvdd_min, (-1)*step)
-		for dvdd in dvdd_range:
-			self.ssa.pwr.set_dvdd(dvdd)
-			time.sleep(0.1)
-			self.ssa.reset()
-			res = self.BIST_LOOP(nruns=nruns_per_point, note='[DVDD={:5.5f}] '.format(dvdd), display=True )
-			rdv = self.ssa.pwr.get_dvdd()
-			result[dvdd] = [rdv, res[0], res[1]]
-		return result
-
-	##############################################################
-	def ring_oscillators_vs_DVDD(self, dvdd_step=0.05, dvdd_max=1.3, dvdd_min=0.8):
-		result = {}
-		dvdd_range = np.arange(dvdd_min, dvdd_max, dvdd_step)
-		for dvdd in dvdd_range:
-			self.ssa.pwr.set_dvdd(dvdd)
-			time.sleep(0.1)
-			res = self.ssa.bist.ring_oscilaltor(64, raw=1, display=1, note=' at DVDD={:5.3f}V'.format(dvdd) )
-			#rdv = self.ssa.pwr.get_dvdd()
-			result[dvdd] = res
-		self.ssa.pwr.set_dvdd(1.0)
-		return result
+		time.sleep(1)
+		self.ssa.init()
+		time.sleep(0.5)
+		self.cluster_data( word_alignment=True )
+		time.sleep(0.5)
+		self.l1_data()
+		self.SRAM_BIST_vs_DVDD(
+			step=0.1, dvdd_max=1.3, dvdd_min=0.7, nruns_per_point = 5,
+			filename = ('../SSA_Results/fast_digital_test/'+run+'/') )
+		self.ssa.pwr.off()
 
 '''
 def prova(i):

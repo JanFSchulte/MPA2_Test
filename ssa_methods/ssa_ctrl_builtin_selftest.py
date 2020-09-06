@@ -47,8 +47,15 @@ class ssa_ctrl_builtin_selftest:
 		self.i2c.peri_write(register = 'bist_memory_sram_mode',  field = False, data= ctrl )
 		self.i2c.peri_write(register = 'bist_memory_sram_start', field = False, data= ctrl )
 		time.sleep(0.010); #Time needed byt the BIST
-		flag = self.i2c.peri_read( register = "bist_output", field=False)
-		status = ((flag>>(1+memory_select))&0b1)
+		for i in range(3):
+			try:
+				flag = self.i2c.peri_read( register = "bist_output", field=False)
+				status = ((flag>>(1+memory_select))&0b1)
+				break
+			except:
+				#print("ERROR {:d}".format(i))
+				utils.activate_I2C_chip()
+				status = 0
 		if( status == 0):
 			if(display): utils.print_error("->  BIST memory {:d} test not working. Return status {:2b}: ".format(memory_select, (flag>>2) ))
 			bisterr=-1
@@ -59,9 +66,12 @@ class ssa_ctrl_builtin_selftest:
 				else:
 					reg = "bist_memory_sram_output_H_{:X}".format(N)
 				r = self.i2c.peri_read(register=reg, field=False)
-				bistres.append(r)
-				if(r != 0):
-					bisterr += 1
+				if(not isinstance(r, int)): #communication error due to low DVDD
+					bistres.append(0xff)
+					bisterr += 8
+				else:
+					bistres.append(r)
+					bisterr += (bin(r).count("1"))
 			if( bisterr > 0 ):
 				if(display):
 					utils.print_warning("->  BIST memory {:d} test error: ".format(memory_select))
@@ -71,11 +81,15 @@ class ssa_ctrl_builtin_selftest:
 			else:
 				if(display):
 					utils.print_good("->  BIST memory {:d} test OK".format(memory_select))
-		return bisterr
+		if(not (bisterr == -1)):
+			efficiency = 100*(1-(np.float(bisterr)/(16*8)))
+		else:
+			efficiency = 0
+		return efficiency
 
 
 	#######################################################################
-	def ring_oscilaltor(self, resolution_inv=127, resolution_del=127, raw=False, aslist=False, display=True, note=''):
+	def ring_oscilaltor(self, resolution_inv=127, resolution_del=127, raw=False, aslist=False, display=True, note='' , asarray=False):
 		ringval   = {'top-right':[0,0] , 'bottom-right':[0,0], 'bottom-center':[0,0], 'bottom-left':[0,0]}
 		frequency = {'top-right':[0,0] , 'bottom-right':[0,0], 'bottom-center':[0,0], 'bottom-left':[0,0]}
 
@@ -131,8 +145,8 @@ class ssa_ctrl_builtin_selftest:
 				if(raw): sret += '\n    {:16s} : INV -> {:5d}     DEL -> {:5d}]'.format(i, ringval[i][0], ringval[i][1])
 				else:    sret += '\n    {:16s} : INV -> {:5.3f} MHz     DEL -> {:5.3f} MHz'.format(i, frequency[i][0], frequency[i][1])
 			utils.print_info(sret)
-		if(not raw):
-			rv = ringval
+		if(not asarray):
+			rv = retval
 		else:
 			rv = []
 			for i in ringval: rv.append(retval[i][0])
