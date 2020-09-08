@@ -488,7 +488,7 @@ class SSA_readout():
 
 #	def alignment_slvs(align_word = 128, step = 10):
 #	    t0 = time.time()
-#	    activate_I2C_chip()
+#	    activate_I2C_chip(self.fc7)
 #	    I2C.peri_write('LFSR_data', align_word)
 #	    activate_shift()
 #	    phase = 0

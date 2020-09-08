@@ -28,7 +28,7 @@ class SSA_test_utility():
 	def cluster_data(self, mode = "digital",  nstrips = 'random', min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = True, word_alignment='auto'):
 		fo = open(file + "readout_cluster-data_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = '';
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		SendCommand_CTRL("stop_trigger")
 		if (init):
 			self.ssa.init(reset_board = False, reset_chip = False, display = False)
@@ -141,7 +141,7 @@ class SSA_test_utility():
 	def l1_data(self, mode = "digital", nstrips='random', nruns = 100, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '',profile=False):
 		fo = open(file + "readout_L1-data_" + mode + ".csv", filemode)
 		counter = [[0,0],[0,0], [0,0]]
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		if(tbconfig.VERSION['SSA'] >= 2): l1_counter_mask = 0b111111111
 		else: l1_counter_mask = 0b1111
 		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
@@ -263,7 +263,7 @@ class SSA_test_utility():
 		fo = open(file + "readout_cluster-data-basic_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = ''; stlateralout = '';
 		#print("->  Remember to call test.lateral_input_phase_tuning() before to run this test")
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		if(not self.ssa.cl_word_aligned()):
 			self.ssa.alignment_cluster_data_word()
 			self.ssa.alignment_lateral_input()
@@ -359,7 +359,7 @@ class SSA_test_utility():
 	def l1_data_basic(self, mode = "digital", nruns = 1, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '',profile=False):
 		fo = open(file + "readout_L1-data_" + mode + ".csv", filemode)
 		counter = [[0,0],[0,0]]
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		if(tbconfig.VERSION['SSA'] >= 2): l1_counter_mask = 0b111111111
 		else: l1_counter_mask = 0b1111
 		if (init): self.ssa.init(reset_board = False, reset_chip = False, display = False)
@@ -673,7 +673,7 @@ class SSA_test_utility():
 
 	##############################################################
 	def memory_with_l1(self, memory = [1,2], delay = [10], shift = 0, latency = 199, display = 1, file = '../SSA_Results/Chip0/Chip_0', filemode = 'w', runname = '1.2V'):
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		if(isinstance(memory, int)):
 			if(memory in [1,2]): HIPrun = [memory-1]
 		else: HIPrun = [0,1]
@@ -750,7 +750,7 @@ class SSA_test_utility():
 
 	##############################################################
 	def memory_with_l1_vs_voltage(self, memory = 1, step = 0.005, start = 1.25, stop = 0.9, latency = 200, shift = 0, file = '../SSA_Results/memory_bist_vs_dvdd/', filemode = 'w', runname = ''):
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		if not os.path.exists(file):
 			os.makedirs(file)
 		with open("../SSA_Results/" + file + "_Test_Memory-Supply_" + str(memory) + ".csv", filemode)  as fo:
@@ -843,7 +843,7 @@ class SSA_test_utility():
 			display = display, clean = False)
 
 #	def mem_test2(self, delay = 10, shift = 0, latency = 200, pattern = [50, 51,52,53,54,55]):
-#		utils.activate_I2C_chip()
+#		utils.activate_I2C_chip(self.fc7)
 #		self.ssa.init(reset_board = False, reset_chip = False, display = False)
 #		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 #		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True, multi = False)

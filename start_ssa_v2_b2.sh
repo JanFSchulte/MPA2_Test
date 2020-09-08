@@ -6,10 +6,9 @@ source ./FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export LC_ALL=C; unset LANGUAGE
 
-#in /etc/ethers put
-#sudo /etc/init.d/network restart
+BOARD_MAC="08:00:30:00:22:5d"
 
-file="./utilities/ipaddr_ssa.dat"
+file="./utilities/ipaddr_mpa.dat"
 while IFS= read -r line
 do
 	IP=$line
@@ -30,6 +29,7 @@ echo "from ssa_methods import *" >> LaunchPy.py
 echo "from utilities import tbconfig " >  utilities/tbsettings.py
 echo "tbconfig.VERSION['SSA'] = 2" >> utilities/tbsettings.py
 echo "tbconfig.VERSION['MPA'] = 1" >> utilities/tbsettings.py
+echo "tbconfig.BOARD_SELECT = '$BOARD_MAC'" >> utilities/tbsettings.py
 
 cp ./utilities/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
 

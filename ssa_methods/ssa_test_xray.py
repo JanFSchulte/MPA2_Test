@@ -49,7 +49,7 @@ class SSA_test_xray():
 		self.configure_tests()
 		self.pwr.set_dvdd(self.toptest.dvdd)
 		self.ssa.init(reset_board = True, reset_chip = False, read_current = True)
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		time_init = time.time()
 		time_base = time_init - (rate - init_wait);
 		time_curr = time_init;
@@ -59,7 +59,7 @@ class SSA_test_xray():
 			if( float(time_curr-time_base) > float(rate) ):
 				time_base = time_curr
 				self.toptest.test_routine_main(filename = filename, runname = utils.date_time())
-				utils.activate_I2C_chip()
+				utils.activate_I2C_chip(self.fc7)
 			else:
 				time.sleep(0.1);
 				self.ssa.init(reset_board = True, reset_chip = False, read_current = False)

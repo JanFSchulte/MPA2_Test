@@ -5,13 +5,14 @@ source ~/FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export LC_ALL=C; unset LANGUAGE
 
-file="./utilities/ipaddr_ssa.dat"
-while IFS= read -r line
-do
-        IP=$line
-	printf 'IP=%s\n' "$line"
-done <"$file"
+#   file="./utilities/ipaddr_ssa.dat"
+#   while IFS= read -r line
+#   do
+#           IP=$line
+#   	printf 'IP=%s\n' "$line"
+#   done <"$file"
 
+IP="192.168.0.77"
 eth=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
 
 printf '______________________________________________________\n'
@@ -53,11 +54,11 @@ else
 	#./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_P2.bit -f ~/MPA-SSA_Test/bitfiles/d19c_SSA_SEU_P1.bit
 	#./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_P2.bit
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_20200825.bit -f ~/MPA-SSA_Test/bitfiles/uDTC_SSA2_SEU_20200825.bit
-	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_20200825.bit 
+	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_20200825.bit
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_20200824.bit
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_20200824.bit -f ~/MPA-SSA_Test/bitfiles/uDTC_SSA_SEU_20200824.bit
-	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit -f ~/MPA-SSA_Test/bitfiles/uDTC_SSA_SEU_master.bit
-	./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit 
+	./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit -f ~/MPA-SSA_Test/bitfiles/uDTC_SSA_SEU_master.bit
+	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit
 	cd -
 fi
 #./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_2020.08.19.bit

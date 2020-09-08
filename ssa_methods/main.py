@@ -2,8 +2,11 @@
 from myScripts.Multimeter_GPIB_Keithley import *
 from myScripts.Multimeter_LAN_Keithley import *
 
+
+#from utilities.tbconfig import *
 from utilities.tbsettings import *
-from myScripts.SelectBoardIp import *
+from utilities.configure_communication import *
+from utilities.fc7_com import *
 from ssa_methods.ssa import *
 from ssa_methods.ssa_power_utility import *
 from ssa_methods.ssa_cal_utility import *
@@ -13,7 +16,6 @@ from ssa_methods.ssa_inject_utility import *
 from ssa_methods.ssa_measurements import *
 from ssa_methods.ssa_test_xray import *
 from ssa_methods.ssa_analise_utility import *
-from ssa_methods.ssa_fc7_com import *
 from ssa_methods.ssa_calibration import *
 from ssa_methods.ssa_seu_utility import *
 from ssa_methods.ssa_test_seu import *
@@ -24,18 +26,14 @@ from ssa_methods.main_ssa_test_2 import *
 
 multimeter_gpib = keithley_multimeter()
 multimeter_lan  = Multimeter_LAN_Keithley()
-ipaddr, fc7AddrTable, fc7_if = SelectBoard('ssa')
-# print(tbconfig.VERSION)
-# try_fc7_com(fc7_if)
-FC7 = ssa_fc7_com(fc7_if)
-
+ipaddr, fc7AddrTable, fc7_if = configure_communication()
+FC7 = fc7_com(fc7_if, fc7AddrTable)
 
 class SSAwp:
-
 	def __init__(self, index = 0, address = 0):
 		self.index   = index
 		FC7.set_chip_id(index, address)
-		self.i2c           = ssa_i2c_conf(FC7, index=index, address=address)
+		self.i2c           = ssa_i2c_conf(FC7, fc7AddrTable, index=index, address=address)
 		self.strip_reg_map = self.i2c.get_strip_reg_map()
 		self.peri_reg_map  = self.i2c.get_peri_reg_map()
 		self.ana_mux_map   = self.i2c.get_analog_mux_map()
@@ -65,7 +63,7 @@ class SSAwp:
 ssa0 = SSAwp(0, 0b001)
 ssa1 = SSAwp(1, 0b111)
 
-# FC7               = ssa_fc7_com(fc7_if)
+# FC7               = fc7_com(fc7_if)
 # ssa_i2c           = ssa_i2c_conf(FC7)
 # self.strip_reg_map = ssa_i2c.get_strip_reg_map()
 # self.peri_reg_map  = ssa_i2c.get_peri_reg_map()
@@ -95,7 +93,7 @@ def set_clock(val = 'internal'):
 	SSA0.ssa.init(reset_board = False, reset_chip = False, display = True)
 
 def ssa_on():
-	utils.activate_I2C_chip()
+	utils.activate_I2C_chip(FC7)
 	sleep(0.1);  ssa_pwr.set_supply('on', display=False)
 	sleep(0.1);  ssa_pwr.set_clock_source('internal')
 	sleep(0.1);  ssa.init(reset_board = True, reset_chip = True, display = True)

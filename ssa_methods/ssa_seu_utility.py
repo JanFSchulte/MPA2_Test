@@ -142,7 +142,7 @@ class SSA_SEU_utilities():
 		strip_list = np.sort(strip_list)
 		hipflag_list = np.sort(hipflag_list)
 		#here define the way to generate stub/centroid data pattern on the MPA/SSA
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		self.ssa.ctrl.activate_readout_normal(mipadapterdisable = 1)
 		self.ssa.ctrl.set_cal_pulse_duration(duration = 1)
 		#time.sleep(0.01); self.I2C.strip_write("ENFLAGS", 0, 0b01001)

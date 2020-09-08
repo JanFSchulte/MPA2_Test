@@ -1,4 +1,4 @@
-utils.activate_I2C_chip()
+utils.activate_I2C_chip(self.fc7)
 
 
 
@@ -220,7 +220,7 @@ BIST_LOO
 
 
 
-utils.activate_I2C_chip()
+utils.activate_I2C_chip(self.fc7)
 self.fc7.SendCommand_CTRL("stop_trigger")
 self.ssa.readout.cluster_data(initialize=True)
 self.ssa.ctrl.activate_readout_async()
@@ -261,7 +261,7 @@ def scurves(self, cal_ampl = [50], mode = 'all', nevents = 1000, rdmode = 'fast'
     while(evaluate_sc):
         evaluate_cn += 1
         time_init = time.time()
-        utils.activate_I2C_chip()
+        utils.activate_I2C_chip(self.fc7)
         # first go to the async mode
         self.fc7.SendCommand_CTRL("stop_trigger")
         self.ssa.readout.cluster_data(initialize=True)

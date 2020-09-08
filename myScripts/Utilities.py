@@ -72,9 +72,12 @@ class Utilities:
 		row = "\t" + message
 		sys.stdout.write("%s\r%d%%" %(row, i + 1))
 		sys.stdout.flush()
-		time.sleep(0.001)
+		#time.sleep(0.001)
 		if (i == 99):
 			sys.stdout.write('\n')
+
+	def print_inline(self, message):
+		sys.stdout.write("\r{:s}".format(message))
 
 	def linear_fit(self, xdata, ydata):
 		par, cov = curve_fit(
@@ -143,10 +146,10 @@ class Utilities:
 		else:
 			sys.stdout = open(os.devnull, "w")
 
-	def activate_I2C_chip(self, pr = ''):
+	def activate_I2C_chip(self, fc7_if, pr = ''):
 		if(not pr == 'debug'):
 			self.print_enable(False)
-		activate_I2C_chip()
+		fc7_if.activate_I2C_chip()
 		if(not pr == 'debug'):
 			self.print_enable(True)
 		if(pr == 'print'):

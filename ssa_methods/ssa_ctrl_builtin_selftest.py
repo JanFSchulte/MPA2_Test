@@ -54,7 +54,7 @@ class ssa_ctrl_builtin_selftest:
 				break
 			except:
 				#print("ERROR {:d}".format(i))
-				utils.activate_I2C_chip()
+				utils.activate_I2C_chip(self.fc7)
 				status = 0
 		if( status == 0):
 			if(display): utils.print_error("->  BIST memory {:d} test not working. Return status {:2b}: ".format(memory_select, (flag>>2) ))

@@ -552,7 +552,7 @@ class SSA_measurements():
 	###########################################################
 	def gain_offset_noise(self, calpulse = 50, ret_average = True, plot = True, use_stored_data = False, file = 'TestLogs/TestLogs', filemode = 'w', runname = '', nevents=1000, speeduplevel = 2):
 		utils.print_log("->  SCurve Gain, Offset and Noise Measurement")
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		callist = [calpulse-20, calpulse, calpulse+20]
 		thresholds = []; sigmas = [];
 		gain = []; offset = []; cnt = 0;
@@ -726,7 +726,7 @@ class SSA_measurements():
 
 	###########################################################
 	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, eval_inl_dnl = True, npoints = 10 ,filename = 'temp/temp', plot = True, filemode = 'w', runname = '', ideal_gain = 1.840, ideal_offset = 0.8):
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		if(self.bias == False): return False, False
 		if(not (name in self.muxmap)): return False, False
 		if(isinstance(filename, str)):
@@ -785,7 +785,7 @@ class SSA_measurements():
 		for i in range(len(th)):
 			for l in range(rp):
 				cnt = np.zeros(itr, dtype = int)
-				self.utils.activate_I2C_chip()
+				self.utils.activate_I2C_chip(self.fc7)
 				self.ssa.ctrl.set_threshold(th[i])
 				for m in range(itr):
 					compose_fast_command(duration = 0, resync_en = 0, l1a_en = 0, cal_pulse_en = 1, bc0_en = 0)

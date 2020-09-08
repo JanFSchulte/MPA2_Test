@@ -4,6 +4,7 @@ import inspect
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
+import seaborn as sns
 from random import randint
 
 from utilities.tbsettings import *
@@ -37,7 +38,7 @@ class ssa_ctrl_analog:
 			self.I2C.peri_write(    register="ADC_control",  field='ADC_control_input_sel', data=ctrl)
 			r = self.I2C.peri_read( register="ADC_control",  field='ADC_control_input_sel')
 		else:
-			#utils.activate_I2C_chip()
+			#utils.activate_I2C_chip(self.fc7)
 			ctrl = self.analog_mux_map[testline]
 			self.I2C.peri_write('Bias_TEST_LSB', 0) # to avoid short
 			self.I2C.peri_write('Bias_TEST_MSB', 0) # to avoid short
@@ -73,7 +74,7 @@ class ssa_ctrl_analog:
 
 	#####################################################################
 	def _adc_measure(self, testline = 'highimpedence', fast=True):
-		#tinit=time.time()
+		#start=time.time()
 		input_sel = self.analog_mux_map[testline]
 		if(fast):
 			r =    self.I2C.peri_write( register="ADC_control", field=False, data=(0b11100000 | (input_sel & 0b00011111)) )
@@ -90,14 +91,14 @@ class ssa_ctrl_analog:
 		time.sleep(0.001)
 		msb = self.I2C.peri_read( register="ADC_out_H", field=False )
 		lsb = self.I2C.peri_read( register="ADC_out_L", field=False )
+		#print('{:8.3f} ms'.format(1E3*(time.time()-start))); start=time.time()
 		if((msb==None) or (lsb==None) or (msb=='Null') or (lsb=='Null') ):
-			utils.activate_I2C_chip()
+			utils.activate_I2C_chip(self.fc7)
 			msb = self.I2C.peri_read( register="ADC_out_H", field=False )
 			lsb = self.I2C.peri_read( register="ADC_out_L", field=False )
 		if((msb==None) or (lsb==None) or (msb=='Null') or (lsb=='Null') ):
 			return False
 		res = ((msb<<8) | lsb)
-		#print((time.time()-tinit)*1000); tinit=time.time()
 		return res
 
 
@@ -141,11 +142,17 @@ class ssa_ctrl_analog:
 
 	#####################################################################
 	def adc_measure_ext_pad(self, nsamples=10):
-		return self.adc_measure(testline='TESTPAD', testpad_enable=True, nsamples=nsamples, fast=True)
+		#start = time.time()
+		rp = self.adc_measure(testline='TESTPAD', testpad_enable=True, nsamples=nsamples, fast=True)
+		#print('{:8.3f} ms'.format(1E3*(time.time()-start)))
+		return rp
 
 	#####################################################################
-	def adc_sample_histogram(self, runtime=3600, freq=0.1, show=1, filename='../SSA_Results/ADC_samples.csv'):
-		adchist = np.zeros(2**13)
+	def adc_sample_histogram(self, runtime=3600, freq=0.1, show=1, filename='../SSA_Results/adc_measures/ADC_samples.csv', continue_on_same_file=0):
+		if(continue_on_same_file):
+			adchist = CSV.csv_to_array(filename=filename)[:,1]
+		else:
+			adchist = np.zeros(2**13, dtype=int)
 		cnt  = 0; told = 0; wd = 0
 		self.adc_measure_ext_pad()
 		runtime = round(float(runtime)*freq)/freq #to have n copleate cycles
@@ -155,22 +162,25 @@ class ssa_ctrl_analog:
 			filename = '../SSA_Results/ADC_samples_'+str(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H-%M-%S')+'.csv')
 		timestart = time.time()
 		while ((time.time()-timestart) < runtime):
+			wd = 0
 			while(wd < 3):
 				try:
-					res = int(np.round(self.adc_measure_ext_pad(1)))
-					time.sleep( randint(0,3)*0.001 )
+					res = int(np.round(self.adc_measure_ext_pad(nsamples=1)))
+					utils.print_inline('{:8d}'.format(res) )
+					time.sleep( randint(0,3)*0.0005 )
 					break
 				except:
 					wd +=1;
+					print('Exception {:d}'.format(wd))
 			if res is False: return False
 			else: adchist[int(res)]+=1
 			cnt+=1
 			tcur = time.time()
 			if ((tcur-told)>1): #update histogram every second
 				told = tcur
-				print('->  ADC collected '+str(cnt)+' samples')
-				with open(filename, 'w') as fo:
-					fo.write('{:8d},\n'.format(res))
+				utils.print_inline('{:8d} ->  ADC collected {:d} samples'.format(res, cnt))
+				#with open(filename, 'w') as fo:
+				#	fo.write('{:8d},\n'.format(res))
 				CSV.array_to_csv(adchist, filename=filename)
 		f.close()
 		print('->  ADC total number of samples taken is '+str(cnt))
@@ -178,25 +188,34 @@ class ssa_ctrl_analog:
 		return dnlh, inlh, adchist
 
 	#####################################################################
-	def adc_dnl_inl_histogram(self, filename='../SSA_Results/ADC_samples.csv', minc=2, maxc=4093):
-		if filename is None:
-			try: filename = self.filename
-			except: return False
-		self.dnlh = np.zeros(4096)
-		self.inlh = np.zeros(4096)
+	def adc_dnl_inl_histogram(self, minc=3, maxc=4092, filename='../SSA_Results/adc_measures/ADC_samples.csv'):
+		dnlh = np.zeros(4096)
+		inlh = np.zeros(4096)
 		maxim = 0; inl=0.0;
 		adchist = CSV.csv_to_array(filename)[:,1]
 		fo=open("../SSA_Results//adc_dnl_inl.csv","w")
 		stepsize = float(np.sum(adchist[minc:maxc]))/(maxc-minc)
 		for i in range(minc,maxc+1):
 			dnl = (float(adchist[i])/stepsize)-1.0
-			self.dnlh[i] = dnl
+			dnlh[i] = dnl
 			inl+=dnl
-			self.inlh[i] = inl
+			inlh[i] = inl
 			fo.write("{:8d}, {:9.6f}, {:9.6f}, {:9.6f}\n".format(i, dnl, inl, float(adchist[i])) )
 		fo.close()
-		return self.dnlh, self.inlh
-
+		plt.clf()
+		color=iter(sns.color_palette('deep'))
+		fig = plt.figure(1, figsize=(18,12))
+		c = next(color);
+		plt.plot(range(minc,maxc,1), adchist[minc:maxc], 'x', color=c)
+		fig = plt.figure(2, figsize=(18,12))
+		c = next(color);
+		plt.plot(range(minc,maxc,1), dnlh[minc:maxc], 'x', color=c)
+		fig = plt.figure(3, figsize=(18,12))
+		c = next(color);
+		plt.plot(range(minc,maxc,1), inlh[minc:maxc], 'x', color=c)
+		plt.show()
+		return dnlh, inlh
+		#adc_dnl_inl_histogram()
 
 
 # ssa_peri_reg_map['Fuse_Mode']              = 43

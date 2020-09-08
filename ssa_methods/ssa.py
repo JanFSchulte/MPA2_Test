@@ -59,7 +59,7 @@ class SSA_ASIC:
 		self.ctrl.reset(display=True)
 		utils.print_info("->  Reset SSA Chip")
 		time.sleep(0.3);
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		time.sleep(0.2)
 
 	def init(self, reset_board=False, reset_chip=False, resync=True, slvs_current=0b111, edge="rising", display=True, read_current=False, set_deskewing=False):
@@ -75,7 +75,7 @@ class SSA_ASIC:
 			self.ctrl.reset_and_set_sampling_edge(display=False)
 			time.sleep(0.3);
 			if(display): utils.print_info("->  Reset SSA Chip")
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		#time.sleep(0.2)
 		self.ctrl.set_lateral_data(left=0, right=0)
 		if(display):
@@ -201,7 +201,7 @@ class SSA_ASIC:
 
 
 	def alignment_lateral_input(self, display = False, timeout = 256*3, delay = 4, shift = 'default', init = False, file = "../SSA_Results/TestLogs/Chip-0", filemode = 'w', runname = ''):
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		if(not self.cl_word_aligned()):
 			self.alignment_cluster_data_word()
 		if(isinstance(file, str)):

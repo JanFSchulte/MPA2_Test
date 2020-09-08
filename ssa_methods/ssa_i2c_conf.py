@@ -7,12 +7,13 @@ from ssa_methods.Configuration.ssa1_reg_map import *
 
 class ssa_i2c_conf:
 
-	def __init__(self, fc7, debug=False, index=0, address=0):
+	def __init__(self, fc7, fc7AddrTable, debug=False, index=0, address=0):
 		self.__load_reg_map(version=tbconfig.VERSION['SSA'])
 		self.__set_parameters(debug=debug)
 		self.fc7 = fc7
 		self.chip_adr = "SSA{:0d}".format(index)
 		self.i2c_address = address
+		self.fc7AddrTable = fc7AddrTable
 
 	def __load_reg_map(self, version):
 		if(version >= 2):
@@ -64,7 +65,7 @@ class ssa_i2c_conf:
 		return True
 
 	def enable(self):
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 
 	def get_freq(self, value):
 		return self.freq
@@ -149,11 +150,11 @@ class ssa_i2c_conf:
 				adr  = (base & 0xfff) | 0b0001000000000000
 			repd = self.read_I2C(self.chip_adr, adr)
 			if(repd == None):
-				#utils.activate_I2C_chip()
+				#utils.activate_I2C_chip(self.fc7)
 				#rep  = self.read_I2C(self.chip_adr, adr)
 				rep  = 'Null'
 				print('X>  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(adr, 'NOVALUE'))
-				#self.utils.activate_I2C_chip()
+				#self.utils.activate_I2C_chip(self.fc7)
 			else:
 				if(field):
 					mask = int(self.ssa_peri_reg_map[register]['fields_mask'][field], 2)
@@ -318,16 +319,16 @@ class ssa_i2c_conf:
 		return read_data
 
 	def SendCommand_I2C(self, command, hybrid_id, chip_id, page, read, register_address, data, ReadBack):
-		raw_command   = fc7AddrTable.getItem("ctrl_command_i2c_command_type").shiftDataToMask(command)
-		raw_word0     = fc7AddrTable.getItem("ctrl_command_i2c_command_word_id").shiftDataToMask(0)
-		raw_word1     = fc7AddrTable.getItem("ctrl_command_i2c_command_word_id").shiftDataToMask(1)
-		raw_hybrid_id = fc7AddrTable.getItem("ctrl_command_i2c_command_hybrid_id").shiftDataToMask(hybrid_id)
-		raw_chip_id   = fc7AddrTable.getItem("ctrl_command_i2c_command_chip_id").shiftDataToMask(chip_id)
-		raw_readback  = fc7AddrTable.getItem("ctrl_command_i2c_command_readback").shiftDataToMask(ReadBack)
-		raw_page      = fc7AddrTable.getItem("ctrl_command_i2c_command_page").shiftDataToMask(page)
-		raw_read      = fc7AddrTable.getItem("ctrl_command_i2c_command_read").shiftDataToMask(read)
-		raw_register  = fc7AddrTable.getItem("ctrl_command_i2c_command_register").shiftDataToMask(register_address)
-		raw_data      = fc7AddrTable.getItem("ctrl_command_i2c_command_data").shiftDataToMask(data)
+		raw_command   = self.fc7AddrTable.getItem("ctrl_command_i2c_command_type").shiftDataToMask(command)
+		raw_word0     = self.fc7AddrTable.getItem("ctrl_command_i2c_command_word_id").shiftDataToMask(0)
+		raw_word1     = self.fc7AddrTable.getItem("ctrl_command_i2c_command_word_id").shiftDataToMask(1)
+		raw_hybrid_id = self.fc7AddrTable.getItem("ctrl_command_i2c_command_hybrid_id").shiftDataToMask(hybrid_id)
+		raw_chip_id   = self.fc7AddrTable.getItem("ctrl_command_i2c_command_chip_id").shiftDataToMask(chip_id)
+		raw_readback  = self.fc7AddrTable.getItem("ctrl_command_i2c_command_readback").shiftDataToMask(ReadBack)
+		raw_page      = self.fc7AddrTable.getItem("ctrl_command_i2c_command_page").shiftDataToMask(page)
+		raw_read      = self.fc7AddrTable.getItem("ctrl_command_i2c_command_read").shiftDataToMask(read)
+		raw_register  = self.fc7AddrTable.getItem("ctrl_command_i2c_command_register").shiftDataToMask(register_address)
+		raw_data      = self.fc7AddrTable.getItem("ctrl_command_i2c_command_data").shiftDataToMask(data)
 		cmd0          = raw_command + raw_word0 + raw_hybrid_id + raw_chip_id + raw_readback + raw_read + raw_page + raw_register;
 		cmd1          = raw_command + raw_word1 + raw_data
 		description   = "Command: type = " + str(command) + ", hybrid = " + str(hybrid_id) + ", chip = " + str(chip_id)

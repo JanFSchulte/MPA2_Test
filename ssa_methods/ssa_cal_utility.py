@@ -152,7 +152,7 @@ class SSA_cal_utility():
 		while(evaluate_sc):
 			evaluate_cn += 1
 			time_init = time.time()
-			utils.activate_I2C_chip()
+			utils.activate_I2C_chip(self.fc7)
 			# first go to the async mode
 			self.fc7.SendCommand_CTRL("stop_trigger")
 			self.ssa.readout.cluster_data(initialize=True)
@@ -329,7 +329,7 @@ class SSA_cal_utility():
 		iterations = 5, nevents = 1000,
 		plot = True, display = False, reevaluate = True,
 		countershift = 'auto', filename = False):
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		if(isinstance(th_dac_gain, float) or isinstance(th_dac_gain, int)):
 			gain_th_dac = float(th_dac_gain)
 		else:
@@ -951,7 +951,7 @@ class SSA_cal_utility():
 	def shaper_pulse_rising_old(self, calpulse = 60, mode = 'caldll', targetbx = 25, resolution = 1, strip = 5, display = False, display_pattern = False, plot = True, thmin = 20, thmax = 255, iterations = 1, basedelay = 'auto', samplingmode = 'level'):
 		# mode = [clkdll][caldll]
 		utils.print_enable(False)
-		activate_I2C_chip()
+		activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 		thlist = np.array(range(thmin, thmax, resolution))
 		latency = np.ones(np.shape(thlist)[0], dtype = np.float16 )*(-np.inf)
@@ -1012,7 +1012,7 @@ class SSA_cal_utility():
 	def shaper_pulse_falling_old(self, calpulse = 60, mode = 'caldll', targetbx = 25, resolution = 1, strip = 5, display = False, display_pattern = False, plot = True, thmin = 20, thmax = 255, iterations = 1, basedelay = 'auto', samplingmode = 'level'):
 		# mode = [clkdll][caldll]
 		utils.print_enable(False)
-		activate_I2C_chip()
+		activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 		thlist = np.array(range(thmin, thmax, resolution))
 		latency = np.ones(np.shape(thlist)[0], dtype = np.float16 )*(-np.inf)
@@ -1074,7 +1074,7 @@ class SSA_cal_utility():
 
 #	ssa_cal.simple_map(threshold=100)
 	def simple_map(self, cal_ampl = 250, nevents = 1000, threshold = 60, rdmode = 'fast', striplist = range(1,121),countershift = 0):
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		self.fc7.SendCommand_CTRL("stop_trigger")
 		self.ssa.readout.cluster_data(initialize=True)
 		self.ssa.ctrl.activate_readout_async()
