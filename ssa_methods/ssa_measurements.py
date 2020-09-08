@@ -215,6 +215,64 @@ class SSA_measurements():
 		CSV.array_to_csv(offsets,     output_file + 'frontend_offset.csv')
 		return calpulses, thresholds, noise, thmean, sigmamean, gains, gains_mV_fC, offsets
 
+	def FE_Gain_Noise_Std__plot(self, filename='../SSA_Results/TestLogs/Chip_0_'):
+		x = range(0,120,1)
+		calpulses   = CSV.csv_to_array( filename + 'frontend_cal_values.csv')[:,1]
+		gains       = CSV.csv_to_array( filename + 'frontend_gain.csv')[:,1]
+		gains_mV_fC = CSV.csv_to_array( filename + 'frontend_gain_mVfC.csv')[:,1]
+		gainmean    = CSV.csv_to_array( filename + 'frontend_gain-mean.csv')[:,1]
+		offsets     = CSV.csv_to_array( filename + 'frontend_offset.csv')[:,1]
+
+		fig = plt.figure(figsize=(18,12))
+		self.my_hist_plot( gains_mV_fC, "Normalised distribution", 'Front-End Gain [mv/fC]', r"""$\overline{G_{FE}} $""", filename+'fe_gain')
+
+		fig = plt.figure(figsize=(18,12))
+		self.my_hist_plot( offsets, "Normalised distribution", 'Offset [mV]', r"""$\overline{Ofs_{FE}} $""", filename+'fe_offset')
+
+		c_thresholds = {}; c_noise = {}; c_thmean = {}; c_sigmamean = {};
+		for cal in calpulses:
+			c_thresholds[cal] = CSV.csv_to_array( (filename + 'frontend_Q-{:1.3f}_thresholds.csv'.format(cal)))[0][1:]
+			c_noise[cal]      = CSV.csv_to_array( (filename + 'frontend_Q-{:1.3f}_noise.csv'.format(cal)))[0][1:]
+			c_thmean[cal]     = CSV.csv_to_array( (filename + 'frontend_Q-{:1.3f}_threshold-mean.csv'.format(cal)))[:,1]
+			c_sigmamean[cal]  = CSV.csv_to_array( (filename + 'frontend_Q-{:1.3f}_noise-mean.csv'.format(cal)))[:,1]
+
+		fig = plt.figure(figsize=(18,12))
+		for cal in calpulses:
+			c_noise[cal]      = CSV.csv_to_array( (filename + 'frontend_Q-{:1.3f}_noise.csv'.format(cal)))[0][1:]
+			self.my_hist_plot( c_noise[cal], "Normalised distribution", 'Noise', False,  filename+'fe_noise')
+
+
+
+	def my_hist_plot(self, ser, xlabel, ylabel, mean_label=False, save=False):
+		plt.style.use('seaborn-deep')
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(True)
+		ax.spines["right"].set_visible(True)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.xticks(fontsize=32)
+		plt.yticks(fontsize=32)
+		plt.ylabel(xlabel, fontsize=32)
+		plt.xlabel(ylabel, fontsize=32)
+		bn = np.arange(min(ser)*0.95, max(ser)*1.15, ((max(ser)-min(ser))/50.0) )
+		plt.hist(ser,  density=True, bins = bn, alpha = 0.7)
+		xt = plt.xticks()[0] # find minimum and maximum of xticks to know where we should compute theoretical distribution
+		xmin, xmax = min(xt), max(xt)
+		lnspc = np.linspace(xmin, xmax, len(ser))
+		m, s = stats.norm.fit(ser) # get mean and standard deviation
+		pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
+		plt.plot(lnspc, pdf_g, 'r' , label="Norm") # plot i
+		sermean = np.mean(ser)
+		if(mean_label):
+			plt.text(0.95,0.95, mean_label + '= {:6.2f}'.format(sermean), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
+		if(save):
+			plt.savefig(save+'.png', bbox_inches="tight")
+			print('->  Plot saved in ' + save +'.png')
+		#fpl = self.path + 'ANALYSIS/S-Curve_Gain_hist'+self.pltname+'.png'
+		#plt.savefig(fpl, bbox_inches="tight");
+		#print("->  Plot saved in %s" % (fpl))
+
+
 
 	###########################################################
 	def power_vs_occupancy(self,
@@ -432,7 +490,6 @@ class SSA_measurements():
 		plt.style.use('seaborn-deep')
 		color=iter(sns.color_palette('deep')) #iter(cm.summer(np.linspace(0,1, len(scurves) )))
 		ax0 = plt.subplot(gs[1])
-		ax0.spines["top"].set_visible(False); ax0.spines["right"].set_visible(False)
 		ax0.get_xaxis().tick_bottom(); ax0.get_yaxis().tick_left()
 		plt.xticks(fontsize=16); plt.yticks(fontsize=16)
 		plt.xlim(min(bn)-10, max(bn)+10);
@@ -446,7 +503,8 @@ class SSA_measurements():
 		plt.setp(ax1.get_xticklabels(), visible=False)
 		plt.xlim(min(bn)-10, max(bn)+10);
 		plt.ylim(0, 1.1)
-		ax1.spines["top"].set_visible(False); ax1.spines["right"].set_visible(False)
+		ax1.spines["top"].set_visible(True)
+		ax1.spines["right"].set_visible(True)
 		ax1.get_xaxis().tick_bottom(); ax1.get_yaxis().tick_left()
 		labels = ["Optimal trimming values", "Not trimmed: THDAC = MIN", "Not trimmed: THDAC = MAX"]
 		cnt = 0
@@ -462,9 +520,7 @@ class SSA_measurements():
 			m, s = stats.norm.fit(c_thresholds[i]) # get mean and standard deviation
 			stds.append(s)
 			pdf_g = stats.norm.pdf(lnspc, m, s*plot_scale) # now get theoretical values in our interval
-
 			xnew = np.linspace(np.min(lnspc), np.max(lnspc), 1000, endpoint=True)
-
 			#pdf_l = scipy_interpolate.BSpline(lnspc, pdf_g, xnew)
 			helper_y3 = scipy_interpolate.make_interp_spline(lnspc, pdf_g)
 			pdf_l = helper_y3(xnew)
@@ -472,8 +528,6 @@ class SSA_measurements():
 			print('----------')
 			print(s)
 			print('==========')
-
-
 			plt.plot(xnew, pdf_l, c = 'darkred', lw = 2) # plot i
 			cnt += 1
 		leg = ax1.legend(fontsize = 16, )

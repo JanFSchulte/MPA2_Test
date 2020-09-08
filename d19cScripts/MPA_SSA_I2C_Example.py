@@ -121,7 +121,7 @@ def SendCommand_I2C_SeqWrite(command, hybrid_id, chip_id, register_address, data
   return description
 
 # read the chip data (nbytes per read transaction)
-def ReadChipDataNEW(nbytes = 1):
+def ReadChipDataNEW2(nbytes = 1):
 	numberOfReads = 0
 	print "Reading Out Data:"
 	print "   =========================================================================================="

@@ -55,6 +55,9 @@ class fc7_com():
 		encode_duration = self.fc7AddrTable.getItem("ctrl_fast_signal_duration").shiftDataToMask(duration)
 		self.write("ctrl_fast", encode_resync + encode_l1a + encode_cal_pulse + encode_bc0 + encode_duration)
 
+	def DataFromMask(self, data, mask_name):
+		return self.fc7AddrTable.getItem(mask_name).shiftDataFromMask(data)
+
 	def update_active_readout_chip(self):
 		self.active_chip = self.read("cnfg_phy_slvs_chip_switch")
 		return self.active_chip
@@ -268,10 +271,10 @@ class fc7_com():
 				time.sleep(0.1)
 		# get the reply
 		reply = self.fc7.read("ctrl_command_i2c_reply_fifo")
-		reply_slave_id = DataFromMask(reply, "mpa_ssa_i2c_reply_slave_id")
-		reply_board_id = DataFromMask(reply, "mpa_ssa_i2c_reply_board_id")
-		reply_err = DataFromMask(reply, "mpa_ssa_i2c_reply_err")
-		reply_data = DataFromMask(reply, "mpa_ssa_i2c_reply_data")
+		reply_slave_id = self.DataFromMask(reply, "mpa_ssa_i2c_reply_slave_id")
+		reply_board_id = self.DataFromMask(reply, "mpa_ssa_i2c_reply_board_id")
+		reply_err = self.DataFromMask(reply, "mpa_ssa_i2c_reply_err")
+		reply_data = self.DataFromMask(reply, "mpa_ssa_i2c_reply_data")
 		# print(full word)
 		#print("Full Reply Word: ", hex(reply))
 		# check the data
@@ -345,18 +348,18 @@ class fc7_com():
 	def ReadStatus(self, name = "Current Status"):
 		print("============================")
 		print(name + ":")
-		error_counter = fc7.read("stat_error_counter")
+		error_counter = self.fc7.read("stat_error_counter")
 		print("   -> Error Counter: " + str(error_counter))
 		if error_counter > 0:
 			for i in range (0,error_counter):
-				error_full = fc7.read("stat_error_full")
-				error_block_id = DataFromMask(error_full,"stat_error_block_id");
-				error_code = DataFromMask(error_full,"stat_error_code");
+				error_full = self.fc7.read("stat_error_full")
+				error_block_id = self.DataFromMask(error_full,"stat_error_block_id");
+				error_code = self.DataFromMask(error_full,"stat_error_code");
 				print("   -> ")
 				fc7ErrorHandler.getErrorDescription(error_block_id,error_code)
 		else:
 			print("   -> No Errors")
-		temp_source = fc7.read("stat_fast_fsm_source")
+		temp_source = self.fc7.read("stat_fast_fsm_source")
 		temp_source_name = "Unknown"
 		if temp_source == 1:
 			temp_source_name = "L1-Trigger"
@@ -373,7 +376,7 @@ class fc7_com():
 		elif temp_source == 7:
 			temp_source_name = "Antenna Trigger"
 		print("   -> trigger source:" + str(temp_source_name))
-		temp_state = fc7.read("stat_fast_fsm_state")
+		temp_state = self.fc7.read("stat_fast_fsm_state")
 		temp_state_name = "Unknown"
 		if temp_state == 0:
 			temp_state_name = "Idle"
@@ -382,13 +385,239 @@ class fc7_com():
 		elif temp_state == 2:
 			temp_state_name = "Paused. Waiting for readout"
 		print("   -> trigger state:" + str(temp_state_name))
-		print("   -> trigger configured:"  + str(fc7.read("stat_fast_fsm_configured")))
+		print("   -> trigger configured:"  + str(self.fc7.read("stat_fast_fsm_configured")))
 		print(   "   -> --------------------------------")
-		print("   -> i2c commands fifo empty:" + str( fc7.read("stat_command_i2c_fifo_commands_empty")))
-		print("   -> i2c replies fifo empty:" + str( fc7.read("stat_command_i2c_fifo_replies_empty")))
-		print("   -> i2c nreplies available:" + str( fc7.read("stat_command_i2c_nreplies_present")))
-		print("   -> i2c fsm state:" + str( fc7.read("stat_command_i2c_fsm") ))
+		print("   -> i2c commands fifo empty:" + str( self.fc7.read("stat_command_i2c_fifo_commands_empty")))
+		print("   -> i2c replies fifo empty:" + str( self.fc7.read("stat_command_i2c_fifo_replies_empty")))
+		print("   -> i2c nreplies available:" + str( self.fc7.read("stat_command_i2c_nreplies_present")))
+		print("   -> i2c fsm state:" + str( self.fc7.read("stat_command_i2c_fsm") ))
 		print(   "   -> --------------------------------")
-		print(   "   -> dio5 not ready:" + str(fc7.read("stat_dio5_not_ready")))
-		print(   "   -> dio5 error:" + str( fc7.read("stat_dio5_error")))
+		print(   "   -> dio5 not ready:" + str(self.fc7.read("stat_dio5_not_ready")))
+		print(   "   -> dio5 error:" + str( self.fc7.read("stat_dio5_error")))
 		print("============================")
+
+	def SendPhaseTuningCommand(self, value):
+		self.fc7.write("ctrl_phy_phase_tuning", value)
+
+	def CheckLineDone(self, hybrid_id, chip_id, line_id):
+		# shifting
+		hybrid_raw = (hybrid_id & 0xF) << 28
+		chip_raw = (chip_id & 0xF) << 24
+		line_raw = (line_id & 0xF) << 20
+		# command 1
+		command_type = 1
+		command_raw = (command_type & 0xF) << 16
+		# final command 1
+		command_final = hybrid_raw + chip_raw + line_raw + command_raw
+		self.SendPhaseTuningCommand(command_final)
+		time.sleep(0.01)
+		line_done = self.GetPhaseTuningStatus(printStatus = False)
+		if line_done >= 0:
+			pass
+		else:
+			print("Tuning Failed or Wrong Status")
+		return line_done
+
+
+	def GetPhaseTuningStatus(self, printStatus = True):
+		# get data word
+		data = self.fc7.read("stat_phy_phase_tuning")
+		# parse commands
+		line_id = (data & 0xF0000000) >> 28
+		output_type = (data & 0x0F000000) >> 24
+		# line configuration
+		if(output_type == 0):
+			mode = (data & 0x00003000) >> 12
+			master_line_id = (data & 0x00000F00) >> 8
+			delay = (data & 0x000000F8) >> 3
+			bitslip = (data & 0x00000007) >> 0
+			if printStatus:
+				print("Line Configuration: ")
+				print("\tLine ID: "+ str(line_id) +",\tMode: "+ str(mode)+ ",\tMaster line ID: "+ str(master_line_id)+ ",\tIdelay: "+ str(delay)+ ",\tBitslip: "+ str(bitslip))
+			return -1
+		# tuning status
+		elif(output_type == 1):
+			delay = (data & 0x00F80000) >> 19
+			bitslip = (data & 0x00070000) >> 16
+			done = (data & 0x00008000) >> 15
+			wa_fsm_state = (data & 0x00000F00) >> 8
+			pa_fsm_state = (data & 0x0000000F) >> 0
+			if printStatus:
+				print("Line Status: ")
+				print("\tTuning done/applied: "+ done)
+				print("\tLine ID: "+str(line_id)+ ",\tIdelay: " +str(delay)+ ",\tBitslip: " +str(bitslip)+ ",\tWA FSM State: " +str(wa_fsm_state)+ ",\tPA FSM State: "+str( pa_fsm_state))
+			return done
+		# tuning status
+		elif output_type == 6:
+			default_fsm_state = (data & 0x000000FF) >> 0
+			if printStatus:
+				print("Default tuning FSM state: "+ hex(default_fsm_state))
+			return -1
+		# unknown
+		else:
+			print("Error! Unknown status message!")
+			return -2
+
+
+	def TuneLine(self, line_id, pattern, pattern_period, changePattern = True, printStatus = False):
+		# in that case all set specified pattern (same for all lines)
+		if changePattern:
+			self.SetLineMode(0,0,line_id,mode = 0)
+			self.SetLinePattern(0,0,line_id,pattern, pattern_period)
+			time.sleep(0.01)
+		# do phase alignment
+		self.SendControl(0,0,line_id,"do_phase")
+		time.sleep(0.01)
+		# do word alignment
+		self.SendControl(0,0,line_id,"do_word")
+		time.sleep(0.01)
+		if printStatus:
+			self.GetLineStatus(0,0,line_id)
+			print( "\n")
+		return self.CheckLineDone(0,0,line_id)
+
+	def SetLinePattern(self, hybrid_id, chip_id, line_id, pattern, pattern_period):
+		# shifting
+		hybrid_raw = (hybrid_id & 0xF) << 28
+		chip_raw = (chip_id & 0xF) << 24
+		line_raw = (line_id & 0xF) << 20
+		# setting the size of the pattern
+		command_type = 3
+		command_raw = (command_type & 0xF) << 16
+		len_raw = (0xFF & pattern_period) << 0
+		command_final = hybrid_raw + chip_raw + line_raw + command_raw + len_raw
+		self.SendPhaseTuningCommand(command_final)
+		# setting the pattern itself
+		command_type = 4
+		command_raw = (command_type & 0xF) << 16
+		byte_id_raw = (0xFF & 0) << 8
+		pattern_raw = (0xFF & pattern) << 0
+		command_final = hybrid_raw + chip_raw + line_raw + command_raw + byte_id_raw + pattern_raw
+		self.SendPhaseTuningCommand(command_final)
+
+
+	def SetLineMode(self, hybrid_id, chip_id, line_id, mode, delay = 0, bitslip = 0, l1_en = 0, master_line_id = 0):
+		# shifting
+		hybrid_raw = (hybrid_id & 0xF) << 28
+		chip_raw = (chip_id & 0xF) << 24
+		line_raw = (line_id & 0xF) << 20
+		# command
+		command_type = 2
+		command_raw = (command_type & 0xF) << 16
+		# shift payload
+		mode_raw = (mode & 0x3) << 12
+		# defautls
+		l1a_en_raw = 0
+		master_line_id_raw = 0
+		delay_raw = 0
+		bitslip_raw = 0
+		# now assign proper values
+		if mode == 0:
+			l1a_en_raw = (l1_en & 0x1) << 11
+		elif mode == 1:
+			master_line_id_raw = (master_line_id & 0xF) << 8
+		elif mode == 2:
+			delay_raw = (delay & 0x1F) << 3
+			bitslip_raw = (bitslip & 0x7) << 0
+		# now combine the command itself
+		command_final = hybrid_raw + chip_raw + line_raw + command_raw + mode_raw + l1a_en_raw + master_line_id_raw + delay_raw + bitslip_raw
+		self.SendPhaseTuningCommand(command_final)
+
+
+	def SendControl(self, hybrid_id, chip_id, line_id, command):
+		# shifting
+		hybrid_raw = (hybrid_id & 0xF) << 28
+		chip_raw = (chip_id & 0xF) << 24
+		line_raw = (line_id & 0xF) << 20
+		# command
+		command_type = 5
+		command_raw = (command_type & 0xF) << 16
+		# final
+		command_final = hybrid_raw + chip_raw + line_raw + command_raw
+		if command == "do_apply":
+			command_final += 4
+		elif command == "do_word":
+			command_final += 2
+		elif command == "do_phase":
+			command_final += 1
+		# send
+		self.SendPhaseTuningCommand(command_final)
+
+	def GetLineStatus(self, hybrid_id, chip_id, line_id):
+		# shifting
+		hybrid_raw = (hybrid_id & 0xF) << 28
+		chip_raw = (chip_id & 0xF) << 24
+		line_raw = (line_id & 0xF) << 20
+		# command 0
+		command_type = 0
+		command_raw = (command_type & 0xF) << 16
+		# final command 0
+		command_final = hybrid_raw + chip_raw + line_raw + command_raw
+		self.SendPhaseTuningCommand(command_final)
+		time.sleep(0.01)
+		self.GetPhaseTuningStatus()
+		# command 1
+		command_type = 1
+		command_raw = (command_type & 0xF) << 16
+		# final command 1
+		command_final = hybrid_raw + chip_raw + line_raw + command_raw
+		self.SendPhaseTuningCommand(command_final)
+		time.sleep(0.01)
+		done = self.GetPhaseTuningStatus()
+		return done
+
+
+	# read the chip data (nbytes per read transaction)
+	def ReadChipDataNEW(self, nbytes = 1, verbose = 0):
+		numberOfReads = 0
+		data = None
+		if verbose:
+			print("Reading Out Data:")
+			print("   ==========================================================================================")
+			print("   | Hybrid ID             || Chip ID             || Register(LSB)          || DATA         |")
+			print("   ==========================================================================================")
+
+		while self.fc7.read("stat_command_i2c_fifo_replies_empty") == 0:
+			byte_counter = 0
+			reply = self.fc7.read("ctrl_command_i2c_reply_fifo")
+			hybrid_id = self.DataFromMask(reply, "ctrl_command_i2c_reply_hybrid_id")
+			chip_id = self.DataFromMask(reply, "ctrl_command_i2c_reply_chip_id")
+			register = self.DataFromMask(reply, "ctrl_command_i2c_reply_register")
+			data = self.DataFromMask(reply, "ctrl_command_i2c_reply_data")
+
+			# first byte is always in the first word
+			if verbose:
+				print('   | {:s} {:-12i} || {:s} {:-12i} || {:s} {:-12i} || {:-12i} |'.format("Hybrid #", hybrid_id, "Chip #", chip_id, "Register #", hex(register)[:4], hex(data)[:4]))
+			byte_counter = byte_counter + 1
+			register = register + 1
+			while(byte_counter < nbytes):
+				# just in case wait next word
+				while(self.fc7.read("stat_command_i2c_fifo_replies_empty") == 1):
+					print("debug: waiting next word, should not happen")
+					time.sleep(1)
+				reply = self.fc7.read("ctrl_command_i2c_reply_fifo")
+				data1 = (reply & 0x000000FF) >> 0
+				data2 = (reply & 0x0000FF00) >> 8
+				data3 = (reply & 0x00FF0000) >> 16
+				# this "if" is not necessary - satisfied when entered the while loop - print the first byte of the word
+				if (byte_counter < nbytes):
+					if verbose:
+						print('   | {:s} {:-12i} || {:s} {:-12i} || {:s} {:-12i} || {:-12i} |'.format("Hybrid #", hybrid_id, "Chip #", chip_id, "Register #", hex(register)[:4], hex(data)[:4]))
+					byte_counter = byte_counter + 1
+					register = register + 1
+				# print(the second byte of the word)
+				if (byte_counter < nbytes):
+					if verbose:
+						print('   | {:s} {:-12i} || {:s} {:-12i} || {:s} {:-12i} || {:-12i} |'.format("Hybrid #", hybrid_id, "Chip #", chip_id, "Register #", hex(register)[:4], hex(data)[:4]))
+					byte_counter = byte_counter + 1
+					register = register + 1
+				# print(the third byte of the word)
+				if (byte_counter < nbytes):
+					if verbose:
+						print('   | {:s} {:-12i} || {:s} {:-12i} || {:s} {:-12i} || {:-12i} |'.format( "Hybrid #", hybrid_id, "Chip #", chip_id, "Register #", hex(register)[:4], hex(data)[:4]))
+					byte_counter = byte_counter + 1
+					register = register + 1
+		if verbose:
+			print("	-----------------------------------------------------------------------------------------")
+			print("   ====================================================   ")
+		return data

@@ -7,9 +7,9 @@ import copy
 from random import randint
 
 from utilities.tbsettings import *
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
+#from d19cScripts.fc7_daq_methods import *
+#from d19cScripts.MPA_SSA_BoardControl import *
+#from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from d19cScripts.phase_tuning_control import *
@@ -299,8 +299,8 @@ class ssa_ctrl_base:
 		self.setup_readout_chip_id()
 		state = True
 		for line in range(0,9):
-			TuneLine(line, np.array(pattern),1,True,False)
-			if CheckLineDone(0,0,line) != 1:
+			self.fc7.TuneLine(line, np.array(pattern),1,True,False)
+			if self.fc7.CheckLineDone(0,0,line) != 1:
 				print("Failed tuning line {:d}".format(line))
 				state = False
 		return state

@@ -30,6 +30,9 @@ class SSA_Analise_Test_results():
 	def __init__(self, toptest, test, measure, biascal):
 		self.test = test; self.measure = measure; self.toptest = toptest; self.biascal = biascal;
 		self.set_configuration(0)
+		### temporary:
+		#self.set_data_path('/home/acaratel/MPA-SSA_Test/SSA_Results/TestLogs/')
+		#self.set_data_path('Chip_0_frontend')
 
 	## Setup Plots ####################################################################################
 
@@ -109,7 +112,9 @@ class SSA_Analise_Test_results():
 		thmean = {}; sigmamean = {};
 		print('->  Searching for matching files in ' + self.path)
 		fl = self._get_file_name()
+		#files_list = self._get_files_list( 'scurve_trim__cal_' + '*', 'csv')
 		files_list = self._get_files_list( 'scurve_trim__cal_' + '*', 'csv')
+
 		if(len(files_list) == 0): return ['er']*7
 		calpulses = []; scurve_table = {}; runlist = {}
 		print('->  Sorting Informations')

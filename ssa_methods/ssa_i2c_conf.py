@@ -315,7 +315,7 @@ class ssa_i2c_conf:
 		elif (chip == 'SSA1'): self.SendCommand_I2C(0, 0, 2, 0, read, address, data, readback)
 		else: print('ERROR I2C Chip Name ' + str(chip))
 		time.sleep(self.delay)
-		read_data = ReadChipDataNEW()
+		read_data = self.fc7.ReadChipDataNEW()
 		return read_data
 
 	def SendCommand_I2C(self, command, hybrid_id, chip_id, page, read, register_address, data, ReadBack):

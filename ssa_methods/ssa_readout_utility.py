@@ -273,10 +273,10 @@ class SSA_readout():
 		#self.fc7.SendCommand_CTRL("start_trigger")
 		time.sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
-		while ((status & 0x00000002) >> 1) != 1:
-			status = self.fc7.read("stat_slvs_debug_general")
-			time.sleep(0.001)
-			counter = 0
+		#while ((status & 0x00000002) >> 1) != 1:
+		#	status = self.fc7.read("stat_slvs_debug_general")
+		#	time.sleep(0.001)
+		#	counter = 0
 		time.sleep(0.001)
 		lateral_data = self.fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
 		if (display is True):
