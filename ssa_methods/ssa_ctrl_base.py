@@ -56,7 +56,9 @@ class ssa_ctrl_base:
 		return rp
 
 	#####################################################################
-	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True, rtarray = False, strip_list = range(1,121), notes = [['note','','']]):
+	def save_configuration(self, file = '../SSA_Results/Configuration.csv', display=True, rtarray = False, strip_list = 'all', notes = [['note','','']]):
+		if(strip_list=='all'):
+			strip_list = range(1,121)
 		registers = []; rm = []
 		peri_reg_map  = self.ssa_peri_reg_map.copy()
 		for i in peri_reg_map:
@@ -131,11 +133,12 @@ class ssa_ctrl_base:
 				if(int(conf[i,2]) != int(conf_ref[i,2])):
 					error[0] += 1
 					if(display):
-						print("-X  Configuration error. Reg: " + str(conf[i,1]) + " Expected: " + str(int(conf_ref[i,2])) + "Found: " + str(int(conf[i,2])))
+						utils.print_error("-X  Configuration error. Periphery Reg: {:32s} -> Expected: {:8b} Found: {:8b}".format(str(conf[i,1]), int(conf_ref[i,2]), int(conf[i,2]) ) )
 			elif(int(conf[i,0]) > 0):
 				if(int(conf[i,2]) != int(conf_ref[i,2])):
 					if(display):
-						print("-X  Configuration error. Reg: " + str(conf[i,1]) + " Strip: " + str(int(conf[i,0])) + " Expected: " + str(int(conf_ref[i,2])) + " Found: " + str(int(conf[i,2])) )
+						utils.print_error("-X  Configuration error. Strip {:3d} Reg: {:32s} -> Expected: {:8b} Found: {:8b}".format(int(conf[i,0]), str(conf[i,1]), int(conf_ref[i,2]), int(conf[i,2])) )
+
 					error[int(conf[i,0])] += 1
 		return error
 
@@ -210,7 +213,7 @@ class ssa_ctrl_base:
 			done = False
 		return  done
 
-	def phase_tuning(self, method = 'new'):
+	def phase_tuning(self, method = 'old'):
 		self.setup_readout_chip_id()
 		self.activate_readout_shift()
 		if(self.fc7.invert):
@@ -242,9 +245,11 @@ class ssa_ctrl_base:
 		while(self.fc7.read("stat_phy_phase_tuning_done") == 0):
 			time.sleep(0.1)
 			utils.print_warning("->  Waiting for the phase tuning")
+			#self.fc7.write("ctrl_phy_phase_tune_again", 1)
 			timeout+=1
 			if (timeout == timeout_max):
 				return False
+		#self.fc7.write("ctrl_phy_phase_tune_again", 1)
 		return True
 
 	#####################################################################

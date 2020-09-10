@@ -217,6 +217,58 @@ class ssa_ctrl_analog:
 		return dnlh, inlh
 		#adc_dnl_inl_histogram()
 
+	## quick and dirty test
+	def adc_manual_measure():
+		result={}
+		for vin in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
+			print("set input voltage to {:5.3f}".format(vin))
+			time.sleep(3)
+			result[vin] = ssa.chip.analog.adc_measure('TESTPAD', nsamples=100)
+			print('-------------------------------------------------')
+		return result
+
+	## quick and dirty test
+	def adc_manual_measure_plot():
+		data = {}
+		plt.clf()
+		fig = plt.figure(figsize=(10,8))
+		data['0']  = {0.0: 22.44, 0.1: 646.34, 0.2: 1306.04, 0.3: 1979.96, 0.4: 2647.79, 0.5: 3305.76, 0.6: 3969.82, 0.7: 4095.00, 0.8: 4095.0}
+		data['7']  = {0.0: 11.07, 0.1: 600.59, 0.2: 1229.38, 0.3: 1854.88, 0.4: 2474.18, 0.5: 3105.9,  0.6: 3721.64, 0.7: 4093.68, 0.8: 4095.0}
+		data['15'] = {0.0: 11.23, 0.1: 566.62, 0.2: 1143.58, 0.3: 1729.33, 0.4: 2310.25, 0.5: 2891.36, 0.6: 3471.86, 0.7: 4006.68, 0.8: 4095.0}
+		data['23'] = {0.0: 11.13, 0.1: 531.79, 0.2: 1067.91, 0.3: 1608.77, 0.4: 2159.76, 0.5: 2706.12, 0.6: 3250.75, 0.7: 3789.76, 0.8: 4094.33}
+		data['31'] = {0.0: 14.57, 0.1: 498.44, 0.2: 1007.13, 0.3: 1519.30, 0.4: 2028.33, 0.5: 2532.94, 0.6: 3053.69, 0.7: 3558.16, 0.8: 4060.9}
+		plt.style.use('seaborn-deep')
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(True)
+		ax.spines["right"].set_visible(True)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.xticks(list(arange(0,0.9,0.1)), fontsize=16)
+		plt.yticks(list(range(0,2**12+1,2**8)), fontsize=16)
+		plt.ylabel('Input voltage [V]', fontsize=16)
+		plt.xlabel('Converted code', fontsize=16)
+		color=iter(sns.color_palette('deep'))
+		for v in data:
+			x = list(data[v].keys())
+			y = list(data[v].values())
+			c = next(color);
+			xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
+			if(v in ['31', '23']):
+				helper_y3 = scipy_interpolate.make_interp_spline(x, np.array(y), bc_type=([(2, 0.0)], [(2, 0.0)]))
+			else:
+				helper_y3 = scipy_interpolate.make_interp_spline(x, np.array(y), bc_type=([(3, 0.0)], [(1, 0.0)]))
+			y_smuth = helper_y3(xnew)
+			y_hat = scypy_signal.savgol_filter(x = y_smuth , window_length = 1001, polyorder = 1)
+			plt.plot(xnew, y_smuth, lw=1, alpha = 0.5, color=c)
+			#plt.plot(xnew, y_hat, color=c, lw=1, alpha = 0.8)
+			plt.plot(x, y, 'x', label= "DAC = {:s}".format(v), color=c)
+			leg = ax.legend(fontsize = 12, loc=('lower right'), frameon=True )
+			leg.get_frame().set_linewidth(1.0)
+			ax.get_xaxis().tick_bottom()
+			ax.get_yaxis().tick_left()
+		plt.show()
+
+
 
 # ssa_peri_reg_map['Fuse_Mode']              = 43
 # ssa_peri_reg_map['Fuse_Prog_b0']           = 44

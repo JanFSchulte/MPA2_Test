@@ -3,7 +3,7 @@ ETHERS = {}
 
 #############################################################################
 # This section is overwritten by "start_ssa_*.sh"
-VERSION['SSA'] = 2
+VERSION['SSA'] = 1
 VERSION['MPA'] = 1
 VERSION['INT_PCB'] = 2
 BOARD_SELECT = "08:00:30:00:22:5d"

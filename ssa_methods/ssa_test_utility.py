@@ -801,7 +801,7 @@ class SSA_test_utility():
 			self.fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
 			self.fc7.write("cnfg_fast_delay_between_consecutive_trigeers", delay_between_consecutive_trigeers)
 			self.fc7.write("cnfg_fast_triggers_to_accept", npulses)
-			self.fc7.write("ctrl_fast_signal_duration", l1_duration) ### doesn't work
+			#self.fc7.write("ctrl_fast_signal_duration", l1_duration) ### doesn't work
 			#sleep(0.1); self.fc7.write("ctrl_fast", fc7AddrTable.getItem("ctrl_fast_signal_duration").shiftDataToMask(l1_duration) ); sleep(0.1);
 			sleep(0.1);	SendCommand_CTRL("load_trigger_config"); sleep(0.1);
 		self.ssa.inject.digital_pulse(hit_list = patternL, hip_list = patternH, initialise = False, sequence = sequence)

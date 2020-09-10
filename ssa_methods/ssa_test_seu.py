@@ -76,12 +76,12 @@ class SSA_SEU():
 
 				self.ssa.ctrl.read_seu_counter(display=False, return_rate=True) #only to initialize timer for rate calculation
 
-				results = self.seuutil.Run_Test_SEU(
-					check_stub=True, check_l1=False, check_lateral=True,
-					strip = striplist, hipflags = striplist, delay = 73, run_time = self.run_time,
-					cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 1, stop_if_fifo_full = True)
+				#results = self.seuutil.Run_Test_SEU(
+				#	check_stub=True, check_l1=True, check_lateral=True,
+				#	strip = striplist, hipflags = striplist, delay = 74, run_time = self.run_time,
+				#	cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 1, stop_if_fifo_full = 0)
 
-				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration]  = results
+				#[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration]  = results
 
 				seucounter = self.ssa.ctrl.read_seu_counter(display=True)
 
@@ -248,16 +248,19 @@ class SSA_SEU():
 	##############################################################
 	def check_configuration(self, filename = '../SSA_Results/SEU/test', strip_list = range(1,121), latency = 500):
 		#t = time.time()
+		utils.print_info("->  Saving configuration to " + str(filename))
 		conf_new = self.ssa.ctrl.save_configuration(
-			rtarray = True, display=False, strip_list = strip_list,
+			rtarray = True, display=False, strip_list = 'all',
 			file = (filename+'__configuration.scv'))
 
+		utils.print_info("->  Reading default configuration ")
 		conf_ref = self.ssa.ctrl.load_configuration(
 			rtarray = True, display=False, upload_on_chip = False,
 			file = 'ssa_methods/Configuration/ssa_configuration_base_v{:d}.csv'.format(tbconfig.VERSION['SSA']))
 
 		#conf_ref[ np.where(conf_ref[:,1] == 'L1_Latency_lsb')[0][0] , 2] = (latency >> 0) & 0xff
 		#conf_ref[ np.where(conf_ref[:,1] == 'L1_Latency_msb')[0][0] , 2] = (latency >> 8) & 0xff
+		utils.print_info("->  Comparing configuration")
 		error = self.ssa.ctrl.compare_configuration(conf_new, conf_ref)
 		#print(time.time() - t)
 		peri_er = bool(error[0])

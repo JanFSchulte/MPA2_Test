@@ -241,39 +241,6 @@ class SSA_measurements():
 			c_noise[cal]      = CSV.csv_to_array( (filename + 'frontend_Q-{:1.3f}_noise.csv'.format(cal)))[0][1:]
 			self.my_hist_plot( c_noise[cal], "Normalised distribution", 'Noise', False,  filename+'fe_noise')
 
-
-
-	def my_hist_plot(self, ser, xlabel, ylabel, mean_label=False, save=False):
-		plt.style.use('seaborn-deep')
-		ax = plt.subplot(111)
-		ax.spines["top"].set_visible(True)
-		ax.spines["right"].set_visible(True)
-		ax.get_xaxis().tick_bottom()
-		ax.get_yaxis().tick_left()
-		plt.xticks(fontsize=32)
-		plt.yticks(fontsize=32)
-		plt.ylabel(xlabel, fontsize=32)
-		plt.xlabel(ylabel, fontsize=32)
-		bn = np.arange(min(ser)*0.95, max(ser)*1.15, ((max(ser)-min(ser))/50.0) )
-		plt.hist(ser,  density=True, bins = bn, alpha = 0.7)
-		xt = plt.xticks()[0] # find minimum and maximum of xticks to know where we should compute theoretical distribution
-		xmin, xmax = min(xt), max(xt)
-		lnspc = np.linspace(xmin, xmax, len(ser))
-		m, s = stats.norm.fit(ser) # get mean and standard deviation
-		pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
-		plt.plot(lnspc, pdf_g, 'r' , label="Norm") # plot i
-		sermean = np.mean(ser)
-		if(mean_label):
-			plt.text(0.95,0.95, mean_label + '= {:6.2f}'.format(sermean), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
-		if(save):
-			plt.savefig(save+'.png', bbox_inches="tight")
-			print('->  Plot saved in ' + save +'.png')
-		#fpl = self.path + 'ANALYSIS/S-Curve_Gain_hist'+self.pltname+'.png'
-		#plt.savefig(fpl, bbox_inches="tight");
-		#print("->  Plot saved in %s" % (fpl))
-
-
-
 	###########################################################
 	def power_vs_occupancy(self,
 		maxclusters=8, l1rates=[0, 250, 500, 750, 1000],
@@ -371,7 +338,7 @@ class SSA_measurements():
 		fig = plt.figure(figsize=(18,12))
 		self.power_vs_occupancy_plot(label='SRAM ', maxclusters=maxclusters, l1rates=l1rates, save=0, show=0, filename=file_sram,  fit=fit)
 		self.power_vs_occupancy_plot(label='Latch ', maxclusters=maxclusters, l1rates=l1rates, save=0, show=0, filename=file_latch, fit=fit)
-		plt.savefig(file_out+'/power_vs_occupancy_sram_latch.png', bbox_inches="tight");
+		#plt.savefig(file_out+'/power_vs_occupancy_sram_latch.png', bbox_inches="tight");
 		plt.show()
 
 #		self.ssa.ctrl.set_threshold(100)
@@ -961,6 +928,76 @@ class SSA_measurements():
 		hit.sort()
 		c.sort()
 		return hit, c
+
+	###########################################################
+	def my_hist_plot(self, ser, xlabel, ylabel, mean_label=False, save=False):
+		plt.style.use('seaborn-deep')
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(True)
+		ax.spines["right"].set_visible(True)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.xticks(fontsize=32)
+		plt.yticks(fontsize=32)
+		plt.ylabel(xlabel, fontsize=32)
+		plt.xlabel(ylabel, fontsize=32)
+		bn = np.arange(min(ser)*0.95, max(ser)*1.15, ((max(ser)-min(ser))/50.0) )
+		plt.hist(ser,  density=True, bins = bn, alpha = 0.7)
+		xt = plt.xticks()[0] # find minimum and maximum of xticks to know where we should compute theoretical distribution
+		xmin, xmax = min(xt), max(xt)
+		lnspc = np.linspace(xmin, xmax, len(ser))
+		m, s = stats.norm.fit(ser) # get mean and standard deviation
+		pdf_g = stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
+		plt.plot(lnspc, pdf_g, 'r' , label="Norm") # plot i
+		sermean = np.mean(ser)
+		if(mean_label):
+			plt.text(0.95,0.95, mean_label + '= {:6.2f}'.format(sermean), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
+		if(save):
+			plt.savefig(save+'.png', bbox_inches="tight")
+			print('->  Plot saved in ' + save +'.png')
+		#fpl = self.path + 'ANALYSIS/S-Curve_Gain_hist'+self.pltname+'.png'
+		#plt.savefig(fpl, bbox_inches="tight");
+		#print("->  Plot saved in %s" % (fpl))
+
+	###########################################################
+	def my_linear_plot(self, x, y, xlabel, ylabel, fit=True, mean_label=False, save=False):
+		plt.style.use('seaborn-deep')
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(True)
+		ax.spines["right"].set_visible(True)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.xticks(fontsize=32)
+		plt.yticks(fontsize=32)
+		plt.ylabel(xlabel, fontsize=32)
+		plt.xlabel(ylabel, fontsize=32)
+		xt = plt.xticks()[0] # find minimum and maximum of xticks to know where we should compute theoretical distribution
+		xmin, xmax = min(xt), max(xt)
+		if(fit>0):
+			xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
+			c = next(color);
+			#y_smuth = scipy_interpolate.BSpline(x, np.array([y, xnew]))
+			helper_y3 = scipy_interpolate.make_interp_spline(x, np.array(y) )
+			y_smuth = helper_y3(xnew)
+			y_hat = scypy_signal.savgol_filter(x = y_smuth , window_length = 1001, polyorder = fit)
+			plt.plot(xnew, y_smuth , color=c, lw=1, alpha = 0.5)
+			#plt.plot(xnew, y_hat   , color=c, lw=1, alpha = 0.8)
+			plt.plot(x, y, 'o', label=label + "(L1 rate = {:4d} kHz)".format(lr), color=c)
+			#p = np.poly1d(np.polyfit(list(range(maxclusters+1)), current[0:maxclusters+1], fit))
+			#t = np.linspace(0, 8, 1000)
+			#plt.plot(range(0,maxclusters+1,1), current[0:maxclusters+1], 'o', t, p(t), '-')
+		else:
+			plt.plot(range(0,maxclusters+1,1), current[0:maxclusters+1], 'o')
+		leg = ax.legend(fontsize = 12, loc=('lower right'), frameon=True )
+		leg.get_frame().set_linewidth(1.0)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.ylabel(ylabel, fontsize=16)
+		plt.xlabel(xlabel, fontsize=16)
+		if(save):
+			plt.savefig(save+'.png', bbox_inches="tight")
+			print('->  Plot saved in ' + save +'.png')
+
 
 
 '''

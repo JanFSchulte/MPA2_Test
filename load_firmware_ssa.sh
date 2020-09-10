@@ -12,7 +12,7 @@ export LC_ALL=C; unset LANGUAGE
 #   	printf 'IP=%s\n' "$line"
 #   done <"$file"
 
-IP="192.168.0.77"
+IP="192.168.0.79"
 eth=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
 
 printf '______________________________________________________\n'
@@ -57,8 +57,11 @@ else
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_20200825.bit
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_20200824.bit
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_20200824.bit -f ~/MPA-SSA_Test/bitfiles/uDTC_SSA_SEU_20200824.bit
-	./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit -f ~/MPA-SSA_Test/bitfiles/uDTC_SSA_SEU_master.bit
+	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit -f ~/MPA-SSA_Test/bitfiles/uDTC_SSA_SEU_master.bit
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit
+	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA1_SEU.bin
+	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA1_SEU.bin
+	./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_10092020.bin
 	cd -
 fi
 #./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_2020.08.19.bit

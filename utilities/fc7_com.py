@@ -411,7 +411,7 @@ class fc7_com():
 		command_final = hybrid_raw + chip_raw + line_raw + command_raw
 		self.SendPhaseTuningCommand(command_final)
 		time.sleep(0.01)
-		line_done = self.GetPhaseTuningStatus(printStatus = False)
+		line_done = self.GetPhaseTuningStatus(printStatus = True)
 		if line_done >= 0:
 			pass
 		else:
@@ -444,7 +444,7 @@ class fc7_com():
 			pa_fsm_state = (data & 0x0000000F) >> 0
 			if printStatus:
 				print("Line Status: ")
-				print("\tTuning done/applied: "+ done)
+				print("\tTuning done/applied: "+ str(done))
 				print("\tLine ID: "+str(line_id)+ ",\tIdelay: " +str(delay)+ ",\tBitslip: " +str(bitslip)+ ",\tWA FSM State: " +str(wa_fsm_state)+ ",\tPA FSM State: "+str( pa_fsm_state))
 			return done
 		# tuning status
@@ -555,7 +555,7 @@ class fc7_com():
 		command_final = hybrid_raw + chip_raw + line_raw + command_raw
 		self.SendPhaseTuningCommand(command_final)
 		time.sleep(0.01)
-		self.GetPhaseTuningStatus()
+		# self.GetPhaseTuningStatus()
 		# command 1
 		command_type = 1
 		command_raw = (command_type & 0xF) << 16

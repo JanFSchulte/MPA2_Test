@@ -313,7 +313,8 @@ def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, dela
   time.sleep(0.1)
 
 def Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses, initial_reset = 0):
-  time.sleep(0.01); fc7.write("cnfg_fast_initial_fast_reset_enable", initial_reset)
+  fc7.write('ctrl_fast_reset', 1)
+  time.sleep(0.10); fc7.write("cnfg_fast_initial_fast_reset_enable", initial_reset)
   time.sleep(0.01); fc7.write("cnfg_fast_delay_before_next_pulse", cal_pulse_period)
   time.sleep(0.01); fc7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
   time.sleep(0.01); fc7.write("cnfg_fast_triggers_to_accept", number_of_cal_pulses)

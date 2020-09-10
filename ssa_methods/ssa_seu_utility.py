@@ -34,12 +34,14 @@ class SSA_SEU_utilities():
 			check_stub=True, check_l1=True, check_lateral=True,
 			strip =[10,20,30,40], hipflags = [], cal_pulse_period = 1, l1a_period = 39,
 			latency = 101, run_time = 2, display = 1, filename = '', runname = '',
-			delay = 74, create_errors = False, stop_if_fifo_full = True, read_seu_counter=True):
+			delay = 74, create_errors = False, stop_if_fifo_full = True,
+			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0):
 
 		self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
 		self.fc7.write("ctrl_fast", 0x10000)
 		self.ssa.init(edge = 'negative', display = False)
+		print(tbconfig.VERSION['SSA'])
 
 		s1, s2, s3 = self.Stub_Evaluate_Pattern(strip)
 		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern(strip, [])
@@ -50,9 +52,23 @@ class SSA_SEU_utilities():
 
 		self.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = 2)
 
+		#self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = display)
 		self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = display)
 
-		Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0, initial_reset = 1)
+		 # Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0, initial_reset = 1)
+		 # Configure_SEU(1, 39,0,1)
+
+		time.sleep(0.01); self.fc7.write("cnfg_fast_initial_fast_reset_enable", 1) #1
+		time.sleep(0.01); self.fc7.write("cnfg_fast_delay_before_next_pulse", cal_pulse_period)
+		time.sleep(0.01); self.fc7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
+		time.sleep(0.01); self.fc7.write("cnfg_fast_triggers_to_accept", 0)
+		time.sleep(0.01); self.fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
+		time.sleep(0.01); self.fc7.write("cnfg_fast_source", 9)
+		time.sleep(0.01); self.fc7.write('cnfg_fast_timeout_enable', 0)
+		time.sleep(0.1);  self.fc7.SendCommand_CTRL("load_trigger_config")
+		time.sleep(0.1)
+
+		time.sleep(0.01); self.fc7.write('cnfg_fast_timeout_enable', 0)
 
 		self.fc7.write("cnfg_fast_backpressure_enable", 0)
 		self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
@@ -73,6 +89,7 @@ class SSA_SEU_utilities():
 	def RunStateMachine_L1_and_Stubs(self, check_stub=True, check_l1=True, timer_data_taking = 30, display = 2, stop_if_fifo_full = True):
 		time.sleep(0.1)
 		FSM = self.fc7.read("stat_phy_slvs_compare_state_machine")
+		time.sleep(0.01); self.fc7.write('cnfg_fast_timeout_enable', 0)
 		if(display > 1):
 			print("State of FSM before starting: "   + str( FSM))
 			print("Almost full flag of FIFO before starting: "   + str( self.fc7.read("stat_phy_slvs_compare_fifo_almost_full")))
@@ -258,12 +275,18 @@ class SSA_SEU_utilities():
 					location += 1
 		if(tbconfig.VERSION['SSA'] >= 2):
 			p1 = 0x00000000
-			p2 = 0x00000000
-			p3 = int( '0b' + ( ''.join((l1hit[0:26])[::-1])  + '111100'    ) , 2)
-			p4 = int( '0b' + ( ''.join((l1hit[26:58])[::-1])  ) , 2)
-			p5 = int( '0b' + ( ''.join((l1hit[58:90])[::-1])  ) , 2)
-			p6 = int( '0b' + ( ''.join((l1flag[0:2])[::-1])   + ''.join((l1hit[90:120])[::-1])  ) , 2)
-			p7 = int( '0b' + ( '0'*6 + ''.join((l1flag[2:24])[::-1])  ) , 2)
+			#p2 = 0x00000000
+			#p3 = int( '0b' + ( ''.join((l1hit[0:26])[::-1])  + '111100'    ) , 2)
+			#p4 = int( '0b' + ( ''.join((l1hit[26:58])[::-1])  ) , 2)
+			#p5 = int( '0b' + ( ''.join((l1hit[58:90])[::-1])  ) , 2)
+			#p6 = int( '0b' + ( ''.join((l1flag[0:2])[::-1])   + ''.join((l1hit[90:120])[::-1])  ) , 2)
+			#p7 = int( '0b' + ( '0'*6 + ''.join((l1flag[2:24])[::-1])  ) , 2)
+			p2 = int( '0b' + ( '11' + '0'*30    ) , 2)
+			p3 = int( '0b' + ( ''.join((l1hit[0:30])[::-1])  + '11'    ) , 2)
+			p4 = int( '0b' + ( ''.join((l1hit[30:62])[::-1])  ) , 2)
+			p5 = int( '0b' + ( ''.join((l1hit[62:94])[::-1])  ) , 2)
+			p6 = int( '0b' + ( ''.join((l1flag[0:6])[::-1])   + ''.join((l1hit[94:120])[::-1])  ) , 2)
+			p7 = int( '0b' + ( '0'*10 + ''.join((l1flag[6:24])[::-1])  ) , 2)
 		else:
 			p1 = 0x00000000
 			p2 = 0x00000000
@@ -420,7 +443,7 @@ class SSA_SEU_utilities():
 		FIFO = np.full( [16386,4], '', dtype ='|S160')
 		if(not isinstance(nevents, int)):
 			FIFO_depth = self.fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo")
-			FIFO_depth = 50
+			FIFO_depth = 300
 		else:
 			FIFO_depth = nevents
 		for i in range(0, FIFO_depth):
@@ -435,15 +458,27 @@ class SSA_SEU_utilities():
 				fifo8_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data8_fifo")
 				fifo9_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data9_fifo")
 				if(display>1): print("Full l1 data package without the header (MSB downto LSB): ")
-				FIFO[i,0] = '{:8d}'.format(fifo8_word)
-				FIFO[i,1] = '{:8d}'.format(fifo9_word)
-				FIFO[i,2] = '{:8d}'.format(fifo7_word) # (fifo7_word >>27) & 0xf
+				FIFO[i,0] = '{:32b}'.format(fifo8_word)
+				FIFO[i,1] = '{:32b}'.format(fifo9_word)
+				FIFO[i,2] = '{:32b}'.format(fifo7_word) # (fifo7_word >>27) & 0xf
 				FIFO[i,3] = (self.parse_to_bin32(fifo8_word) +'-'+ self.parse_to_bin32(fifo7_word) +'-'+ self.parse_to_bin32(fifo6_word) +'-'+ self.parse_to_bin32(fifo5_word) +'-'+ self.parse_to_bin32(fifo4_word) +'-'+ self.parse_to_bin32(fifo3_word) +'-'+ self.parse_to_bin32(fifo2_word))
 				if(display>0):
-					print("->  L1 counter  "  + str( FIFO[i,2] ))
-					print("->  BX counter: "  + str( FIFO[i,0] ))
-					print("->  BX mirrow:  "  + str( FIFO[i,1] ))
-					print("->  Packet:     "  + str( FIFO[i,3] ))
+					#print("->  L1 counter  "  + str(  bin(fifo7_word)  ))
+					#print("->  L1 mirrow:  "  + str(  bin(fifo9_word)  ))
+					#print("->  BX counter: "  + str(  fifo8_word ))
+					#print("->  Packet:     "  + str( FIFO[i,3] ))
+					print("->  r9: "  + str(  self.parse_to_bin32(fifo9_word) )) #mirrrow
+					print("->  r8: "  + str(  self.parse_to_bin32(fifo8_word) )) #BX
+					print("->  r7: "  + str(  self.parse_to_bin32(fifo7_word) )) #L1 counter
+					print("->  r6: "  + str(  self.parse_to_bin32(fifo6_word) ))
+					print("->  r5: "  + str(  self.parse_to_bin32(fifo5_word) ))
+					print("->  r4: "  + str(  self.parse_to_bin32(fifo4_word) ))
+					print("->  r3: "  + str(  self.parse_to_bin32(fifo3_word) ))
+					print("->  r2: "  + str(  self.parse_to_bin32(fifo2_word) ))
+					print("->  r1: "  + str(  self.parse_to_bin32(fifo1_word) ))
+
+
+
 		fo = ("../SSA_Results/" + filename + "__SEU__L1-DATA-FIFO__" + runname + ".csv")
 		dir = fo[:fo.rindex(os.path.sep)]
 		if not os.path.exists(dir): os.makedirs(dir)
