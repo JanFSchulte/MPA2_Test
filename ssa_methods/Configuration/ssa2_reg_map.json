@@ -1148,8 +1148,16 @@
             "fields_mask": {
                 "bist_memory_sram_output_H_F" : "0b11111111"
             }
-        }
+        },
 
+        "Async_SEUcnt_strip0": {
+            "adr": "0x6",
+            "permissions": "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "counter": "0b11111111"
+            }
+        }
 
 
 

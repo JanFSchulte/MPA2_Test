@@ -48,14 +48,16 @@ class Utilities:
 			return "{:6.1f}".format(self)
 
 	def set_log_files(self, logfile, errorlog):
-		if(self.logfile): self.logfile.close()
-		if(self.errorlog): self.errorlog.close()
-		self.logfile = open(logfile, "w")
-		self.errorlog = open(errorlog, "w")
+		#if(self.logfile):  self.logfile.close()
+		#if(self.errorlog): self.errorlog.close()
+		self.logfile = logfile
+		self.errorlog = errorlog
+		fo = open(logfile, "w");  fo.close()
+		fo = open(errorlog, "w"); fo.close()
 
 	def close_log_files(self):
-		if(self.logfile): self.logfile.close()
-		if(self.errorlog): self.errorlog.close()
+		#if(self.logfile): self.logfile.close()
+		#if(self.errorlog): self.errorlog.close()
 		self.logfile = False
 		self.errorlog = False
 
@@ -165,47 +167,86 @@ class Utilities:
 		else:
 			return datetime.now().strftime("%Y-%m-%d_%H-%M")
 
+	def date_and_time(self, format='print'):
+		if(format == 'print'):
+			return (datetime.now().strftime("%Y-%m-%d,%H-%M-%S")).split(',')
+		elif(format == 'csv'):
+			return datetime.now().strftime("%Y, %m, %d, %H, %M, %S")
+		elif(format == 'array'):
+			return (datetime.now().strftime("%Y, %m, %d, %H, %M, %S")).split(', ')
+		else:
+			return datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 	def print_error(self, text, logfile = False):
 		print(self.text_color(text, 'red'))
 		if(self.logfile):
-			self.logfile.write(str(text)+"\n")
+			with open(self.logfile, 'a') as fo:
+				fo.write(str(text)+"\n")
 		if(self.errorlog):
-			self.errorlog.write(str(text)+"\n")
-
+			with open(self.errorlog, 'a') as fo:
+				fo.write(str(text)+"\n")
 
 	def print_warning(self, text, logfile = False):
 		print(self.text_color(text, 'yellow'))
 		if(self.logfile):
-			self.logfile.write(str(text)+"\n")
+			with open(self.logfile, 'a') as fo:
+				fo.write(str(text)+"\n")
 
 	def print_info(self, text, logfile = False):
 		print(self.text_color(text, 'blue'))
 		if(self.logfile):
-			self.logfile.write(str(text)+"\n")
+			with open(self.logfile, 'a') as fo:
+				fo.write(str(text)+"\n")
 
 	def print_good(self, text, logfile = False):
 		print(self.text_color(text, 'green'))
 		if(self.logfile):
-			self.logfile.write(str(text)+"\n")
+			with open(self.logfile, 'a') as fo:
+				fo.write(str(text)+"\n")
 
 	def print_log(self, text, logfile = False):
-		print(self.text_color(text, 'white'))
+		print(self.text_color(text, 'CITALIC'))
 		if(self.logfile):
-			self.logfile.write(str(text)+"\n")
+			with open(self.logfile, 'a') as fo:
+				fo.write(str(text)+"\n")
+
+	def print(self, text, mode='log'):
+		if  (mode=='log'):     self.print_log(text)
+		elif(mode=='warning'): self.print_warning(text)
+		elif(mode=='info'):    self.print_info(text)
+		elif(mode=='good'):    self.print_good(text)
+		elif(mode=='error'):   self.print_error(text)
+		else:                  print(text)
 
 	def text_color(self, text, color='none'):
 		if(color=='green'):
 			return "\033[1;32m" + str(text) + "\033[0;0m"
 		elif(color=='yellow'):
-			return "\033[1;33m" + str(text) + "\033[0;0m"
+			return "\033[1;93m" + str(text) + "\033[0;0m"
 		elif(color=='red'):
 			return "\033[1;31m" + str(text) + "\033[0;0m"
 		elif(color=='blue'):
 			return "\033[1;34m" + str(text) + "\033[0;0m"
+		elif(color=='grey'):
+			return "\033[1;34m" + str(text) + "\033[0;0m"
+		elif(color=='HEADER'):
+			return '\033[95m' + str(text) + "\033[0;0m"
+		elif(color=='OKBLUE'):
+			return '\033[94m' + str(text) + "\033[0;0m"
+		elif(color=='OKGREEN'):
+			return '\033[92m' + str(text) + "\033[0;0m"
+		elif(color=='WARNING'):
+			return '\033[93m' + str(text) + "\033[0;0m"
+		elif(color=='FAIL'):
+			return '\033[91m' + str(text) + "\033[0;0m"
+		elif(color=='BOLD'):
+			return '\033[1m'  + str(text) + "\033[0;0m"
+		elif(color=='UNDERLINE'):
+			return '\033[4m'  + str(text) + "\033[0;0m"
+		elif(color=='CITALIC'):
+			return '\33[3m'  + str(text) + "\033[0;0m"
 		else:
-			return text
-
+			return str(text)
 
 	def print_log_color_legend(self, text):
 		sys.stdout.write('Color legend: ')

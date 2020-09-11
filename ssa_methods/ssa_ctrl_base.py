@@ -100,29 +100,36 @@ class ssa_ctrl_base:
 			return np.array(registers[1:])
 
 	#####################################################################
-	def load_configuration(self, file = '../SSA_Results/Configuration.csv', display=True, upload_on_chip = True, rtarray = False):
+	def load_configuration(self, file = '../SSA_Results/Configuration.csv', strips = 'all', peri=True, display=True, upload_on_chip = True, rtarray = False):
+		if(strips=='all'): strips = range(1,121)
 		registers = CSV.CsvToArray(file)[1:,1:4]
 		if(upload_on_chip):
 			for tmp in registers:
-				if(tmp[0] == -1):
-					if display: print('writing')
-					if (not 'Fuse' in tmp[1]):
-						self.I2C.peri_write(tmp[1], tmp[2])
-						r = self.I2C.peri_read(tmp[1])
-						if(r != tmp[2]):
-							utils.print_error('X>   Configuration ERROR Periphery  ' + str(tmp[1]) + '  ' + str(tmp[2]) + '  ' + str(r))
-				elif(tmp[0]>=1 and tmp[0]<=120):
-					if display: print('writing')
-					if ((not 'ReadCounter' in tmp[1]) and ((not 'Fuse' in tmp[1]))):
-						self.I2C.strip_write(tmp[1], tmp[0], tmp[2])
-						r = self.I2C.strip_read(tmp[1], tmp[0])
-						if(r != tmp[2]):
-							utils.print_error('X>   Configuration ERROR Strip ' + str(tmp[0]))
-				if display:
-					print([tmp[0], tmp[1], tmp[2], r])
-			print("->  Configuration Loaded from file")
+				if((int(tmp[0]) == -1) and peri):
+					if ((not 'Fuse' in tmp[1]) and (not 'mask' in tmp[1])):
+						self.I2C.peri_write(tmp[1], int(tmp[2]))
+						if display: print([tmp[0], tmp[1], int(tmp[2])])
+					else:
+						if display: print(str([tmp[0], tmp[1], int(tmp[2])]) + ' -> skipped')
+				elif((int(tmp[0])>=1) and (int(tmp[0])<=120) and (int(tmp[0]) in strips) ):
+					if ((not 'ReadCounter' in tmp[1]) and (not 'mask' in tmp[1]) and ((not 'Fuse' in tmp[1]))):
+						self.I2C.strip_write(tmp[1], int(tmp[0]), int(tmp[2]))
+						if display: print([tmp[0], tmp[1], int(tmp[2])])
+					else:
+						if display: print(str([tmp[0], tmp[1], int(tmp[2])]) + ' -> skipped')
+
+			utils.print_log("->  Configuration Loaded from file")
 		if(rtarray):
 			return registers
+
+	def load_basic_calib_configuration(self, strips = 'all', peri=True, display=True):
+		self.set_all_config_masks(0xff,0xff,0xff)
+		conf_ref = self.load_configuration(
+			rtarray = True, display=display, upload_on_chip = True, strips = strips, peri=peri,
+			file = 'ssa_methods/Configuration/ssa_configuration_base_calib_v{:d}.csv'.format(tbconfig.VERSION['SSA']))
+		self.set_all_config_masks(0x00,0x00,0x00)
+		return conf_ref
+
 
 	#####################################################################
 	def compare_configuration(self, conf, conf_ref, display = True):
@@ -133,14 +140,22 @@ class ssa_ctrl_base:
 				if(int(conf[i,2]) != int(conf_ref[i,2])):
 					error[0] += 1
 					if(display):
-						utils.print_error("-X  Configuration error. Periphery Reg: {:32s} -> Expected: {:8b} Found: {:8b}".format(str(conf[i,1]), int(conf_ref[i,2]), int(conf[i,2]) ) )
+						utils.print_error("->  Configuration comparison error. Periphery Reg: {:32s} -> Expected: {:8b} Found: {:8b}".format(str(conf[i,1]), int(conf_ref[i,2]), int(conf[i,2]) ) )
 			elif(int(conf[i,0]) > 0):
 				if(int(conf[i,2]) != int(conf_ref[i,2])):
 					if(display):
-						utils.print_error("-X  Configuration error. Strip {:3d} Reg: {:32s} -> Expected: {:8b} Found: {:8b}".format(int(conf[i,0]), str(conf[i,1]), int(conf_ref[i,2]), int(conf[i,2])) )
-
+						utils.print_error("->  Configuration comparison error. Strip {:3d} Reg: {:32s} -> Expected: {:8b} Found: {:8b}".format(int(conf[i,0]), str(conf[i,1]), int(conf_ref[i,2]), int(conf[i,2])) )
 					error[int(conf[i,0])] += 1
+		if(error==[0]*121):
+			utils.print_good("->  Configuration comparison match.")
 		return error
+
+	def _change_config_value(self, conf, strips, field, new_value):
+		for strip in strips:
+			conf_loc = np.where(( conf[:,0:2] == ( '{:d}'.format(strip) , field )).all(axis=1))[0]
+			for line in conf_loc:
+				conf[line] = ['{:d}'.format(strip), field, new_value]
+		return conf
 
 	#####################################################################
 	def init_slvs(self, current = 0b111):
@@ -630,7 +645,7 @@ class ssa_ctrl_base:
 			return True
 
 	#####################################################################
-	def read_seu_counter(self, display=True, return_rate=False):
+	def read_seu_counter(self, display=True, return_rate=False, return_short_array=False, printmode='info'):
 		if(tbconfig.VERSION['SSA'] >= 2):
 			## read counters ##############
 			seu_rate = {}
@@ -657,19 +672,23 @@ class ssa_ctrl_base:
 			seu_rate['S'] = np.float(self.seu_cntr['S']['all']-prev['S']['all'])/(self.seu_cntr['time_since_last_check'])
 
 			if(display):
-				utils.print_info("->  SEU Counter       ->  S: rate={:3.3f}seu/s new=[{:d}] total=[{:d}] \n{:s}A: rate={:3.3f}seu/s new=[{:d}] total=[{:d}]".format(
-					seu_rate['S'], self.seu_cntr['S']['all']-prev['S']['all'], self.seu_cntr['S']['all'], ' '*26,
-					seu_rate['A'], self.seu_cntr['A']['all']-prev['A']['all'], self.seu_cntr['A']['all']) )
+				utils.print("->  SEU Counter       ->  S: rate ={:8.3f}seu/s | new =[{:5d}] | total =[{:5d}]".format(
+					seu_rate['S'], self.seu_cntr['S']['all']-prev['S']['all'], self.seu_cntr['S']['all']), printmode)
+
+				utils.print("->  SEU Counter       ->  A: rate ={:8.3f}seu/s | new =[{:5d}] | total =[{:5d}]".format(
+					seu_rate['A'], self.seu_cntr['A']['all']-prev['A']['all'], self.seu_cntr['A']['all']), printmode)
 		else:
 			self.seu_cntr = self.I2C.peri_read('SEU_Counter')
 			seu_rate = np.float(self.seu_cntr)/(time.time() - self.seu_check_time)
 			self.seu_check_time = time.time()
 			if(display):
-				utils.print_info("->  SEU Counter       ->  Value: " + str(seucounter) + " Rate: " + str(seurate) + " 1/s")
-		if(return_rate):
-			return self.seu_cntr, seu_rate
+				utils.print_info("->  SEU Counter       ->  Value: " + str(seucounter) + " Rate: " + str(seurate) + " 1/s", printmode)
+		if(return_short_array):
+			rt = [int(self.seu_cntr['A']['peri_all']), int(self.seu_cntr['A']['strip_all']), int(self.seu_cntr['S']['peri_all']), int(self.seu_cntr['S']['strip_all']), self.seu_cntr['time_since_last_check']  ]
 		else:
-			return self.seu_cntr
+			if(return_rate): rt = self.seu_cntr, seu_rate
+			else: rt = self.seu_cntr
+		return rt
 
 	##############################################################
 	def set_l1_latency(self, latency):
@@ -679,6 +698,11 @@ class ssa_ctrl_base:
 		else:
 			self.I2C.peri_write('L1_Latency_msb', (latency & 0xff00) >> 8)
 			self.I2C.peri_write('L1_Latency_lsb', (latency & 0x00ff) >> 0)
+
+	def set_all_config_masks(self, digital=0xff, analog=0xff, strips=0xff ):
+		self.I2C.peri_write(register = 'mask_strip',  field = False, data=strips)
+		self.I2C.peri_write(register = 'mask_peri_D', field = False, data=digital)
+		self.I2C.peri_write(register = 'mask_peri_A', field = False, data=analog)
 
 	#####################################################################
 	def try_i2c(self, repeat=4):

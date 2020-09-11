@@ -27,13 +27,13 @@ class SSA_SEU_utilities():
 	##############################################################
 	def __init__(self, ssa, I2C, FC7, pwr):
 		self.ssa = ssa; self.I2C = I2C; self.fc7 = FC7; self.pwr = pwr;
-		self.seu_check_time = -1
+		self.seu_check_time = -1; self.last_test_duration = 0;
 
 	##############################################################
 	def Run_Test_SEU(self,
-			check_stub=True, check_l1=True, check_lateral=True,
-			strip =[10,20,30,40], hipflags = [], cal_pulse_period = 1, l1a_period = 39,
-			latency = 101, run_time = 2, display = 1, filename = '', runname = '',
+			check_stub=True, check_l1=True, check_lateral=False,
+			strip =[10,20,30,40], centroids=[10,20,30,40], hipflags = [10,30], cal_pulse_period = 1, l1a_period = 39,
+			latency = 101, run_time = 5, display = 1, filename = '', runname = '',
 			delay = 74, create_errors = False, stop_if_fifo_full = True,
 			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0):
 
@@ -41,10 +41,10 @@ class SSA_SEU_utilities():
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
 		self.fc7.write("ctrl_fast", 0x10000)
 		self.ssa.init(edge = 'negative', display = False)
-		print(tbconfig.VERSION['SSA'])
+		#print(tbconfig.VERSION['SSA'])
 
 		s1, s2, s3 = self.Stub_Evaluate_Pattern(strip)
-		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern(strip, [])
+		p1, p2, p3, p4, p5, p6, p7 = self.L1_Evaluate_Pattern(strip, hipflags)
 
 		self.Configure_Injection(
 			strip_list = strip, hipflag_list = hipflags, analog_injection = 0,
@@ -52,12 +52,9 @@ class SSA_SEU_utilities():
 
 		self.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = 2)
 
-		#self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = display)
-		self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = display)
-
+		self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = 2)
 		 # Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0, initial_reset = 1)
 		 # Configure_SEU(1, 39,0,1)
-
 		time.sleep(0.01); self.fc7.write("cnfg_fast_initial_fast_reset_enable", 1) #1
 		time.sleep(0.01); self.fc7.write("cnfg_fast_delay_before_next_pulse", cal_pulse_period)
 		time.sleep(0.01); self.fc7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
@@ -67,26 +64,28 @@ class SSA_SEU_utilities():
 		time.sleep(0.01); self.fc7.write('cnfg_fast_timeout_enable', 0)
 		time.sleep(0.1);  self.fc7.SendCommand_CTRL("load_trigger_config")
 		time.sleep(0.1)
-
 		time.sleep(0.01); self.fc7.write('cnfg_fast_timeout_enable', 0)
 
 		self.fc7.write("cnfg_fast_backpressure_enable", 0)
 		self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
 
 		test_duration = self.RunStateMachine_L1_and_Stubs(
-			check_stub=check_stub, check_l1=check_l1,
+			check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral,
 			timer_data_taking=run_time, display=display, stop_if_fifo_full=stop_if_fifo_full)
-		#time.sleep(0.1); self.Stub_RunStateMachine(run_time = run_time, display = display)
 
 		correction = int(latency/(l1a_period+1))
 		if(display==0): display=1
-		CL_ok, CL_er = self.Stub_printinfo(display = display, header = 1, message = "SUMMARY")
-		LA_ok, LA_er = self.Lateral_printinfo(display = 0)
-		L1_ok, L1_er, LH_ok, LH_er = self.L1_printInfo(display = display, correction = correction )
+		CL_ok, CL_er = self.Stub_printinfo(display = display, header = 1, message = "SUMMARY", logmode='info')
+		LA_ok, LA_er = self.Lateral_printinfo(display = 0, logmode='info', enable=check_lateral)
+		L1_ok, L1_er, LH_ok, LH_er = self.L1_printInfo(display = display, correction = correction, logmode='info')
 		return [CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration]
 
 	##############################################################
-	def RunStateMachine_L1_and_Stubs(self, check_stub=True, check_l1=True, timer_data_taking = 30, display = 2, stop_if_fifo_full = True):
+	def last_test_duration(self):
+		return self.last_test_duration
+
+	##############################################################
+	def RunStateMachine_L1_and_Stubs(self, check_stub=True, check_l1=True, check_lateral=True, timer_data_taking = 30, display = 2, stop_if_fifo_full = True):
 		time.sleep(0.1)
 		FSM = self.fc7.read("stat_phy_slvs_compare_state_machine")
 		time.sleep(0.01); self.fc7.write('cnfg_fast_timeout_enable', 0)
@@ -127,31 +126,36 @@ class SSA_SEU_utilities():
 			else:
 				stop_condition = (timer < timer_data_taking)
 
-			if((timer-timer_prev)>=0.5):
+			if((timer-timer_prev)>=1):
 				timer_prev = timer
-				self.print_all_info(check_stub=check_stub, check_l1=check_l1, message=message, display=display, header=1)
+				self.print_all_info(
+					check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral,
+					message=message, display=display, header=1)
+				seucounter = self.ssa.ctrl.read_seu_counter(display=True, printmode='log')
 
 		self.fc7.write("ctrl_phy_SLVS_compare_stop",1)
 		timer = time.time()-timer_init
 		self.fc7.SendCommand_CTRL("stop_trigger")
-		self.print_all_info(check_stub=check_stub, check_l1=check_l1, message=message, display=display, header=1)
+		self.print_all_info(
+			check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral,
+			message=message, display=display, header=1)
 		#time.sleep(0.1); self.fc7.SendCommand_CTRL("stop_trigger")
 		#print("State of FSM after stopping: " , self.fc7.read("stat_phy_slvs_compare_state_machine"))
 		if(display>-1):
 			print("________________________________________________________________________________________\n")
 			if(timer == timer_data_taking and FIFO_almost_full_stub == 0):
-				print("CLUSTERS: data taking stopped because reached the adequate time")
+				utils.print_log("CLUSTERS: data taking stopped because reached the adequate time")
 			elif(FIFO_almost_full_stub == 1 and timer < timer_data_taking ):
-				print("CLUSTERS: data taking stopped because the FIFO reached the 80%")
+				utils.print_log("CLUSTERS: data taking stopped because the FIFO reached the 80%")
 			else:
-				print("CLUSTERS: data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
+				utils.print_log("CLUSTERS: data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
 			#print("State of FSM after stopping: " , self.fc7.read("stat_phy_slvs_compare_state_machine"))
 			if(timer == timer_data_taking and FIFO_almost_full_L1 == 0):
-				print("L1-DATA:  data taking stopped because reached the adequate time")
+				utils.print_log("L1-DATA:  data taking stopped because reached the adequate time")
 			elif(FIFO_almost_full_L1 == 1 and timer < timer_data_taking ):
-				print("L1-DATA:  data taking stopped because the FIFO reached the 80%")
+				utils.print_log("L1-DATA:  data taking stopped because the FIFO reached the 80%")
 			else:
-				print("L1-DATA:  data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
+				utils.print_log("L1-DATA:  data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
 		return timer
 
 	##############################################################
@@ -205,6 +209,7 @@ class SSA_SEU_utilities():
 					self.I2C.strip_write("DigCalibPattern_L", i, 170)
 					self.I2C.strip_write("DigCalibPattern_H", i, 170)
 		time.sleep(0.01)
+		self.ssa.ctrl.set_all_config_masks(0x00, 0x00, 0x00)
 
 
 	##############################################################
@@ -308,9 +313,9 @@ class SSA_SEU_utilities():
 		self.fc7.write("cnfg_phy_lateral_MPA_SSA_SEU_check_patterns1",lateral); time.sleep(0.01)
 		###### time.sleep(0.5)
 		if(display>1):
-			print("Content of the patterns1 cnfg register: " + str(self.fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns1")))
-			print("Content of the patterns2 cnfg register: " + str(self.fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns2")))
-			print("Content of the patterns3 cnfg register: " + str(self.fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns3")))
+			utils.print_log("->  Content of the patterns1 cnfg register: " + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns1"))))
+			utils.print_log("->  Content of the patterns2 cnfg register: " + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns2"))))
+			utils.print_log("->  Content of the patterns3 cnfg register: " + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns3"))))
 
 
 	##############################################################
@@ -351,13 +356,13 @@ class SSA_SEU_utilities():
 		self.fc7.write("ctrl_phy_SLVS_compare_stop",1)
 		if(display>1): print("State of FSM after stopping: " + str(self.fc7.read("stat_phy_slvs_compare_state_machine")))
 		if(timer == run_time and FIFO_almost_full == 0):
-			print("->  SEU Cluster-Data  -> data taking stopped because reached the adequate time")
+			utils.print_log("->  SEU Cluster-Data  -> data taking stopped because reached the adequate time")
 		elif(self.fc7.read("stat_phy_slvs_compare_number_good_data") > (2**31-3)):
-			print("->  SEU Cluster-Data  -> data taking stopped because reached the good-clusters counter size")
+			utils.print_log("->  SEU Cluster-Data  -> data taking stopped because reached the good-clusters counter size")
 		elif(FIFO_almost_full == 1 and timer < run_time ):
-			print("-X  \tSEU Cluster-Data  -> data taking stopped because the FIFO reached the 80%")
+			utils.print_log("-X  \tSEU Cluster-Data  -> data taking stopped because the FIFO reached the 80%")
 		else:
-			print("-X  \tSEU Cluster-Data  -> data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
+			utils.print_log("-X  \tSEU Cluster-Data  -> data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
 
 
 	##############################################################
@@ -393,6 +398,7 @@ class SSA_SEU_utilities():
 
 	##############################################################
 	def Stub_ReadFIFOs(self, nevents = 'all', filename = "SEU_TMP/SEU", runname = '', display = 0):
+		utils.print_info("->  Reading stub-data mismatches FIFO")
 		if(display>1): print("State of FSM before reading FIFOs: "  + str(self.fc7.read("stat_phy_slvs_compare_state_machine")))
 		stat_phy_slvs_compare_data_ready = self.fc7.read("stat_phy_slvs_compare_data_ready")
 		FIFO = np.full( [16386,10], np.NaN)
@@ -439,6 +445,7 @@ class SSA_SEU_utilities():
 	#####################################################################################################################
 	def L1_ReadFIFOs(self, nevents = 'all', filename = "SEU_TMP/SEU", runname = '', display = 0):
 		#self.L1_printInfo("BEFORE READING FIFO:")
+		utils.print_info("->  Reading L1-data mismatches FIFO")
 		if(display>1): print("Now printing the data in the FIFO:")
 		FIFO = np.full( [16386,4], '', dtype ='|S160')
 		if(not isinstance(nevents, int)):
@@ -510,17 +517,17 @@ class SSA_SEU_utilities():
 		self.fc7.write("cnfg_phy_l1_MPA_SSA_SEU_check_patterns7",pattern7)
 		##### time.sleep(0.5)
 		if(display > 1):
-			print("Content of the patterns7 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns7")) ))
-			print("Content of the patterns6 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns6")) ))
-			print("Content of the patterns5 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns5")) ))
-			print("Content of the patterns4 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns4")) ))
-			print("Content of the patterns3 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns3")) ))
-			print("Content of the patterns2 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns2")) ))
-			print("Content of the patterns1 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns1")) ))
+			utils.print_log("->  Content of the patterns7 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns7")) ))
+			utils.print_log("->  Content of the patterns6 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns6")) ))
+			utils.print_log("->  Content of the patterns5 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns5")) ))
+			utils.print_log("->  Content of the patterns4 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns4")) ))
+			utils.print_log("->  Content of the patterns3 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns3")) ))
+			utils.print_log("->  Content of the patterns2 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns2")) ))
+			utils.print_log("->  Content of the patterns1 cnfg register: "  + str( self.parse_to_bin32(self.fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns1")) ))
 
 
 	##############################################################
-	def L1_printInfo(self, message = '', display = 2, header = 0, correction = 0):
+	def L1_printInfo(self, message = '', display = 2, header = 0, correction = 0, logmode='log'):
 		state      = self.fc7.read("stat_phy_l1_slvs_compare_state_machine")
 		full       = self.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
 		n_in_fifo  = self.fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo") - correction
@@ -533,58 +540,62 @@ class SSA_SEU_utilities():
 		#print('=========================')
 
 		if(header and display>0):
-			print("________________________________________________________________________________________")
+			utils.print("________________________________________________________________________________________", logmode)
 		if(display==2):
-			print("->  SEU L1-Data       -> State of FSM:       %12d "           % (state))
-			print("->  SEU L1-Data       -> Full Flag:          %12d "           % (full))
-			print("->  SEU L1-Data       -> Correct events:     %12d (%10.6f%%)" % (n_correct, 100*np.float(n_correct)/(n_triggers)))
-			print("->  SEU L1-Data       -> Packets with Error: %12d (%10.6f%%)" % (n_in_fifo,  100*np.float(n_in_fifo)/(n_triggers)))
-			print("->  SEU L1-Data       -> Packets Missing:    %12d (%10.6f%%)" % ((n_triggers-n_headers),  (100*np.float(n_triggers-n_headers))/n_triggers))
+			utils.print("->  SEU L1-Data       -> State of FSM:       %12d "           % (state), logmode)
+			utils.print("->  SEU L1-Data       -> Full Flag:          %12d "           % (full), logmode)
+			utils.print("->  SEU L1-Data       -> Correct events:     %12d (%10.6f%%)" % (n_correct, 100*np.float(n_correct)/(n_triggers)), logmode)
+			utils.print("->  SEU L1-Data       -> Packets with Error: %12d (%10.6f%%)" % (n_in_fifo,  100*np.float(n_in_fifo)/(n_triggers)), logmode)
+			utils.print("->  SEU L1-Data       -> Packets Missing:    %12d (%10.6f%%)" % ((n_triggers-n_headers),  (100*np.float(n_triggers-n_headers))/n_triggers), logmode)
 		elif(display==1):
-			print("->  SEU L1-Data       -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (n_correct, (100*np.float(n_correct)/(n_correct+n_in_fifo+1E-9)), n_in_fifo,  (100*np.float(n_in_fifo)/(n_correct+n_in_fifo+1E-9)) ))
-			print("->  SEU L1-Headers    -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (n_headers, 100*(1-np.float(n_triggers-n_headers)/(n_triggers+1E-9)) , (n_triggers - n_headers), 100*(np.float(n_triggers - n_headers)/(n_triggers+1E-9)) ) )
+			utils.print("->  SEU L1-Data       -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (n_correct, (100*np.float(n_correct)/(n_correct+n_in_fifo+1E-9)), n_in_fifo,  (100*np.float(n_in_fifo)/(n_correct+n_in_fifo+1E-9)) ), logmode)
+			utils.print("->  SEU L1-Headers    -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (n_headers, 100*(1-np.float(n_triggers-n_headers)/(n_triggers+1E-9)) , (n_triggers - n_headers), 100*(np.float(n_triggers - n_headers)/(n_triggers+1E-9)) ) , logmode)
 		return [n_correct, n_in_fifo, n_headers, (n_triggers-n_headers)]
 
 	##############################################################
-	def Stub_printinfo(self, message = '', display = 2, header = 0):
+	def Stub_printinfo(self, message = '', display = 2, header = 0, logmode='log'):
 		CntBad  = self.fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo")
 		CntGood = self.fc7.read("stat_phy_slvs_compare_number_good_data")
 		state   = (self.fc7.read("stat_phy_slvs_compare_state_machine"))
 		full    = (self.fc7.read("stat_phy_slvs_compare_fifo_almost_full"))
 		if(header and display>0):
-			print("________________________________________________________________________________________")
-			print("%18s                      CORRECT                         ERROR " % message)
+			utils.print("________________________________________________________________________________________", logmode)
+			utils.print("%18s                      CORRECT                         ERROR " % message, logmode)
 		if(display==2):
-			print("->  SEU Cluster-Data  -> State of FSM:      %12d" % (state))
-			print("->  SEU Cluster-Data  -> FIFO almost full:  %12d" % (full))
-			print("->  SEU Cluster-Data  -> Number of good BX: %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad)))
-			print("->  SEU Cluster-Data  -> Number of bad  BX: %12d (%10.6f%%)" % (CntBad,  100*np.float(CntBad)/(CntGood+CntBad)))
+			utils.print("->  SEU Cluster-Data  -> State of FSM:      %12d" % (state), logmode)
+			utils.print("->  SEU Cluster-Data  -> FIFO almost full:  %12d" % (full), logmode)
+			utils.print("->  SEU Cluster-Data  -> Number of good BX: %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad)), logmode)
+			utils.print("->  SEU Cluster-Data  -> Number of bad  BX: %12d (%10.6f%%)" % (CntBad,  100*np.float(CntBad)/(CntGood+CntBad)), logmode)
 		elif(display==1):
-			print("->  SEU Cluster-Data  -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad+1E-9), CntBad,  100*np.float(CntBad)/(CntGood+CntBad+1E-9)))
+			utils.print("->  SEU Cluster-Data  -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad+1E-9), CntBad,  100*np.float(CntBad)/(CntGood+CntBad+1E-9)), logmode)
 		return [CntGood, CntBad]
 
 
 	##############################################################
-	def Lateral_printinfo(self, display = 2, header = 0):
-		CntBad  = self.fc7.read("stat_phy_lateral_slvs_compare_numbere_events_written_to_fifo")
-		CntGood = self.fc7.read("stat_phy_lateral_slvs_compare_number_good_data")
-		state   = self.fc7.read("stat_phy_lateral_slvs_compare_state_machine")
-		full    = self.fc7.read("stat_phy_lateral_slvs_compare_fifo_almost_full")
-		if(header and display>0):
-			print("________________________________________________________________________________________")
-		if(display==2):
-			print("->  SEU Lateral-Data  -> State of FSM:      %12d" % (state))
-			print("->  SEU Lateral-Data  -> FIFO almost full:  %12d" % (full))
-			print("->  SEU Lateral-Data  -> Number of good BX: %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad)))
-			print("->  SEU Lateral-Data  -> Number of bad  BX: %12d (%10.6f%%)" % (CntBad,  100*np.float(CntBad)/(CntGood+CntBad)))
-		if(display==1):
-			print("->  SEU Lateral-Data  -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad+1E-9), CntBad,  100*np.float(CntBad)/(CntGood+CntBad+1E-9)))
+	def Lateral_printinfo(self, display = 2, header = 0, logmode='log', enable=True):
+		if(enable):
+			CntBad  = self.fc7.read("stat_phy_lateral_slvs_compare_numbere_events_written_to_fifo")
+			CntGood = self.fc7.read("stat_phy_lateral_slvs_compare_number_good_data")
+			state   = self.fc7.read("stat_phy_lateral_slvs_compare_state_machine")
+			full    = self.fc7.read("stat_phy_lateral_slvs_compare_fifo_almost_full")
+			if(header and display>0):
+				utils.print("________________________________________________________________________________________")
+			if(display==2):
+				utils.print("->  SEU Lateral-Data  -> State of FSM:      %12d" % (state), logmode)
+				utils.print("->  SEU Lateral-Data  -> FIFO almost full:  %12d" % (full), logmode)
+				utils.print("->  SEU Lateral-Data  -> Number of good BX: %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad)), logmode)
+				utils.print("->  SEU Lateral-Data  -> Number of bad  BX: %12d (%10.6f%%)" % (CntBad,  100*np.float(CntBad)/(CntGood+CntBad)), logmode)
+			if(display==1):
+				utils.print("->  SEU Lateral-Data  -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad+1E-9), CntBad,  100*np.float(CntBad)/(CntGood+CntBad+1E-9)), logmode)
+		else:
+			CntGood	, CntBad = 0, 0
 		return [CntGood, CntBad]
 
 	##############################################################
-	def print_all_info(self, check_stub=True, check_l1=True, message = '', display = 2, header = 1):
+	def print_all_info(self, check_stub=True, check_l1=True, check_lateral=True, message = '', display = 2, header = 1):
 		if(check_stub):
 			self.Stub_printinfo(display=display, header=header, message=message)
+		if(check_lateral):
 			self.Lateral_printinfo(display = display)
 		if(check_l1):
 			self.L1_printInfo(display = display)
@@ -617,11 +628,11 @@ class SSA_SEU_utilities():
 		self.fc7.write("ctrl_phy_SLVS_compare_stop",1)
 		self.L1_printInfo("STATE MACHINE AND TRIGGER STOPPED:")
 		if(timer == timer_data_taking and FIFO_almost_full == 0):
-			print("data taking stopped because reached the adequate time")
+			utils.print_log("data taking stopped because reached the adequate time")
 		elif(FIFO_almost_full == 1 and timer < timer_data_taking ):
-			print("data taking stopped because the FIFO reached the 80%")
+			utils.print_log("data taking stopped because the FIFO reached the 80%")
 		else:
-			print("data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
+			utils.print_log("data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
 
 
 	##############################################################

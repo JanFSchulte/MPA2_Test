@@ -72,103 +72,103 @@ class ssa_i2c_conf:
 
 	def peri_write(self, register, data, field=False, use_onchip_mask = True):
 		cnt = 0; st = True;
-		#while cnt < 4:
-		#	try:
-		cnt += 1
-		data = data & 0xff
-		time.sleep(self.delay)
-		if(register not in self.ssa_peri_reg_map.keys()):
-			print("'X>  I2C Periphery register name not found: key: {:s} ".format(register))
-			rep = 'Null'
-		else:
-			if(tbconfig.VERSION['SSA'] >= 2):
-				reg_adr = self.tonumber(self.ssa_peri_reg_map[register]['adr'],0)
-				mask_name = self.ssa_peri_reg_map[register]['mask_reg']
-				mask_adr  = self.tonumber(self.ssa_peri_reg_map[mask_name]['adr'], 0)
-			else:
-				base = self.ssa_peri_reg_map[register]
-				reg_adr  = (base & 0x0fff) | 0b0001000000000000
-				mask_name = 'None'
-			if(field):
-				if(tbconfig.VERSION['SSA']<2):
-					print('X>  I2C Strip {:3d} error. Field available only for SSA v2'.format(strip_id))
-					return 'Null'
-				####################################
-				mask_val = self.tonumber(self.ssa_peri_reg_map[register]['fields_mask'][field], 0)
-				loc = self._get_field_location(mask_val)
-				tdata = (data << loc[0]) & 0xff & mask_val
-
-				if(use_onchip_mask): ### this is the procedure to use
-					self.mask_active[mask_name] = True
-					rep  = self.write_I2C(self.chip_adr, mask_adr, mask_val, self.freq)
-					rep  = self.write_I2C(self.chip_adr, reg_adr, tdata, self.freq)
+		while cnt < 4:
+			try:
+				cnt += 1
+				data = data & 0xff
+				time.sleep(self.delay)
+				if(register not in self.ssa_peri_reg_map.keys()):
+					print("'X>  I2C Periphery register name not found: key: {:s} ".format(register))
+					rep = 'Null'
 				else:
-					readreg  = self.read_I2C(self.chip_adr, reg_adr)
-					if(readreg != None):
-						wdata = (readreg & (~int(mask, 2))) | (tdata & int(mask, 2))
-						rep  = self.write_I2C(self.chip_adr, reg_adr, wdata, self.freq)
+					if(tbconfig.VERSION['SSA'] >= 2):
+						reg_adr = self.tonumber(self.ssa_peri_reg_map[register]['adr'],0)
+						mask_name = self.ssa_peri_reg_map[register]['mask_reg']
+						mask_adr  = self.tonumber(self.ssa_peri_reg_map[mask_name]['adr'], 0)
 					else:
-						print('X>  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(reg_adr, 'NOVALUE'))
-						st = 'Null';
-				####################################
-				if(self.debug):
-					print('->  I2C Periphery write - Adr=[0x{:4x}], Value=[{:d}]'.format(reg_adr, tdata))
-			else:
-				if(self.mask_active[mask_name] and (tbconfig.VERSION['SSA']>=2) ):
-					rep  = self.write_I2C(self.chip_adr, mask_adr, 0xff, self.freq)
-					self.mask_active[mask_name] = False
-				rep  = self.write_I2C(self.chip_adr, reg_adr, data, self.freq)
-				if(self.debug):
-					print('->  I2C Periphery write - Adr=[0x{:4x}], Value=[{:d}]'.format(reg_adr, data))
-		if(self.readback):
-			rep = self.peri_read(register)
-			if(rep != data):
-				print("->  I2C periphery write - [%d][%d] - ERROR" % (data, rep))
+						base = self.ssa_peri_reg_map[register]
+						reg_adr  = (base & 0x0fff) | 0b0001000000000000
+						mask_name = 'None'
+					if(field):
+						if(tbconfig.VERSION['SSA']<2):
+							print('X>  I2C Strip {:3d} error. Field available only for SSA v2'.format(strip_id))
+							return 'Null'
+						####################################
+						mask_val = self.tonumber(self.ssa_peri_reg_map[register]['fields_mask'][field], 0)
+						loc = self._get_field_location(mask_val)
+						tdata = (data << loc[0]) & 0xff & mask_val
+
+						if(use_onchip_mask): ### this is the procedure to use
+							self.mask_active[mask_name] = True
+							rep  = self.write_I2C(self.chip_adr, mask_adr, mask_val, self.freq)
+							rep  = self.write_I2C(self.chip_adr, reg_adr, tdata, self.freq)
+						else:
+							readreg  = self.read_I2C(self.chip_adr, reg_adr)
+							if(readreg != None):
+								wdata = (readreg & (~int(mask, 2))) | (tdata & int(mask, 2))
+								rep  = self.write_I2C(self.chip_adr, reg_adr, wdata, self.freq)
+							else:
+								print('X>  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(reg_adr, 'NOVALUE'))
+								st = 'Null';
+						####################################
+						if(self.debug):
+							print('->  I2C Periphery write - Adr=[0x{:4x}], Value=[{:d}]'.format(reg_adr, tdata))
+					else:
+						if(self.mask_active[mask_name] and (tbconfig.VERSION['SSA']>=2) ):
+							rep  = self.write_I2C(self.chip_adr, mask_adr, 0xff, self.freq)
+							self.mask_active[mask_name] = False
+						rep  = self.write_I2C(self.chip_adr, reg_adr, data, self.freq)
+						if(self.debug):
+							print('->  I2C Periphery write - Adr=[0x{:4x}], Value=[{:d}]'.format(reg_adr, data))
+				if(self.readback):
+					rep = self.peri_read(register)
+					if(rep != data):
+						print("->  I2C periphery write - [%d][%d] - ERROR" % (data, rep))
+						st = 'Null'
+				if(st):
+					break
+			except:
+				print('=>  TB Communication error - I2C-Peri_write')
+				time.sleep(0.1)
 				st = 'Null'
-			#	if(st):
-			#		break
-			#except:
-			#	print('=>  TB Communication error - I2C-Peri_write')
-			#	time.sleep(0.1)
-			#	st = 'Null'
 		return st
 
 	def peri_read(self, register, field=False):
 		cnt = 0; rep = True;
 		time.sleep(self.delay)
-		#while cnt < 4:
-		#	try:
-		cnt += 1
-		if(register not in self.ssa_peri_reg_map.keys()):
-			print("'X>  I2C Periphery register name not found: key: {:s} ".format(register))
-			rep = 'Null'
-		else:
-			if(tbconfig.VERSION['SSA'] == 2):
-				adr = self.tonumber(self.ssa_peri_reg_map[register]['adr'], 0)
-			else:
-				base = self.ssa_peri_reg_map[register]
-				adr  = (base & 0xfff) | 0b0001000000000000
-			repd = self.read_I2C(self.chip_adr, adr)
-			if(repd == None):
-				#utils.activate_I2C_chip(self.fc7)
-				#rep  = self.read_I2C(self.chip_adr, adr)
-				rep  = 'Null'
-				print('X>  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(adr, 'NOVALUE'))
-				#self.utils.activate_I2C_chip(self.fc7)
-			else:
-				if(field):
-					mask = int(self.ssa_peri_reg_map[register]['fields_mask'][field], 2)
-					loc  = self._get_field_location(mask)
-					rep  = ((repd & mask) >> loc[0])
+		while cnt < 4:
+			try:
+				cnt += 1
+				if(register not in self.ssa_peri_reg_map.keys()):
+					print("'X>  I2C Periphery register name not found: key: {:s} ".format(register))
+					rep = 'Null'
 				else:
-					rep  = repd
-				if(self.debug):
-					print('->  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:b}] - GOOD'.format(adr, repd))
-			#			break
-			#except:
-			#	print('=>  TB Communication error - I2C-Peri_read')
-			#	time.sleep(0.1)
-			#	rep = 'Null'
+					if(tbconfig.VERSION['SSA'] == 2):
+						adr = self.tonumber(self.ssa_peri_reg_map[register]['adr'], 0)
+					else:
+						base = self.ssa_peri_reg_map[register]
+						adr  = (base & 0xfff) | 0b0001000000000000
+					repd = self.read_I2C(self.chip_adr, adr)
+					if(repd == None):
+						#utils.activate_I2C_chip(self.fc7)
+						#rep  = self.read_I2C(self.chip_adr, adr)
+						rep  = 'Null'
+						print('X>  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(adr, 'NOVALUE'))
+						#self.utils.activate_I2C_chip(self.fc7)
+					else:
+						if(field):
+							mask = int(self.ssa_peri_reg_map[register]['fields_mask'][field], 2)
+							loc  = self._get_field_location(mask)
+							rep  = ((repd & mask) >> loc[0])
+						else:
+							rep  = repd
+						if(self.debug):
+							print('->  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:b}] - GOOD'.format(adr, repd))
+				break
+			except:
+				print('=>  TB Communication error - I2C-Peri_read')
+				time.sleep(0.1)
+				rep = 'Null'
 		return rep
 
 

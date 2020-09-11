@@ -862,20 +862,29 @@ class SSA_test_utility():
 #		dstr = "[%3d][%3d][%3s][%3s]" % (L1_counter, BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)))
 #		print(dstr)
 
-	def generate_clusters(self, nclusters, min_clsize = 1, max_clsize = 4, smin=-2, smax=124):
-		hit = []; c = []; exc = [];
+	def generate_clusters(self, nclusters, min_clsize = 1, max_clsize = 4, smin=-2, smax=124, HIP_flags=False):
+		hits = []; centroids = [];
+		hips = []; flags = []; exc = [];
 		for i in range(nclusters):
 			size = random.sample(range(min_clsize, max_clsize), 1)[0]
 			rangelist = list( set(range(smin, smax-size)) - set(exc) )
 			adr = random.sample(rangelist, 1)[0]
 			cll = range(adr, adr+size)
-			hit += cll
-			c.append( np.mean(cll) )
+			hits += cll
+			centroids.append( np.mean(cll) )
 			exc += range(min(cll)-max_clsize-1, max(cll)+2)
-		hit.sort()
-		c.sort()
-		return hit, c
-
+			iship = random.randint(0,1)
+			if(iship):
+				hips.append(adr)
+				flags.append(np.mean(cll))
+		hits.sort()
+		centroids.sort()
+		hips.sort()
+		flags.sort()
+		if(HIP_flags):
+			return hits, centroids, hips, flags
+		else:
+			return hits, centroids
 
 	def force_alinament(self, maxtime = 5*60):
 		time_init = time.time()

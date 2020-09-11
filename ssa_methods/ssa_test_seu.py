@@ -40,79 +40,173 @@ class SSA_SEU():
 		self.init_parameters()
 
 	##############################################################
+	def main_test(self, niterations=16, run_time=5, memory_select='SRAM' ):
+		self.run_time = run_time
+		self.set_info()
+		self.time   = utils.date_time()
+		self.filename = "SEU_SSA_" + self.time + "__Ion-" + self.ion + "__Tilt-" + str(self.tilt) + "__Flux-" + str(self.flux) + "__"
+		self.seu_test( self.filename, self.folder, niterations, memory_select)
+
+	##############################################################
+	def seu_test(self, filename = 'Try', folder = 'PROVA0', niterations=16, memory_select='SRAM'):
+		print(folder)
+		runname = self.run_info()
+		logfile = folder + filename + '__full.log'
+		errfile = folder + filename + '__errors.log'
+		summary = folder + filename + '__summary.csv'
+		stublog = folder + '/CL-FIFO/'+ filename +'__'+str(runname)+'__'
+		l1dtlog = folder + '/L1-FIFO/'+ filename +'__'+str(runname)+'__'
+		conflog = folder + '/CONFIG/' + filename +'__'+str(runname)+'__'
+		utils.set_log_files(logfile, errfile)
+		for latency in self.l1_latency:
+			#striplist = []
+			#stavailable = range(1,121)
+			for iteration in list(range(niterations)):
+				self.ssa.reset(display = False)
+				init_time = time.time();
+				start_date_time = utils.date_and_time()
+				time.sleep(0.1); #after reset
+				self.ssa.ctrl.load_basic_calib_configuration(strips=[], peri=True, display=0)
+				self.ssa.ctrl.set_active_memory(memory_select, memory_select)
+				#self.ssa.init(edge = 'negative', display = False)
+				#self.test.lateral_input_phase_tuning(shift = 1)
+				#stavailable = [x for x in stavailable if x not in striplist]
+				#striplist = sorted(random.sample(stavailable, 7))
+				#hipflags  = sorted(random.sample(striplist, np.random   ))
+				striplist, centroids, hip_hits, hip_flags  = self.test.generate_clusters(
+					nclusters=8, min_clsize=1, max_clsize=2, smin=1,
+					smax=119, HIP_flags=True)
+
+				self.ssa.ctrl.read_seu_counter(display=False, return_rate=True) #only to initialize timer for rate calculation
+
+				results = self.seuutil.Run_Test_SEU(
+					check_stub=True, check_l1=True, check_lateral=False,
+					strip = striplist, centroids=centroids, hipflags = hip_hits, delay = 74, run_time = self.run_time,
+					cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 1, stop_if_fifo_full = 0)
+
+				utils.print_info("->  Active strips     -> " + str(striplist))
+				utils.print_info("->  HIP strips        -> " + str(hip_hits))
+				utils.print_info("->  L1 Latency        -> " + str(latency))
+
+				time_since_reset = time.time()-init_time
+
+				seucounter = self.ssa.ctrl.read_seu_counter(display=True, return_short_array=True, printmode='info')
+
+				self.seuutil.Stub_ReadFIFOs( nevents = 'all', filename = stublog +str(iteration))
+
+				self.seuutil.L1_ReadFIFOs( nevents = 'all', filename = l1dtlog +str(iteration))
+
+				conf_p_er, conf_s_er = self.check_configuration(
+					filename = (conflog + str(iteration)),
+					active_strip_list = striplist, active_HIP_list = hip_hits,
+					latency = latency, memory_select=memory_select)
+
+				self.write_summary(
+					summary, results, striplist, hip_hits, time_since_reset, seucounter, iteration,
+					latency, runname,  conf_p_er,  conf_s_er, memory_select, start_date_time)
+
+	##############################################################
+	def seucounter_try(self, iterations = 1000):
+		curtime = time.time()
+		for i in range(iterations):
+			cnt = self.ssa.ctrl.read_seu_counter()
+			print("->  %10.6f -> %3d" % ( (time.time()-curtime), cnt))
+
+	##############################################################
+	def check_configuration(self, filename = '../SSA_Results/SEU/test', active_strip_list = [], active_HIP_list = [], latency = 500, memory_select='SRAM'):
+		#t = time.time()
+		utils.print_info("->  Saving configuration to " + str(filename))
+
+		conf_new = self.ssa.ctrl.save_configuration(
+			rtarray = True, display=False, strip_list = 'all',
+			file = (filename+'__configuration.scv'),
+			notes = [['note','active_strip_and_HIPs','[{:s}] - [{:s}]'.format(
+				', '.join(map(str, active_strip_list)), ', '.join(map(str, active_HIP_list))   ) ]] )
+
+		utils.print_info("->  Reading default configuration ")
+		conf_ref = self.ssa.ctrl.load_configuration(
+			rtarray = True, display=False, upload_on_chip = False,
+			file = 'ssa_methods/Configuration/ssa_configuration_base_calib_v{:d}.csv'.format(tbconfig.VERSION['SSA']))
+		ctrl_3_val = latency & 0x00ff
+		if(memory_select == 'LATCH'):
+			ctrl_1_val = ((latency&0x0100)>>4)|0b01100100
+		else:
+			ctrl_1_val = ((latency&0x0100)>>4)|0b00000100
+		conf_ref = self.ssa.ctrl._change_config_value(field='StripControl1',     new_value=0b00001001,  conf=conf_ref, strips=active_strip_list )
+		conf_ref = self.ssa.ctrl._change_config_value(field='DigCalibPattern_L', new_value=0b00000001,  conf=conf_ref, strips=active_strip_list )
+		conf_ref = self.ssa.ctrl._change_config_value(field='DigCalibPattern_H', new_value=0b00000001,  conf=conf_ref, strips=active_HIP_list )
+		conf_ref = self.ssa.ctrl._change_config_value(field='control_1',         new_value=ctrl_1_val,  conf=conf_ref, strips=[-1] )
+		conf_ref = self.ssa.ctrl._change_config_value(field='control_3',         new_value=ctrl_3_val,  conf=conf_ref, strips=[-1] )
+
+		utils.print_info("->  Comparing configuration")
+		error = self.ssa.ctrl.compare_configuration(conf_new, conf_ref)
+		#print(time.time() - t)
+		peri_er = bool(error[0])
+		strip_er = not all(v == 0 for v in error[1:])
+		if(peri_er):
+			utils.print_error("->  SEU Configuration -> Error in Periphery configuration")
+		if(strip_er):
+			utils.print_error("->  SEU Configuration -> Error in Strip configuration")
+		if(not peri_er and not strip_er):
+			utils.print_good("->  SEU Configuration -> Correct")
+		return peri_er, strip_er
+
+	##############################################################
+	def set_info(self):
+		self.ion    = input("Ion    : ")
+		self.tilt   = input("Angle  : ")
+		self.flux   = input("Flux : ")
+		self.folder = "../SSA_Results/SEU_Results/" + "Ion-" + self.ion + "__Tilt-" + str(self.tilt) + "__Flux-" + str(self.flux) + '/'
+		if not os.path.exists(self.folder):
+			os.makedirs(self.folder)
+
+	##############################################################
+	def write_summary(self, summary, results, striplist, hip_hits, time_since_reset, seucounter, iteration, latency, runname, conf_p_er,  conf_s_er, memory, start_time):
+		striplist.extend([0]*(8-len(striplist)))
+		hip_hits.extend([0]*(8-len(hip_hits)))
+		utils.print_log('->  Writing summary')
+		[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration]  = results
+		logdata = list(pandas_flatten([
+			runname, iteration, start_time,  time_since_reset, test_duration, latency, memory,
+			CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, conf_p_er,  conf_s_er,
+			seucounter, list(striplist), list(hip_hits),
+			]))
+		header = [
+			'runname'   , 'iteration' , 'date', 'start_time', 'time_reset', 'time_test', 'latency'   , 'memory',
+			'CL_ok'     , 'LA_ok'     , 'L1_ok'     , 'LH_ok'     , 'CL_er', 'LA_er', 'L1_er', 'LH_er', 'conf_p_er',  'conf_s_er',
+			'seucnt_A_P', 'seucnt_A_S', 'seucnt_S_P', 'seucnt_S_S', 'seucnt_T' ,
+			'strip_0'   , 'strip_1', 'strip_2', 'strip_3', 'strip_4', 'strip_5', 'strip_6', 'strip_7',
+			'hip_0'     , 'hip_1'  , 'hip_2'  , 'hip_3'  , 'hip_4'  , 'hip_5'  , 'hip_6'  , 'hip_7'  ]
+		msg = ''
+		if(not os.path.exists(summary)):
+			for data in header:
+				msg += self.__write_fixed_width(data)
+			msg += '\n'
+		for data in logdata:
+			msg += self.__write_fixed_width(data)
+		with open(summary, 'a') as fo:
+			fo.write(msg + '\n')
+
+	##############################################################
+	def __write_fixed_width(self, data):
+		if  (type(data)==int):    msg = '{:10d}, '.format(data)
+		elif(type(data)==str):    msg = '{:10s}, '.format(data)
+		elif(type(data)==float):  msg = '{:10.3f}, '.format(data)
+		elif(type(data)==bool):   msg = '{:10s}, '.format(str(data))
+		else:                     msg = str(data)
+		return msg
+
+	##############################################################
 	def init_parameters(self):
 		self.summary = results()
 		self.runtest = RunTest('default')
 		self.l1_latency = [101, 501]
 		self.run_time = 5 #sec
 
-	##############################################################
-	def main_test(self, run_repeat = 1, run_time = 30):
-		self.run_time = run_time
-		self.set_info()
-		for i in range(run_repeat):
-			self.time   = utils.date_time()
-			self.filename = "SEU_SSA_" + self.time + "__Ion-" + self.ion + "__Tilt-" + str(self.tilt) + "__Flux-" + str(self.flux) + "__"
-			self.seu_test( self.filename, self.folder)
 
 	##############################################################
-	def seu_test(self, filename = 'Try', folder = 'PROVA0'):
-		runname = self.run_info()
-		logfile = "../SSA_Results/SEU_Results/" + folder + "/" + filename
-		iteration = 0
-		for latency in self.l1_latency:
-			striplist = []
-			stavailable = range(1,121)
-			for rp in range(8):
-				self.ssa.reset(display = False)
-
-				init_time = time.time()
-				#self.ssa.init(edge = 'negative', display = False)
-				#self.test.lateral_input_phase_tuning(shift = 1)
-				stavailable = [x for x in stavailable if x not in striplist]
-				striplist = random.sample(stavailable, 6)
-				striplist = list(np.sort(striplist))
-				iteration += 1
-
-				self.ssa.ctrl.read_seu_counter(display=False, return_rate=True) #only to initialize timer for rate calculation
-
-				#results = self.seuutil.Run_Test_SEU(
-				#	check_stub=True, check_l1=True, check_lateral=True,
-				#	strip = striplist, hipflags = striplist, delay = 74, run_time = self.run_time,
-				#	cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 1, stop_if_fifo_full = 0)
-
-				#[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration]  = results
-
-				seucounter = self.ssa.ctrl.read_seu_counter(display=True)
-
-				self.seuutil.Stub_ReadFIFOs(
-					nevents = 'all',
-					filename = "../SSA_Results/SEU/" + folder + '/CL-FIFO/' + filename +'__'+str(runname)+'__'+str(iteration))
-
-				self.seuutil.L1_ReadFIFOs(
-					nevents = 'all',
-					filename = "../SSA_Results/SEU/" + folder + '/L1-FIFO/' + filename +'__'+str(runname)+'__'+str(iteration))
-
-				conf_p_er, conf_s_er = self.check_configuration(
-					filename = "../SSA_Results/SEU/" + folder + '/CONFIG/' + filename +'__'+str(runname)+'__'+str(iteration),
-					strip_list = striplist, latency = latency)
-
-				print("->  Strip List = " + str(striplist))
-
-				striplist.extend([0]*(8-len(striplist)))
-				logdata = list(pandas_flatten([
-					runname, str(iteration), str(latency), striplist,
-					CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, conf_p_er,  conf_s_er,
-					self.ssa.ctrl.seu_cntr['S']['peri'], self.ssa.ctrl.seu_cntr['S']['strip'],
-					self.ssa.ctrl.seu_cntr['A']['peri'], self.ssa.ctrl.seu_cntr['A']['strip'],
-					test_duration, seucounter['time_since_last_check'],
-					]))
-				msg = ','.join(map(str, logdata))
-				fn = logfile + self.run_info() + '.csv'
-				dir = fn[:fn.rindex(os.path.sep)]
-				if not os.path.exists(dir): os.makedirs(dir)
-				with open(fn, 'a') as fo:
-					fo.write(msg + '\n')
+	##### OLD METHODS ############################################
+	##############################################################
 
 	def analyse_stub_error_buffer(self, folder = "../SSA_Results/SEU_Results_anl"):
 		labels = []
@@ -182,6 +276,53 @@ class SSA_SEU():
 		CSV.array_to_csv( datalog , folder + "/cmplog.csv" )
 		print("->  Compiled log saved in: " + str( folder + "/cmplog.csv") )
 
+	##############################################################
+	def run_seu_counter(self, folder, filename, runtime = 60):
+		logfile = "../SSA_Results/SEU/" + folder + "/" + filename + "_seucounter.csv"
+		tinit = time.time()
+		while True:
+			seucounter = self.ssa.ctrl.read_seu_counter()
+			fo = open(logfile, 'a')
+			fo.write(str(time.time()-tinit) + ", " + str(seucounter) + '\n')
+			fo.close()
+			time.sleep(0.2)
+			print(str(seucounter))
+			if( (time.time()-tinit) > runtime):
+				return
+
+	def run_info(self):
+		return ''
+
+	def I2C_test(self, file):
+		for i in range(10000):
+			registers = []; rm = []
+			peri_reg_map  = self.ssa.ctrl.ssa_peri_reg_map.copy()
+
+			for i in peri_reg_map:
+				if('Fuse' in i): rm.append(i)
+				if('SEU' in i): rm.append(i)
+			for k in rm:
+				peri_reg_map.pop(k, None)
+			strip_reg_map = self.ssa.ctrl.ssa_strip_reg_map.copy()
+			for i in strip_reg_map:
+				if('ReadCounter' in i): rm.append(i)
+			for k in rm:
+				strip_reg_map.pop(k, None)
+
+			for reg in peri_reg_map:
+				self.I2C.peri_write(reg, 0x1)
+				r = self.I2C.peri_read(reg)
+				registers.append([ reg,  r])
+				if(r != 0x1):
+					print([ reg,  r])
+			#for reg in strip_reg_map:
+			#	for strip in range(1,120):
+			#		self.I2C.strip_write(reg, strip, 0x1)
+			#		r = self.I2C.strip_read(reg,  strip)
+			#		registers.append([ reg,  r])
+			#		#if(r != 0x1):
+			#		print([ reg,  r])
+			CSV.ArrayToCSV(registers, file+ str(i))
 
 	##############################################################
 	def plot_logs(self, folder = "../SSA_Results/SEU_Results", compile_data = True, cl_cut = 70, l1_cut = 70):
@@ -239,96 +380,6 @@ class SSA_SEU():
 		plt.semilogy(er_l500[:,0], er_l500[:,1], '--o', color = c, markersize = 10, markeredgewidth = 0)
 
 	##############################################################
-	def seucounter_try(self, iterations = 1000):
-		curtime = time.time()
-		for i in range(iterations):
-			cnt = self.ssa.ctrl.read_seu_counter()
-			print("->  %10.6f -> %3d" % ( (time.time()-curtime), cnt))
-
-	##############################################################
-	def check_configuration(self, filename = '../SSA_Results/SEU/test', strip_list = range(1,121), latency = 500):
-		#t = time.time()
-		utils.print_info("->  Saving configuration to " + str(filename))
-		conf_new = self.ssa.ctrl.save_configuration(
-			rtarray = True, display=False, strip_list = 'all',
-			file = (filename+'__configuration.scv'))
-
-		utils.print_info("->  Reading default configuration ")
-		conf_ref = self.ssa.ctrl.load_configuration(
-			rtarray = True, display=False, upload_on_chip = False,
-			file = 'ssa_methods/Configuration/ssa_configuration_base_v{:d}.csv'.format(tbconfig.VERSION['SSA']))
-
-		#conf_ref[ np.where(conf_ref[:,1] == 'L1_Latency_lsb')[0][0] , 2] = (latency >> 0) & 0xff
-		#conf_ref[ np.where(conf_ref[:,1] == 'L1_Latency_msb')[0][0] , 2] = (latency >> 8) & 0xff
-		utils.print_info("->  Comparing configuration")
-		error = self.ssa.ctrl.compare_configuration(conf_new, conf_ref)
-		#print(time.time() - t)
-		peri_er = bool(error[0])
-		strip_er = not all(v == 0 for v in error[1:])
-		if(peri_er):
-			print("-X  \tSEU Configuration -> Error in Periphery configuration")
-		if(strip_er):
-			print("-X  \tSEU Configuration -> Error in Strip configuration")
-		if(not peri_er and not strip_er):
-			print("->  SEU Configuration -> Correct")
-		return peri_er, strip_er
-
-	def set_info(self):
-		self.ion    = input("Ion    : ")
-		self.tilt   = input("Angle  : ")
-		self.flux   = input("Flux : ")
-		self.folder = input("Folder : ")
-
-	##############################################################
-	def run_seu_counter(self, folder, filename, runtime = 60):
-		logfile = "../SSA_Results/SEU/" + folder + "/" + filename + "_seucounter.csv"
-		tinit = time.time()
-		while True:
-			seucounter = self.ssa.ctrl.read_seu_counter()
-			fo = open(logfile, 'a')
-			fo.write(str(time.time()-tinit) + ", " + str(seucounter) + '\n')
-			fo.close()
-			time.sleep(0.2)
-			print(str(seucounter))
-			if( (time.time()-tinit) > runtime):
-				return
-
-	def run_info(self):
-		return ''
-
-	def I2C_test(self, file):
-		for i in range(10000):
-			registers = []; rm = []
-			peri_reg_map  = self.ssa.ctrl.ssa_peri_reg_map.copy()
-
-			for i in peri_reg_map:
-				if('Fuse' in i): rm.append(i)
-				if('SEU' in i): rm.append(i)
-			for k in rm:
-				peri_reg_map.pop(k, None)
-			strip_reg_map = self.ssa.ctrl.ssa_strip_reg_map.copy()
-			for i in strip_reg_map:
-				if('ReadCounter' in i): rm.append(i)
-			for k in rm:
-				strip_reg_map.pop(k, None)
-
-			for reg in peri_reg_map:
-				self.I2C.peri_write(reg, 0x1)
-				r = self.I2C.peri_read(reg)
-				registers.append([ reg,  r])
-				if(r != 0x1):
-					print([ reg,  r])
-
-			#for reg in strip_reg_map:
-			#	for strip in range(1,120):
-			#		self.I2C.strip_write(reg, strip, 0x1)
-			#		r = self.I2C.strip_read(reg,  strip)
-			#		registers.append([ reg,  r])
-			#		#if(r != 0x1):
-			#		print([ reg,  r])
-			CSV.ArrayToCSV(registers, file+ str(i))
-
-
 	def CheckConfiguration(self, folder = "../SSA_Results/SEU_Results/"):
 		labels = []; datalog = [];
 		dirs = os.listdir(folder)
@@ -362,7 +413,6 @@ class SSA_SEU():
 
 					CSV.array_to_csv(conf_read[:,1:], folder + '/' + dt + "/CONFIG/" + f )
 			CSV.array_to_csv(errors, folder + '/' + dt + "/CONFIG/Conf_ErLog.csv")
-
 
 
 		#fig = plt.figure(figsize=(16,12))
