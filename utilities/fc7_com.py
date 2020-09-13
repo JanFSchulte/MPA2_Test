@@ -17,6 +17,7 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from datetime import datetime
+from myScripts.Utilities import *
 
 class I2C_MainSlaveMapItem:
 	def __init__(self):
@@ -134,7 +135,7 @@ class fc7_com():
 		#print(bin(val))
 		self.activate_I2C_chip(verbose=0)
 
-	def activate_I2C_chip(frequency = 0, verbose = 1):
+	def activate_I2C_chip(self, frequency = 0, verbose = 1):
 		i2cmux = 0
 		write = 0
 		self.SetSlaveMap(verbose = verbose)
@@ -262,15 +263,22 @@ class fc7_com():
 			print(hex(word_0))
 			print(hex(word_1))
 		# writing the command
-		self.fc7.write("ctrl_command_i2c_command_fifo", word_0)
-		self.fc7.write("ctrl_command_i2c_command_fifo", word_1)
+		time.sleep(0.001);
+		self.fc7.write("ctrl_command_i2c_command_fifo", word_0); time.sleep(0.001);
+		self.fc7.write("ctrl_command_i2c_command_fifo", word_1); time.sleep(0.001);
 		# wait for the reply to come back
-		while self.fc7.read("stat_command_i2c_fifo_replies_empty") > 0:
+		rr = 1
+		while(rr > 0):
+			time.sleep(0.001)
+			rr = self.fc7.read("stat_command_i2c_fifo_replies_empty")
 			if verbose:
+				time.sleep(0.001);
 				self.ReadStatus()
 				time.sleep(0.1)
 		# get the reply
+		time.sleep(0.001);
 		reply = self.fc7.read("ctrl_command_i2c_reply_fifo")
+		time.sleep(0.001);
 		reply_slave_id = self.DataFromMask(reply, "mpa_ssa_i2c_reply_slave_id")
 		reply_board_id = self.DataFromMask(reply, "mpa_ssa_i2c_reply_board_id")
 		reply_err = self.DataFromMask(reply, "mpa_ssa_i2c_reply_err")
@@ -279,27 +287,18 @@ class fc7_com():
 		#print("Full Reply Word: ", hex(reply))
 		# check the data
 		if reply_err == 1:
-			print("ERROR! Error flag is set to 1. The data is treated as the error code.")
-			print("Error code: " + hex(reply_data))
+			utils.print_warning("ERROR! Error flag is set to 1. The data is treated as the error code.")
+			utils.print_warning("Error code: " + hex(reply_data))
 		elif reply_slave_id != slave_id:
-			print("ERROR! Slave ID doesn't correspond to the one sent")
+			utils.print_warning("ERROR! Slave ID doesn't correspond to the one sent")
 		elif reply_board_id != board_id:
-			print("ERROR! Board ID doesn't correspond to the one sent")
+			utils.print_warning("ERROR! Board ID doesn't correspond to the one sent")
 		else:
 			if read == 1:
 				if verbose: print("Data that was read is: " + hex(reply_data))
 				return reply_data
 			else:
 				if verbose: print("Successful write transaction")
-
-	def activate_I2C_chip(self, frequency = 0, verbose = 1):
-		i2cmux = 0
-		write = 0
-		self.SetSlaveMap(verbose = verbose)
-		self.Configure_MPA_SSA_I2C_Master(1, frequency, verbose = verbose)
-		self.Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x04, verbose = verbose) #enable only MPA-SSA chip I2C
-		self.Configure_MPA_SSA_I2C_Master(0, frequency, verbose = verbose)
-		self.SetMainSlaveMap(verbose = verbose)
 
 	def SetMainSlaveMap(self, verbose = 1):
 		self.i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]

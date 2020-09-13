@@ -37,9 +37,9 @@ class SSA_readout():
 		stub_data_ready = ((status & 0x2) >> 1)
 		counters_ready  = ((status & 0x4) >> 2)
 		if(display):
-			print('->  L1 data ready:   {:d}'.format(l1_data_ready))
-			print('->  Stub data ready: {:d}'.format(stub_data_ready))
-			print('->  Counters ready:  {:d}'.format(counters_ready))
+			utils.print_log('->  L1 data ready:   {:d}'.format(l1_data_ready))
+			utils.print_log('->  Stub data ready: {:d}'.format(stub_data_ready))
+			utils.print_log('->  Counters ready:  {:d}'.format(counters_ready))
 		return [l1_data_ready, stub_data_ready, counters_ready]
 
 
@@ -68,7 +68,7 @@ class SSA_readout():
 			self.fc7.SendCommand_CTRL("start_trigger") # repeated for FC7 code timing issue
 			self.fc7.SendCommand_CTRL("start_trigger") # repeated for FC7 code timing issue
 
-		if(profile): print('->  cluster readout 1 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+		if(profile): utils.print_log('->  cluster readout 1 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		#### status doesn't get reset in the FC7
 		#### while (status[1] != 1 and counter<timeout):
 		#### 	#time.sleep(0.001)
@@ -77,7 +77,7 @@ class SSA_readout():
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
 		#self.fc7.SendCommand_CTRL("stop_trigger")
 		counter = 0
-		if(profile): print('->  cluster readout 2 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+		if(profile): utils.print_log('->  cluster readout 2 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		for word in ssa_stub_data:
 			counter += 1
 			tmp.append( to_number(word, 8, 0)/2.0 )
@@ -87,12 +87,12 @@ class SSA_readout():
 			if (counter % 10 == 0):
 				data.append(tmp)
 				tmp = []
-		if(profile): print('->  cluster readout 3 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+		if(profile): utils.print_log('->  cluster readout 3 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		if raw:
 			return data
 		if(display):
 			for i in data:
-				print("-->  " + str(i) )
+				utils.print_log("-->  " + str(i) )
 		if (not lookaround):
 			coordinates = []
 			for block in data:
@@ -115,7 +115,7 @@ class SSA_readout():
 				cnt0 += 1
 		if(display_pattern):
 			ctmp = np.array(data[0]).astype(bool).astype(int)
-			print( "[{:5s}]".format( '|'.join(map(str, ctmp)) ) )
+			utils.print_log( "[{:5s}]".format( '|'.join(map(str, ctmp)) ) )
 		if(self.index==1): # 2xSSA test board has inverted lines for chip 1
 			coordinates.sort()
 		if return_as_pattern:
@@ -169,17 +169,17 @@ class SSA_readout():
 		if trigger:
 			self.fc7.SendCommand_CTRL("start_trigger")
 			#self.send_trigger(1)
-		if(profile): print('->  L1 readout 1 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+		if(profile): utils.print_log('->  L1 readout 1 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		#time.sleep(0.01)
 		status = self.fc7.read("stat_slvs_debug_general")
 		#time.sleep(0.001)
-		if(profile): print('->  L1 readout 2 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+		if(profile): utils.print_log('->  L1 readout 2 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
-		if(profile): print('->  L1 readout 3 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+		if(profile): utils.print_log('->  L1 readout 3 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		if(display_raw):
-			print("\n->  L1 Data: ")
+			utils.print_log("\n->  L1 Data: ")
 			for word in ssa_l1_data:
-			    print(
+			    utils.print_log(
 					'    \t->' +
 					'{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
 					'{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
@@ -197,7 +197,7 @@ class SSA_readout():
 			data = data | (tmp << (32*(49-i)))
 		end = False; ret = [];
 		timeoutcnt = 50*32
-		if(profile): print('->  L1 readout 4 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+		if(profile): utils.print_log('->  L1 readout 4 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		while (not end):
 			while ((data & 0b1) != 0b1 ):
 				data =  data >> 1
@@ -207,7 +207,7 @@ class SSA_readout():
 					end = True;	break;
 			if(end): break
 			if(display_raw):
-				print("\n->  L1 Data Subset: {:s}\n".format(bin(data)))
+				utils.print_log("\n->  L1 Data Subset: {:s}\n".format(bin(data)))
 			if(tbconfig.VERSION['SSA'] >= 2):
 				L1_counter = (data >> 157) & 0x1ff
 				BX_counter = (data >> 148) & 0x1ff
@@ -218,7 +218,7 @@ class SSA_readout():
 				BX_counter = (data >> 145) & 0x1ff
 				l1data = (data >> 1) & 0x00ffffffffffffffffffffffffffffff
 				hidata = (data >> 121) & 0xffffff
-			#print(bin(hidata))
+			#utils.print_log(bin(hidata))
 			l1datavect = [0]*120
 			hipflagvect = [0]*24
 			for i in range(0,120):
@@ -238,10 +238,10 @@ class SSA_readout():
 				if(hipflagvect[i] > 0):
 					hiplist.append(i+1)
 			if(display):
-				print("->  L1 ={:3d}  |  BX ={:4d}  |  HIT = [{:3s}]  |  HIP = [{:3s}]".format(
+				utils.print_log("->  L1 ={:3d}  |  BX ={:4d}  |  HIT = [{:3s}]  |  HIP = [{:3s}]".format(
 					L1_counter,  BX_counter, ', '.join(map(str, l1hitlist)), ', '.join(map(str, hiplist)) ) )
 
-			#print(data)
+			#utils.print_log(data)
 			data =  data >> 160
 			if(not multi):
 				end = True
@@ -251,7 +251,7 @@ class SSA_readout():
 		if len(ret) == 0:
 			if multi: ret = [[-1,-1,[],[]]]
 			else: ret = [-1,-1,[],[]]
-		if(profile): print('->  L1 readout 5 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+		if(profile): utils.print_log('->  L1 readout 5 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		return ret
 #		ssa.readout.l1_data(display = True, trigger = False, display_raw = 1)
 
@@ -281,9 +281,9 @@ class SSA_readout():
 		lateral_data = self.fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
 		if (display is True):
 			counter = 0
-			print("\n--> Lateral Data: ")
+			utils.print_log("\n--> Lateral Data: ")
 			for word in lateral_data:
-				print(
+				utils.print_log(
 					'    \t->' +
 					'{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
 					'{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
@@ -328,7 +328,7 @@ class SSA_readout():
 			self.ctrl.set_async_readout_start_delay(delay=8, fc7_correction=shift)
 			self.countershift['state'] = True
 			self.countershift['value'] = shift
-			if(not silent): print('->  Updating the counters alignment value to {:d}'.format(shift))
+			if(not silent): utils.print_log('->  Updating the counters alignment value to {:d}'.format(shift))
 		else:
 			if(self.countershift['state']):
 				self.ctrl.set_async_readout_start_delay(delay=8, fc7_correction=self.countershift['value'])
@@ -360,17 +360,17 @@ class SSA_readout():
 				line1 = to_number(fifo1_word,8,0)
 				line2 = to_number(fifo1_word,16,8)
 				count[i] = (line2 << 8) | line1
-				if (i%1000 == 0): print("Reading BX #" + str(i))
+				if (i%1000 == 0): utils.print_log("Reading BX #" + str(i))
 		#### time.sleep(0.1)
 		#### mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
 		for s in range(0,120):
 			if (not (s+1) in striplist):
 				count[s] = 0
-		#print((time.time()-t)*1E3)
+		#utils.print_log((time.time()-t)*1E3)
 		return failed, count
 
 	def align_counters_readout(self, threshold=100, amplitude=200, duration=1):
-		print('->  Running counters readout alignment procedure')
+		utils.print_log('->  Running counters readout alignment procedure')
 		self.fc7.SendCommand_CTRL("stop_trigger")
 		self.cluster_data(initialize=True)
 		self.ctrl.activate_readout_async(ssa_first_counter_delay='keep')
@@ -427,15 +427,15 @@ class SSA_readout():
 		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
 		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
 		lateral_data = self.fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
-		print("--> Status: ")
-		print("---> MPA L1 Data Ready: " + str((status & 0x00000001) >> 0))
-		print("---> MPA Stub Data Ready: " + str((status & 0x00000002) >> 1))
-		print("---> MPA Counters Ready: " +str((status & 0x00000004) >> 2))
-		print("---> Lateral Data Counters Ready: "  + str((status & 0x00000008) >> 3))
+		utils.print_log("--> Status: ")
+		utils.print_log("---> MPA L1 Data Ready: " + str((status & 0x00000001) >> 0))
+		utils.print_log("---> MPA Stub Data Ready: " + str((status & 0x00000002) >> 1))
+		utils.print_log("---> MPA Counters Ready: " +str((status & 0x00000004) >> 2))
+		utils.print_log("---> Lateral Data Counters Ready: "  + str((status & 0x00000008) >> 3))
 		if(l1data):
-			print("\n--> L1 Data: ")
+			utils.print_log("\n--> L1 Data: ")
 			for word in ssa_l1_data:
-				print(
+				utils.print_log(
 					'    \t->' +
 					'{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
 					'{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
@@ -443,11 +443,11 @@ class SSA_readout():
 					'{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) ) )
 		if(cluster):
 			counter = 0
-			print("\n--> Stub Data: ")
+			utils.print_log("\n--> Stub Data: ")
 			for word in ssa_stub_data:
 				if (counter % 10 == 0):
-					print("Line: " + str(counter/10))
-				print(
+					utils.print_log("Line: " + str(counter/10))
+				utils.print_log(
 					'    \t->' +
 					'{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
 					'{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
@@ -455,9 +455,9 @@ class SSA_readout():
 					'{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) ) )
 				counter += 1
 		if(lateral):
-			print("\n--> Lateral Data: ")
+			utils.print_log("\n--> Lateral Data: ")
 			for word in lateral_data:
-				print(
+				utils.print_log(
 					'    \t->' +
 					'{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
 					'{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
@@ -511,8 +511,8 @@ class SSA_readout():
 #	            fc7.write("ctrl_phy_fast_cmd_phase",phase)
 #	        count += 1
 #	    if (not aligned):
-#	        print("Try with finer step")
+#	        utils.print_log("Try with finer step")
 #	    else:
-#	        print("All stubs line aligned!")
+#	        utils.print_log("All stubs line aligned!")
 #	    t1 = time.time()
-#	    print("Elapsed Time: " + str(t1 - t0))
+#	    utils.print_log("Elapsed Time: " + str(t1 - t0))

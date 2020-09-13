@@ -104,7 +104,7 @@ class ssa_ctrl_strip:
 				r = self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b00000)
 				r = self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip=strip, data=activeval)
 			else:
-				print("X>  \tSet_cal_strips error. Wrong strip format specified")
+				utils.print_error("X>  \tSet_cal_strips error. Wrong strip format specified")
 				return False
 			return r
 		else:
@@ -120,7 +120,7 @@ class ssa_ctrl_strip:
 				self.I2C.strip_write("ENFLAGS", 0, 0b00000)
 				self.I2C.strip_write("ENFLAGS", strip, activeval)
 			else:
-				print("X>  \tSet_cal_strips error. Wrong strip format specified")
+				utils.print_error("X>  \tSet_cal_strips error. Wrong strip format specified")
 				return False
 			return True
 

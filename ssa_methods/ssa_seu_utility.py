@@ -41,6 +41,7 @@ class SSA_SEU_utilities():
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
 		self.fc7.write("ctrl_fast", 0x10000)
 		self.ssa.init(edge = 'negative', display = False)
+		self.ssa.resync()
 		#print(tbconfig.VERSION['SSA'])
 
 		s1, s2, s3 = self.Stub_Evaluate_Pattern(strip)
@@ -77,7 +78,13 @@ class SSA_SEU_utilities():
 		if(display==0): display=1
 		CL_ok, CL_er = self.Stub_printinfo(display = display, header = 1, message = "SUMMARY", logmode='info')
 		LA_ok, LA_er = self.Lateral_printinfo(display = 0, logmode='info', enable=check_lateral)
-		L1_ok, L1_er, LH_ok, LH_er = self.L1_printInfo(display = display, correction = correction, logmode='info')
+		L1_ok, L1_er, LH_ok, LH_er = self.L1_printInfo(display = display, correction = correction)
+		if(CL_er==0): utils.print_good('->  Stub data comparison  -> No errors due to SEEs')
+		else:      utils.print_warning('->  Stub data comparison  -> Found errors due to SEEs')
+		if(L1_er==0): utils.print_good('->  L1 data comparison    -> No errors due to SEEs')
+		else:      utils.print_warning('->  L1 data comparison    -> Found errors due to SEEs')
+		if(LH_er==0): utils.print_good('->  L1 headers comparison -> No errors due to SEEs')
+		else:        utils.print_error('->  L1 headers comparison -> Found errors due to SEEs')
 		return [CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration]
 
 	##############################################################
@@ -447,14 +454,14 @@ class SSA_SEU_utilities():
 		#self.L1_printInfo("BEFORE READING FIFO:")
 		utils.print_info("->  Reading L1-data mismatches FIFO")
 		if(display>1): print("Now printing the data in the FIFO:")
-		FIFO = np.full( [16386,4], '', dtype ='|S160')
+		FIFO = np.full( [16386,7], '', dtype ='|S256')
 		if(not isinstance(nevents, int)):
 			FIFO_depth = self.fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo")
-			FIFO_depth = 300
 		else:
 			FIFO_depth = nevents
 		for i in range(0, FIFO_depth):
 				if(display>0): print("Entry number: ", i ," in the FIFO:")
+				#it increments location of the FIFO reading ctrl_phy_l1_SLVS_compare_read_data9_fifo
 				fifo1_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data1_fifo")
 				fifo2_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data2_fifo")
 				fifo3_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data3_fifo")
@@ -464,11 +471,29 @@ class SSA_SEU_utilities():
 				fifo7_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data7_fifo")
 				fifo8_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data8_fifo")
 				fifo9_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data9_fifo")
-				if(display>1): print("Full l1 data package without the header (MSB downto LSB): ")
-				FIFO[i,0] = '{:32b}'.format(fifo8_word)
-				FIFO[i,1] = '{:32b}'.format(fifo9_word)
-				FIFO[i,2] = '{:32b}'.format(fifo7_word) # (fifo7_word >>27) & 0xf
-				FIFO[i,3] = (self.parse_to_bin32(fifo8_word) +'-'+ self.parse_to_bin32(fifo7_word) +'-'+ self.parse_to_bin32(fifo6_word) +'-'+ self.parse_to_bin32(fifo5_word) +'-'+ self.parse_to_bin32(fifo4_word) +'-'+ self.parse_to_bin32(fifo3_word) +'-'+ self.parse_to_bin32(fifo2_word))
+				if(display>1):
+					print("Full l1 data package without the header (MSB downto LSB): ")
+
+				event_array = (
+					self.parse_to_bin32(fifo7_word) + self.parse_to_bin32(fifo6_word) +
+					self.parse_to_bin32(fifo5_word) + self.parse_to_bin32(fifo4_word) +
+					self.parse_to_bin32(fifo3_word) + self.parse_to_bin32(fifo2_word) )
+
+				#l1_counter  = '{:5d}'.format((fifo7_word>>22)&0x1ff)
+				bx_counter  = fifo8_word & 0x1ff
+				l1_counter  = int(event_array[1:10], 2)
+				mirrow      = fifo9_word & 0x1ff
+				flags_array = event_array[19:43]
+				hits_array  = event_array[43:163]
+				trailer     = event_array[163: 167]
+				FIFO[i,0] = '{:5d}'.format(bx_counter) #BX
+				FIFO[i,1] = '{:5d}'.format(mirrow) #mirrrow
+				FIFO[i,2] = '{:5d}'.format(l1_counter) # (fifo7_word >>27) & 0xf
+				FIFO[i,3] = '{:25s}'.format(flags_array)
+				FIFO[i,4] = '{:121s}'.format(hits_array)
+				FIFO[i,5] = '{:5s}'.format(trailer)
+				FIFO[i,5] = '{:193s}'.format(event_array)
+
 				if(display>0):
 					#print("->  L1 counter  "  + str(  bin(fifo7_word)  ))
 					#print("->  L1 mirrow:  "  + str(  bin(fifo9_word)  ))
@@ -483,9 +508,6 @@ class SSA_SEU_utilities():
 					print("->  r3: "  + str(  self.parse_to_bin32(fifo3_word) ))
 					print("->  r2: "  + str(  self.parse_to_bin32(fifo2_word) ))
 					print("->  r1: "  + str(  self.parse_to_bin32(fifo1_word) ))
-
-
-
 		fo = ("../SSA_Results/" + filename + "__SEU__L1-DATA-FIFO__" + runname + ".csv")
 		dir = fo[:fo.rindex(os.path.sep)]
 		if not os.path.exists(dir): os.makedirs(dir)
@@ -527,18 +549,18 @@ class SSA_SEU_utilities():
 
 
 	##############################################################
-	def L1_printInfo(self, message = '', display = 2, header = 0, correction = 0, logmode='log'):
+	def L1_printInfo(self, message = '', display = 2, header = 0, correction = 0, intermediate=0):
 		state      = self.fc7.read("stat_phy_l1_slvs_compare_state_machine")
 		full       = self.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
 		n_in_fifo  = self.fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo") - correction
 		n_correct  = self.fc7.read("stat_phy_l1_slvs_compare_number_good_data")
-		n_triggers = self.fc7.read("stat_phy_l1_slvs_compare_number_l1_triggers") - 1
 		n_headers  = self.fc7.read("stat_phy_l1_slvs_compare_number_l1_headers_found")
-		#print('=========================')
-		#print(n_triggers)
-		#print(n_headers)
-		#print('=========================')
-
+		n_triggers = self.fc7.read("stat_phy_l1_slvs_compare_number_l1_triggers") - 1
+		if(intermediate):
+			logmode = 'log'
+			n_in_fifo -= 2
+		else:
+			logmode = 'info'
 		if(header and display>0):
 			utils.print("________________________________________________________________________________________", logmode)
 		if(display==2):
@@ -598,7 +620,7 @@ class SSA_SEU_utilities():
 		if(check_lateral):
 			self.Lateral_printinfo(display = display)
 		if(check_l1):
-			self.L1_printInfo(display = display)
+			self.L1_printInfo(display = display, intermediate=1)
 
 	##############################################################
 	def L1_RunStateMachine(self, timer_data_taking = 5, display = 0):

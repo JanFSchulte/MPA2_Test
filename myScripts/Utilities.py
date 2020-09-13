@@ -2,6 +2,8 @@ import numpy as np
 import time
 import sys
 import os
+import datetime
+import threading
 
 if(sys.version_info[0] < 3):
 	print('\n\n\x1b[1;37;41m The MPA-SSA Test bench requires python > 3.5. Compatibility with python 2.8 is not anymore guaranteed. \x1b[0m \n\n')
@@ -20,8 +22,7 @@ from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
-from datetime import datetime
-import threading
+
 
 class FuncThread(threading.Thread):
 	def __init__(self, target, *args):
@@ -77,6 +78,11 @@ class Utilities:
 		#time.sleep(0.001)
 		if (i == 99):
 			sys.stdout.write('\n')
+
+	def time_delta(self, time_init):
+		sec = time.time()-time_init
+		ret = str(datetime.timedelta(seconds=int(sec)))
+		return ret
 
 	def print_inline(self, message):
 		sys.stdout.write("\r{:s}".format(message))
@@ -159,23 +165,23 @@ class Utilities:
 
 	def date_time(self, format='print'):
 		if(format == 'print'):
-			return datetime.now().strftime("%Y-%m-%d_%H-%M")
+			return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 		elif(format == 'csv'):
-			return datetime.now().strftime("%Y, %m, %d, %H, %M, %S")
+			return datetime.datetime.now().strftime("%Y, %m, %d, %H, %M, %S")
 		elif(format == 'array'):
-			return (datetime.now().strftime("%Y, %m, %d, %H, %M, %S")).split(', ')
+			return (datetime.datetime.now().strftime("%Y, %m, %d, %H, %M, %S")).split(', ')
 		else:
-			return datetime.now().strftime("%Y-%m-%d_%H-%M")
+			return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 	def date_and_time(self, format='print'):
 		if(format == 'print'):
-			return (datetime.now().strftime("%Y-%m-%d,%H-%M-%S")).split(',')
+			return (datetime.datetime.now().strftime("%Y-%m-%d,%H-%M-%S")).split(',')
 		elif(format == 'csv'):
-			return datetime.now().strftime("%Y, %m, %d, %H, %M, %S")
+			return datetime.datetime.now().strftime("%Y, %m, %d, %H, %M, %S")
 		elif(format == 'array'):
-			return (datetime.now().strftime("%Y, %m, %d, %H, %M, %S")).split(', ')
+			return (datetime.datetime.now().strftime("%Y, %m, %d, %H, %M, %S")).split(', ')
 		else:
-			return datetime.now().strftime("%Y-%m-%d_%H-%M")
+			return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 	def print_error(self, text, logfile = False):
 		print(self.text_color(text, 'red'))

@@ -55,7 +55,7 @@ class ssa_calibration():
 
 	def SetMode(self, mode = 'MULTIMETER_LAN'):
 		if(mode not in ['ADC', 'MULTIMETER_GPIB', 'MULTIMETER_LAN']):
-			print('->  ERROR MULTIMETER MODE')
+			utils.print_log('->  ERROR MULTIMETER MODE')
 			return False
 		else:
 			self.mode = mode
@@ -83,7 +83,7 @@ class ssa_calibration():
 				utils.print_log( "\tTune the value (" + str( par.nominal ) + "):" )
 				best_dac = self.__tune_parameter(self.minst, par.par_name, par.nominal)
 				par.best_dac = best_dac
-		print("\n\nSummary of tuning (tuned values):")
+		utils.print_log("\n\nSummary of tuning (tuned values):")
 		if(measure):
 			self.measure_bias()
 		self.ssa.analog.set_output_mux('highimpedence')
@@ -114,7 +114,7 @@ class ssa_calibration():
 		if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):
 			self.__multimeter_gpib_initialise()
 		if(not name in self.analog_mux_map):
-			print("->  Invalid DAC name")
+			utils.print_log("->  Invalid DAC name")
 			return False
 		if(self.mode == 'MULTIMETER_LAN'):
 			self.multimeter_lan.configure_dc_high_accuracy(nplc_filter=False, nsamples=average)
@@ -141,13 +141,13 @@ class ssa_calibration():
 		dnl_max = np.max(np.abs(dnl))
 		g, ofs, sigma = utils.linear_fit(range(0,2**nbits), data)
 		self.ssa.analog.set_output_mux('highimpedence')
-		print("")
-		print("DAC "+name+'['+str(nbits)+'-bit]:')
-		print("->  GAIN    = {:6.3f} mV/cnt".format(g*1000.0))
-		print("->  OFFSET  = {:6.3f} mV    ".format(ofs*1000.0))
-		print("->  INL MAX = {:6.3f} cnts  ".format(inl_max))
-		print("->  DNL INL = {:6.3f} cnts  ".format(dnl_max))
-		print("")
+		utils.print_log("")
+		utils.print_log("DAC "+name+'['+str(nbits)+'-bit]:')
+		utils.print_log("->  GAIN    = {:6.3f} mV/cnt".format(g*1000.0))
+		utils.print_log("->  OFFSET  = {:6.3f} mV    ".format(ofs*1000.0))
+		utils.print_log("->  INL MAX = {:6.3f} cnts  ".format(inl_max))
+		utils.print_log("->  DNL INL = {:6.3f} cnts  ".format(dnl_max))
+		utils.print_log("")
 		if(plot):
 			plt.clf()
 			plt.figure(1)
@@ -182,7 +182,7 @@ class ssa_calibration():
 		if(not self.initialised and (self.mode == 'MULTIMETER_GPIB')):
 			self.__multimeter_gpib_initialise()
 		if(not name in self.analog_mux_map):
-			print("->  Invalid DAC name")
+			utils.print_log("->  Invalid DAC name")
 			return False
 		if(self.mode == 'MULTIMETER_LAN'):
 			self.multimeter_lan.configure_dc_high_accuracy(nplc_filter=False, nsamples=average)
@@ -206,7 +206,7 @@ class ssa_calibration():
 			CSV.ArrayToCSV (array = data, filename = fo + ".csv", transpose = True)
 		g, ofs, sigma = utils.linear_fit(x, data)
 		self.ssa.analog.set_output_mux('highimpedence')
-		#print("DAC "+name+'['+str(nbits)+'-bit]:')
+		#utils.print_log("DAC "+name+'['+str(nbits)+'-bit]:')
 		utils.print_good("->  Gain({:12s}) = {:9.3f} mV/cnt".format(name, g*1000.0))
 		utils.print_good("->  Offs({:12s}) = {:9.3f} mV    ".format(name, ofs*1000.0))
 
@@ -228,7 +228,7 @@ class ssa_calibration():
 		# ['Bias_D5BFEED'] ['Bias_D5PREAMP']['Bias_D5TDR']['Bias_D5ALLV']['Bias_D5ALLI']
 		# ['Bias_CALDAC']['Bias_BOOSTERBASELINE']['Bias_THDAC']['Bias_THDACHIGH']['Bias_D5DAC8']
 		if(not name in self.analog_mux_map):
-			print("->  Invalid DAC name")
+			utils.print_log("->  Invalid DAC name")
 			return False
 		fullscale = 2**nbits
 		x = np.linspace(0,fullscale, npoints, dtype=int, endpoint=False)
@@ -316,7 +316,7 @@ class ssa_calibration():
 
 	def _d5_value(self, name, mode = 'r', value = -1):
 		if ((mode == 'w') & (value == -1)):# check the read value
-			print("Error! Can not use default value for writing. Please set the value")
+			utils.print_log("Error! Can not use default value for writing. Please set the value")
 			exit(1)
 		if (mode == 'w'):# write now
 			self.I2C.peri_write(name, value)
@@ -326,7 +326,7 @@ class ssa_calibration():
 			return -1
 		if (mode == 'w'):# if it was write - check the result
 			if (value != read_value):
-				print("Error! The write was not succesfull")
+				utils.print_log("Error! The write was not succesfull")
 				return -1
 			else:
 				return 0

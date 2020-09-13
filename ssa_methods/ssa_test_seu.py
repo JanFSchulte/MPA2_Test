@@ -40,15 +40,17 @@ class SSA_SEU():
 		self.init_parameters()
 
 	##############################################################
-	def main_test(self, niterations=16, run_time=5, memory_select='SRAM' ):
+	def main_test(self, niterations=16, run_time=5, memory_select='SRAM', delay_adjust=0):
 		self.run_time = run_time
 		self.set_info()
 		self.time   = utils.date_time()
 		self.filename = "SEU_SSA_" + self.time + "__Ion-" + self.ion + "__Tilt-" + str(self.tilt) + "__Flux-" + str(self.flux) + "__"
-		self.seu_test( self.filename, self.folder, niterations, memory_select)
+		self.seu_test(
+			filename=self.filename, folder=self.folder, niterations=niterations,
+			memory_select=memory_select, delay_adjust=delay_adjust)
 
 	##############################################################
-	def seu_test(self, filename = 'Try', folder = 'PROVA0', niterations=16, memory_select='SRAM'):
+	def seu_test(self, filename = 'Try', folder = 'PROVA0', niterations=16, memory_select='SRAM', delay_adjust=0):
 		print(folder)
 		runname = self.run_info()
 		logfile = folder + filename + '__full.log'
@@ -58,52 +60,68 @@ class SSA_SEU():
 		l1dtlog = folder + '/L1-FIFO/'+ filename +'__'+str(runname)+'__'
 		conflog = folder + '/CONFIG/' + filename +'__'+str(runname)+'__'
 		utils.set_log_files(logfile, errfile)
+		starttime=time.time()
+		compare_del = 74+delay_adjust
 		for latency in self.l1_latency:
 			#striplist = []
 			#stavailable = range(1,121)
 			for iteration in list(range(niterations)):
-				self.ssa.reset(display = False)
-				init_time = time.time();
-				start_date_time = utils.date_and_time()
-				time.sleep(0.1); #after reset
-				self.ssa.ctrl.load_basic_calib_configuration(strips=[], peri=True, display=0)
-				self.ssa.ctrl.set_active_memory(memory_select, memory_select)
-				#self.ssa.init(edge = 'negative', display = False)
-				#self.test.lateral_input_phase_tuning(shift = 1)
-				#stavailable = [x for x in stavailable if x not in striplist]
-				#striplist = sorted(random.sample(stavailable, 7))
-				#hipflags  = sorted(random.sample(striplist, np.random   ))
-				striplist, centroids, hip_hits, hip_flags  = self.test.generate_clusters(
-					nclusters=8, min_clsize=1, max_clsize=2, smin=1,
-					smax=119, HIP_flags=True)
+				wd=0
+				while (wd < 3):
+					try:
+						self.ssa.reset(display = False)
+						init_time = time.time();
+						start_date_time = utils.date_and_time()
+						time.sleep(0.2); #after reset
+						self.ssa.ctrl.load_basic_calib_configuration(strips=[], peri=True, display=0)
+						self.ssa.ctrl.set_active_memory(memory_select, memory_select)
+						#self.ssa.init(edge = 'negative', display = False)
+						#self.test.lateral_input_phase_tuning(shift = 1)
+						#stavailable = [x for x in stavailable if x not in striplist]
+						#striplist = sorted(random.sample(stavailable, 7))
+						#hipflags  = sorted(random.sample(striplist, np.random   ))
+						striplist, centroids, hip_hits, hip_flags  = self.test.generate_clusters(
+							nclusters=8, min_clsize=1, max_clsize=2, smin=1,
+							smax=119, HIP_flags=True)
 
-				self.ssa.ctrl.read_seu_counter(display=False, return_rate=True) #only to initialize timer for rate calculation
+						self.ssa.ctrl.read_seu_counter(display=False, return_rate=True) #only to initialize timer for rate calculation
 
-				results = self.seuutil.Run_Test_SEU(
-					check_stub=True, check_l1=True, check_lateral=False,
-					strip = striplist, centroids=centroids, hipflags = hip_hits, delay = 74, run_time = self.run_time,
-					cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 1, stop_if_fifo_full = 0)
+						results = self.seuutil.Run_Test_SEU(
+							check_stub=True, check_l1=True, check_lateral=False, create_errors = False,
+							strip = striplist, centroids=centroids, hipflags = hip_hits, delay = compare_del, run_time = self.run_time,
+							cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 1, stop_if_fifo_full = 1)
 
-				utils.print_info("->  Active strips     -> " + str(striplist))
-				utils.print_info("->  HIP strips        -> " + str(hip_hits))
-				utils.print_info("->  L1 Latency        -> " + str(latency))
+						utils.print_info("->  Active strips     -> " + str(striplist))
+						utils.print_info("->  HIP strips        -> " + str(hip_hits))
+						utils.print_info("->  L1 Latency        -> " + str(latency))
 
-				time_since_reset = time.time()-init_time
+						time_since_reset = time.time()-init_time
 
-				seucounter = self.ssa.ctrl.read_seu_counter(display=True, return_short_array=True, printmode='info')
+						seucounter = self.ssa.ctrl.read_seu_counter(display=True, return_short_array=True, printmode='info')
 
-				self.seuutil.Stub_ReadFIFOs( nevents = 'all', filename = stublog +str(iteration))
+						self.seuutil.Stub_ReadFIFOs( nevents = 'all', filename = stublog +str(iteration))
 
-				self.seuutil.L1_ReadFIFOs( nevents = 'all', filename = l1dtlog +str(iteration))
+						self.seuutil.L1_ReadFIFOs( nevents = 'all', filename = l1dtlog +str(iteration))
 
-				conf_p_er, conf_s_er = self.check_configuration(
-					filename = (conflog + str(iteration)),
-					active_strip_list = striplist, active_HIP_list = hip_hits,
-					latency = latency, memory_select=memory_select)
+						conf_p_er, conf_s_er = self.check_configuration(
+							filename = (conflog + str(iteration)),
+							active_strip_list = striplist, active_HIP_list = hip_hits,
+							latency = latency, memory_select=memory_select)
 
-				self.write_summary(
-					summary, results, striplist, hip_hits, time_since_reset, seucounter, iteration,
-					latency, runname,  conf_p_er,  conf_s_er, memory_select, start_date_time)
+						self.write_summary(
+							summary, results, striplist, hip_hits, time_since_reset, seucounter, iteration,
+							latency, runname,  conf_p_er,  conf_s_er, memory_select, start_date_time)
+
+						utils.print_log('->  Total time since the start of testing is {:s}'.format(utils.time_delta(time_init=starttime) ))
+						break
+					except KeyboardInterrupt:
+						utils.print_warning("X>  Keyboard Interrupt")
+						raise
+					except:
+						utils.print_warning("X>  Exception.. Reiterating..." + str(wd))
+						self.fc7.reset(); time.sleep(0.1)
+						self.fc7.reset(); time.sleep(0.1)
+						wd +=1;
 
 	##############################################################
 	def seucounter_try(self, iterations = 1000):

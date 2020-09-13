@@ -195,7 +195,7 @@ class SSA_cal_utility():
 					time_cur = time.time()
 					strout = ""
 					error = False
-					#print("Setting the threshold to ", threshold, ", sending the test pulse and reading the counters")
+					#utils.print_log("Setting the threshold to ", threshold, ", sending the test pulse and reading the counters")
 					strout += "threshold = " + str(threshold) + ".   "
 					self.ssa.ctrl.set_threshold(threshold);  # set the threshold
 					#time.sleep(0.05);
@@ -214,7 +214,7 @@ class SSA_cal_utility():
 								test=0; break
 							test = (self.fc7.read("stat_fast_fsm_state"))
 							time.sleep(0.001)
-							#print(test,)
+							#utils.print_log(test,)
 							if((not test) and (((time.time()-t)*1E3)<2) ): # D19C firmware issue
 								time.sleep(0.005)
 								test = self.fc7.read("stat_fast_fsm_state")
@@ -222,7 +222,7 @@ class SSA_cal_utility():
 									self.fc7.SendCommand_CTRL("start_trigger")
 									t = time.time()
 									test = 1
-						#print(((time.time()-t)*1E3))
+						#utils.print_log(((time.time()-t)*1E3))
 						self.fc7.close_shutter(8,5)
 					elif(not baseline and (mode == 'sbs')): # provide cal pulse strip by strip
 						self.fc7.clear_counters(1)
@@ -306,7 +306,7 @@ class SSA_cal_utility():
 		for i in range(120):
 			if(np.sum(scurves[:,i])==0):
 				utils.print_warning("X>\tScurve consant to 0 for strip {:d}".format(i))
-		#### print("\n\n" , (time.time()-time_init))
+		#### utils.print_log("\n\n" , (time.time()-time_init))
 		if(plot == True): plt.clf()
 		plt.ylim(0,3000); plt.xlim(0,150);
 		plt.plot(scurves)
@@ -389,16 +389,16 @@ class SSA_cal_utility():
 		elif(method == 'center'):
 			th_expected = np.mean(thlist_init)
 			self.thlist_init = thlist_init
-			#print("\n------------------------------")
-			#print(th_expected)
-			#print(thlist_init)
-			#print("------------------------------")
+			#utils.print_log("\n------------------------------")
+			#utils.print_log(th_expected)
+			#utils.print_log(thlist_init)
+			#utils.print_log("------------------------------")
 		elif (method == 'highest'):
 			th_expected = np.max(thlist_init)
 		thlist = thlist_init
 		scurve = scurve_init
 		par = par_init
-		print("->  Standard deviation = %5.3f" % (np.std(thlist)))
+		utils.print_log("->  Standard deviation = %5.3f" % (np.std(thlist)))
 		# start trimming on the S-Curves
 		for i in range(0, iterations):
 			trimdac_correction = np.zeros(120)
@@ -408,23 +408,23 @@ class SSA_cal_utility():
 				trimdac_correction[strip-1] = int(round( (th_expected-th_initial)*dacratiolist[strip-1] ))
 				trimdac_current_value       = trimdac_value_prev[strip-1] ##### can be speed up###########################
 				trimdac_value[strip-1]      = trimdac_current_value + trimdac_correction[strip-1]
-				#print(strip, '\t', th_initial,'\t', th_expected,'\t', dacratiolist[strip-1],'\t', trimdac_correction[strip-1],'\t', trimdac_current_value, '\t',trimdac_value[strip-1])
+				#utils.print_log(strip, '\t', th_initial,'\t', th_expected,'\t', dacratiolist[strip-1],'\t', trimdac_correction[strip-1],'\t', trimdac_current_value, '\t',trimdac_value[strip-1])
 				if(trimdac_value[strip-1] > 31):
-					if(display>=2): print("->  Reached high trimming limit for strip" + str(strip))
+					if(display>=2): utils.print_log("->  Reached high trimming limit for strip" + str(strip))
 					trimdac_value[strip-1] = 31
 				elif(trimdac_value[strip-1] < 0):
-					if(display>=2): print("->  Reached low trimming limit for strip" + str(strip))
+					if(display>=2): utils.print_log("->  Reached low trimming limit for strip" + str(strip))
 					trimdac_value[strip-1] = 0
 				# Apply correction to the trimming DAC
 				self.ssa.strip.set_trimming(strip, int(trimdac_value[strip-1]))
 			trimdac_value_prev = trimdac_value
 			if(display>=2):
-				print("->  Target threshold     " + str([th_expected]*10))
-				print("->  Trim-DAC Correction  " + str(trimdac_correction[0:10]))
+				utils.print_log("->  Target threshold     " + str([th_expected]*10))
+				utils.print_log("->  Trim-DAC Correction  " + str(trimdac_correction[0:10]))
 			if(display>=1):
-				print("->  Initial threshold    " + str(thlist[0:10]))
-				print("->  Trimming DAC values: " + str(trimdac_value[0:10]))
-				#print(self.set_trimming('keep', display = False))
+				utils.print_log("->  Initial threshold    " + str(thlist[0:10]))
+				utils.print_log("->  Trimming DAC values: " + str(trimdac_value[0:10]))
+				#utils.print_log(self.set_trimming('keep', display = False))
 			# evaluate new S-Curves
 			if(isinstance(filename, str)):
 				filename = filename + "_iteration_" + str(i)
@@ -440,11 +440,11 @@ class SSA_cal_utility():
 				scurve = scurve,
 				nevents = nevents)
 			dacratiolist = dacratiolist
-			print("->  Standard deviation = {:5.3f}".format(np.std(thlist)))
+			utils.print_log("->  Standard deviation = {:5.3f}".format(np.std(thlist)))
 			if ((np.max(thlist)-np.min(thlist)) < 1):
 				break
 			if (i == iterations-1):
-				print("->  Reached the maximum number of iterations (d = " + str(np.max(thlist)-np.min(thlist)) + ")")
+				utils.print_log("->  Reached the maximum number of iterations (d = " + str(np.max(thlist)-np.min(thlist)) + ")")
 		#plot initial and final S-Curves
 		if(plot):
 			xplt = np.linspace(int(th_expected-30), int(th_expected+31), 601)
@@ -469,7 +469,7 @@ class SSA_cal_utility():
 					self.ssa.strip.set_trimming( i+1, 31)
 				else:
 					self.ssa.strip.set_trimming( i+1, default_trimming[i])
-				#print('Setting strip' + str(i+1) + '  with value' +str(default_trimming[i]))
+				#utils.print_log('Setting strip' + str(i+1) + '  with value' +str(default_trimming[i]))
 			if(display):
 				utils.print_log("->  Trimming: Applied trimming array" % (default_trimming))
 			self.scurve_trimming = 'trimmed'
@@ -497,7 +497,7 @@ class SSA_cal_utility():
 			time.sleep(0.001)
 			rr = self.ssa.strip.get_trimming(i+1)
 			if(isinstance(rr, str)):
-				print('=>  ERROR : {:s}'.format(rr))
+				utils.print_log('=>  ERROR : {:s}'.format(rr))
 			else:
 				readback[i] = rr
 		return readback
@@ -562,7 +562,7 @@ class SSA_cal_utility():
 		ckr = range(nevents, nevents+1)
 
 		if( np.size(np.where( curve > (nevents-1) )) < 1):
-			#print("Fitting Zeros " + errmsg)
+			#utils.print_log("Fitting Zeros " + errmsg)
 			return erret
 		# get read of the noise peack
 		try:
@@ -639,7 +639,7 @@ class SSA_cal_utility():
 		guess_sigma = np.size( np.where(curve > 10) )/6.0
 		errret = [np.inf, np.inf, np.inf]
 		if(guess_mean == 0 or guess_sigma == 0 ):
-			print("Fitting zeros " + errmsg)
+			utils.print_log("Fitting zeros " + errmsg)
 			return errret
 		gmodel = lmfitModel(f_gauss1)
 		err = True; itr = 0;
@@ -651,7 +651,7 @@ class SSA_cal_utility():
 			else:
 				err = False
 		if(err):
-			print("Fitting failed " + errmsg)
+			utils.print_log("Fitting failed " + errmsg)
 			return errret
 		else:
 			sigma = np.abs(result.params['sigma'].value)
@@ -686,7 +686,7 @@ class SSA_cal_utility():
 						lv[i] = float(tmp[0])
 				elif (polarity == 'falling'):
 					val = float(tmp[-1])
-					print(cl_array[0,:])
+					utils.print_log(cl_array[0,:])
 					if( cl_array[0, int(val)+1] == 0):
 						 lv[i] = float(tmp[-1])
 				else:
@@ -749,10 +749,10 @@ class SSA_cal_utility():
 					hitloc = np.mean(hitlocarray)
 					if((delay == 0) and (hitloc0 == False)):
 					    hitloc0 = hitloc
-					#print(hitloc0, "   ", hitloc)
+					#utils.print_log(hitloc0, "   ", hitloc)
 					if(hitloc > hitloc0+0.5):
 						if(display):
-							print("{:4} -> {:4}".format(delay, hitloc))
+							utils.print_log("{:4} -> {:4}".format(delay, hitloc))
 						tm = delay
 						break
 				curve[edge][threshold] = tm
@@ -851,7 +851,7 @@ class SSA_cal_utility():
 			sleep(0.01)
 			delay = self.data_latency(strip = strip, shift = shift, samplingmode=samplingmode, iterations = iterations, display_pattern = display_pattern)
 			if(display):
-				print("deskewing = [%d][%d] \t->  delay = %s)" % (i, j, delay))
+				utils.print_log("deskewing = [%d][%d] \t->  delay = %s)" % (i, j, delay))
 			if (delay == target):
 				break
 		latency = float(i*3.125 + j*0.1953125)
@@ -876,7 +876,7 @@ class SSA_cal_utility():
 			sleep(0.01)
 			latency = self.data_latency(strip = strip, shift = shift, samplingmode=samplingmode, iterations = iterations, display_pattern = display_pattern, polarity=polarity)
 			if(display):
-				print("->  deskewing = [%d] \t->  latency = %s)" % (i, latency))
+				utils.print_log("->  deskewing = [%d] \t->  latency = %s)" % (i, latency))
 			temp = np.insert(temp[:-1], 0, latency)
 			if(temp[0]>256 and temp[1]>256 and temp[2]>256):
 				delay = np.inf
@@ -933,7 +933,7 @@ class SSA_cal_utility():
 			else: # delay out of considered range (< -2 or > +2)
 				r.append(0xff)
 			utils.ShowPercent(i, 63, "Calculating")
-		if(display): print(r)
+		if(display): utils.print_log(r)
 		tmp = np.size( np.where(  np.array(r) == 0 ) )
 		if(tmp > 0):
 			resolution = 25.0 / tmp
@@ -996,7 +996,7 @@ class SSA_cal_utility():
 				latency[cnt] = latency0 - latency[cnt]
 			if(not display):
 				utils.ShowPercent(cnt, len(thlist) , ("Th = %d -> latency = %3.5f" % (th, latency[cnt])))
-				print('')
+				utils.print_log('')
 			cnt += 1
 			if(saturated):
 				break
@@ -1059,7 +1059,7 @@ class SSA_cal_utility():
 				latency[cnt] = latency0 - latency[cnt]
 			if(not display):
 				utils.ShowPercent(cnt, len(thlist) , ("Th = %d -> latency = %3.5f" % (th, latency[cnt])))
-				print('')
+				utils.print_log('')
 			cnt += 1
 			if(saturated):
 				break

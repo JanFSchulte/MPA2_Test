@@ -47,7 +47,7 @@ class ssa_ctrl_analog:
 			r = ((self.I2C.peri_read('Bias_TEST_LSB') & 0xff))
 			r = ((self.I2C.peri_read('Bias_TEST_MSB') & 0xff) << 8) | r
 		if(r != ctrl):
-			print("Error. Failed to set the MUX")
+			utils.print_error("Error. Failed to set the MUX")
 			return False
 		else:
 			return True
@@ -86,7 +86,7 @@ class ssa_ctrl_analog:
 			r = r| self.I2C.peri_write( register="ADC_control", field='ADC_control_input_sel'   , data=input_sel)
 			r = r| self.I2C.peri_write( register="ADC_control", field='ADC_control_enable_start', data=0b11)
 		if(not r):
-			print("Error. Failed to use the ADC")
+			utils.print_error("Error. Failed to use the ADC")
 			return False
 		time.sleep(0.001)
 		msb = self.I2C.peri_read( register="ADC_out_H", field=False )
@@ -144,7 +144,7 @@ class ssa_ctrl_analog:
 	def adc_measure_ext_pad(self, nsamples=10):
 		#start = time.time()
 		rp = self.adc_measure(testline='TESTPAD', testpad_enable=True, nsamples=nsamples, fast=True)
-		#print('{:8.3f} ms'.format(1E3*(time.time()-start)))
+		#utils.print_log('{:8.3f} ms'.format(1E3*(time.time()-start)))
 		return rp
 
 	#####################################################################
@@ -171,7 +171,7 @@ class ssa_ctrl_analog:
 					break
 				except:
 					wd +=1;
-					print('Exception {:d}'.format(wd))
+					utils.print_warning('Exception {:d}'.format(wd))
 			if res is False: return False
 			else: adchist[int(res)]+=1
 			cnt+=1
@@ -183,7 +183,7 @@ class ssa_ctrl_analog:
 				#	fo.write('{:8d},\n'.format(res))
 				CSV.array_to_csv(adchist, filename=filename)
 		f.close()
-		print('->  ADC total number of samples taken is '+str(cnt))
+		utils.print_log('->  ADC total number of samples taken is '+str(cnt))
 		dnlh, inlh = self.adc_dnl_inl_histogram(filename=filename)
 		return dnlh, inlh, adchist
 
@@ -221,10 +221,10 @@ class ssa_ctrl_analog:
 	def adc_manual_measure():
 		result={}
 		for vin in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
-			print("set input voltage to {:5.3f}".format(vin))
+			utils.print_log("set input voltage to {:5.3f}".format(vin))
 			time.sleep(3)
 			result[vin] = ssa.chip.analog.adc_measure('TESTPAD', nsamples=100)
-			print('-------------------------------------------------')
+			utils.print_log('-------------------------------------------------')
 		return result
 
 	## quick and dirty test

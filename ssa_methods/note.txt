@@ -515,7 +515,6 @@ v15 = {0.0: 11.23, 0.1: 566.62, 0.2: 1143.58, 0.3: 1729.33, 0.4: 2310.25, 0.5: 2
 v23 = {0.0: 11.13, 0.1: 531.79, 0.2: 1067.91, 0.3: 1608.77, 0.4: 2159.76, 0.5: 2706.12, 0.6: 3250.75, 0.7: 3789.76, 0.8: 4094.33}
 v31 = {0.0: 14.57, 0.1: 498.44, 0.2: 1007.13, 0.3: 1519.30, 0.4: 2028.33, 0.5: 2532.94, 0.6: 3053.69, 0.7: 3558.16, 0.8: 4060.9}
 
-
 plt.plot(list(v00.keys()), list(v00.values()) , '-o' )
 plt.plot(list(v07.keys()), list(v07.values()) , '-o' )
 plt.plot(list(v15.keys()), list(v15.values()) , '-o' )
@@ -535,3 +534,11 @@ for VDT in [v00, v31, v63]:
 
 
 plt.show()
+
+
+
+
+
+ssa.chip.fc7.write('cnfg_phy_Delay_Select',  (1 << 16) | ( 0  << 8) | 0  )
+ssa.chip.fc7.write("ctrl_phy_phase_tune_again", 1)
+ssa.seuutil.Run_Test_SEU(delay=74, stop_if_fifo_full=0, run_time= 1, strip=[10])

@@ -71,7 +71,7 @@ class SSA_inject():
 					self.I2C.strip_write("DigCalibPattern_H", cl, sequence)
 		time.sleep(0.001)
 		utils.generic_parameters['ssa_inject_utility_mode'] = 'digital'
-		if(profile): print('->  digital_pulse time = {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+		if(profile): utils.print_log('->  digital_pulse time = {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 
 
 	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [50, 100], cal_pulse_amplitude = 120, initialise = True, trigger = False):

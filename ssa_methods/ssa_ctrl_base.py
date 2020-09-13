@@ -41,7 +41,7 @@ class ssa_ctrl_base:
 	def resync(self, display=True):
 		SendCommand_CTRL("fast_fast_reset");
 		if(display):
-			print('->  Sent Re-Sync command')
+			utils.print_log('->  Sent Re-Sync command')
 		#sleep(0.001)
 
 	#####################################################################
@@ -321,7 +321,7 @@ class ssa_ctrl_base:
 		for line in range(0,9):
 			self.fc7.TuneLine(line, np.array(pattern),1,True,False)
 			if self.fc7.CheckLineDone(0,0,line) != 1:
-				print("Failed tuning line {:d}".format(line))
+				utils.print_warning("Failed tuning line {:d}".format(line))
 				state = False
 		return state
 
@@ -337,7 +337,7 @@ class ssa_ctrl_base:
 			else:     self.I2C.peri_write('EdgeSel_T1', 0)
 			utils.print_info("->  T1 sampling edge set to falling")
 		else:
-			print("Error! The edge name is wrong")
+			utils.print_error("Error! The edge name is wrong")
 
 	#####################################################################
 	def activate_readout_normal(self, mipadapterdisable = 0):
@@ -349,7 +349,7 @@ class ssa_ctrl_base:
 			self.I2C.peri_write('ReadoutMode',val)
 			rep = self.I2C.peri_read("ReadoutMode")
 		if(rep != val):
-			print("Error! I2C did not work properly in activate_readout_normal")
+			utils.print_error("Error! I2C did not work properly in activate_readout_normal")
 			#exit(1)
 
 	#####################################################################
@@ -367,11 +367,11 @@ class ssa_ctrl_base:
 		self.I2C.peri_write("AsyncRead_StartDel_MSB", ((delay >> 8) & 0x01))
 		self.I2C.peri_write("AsyncRead_StartDel_LSB", (delay & 0xff))
 		if (self.I2C.peri_read("AsyncRead_StartDel_LSB") != delay & 0xff):
-			print("Error! I2C did not work properly")
+			utils.print_error("Error! I2C did not work properly")
 		# ssa set delay of the counters
 		fwdel = delay + 20 + fc7_correction
 		if(fwdel >= 255):
-			print('->  The counters delay value selected is not supposrted by the firmware [> 255]')
+			utils.print_error('->  The counters delay value selected is not supposrted by the firmware [> 255]')
 		self.fc7.write("cnfg_phy_slvs_ssa_first_counter_del", fwdel & 0xff)
 
 	#####################################################################
@@ -440,8 +440,8 @@ class ssa_ctrl_base:
 		#time.sleep(0.01)
 		test_read = self.I2C.peri_read("Bias_THDAC")
 		if(test_read != value):
-			print("Was writing: ", value, ", got: ", test_read)
-			print("Error. Failed to set the threshold")
+			utils.print_error("Was writing: ", value, ", got: ", test_read)
+			utils.print_error("Error. Failed to set the threshold")
 			error(1)
 
 	#####################################################################
@@ -450,8 +450,8 @@ class ssa_ctrl_base:
 		#time.sleep(0.01)
 		test_read = self.I2C.peri_read("Bias_THDACHIGH")
 		if(test_read != value):
-			print("Was writing: ", value, ", got: ", test_read)
-			print("Error. Failed to set the threshold")
+			utils.print_error("Was writing: ", value, ", got: ", test_read)
+			utils.print_error("Error. Failed to set the threshold")
 			error(1)
 
 	#####################################################################
@@ -483,7 +483,7 @@ class ssa_ctrl_base:
 		for i in repG:
 			if (i != gain_trimming): error = True
 		if error:
-			print("Error. Failed to set the trimming")
+			utils.print_error("Error. Failed to set the trimming")
 
 	#####################################################################
 	def set_cal_pulse(self, amplitude = 255, duration = 5, delay = 'keep'):
@@ -605,7 +605,7 @@ class ssa_ctrl_base:
 		r2 = self.I2C.peri_read('Fuse_Value_b2')
 		r3 = self.I2C.peri_read('Fuse_Value_b3')
 		if display:
-			print( "{0:02x}-{1:02x}-{2:02x}-{3:02x}".format(r3, r2, r1, r0) )
+			utils.print_info( "{0:02x}-{1:02x}-{2:02x}-{3:02x}".format(r3, r2, r1, r0) )
 		else:
 			r = (r3<<24) | (r2<<16) | (r1<<8) | (r0<<0)
 			return r
@@ -626,7 +626,7 @@ class ssa_ctrl_base:
 		r2 = self.I2C.peri_read('Fuse_Prog_b2')
 		r3 = self.I2C.peri_read('Fuse_Prog_b3')
 		if (((r3<<24) | (r2<<16) | (r1<<8) | (r0<<0) ) != val):
-			print("\n->  Error in setting the e-fuses write buffer")
+			utils.print_error("\n->  Error in setting the e-fuses write buffer")
 			return -1
 		if(pulse):
 			if confirm:  rp = 'Y'
@@ -637,9 +637,9 @@ class ssa_ctrl_base:
 				time.sleep(0.1); self.I2C.peri_write('Fuse_Mode', 0b00000000)
 		r = self.read_fuses(pulse = True, display = display)
 		if(r != val):
-			print('->  E-Fuses write error: ')
-			print('        Written:...{0:032b}'.format(val))
-			print('        Read:......{0:032b}'.format(r))
+			utils.print_error('->  E-Fuses write error: ')
+			utils.print_error('        Written:...{0:032b}'.format(val))
+			utils.print_error('        Read:......{0:032b}'.format(r))
 			return False
 		else:
 			return True
