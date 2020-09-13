@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import fnmatch
 import re
+import traceback
 
 from collections import OrderedDict
 from functools import reduce
@@ -63,9 +64,11 @@ class SSA_SEU():
 		starttime=time.time()
 		compare_del = 74+delay_adjust
 		for latency in self.l1_latency:
+			if(self.terminate): break
 			#striplist = []
 			#stavailable = range(1,121)
 			for iteration in list(range(niterations)):
+				if(self.terminate): break
 				wd=0
 				while (wd < 3):
 					try:
@@ -114,14 +117,23 @@ class SSA_SEU():
 
 						utils.print_log('->  Total time since the start of testing is {:s}'.format(utils.time_delta(time_init=starttime) ))
 						break
-					except KeyboardInterrupt:
-						utils.print_warning("X>  Keyboard Interrupt")
-						raise
+					except(KeyboardInterrupt):
+						utils.print_warning("\n->  Keyboard Interrupt request. Exiting SEU test procedure.")
+						self.terminate = True
+						break
 					except:
-						utils.print_warning("X>  Exception.. Reiterating..." + str(wd))
+						utils.print_warning("\n\nX>  Exception.. Reiterating..." + str(wd))
+						self.exc_info = sys.exc_info()
+						utils.print_warning("======================")
+						exeptinfo = traceback.format_exception(*self.exc_info )
+						for extx in exeptinfo:
+							utils.print_warning(extx)
+						utils.print_warning("======================")
 						self.fc7.reset(); time.sleep(0.1)
 						self.fc7.reset(); time.sleep(0.1)
 						wd +=1;
+		utils.print_good('->  SEE test procedure completed! (total time: {:s})'.format(utils.time_delta(time_init=starttime) ))
+
 
 	##############################################################
 	def seucounter_try(self, iterations = 1000):
@@ -183,18 +195,18 @@ class SSA_SEU():
 		striplist.extend([0]*(8-len(striplist)))
 		hip_hits.extend([0]*(8-len(hip_hits)))
 		utils.print_log('->  Writing summary')
-		[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration]  = results
+		[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1]  = results
 		logdata = list(pandas_flatten([
 			runname, iteration, start_time,  time_since_reset, test_duration, latency, memory,
-			CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, conf_p_er,  conf_s_er,
+			CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, conf_p_er,  conf_s_er, fifo_full_stub, fifo_full_L1,
 			seucounter, list(striplist), list(hip_hits),
 			]))
 		header = [
-			'runname'   , 'iteration' , 'date', 'start_time', 'time_reset', 'time_test', 'latency'   , 'memory',
-			'CL_ok'     , 'LA_ok'     , 'L1_ok'     , 'LH_ok'     , 'CL_er', 'LA_er', 'L1_er', 'LH_er', 'conf_p_er',  'conf_s_er',
-			'seucnt_A_P', 'seucnt_A_S', 'seucnt_S_P', 'seucnt_S_S', 'seucnt_T' ,
-			'strip_0'   , 'strip_1', 'strip_2', 'strip_3', 'strip_4', 'strip_5', 'strip_6', 'strip_7',
-			'hip_0'     , 'hip_1'  , 'hip_2'  , 'hip_3'  , 'hip_4'  , 'hip_5'  , 'hip_6'  , 'hip_7'  ]
+			'runname'   , 'iteration' , 'date',     'start_time'  , 'time_reset', 'time_test' , 'latency'  , 'memory',
+			'CL_ok'     , 'LA_ok'     , 'L1_ok'     , 'LH_ok'     , 'CL_er'     , 'LA_er'     , 'L1_er'    , 'LH_er', 'conf_p_er',  'conf_s_er',
+			'FIFO_Stub' , 'FIFO_L1'   , 'seucnt_A_P', 'seucnt_A_S', 'seucnt_S_P', 'seucnt_S_S', 'seucnt_T' ,
+			'strip_0'   , 'strip_1'   , 'strip_2'   , 'strip_3'   , 'strip_4'   , 'strip_5'   , 'strip_6'  , 'strip_7',
+			'hip_0'     , 'hip_1'     , 'hip_2'     , 'hip_3'     , 'hip_4'     , 'hip_5'     , 'hip_6'    , 'hip_7'  ]
 		msg = ''
 		if(not os.path.exists(summary)):
 			for data in header:
@@ -220,6 +232,7 @@ class SSA_SEU():
 		self.runtest = RunTest('default')
 		self.l1_latency = [101, 501]
 		self.run_time = 5 #sec
+		self.terminate = False
 
 
 	##############################################################

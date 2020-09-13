@@ -70,7 +70,7 @@ class SSA_SEU_utilities():
 		self.fc7.write("cnfg_fast_backpressure_enable", 0)
 		self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
 
-		test_duration = self.RunStateMachine_L1_and_Stubs(
+		test_duration, fifo_full_stub, fifo_full_L1 = self.RunStateMachine_L1_and_Stubs(
 			check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral,
 			timer_data_taking=run_time, display=display, stop_if_fifo_full=stop_if_fifo_full)
 
@@ -85,7 +85,7 @@ class SSA_SEU_utilities():
 		else:      utils.print_warning('->  L1 data comparison    -> Found errors due to SEEs')
 		if(LH_er==0): utils.print_good('->  L1 headers comparison -> No errors due to SEEs')
 		else:        utils.print_error('->  L1 headers comparison -> Found errors due to SEEs')
-		return [CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration]
+		return [CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1]
 
 	##############################################################
 	def last_test_duration(self):
@@ -149,21 +149,23 @@ class SSA_SEU_utilities():
 		#time.sleep(0.1); self.fc7.SendCommand_CTRL("stop_trigger")
 		#print("State of FSM after stopping: " , self.fc7.read("stat_phy_slvs_compare_state_machine"))
 		if(display>-1):
-			print("________________________________________________________________________________________\n")
-			if(timer == timer_data_taking and FIFO_almost_full_stub == 0):
-				utils.print_log("CLUSTERS: data taking stopped because reached the adequate time")
-			elif(FIFO_almost_full_stub == 1 and timer < timer_data_taking ):
-				utils.print_log("CLUSTERS: data taking stopped because the FIFO reached the 80%")
+			utils.print_log("________________________________________________________________________________________\n")
+			if(timer >= timer_data_taking and FIFO_almost_full_stub == 0):
+				utils.print_good("->  STUB DATA: data taking stopped because reached the adequate time")
+				utils.print_good("->  L1 DATA:   data taking stopped because reached the adequate time")
+			elif(FIFO_almost_full_stub == 1 and FIFO_almost_full_L1 == 0 and timer < timer_data_taking ):
+				utils.print_warning("->  STUB DATA: data taking stopped because the STUB DATA FIFO is full")
+				utils.print_warning("->  L1 DATA:   data taking stopped because the STUB DATA FIFO is full")
+			elif(FIFO_almost_full_stub == 0 and FIFO_almost_full_L1 == 1 and timer < timer_data_taking ):
+				utils.print_warning("->  STUB DATA: data taking stopped because the L1 DATA FIFO is full")
+				utils.print_warning("->  L1 DATA:   data taking stopped because the L1 DATA FIFO is full")
+			elif(FIFO_almost_full_stub == 1 and FIFO_almost_full_L1 == 1 and timer < timer_data_taking ):
+				utils.print_warning("->  STUB DATA: data taking stopped because the both STUB and L1 DATA FIFO reached the 80%")
+				utils.print_warning("->  L1 DATA:   data taking stopped because the both STUB and L1 DATA FIFO reached the 80%")
 			else:
-				utils.print_log("CLUSTERS: data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
-			#print("State of FSM after stopping: " , self.fc7.read("stat_phy_slvs_compare_state_machine"))
-			if(timer == timer_data_taking and FIFO_almost_full_L1 == 0):
-				utils.print_log("L1-DATA:  data taking stopped because reached the adequate time")
-			elif(FIFO_almost_full_L1 == 1 and timer < timer_data_taking ):
-				utils.print_log("L1-DATA:  data taking stopped because the FIFO reached the 80%")
-			else:
-				utils.print_log("L1-DATA:  data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
-		return timer
+				utils.print_error("->  STUB DATA: data taking stopped because the FIFO is full and the timer also just reached the last step (something really strange)")
+				utils.print_error("->  L1 DATA:   data taking stopped because the FIFO is full and the timer also just reached the last step (something really strange)")
+		return timer, FIFO_almost_full_stub, FIFO_almost_full_L1
 
 	##############################################################
 	def Configure_Injection(self, strip_list = [], hipflag_list = [], lateral = [], analog_injection = 0, latency = 100, create_errors = False):

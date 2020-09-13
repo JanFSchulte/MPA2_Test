@@ -137,17 +137,26 @@ class ssa_ctrl_base:
 		#checklist = np.unique(conf[:,0])
 		for i in range(len(conf)):
 			if(int(conf[i,0]) == -1):
-				if(int(conf[i,2]) != int(conf_ref[i,2])):
+				if(conf[i,2]=='Null'):
+					error[0] += 1
+					if(display):
+						utils.print_error("->  Configuration comparison error. Periphery Reg: {:32s} -> Expected: {:8b} Found: NULL".format(str(conf[i,1]), int(conf_ref[i,2]) ) )
+				elif(int(conf[i,2]) != int(conf_ref[i,2])):
 					error[0] += 1
 					if(display):
 						utils.print_error("->  Configuration comparison error. Periphery Reg: {:32s} -> Expected: {:8b} Found: {:8b}".format(str(conf[i,1]), int(conf_ref[i,2]), int(conf[i,2]) ) )
 			elif(int(conf[i,0]) > 0):
-				if(int(conf[i,2]) != int(conf_ref[i,2])):
+				if(conf[i,2]=='Null'):
+					error[int(conf[i,0])] += 1
+					if(display):
+						utils.print_error("->  Configuration comparison error. Strip {:3d} Reg: {:32s} -> Expected: {:8b} Found: NULL".format(int(conf[i,0]), str(conf[i,1]), int(conf_ref[i,2]) ) )
+				elif(int(conf[i,2]) != int(conf_ref[i,2])):
+					error[int(conf[i,0])] += 1
 					if(display):
 						utils.print_error("->  Configuration comparison error. Strip {:3d} Reg: {:32s} -> Expected: {:8b} Found: {:8b}".format(int(conf[i,0]), str(conf[i,1]), int(conf_ref[i,2]), int(conf[i,2])) )
-					error[int(conf[i,0])] += 1
 		if(error==[0]*121):
-			utils.print_good("->  Configuration comparison match.")
+			if(display):
+				utils.print_good("->  Configuration comparison match.")
 		return error
 
 	def _change_config_value(self, conf, strips, field, new_value):
@@ -659,24 +668,29 @@ class ssa_ctrl_base:
 				self.seu_cntr['S']['strip'][i] = 0 # TODO
 				self.seu_cntr['A']['strip'][i] = 0 # TODO
 			################################
-			self.seu_cntr['S']['peri_all']  = np.sum(self.seu_cntr['S']['peri'])
-			self.seu_cntr['A']['peri_all']  = np.sum(self.seu_cntr['A']['peri'])
-			self.seu_cntr['S']['strip_all'] = np.sum(self.seu_cntr['S']['strip'])
-			self.seu_cntr['A']['strip_all'] = np.sum(self.seu_cntr['A']['strip'])
-			self.seu_cntr['S']['all'] = self.seu_cntr['S']['peri_all'] + self.seu_cntr['S']['strip_all']
-			self.seu_cntr['A']['all'] = self.seu_cntr['A']['peri_all'] + self.seu_cntr['A']['strip_all']
-
 			self.seu_cntr['time_since_last_check'] = (check_time - self.seu_check_time)
 			self.seu_check_time = check_time
-			seu_rate['A'] = np.float(self.seu_cntr['A']['all']-prev['A']['all'])/(self.seu_cntr['time_since_last_check'])
-			seu_rate['S'] = np.float(self.seu_cntr['S']['all']-prev['S']['all'])/(self.seu_cntr['time_since_last_check'])
+			try:
+				self.seu_cntr['S']['peri_all']  = np.sum(self.seu_cntr['S']['peri'])
+				self.seu_cntr['A']['peri_all']  = np.sum(self.seu_cntr['A']['peri'])
+				self.seu_cntr['S']['strip_all'] = np.sum(self.seu_cntr['S']['strip'])
+				self.seu_cntr['A']['strip_all'] = np.sum(self.seu_cntr['A']['strip'])
+				self.seu_cntr['S']['all'] = self.seu_cntr['S']['peri_all'] + self.seu_cntr['S']['strip_all']
+				self.seu_cntr['A']['all'] = self.seu_cntr['A']['peri_all'] + self.seu_cntr['A']['strip_all']
+				seu_rate['A'] = np.float(self.seu_cntr['A']['all']-prev['A']['all'])/(self.seu_cntr['time_since_last_check'])
+				seu_rate['S'] = np.float(self.seu_cntr['S']['all']-prev['S']['all'])/(self.seu_cntr['time_since_last_check'])
 
-			if(display):
-				utils.print("->  SEU Counter       ->  S: rate ={:8.3f}seu/s | new =[{:5d}] | total =[{:5d}]".format(
-					seu_rate['S'], self.seu_cntr['S']['all']-prev['S']['all'], self.seu_cntr['S']['all']), printmode)
+				if(display):
+					utils.print("->  SEU Counter       ->  S: rate ={:8.3f}seu/s | new =[{:5d}] | total =[{:5d}]".format(
+						seu_rate['S'], self.seu_cntr['S']['all']-prev['S']['all'], self.seu_cntr['S']['all']), printmode)
 
-				utils.print("->  SEU Counter       ->  A: rate ={:8.3f}seu/s | new =[{:5d}] | total =[{:5d}]".format(
-					seu_rate['A'], self.seu_cntr['A']['all']-prev['A']['all'], self.seu_cntr['A']['all']), printmode)
+					utils.print("->  SEU Counter       ->  A: rate ={:8.3f}seu/s | new =[{:5d}] | total =[{:5d}]".format(
+						seu_rate['A'], self.seu_cntr['A']['all']-prev['A']['all'], self.seu_cntr['A']['all']), printmode)
+			except:
+				#means that was impossible to read the counters via I2C, so some of the values are null
+				utils.print_error('->  Impossible to read SEU counters')
+				if(return_short_array):
+					return [-0xff,-0xff,-0xff,-0xff, self.seu_cntr['time_since_last_check']  ]
 		else:
 			self.seu_cntr = self.I2C.peri_read('SEU_Counter')
 			seu_rate = np.float(self.seu_cntr)/(time.time() - self.seu_check_time)
