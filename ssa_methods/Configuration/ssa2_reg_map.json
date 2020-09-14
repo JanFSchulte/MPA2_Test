@@ -381,23 +381,6 @@
                 "Config_HitDelay" : "0b11111111"
             }
         },
-        "Async_SEUcnt_blk0": {
-            "adr": "0x101E",
-            "permissions": "R",
-            "mask_reg"   : "mask_peri_D",
-            "fields_mask": {
-                "Async_SEUcnt_blk0" : "0b11111111"
-            }
-        },
-        "Sync_SEUcnt_blk0": {
-            "adr": "0x101F",
-            "permissions": "R",
-            "mask_reg"   : "mask_peri_D",
-            "fields_mask": {
-                "Sync_SEUcnt_blk0" : "0b11111111"
-            }
-        },
-
 
         "Bias_THDAC": {
             "adr": "0x1020",
@@ -641,25 +624,6 @@
                 "ADC_VREF" : "0b00011111"
             }
         },
-        "Async_SEUcnt_blk1": {
-            "adr": "0x103E",
-            "permissions": "R",
-            "mask_reg"   : "mask_peri_A",
-            "fields_mask": {
-                "Async_SEUcnt_blk1" : "0b11111111"
-            }
-        },
-        "Sync_SEUcnt_blk1": {
-            "adr": "0x103F",
-            "permissions": "R",
-            "mask_reg"   : "mask_peri_A",
-            "fields_mask": {
-                "Sync_SEUcnt_blk1" : "0b11111111"
-            }
-        },
-
-
-
 
 
         "status_reg": {
@@ -1150,16 +1114,283 @@
             }
         },
 
-        "Async_SEUcnt_strip0": {
-            "adr": "0x6",
+
+
+        "Async_SEUcnt_blk0": {
+            "adr": "0x101E",
             "permissions": "R",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Async_SEUcnt_blk0" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_blk0": {
+            "adr": "0x101F",
+            "permissions": "R",
+            "mask_reg"   : "mask_peri_D",
+            "fields_mask": {
+                "Sync_SEUcnt_blk0" : "0b11111111"
+            }
+        },
+
+        "Async_SEUcnt_blk1": {
+            "adr": "0x103E",
+            "permissions": "R",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Async_SEUcnt_blk1" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_blk1": {
+            "adr": "0x103F",
+            "permissions": "R",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "Sync_SEUcnt_blk1" : "0b11111111"
+            }
+        },
+
+        "Async_SEUcnt_StripBlock0": {
+            "adr" : "0b111010000000",
+            "permissions" : "R",
             "mask_reg"   : "mask_strip",
             "fields_mask": {
-                "counter": "0b11111111"
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock1": {
+            "adr" : "0b111010001000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock2": {
+            "adr" : "0b111010010000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock3": {
+            "adr" : "0b111010011000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock4": {
+            "adr" : "0b111010100000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock5": {
+            "adr" : "0b111010101000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock6": {
+            "adr" : "0b111010110000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock7": {
+            "adr" : "0b111010111000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock8": {
+            "adr" : "0b111011000000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock9": {
+            "adr" : "0b111011001000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock10": {
+            "adr" : "0b111011010000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock11": {
+            "adr" : "0b111011011000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock12": {
+            "adr" : "0b111011100000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock13": {
+            "adr" : "0b111011101000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Async_SEUcnt_StripBlock14": {
+            "adr" : "0b111011110000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+
+
+        "Sync_SEUcnt_StripBlock0": {
+            "adr" : "0b111110000000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock1": {
+            "adr" : "0b111110001000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock2": {
+            "adr" : "0b111110010000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock3": {
+            "adr" : "0b111110011000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock4": {
+            "adr" : "0b111110100000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock5": {
+            "adr" : "0b111110101000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock6": {
+            "adr" : "0b111110110000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock7": {
+            "adr" : "0b111110111000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock8": {
+            "adr" : "0b111111000000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock9": {
+            "adr" : "0b111111001000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock10": {
+            "adr" : "0b111111010000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock11": {
+            "adr" : "0b111111011000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock12": {
+            "adr" : "0b111111100000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock13": {
+            "adr" : "0b111111101000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
+            }
+        },
+        "Sync_SEUcnt_StripBlock14": {
+            "adr" : "0b111111110000",
+            "permissions" : "R",
+            "mask_reg"   : "mask_strip",
+            "fields_mask": {
+                "seu_counter" : "0b11111111"
             }
         }
-
-
-
     }
 }

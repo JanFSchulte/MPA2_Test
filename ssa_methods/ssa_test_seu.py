@@ -41,7 +41,7 @@ class SSA_SEU():
 		self.init_parameters()
 
 	##############################################################
-	def main_test(self, niterations=16, run_time=5, memory_select='SRAM', delay_adjust=0):
+	def main_test(self, niterations=16, run_time=30, memory_select='SRAM', delay_adjust=0):
 		self.run_time = run_time
 		self.set_info()
 		self.time   = utils.date_time()

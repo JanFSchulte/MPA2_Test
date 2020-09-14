@@ -62,7 +62,10 @@ else
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA1_SEU.bin
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA1_SEU.bin
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_10092020.bin
-	./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_10092020_v2.bin
+	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_10092020_v2.bin
+	#./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit -f ~/MPA-SSA_Test/bitfiles/SSAx1_SEU_oldFW_newPhT_14092020.bit
+	./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit 
+	
 	cd -
 fi
 #./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_2020.08.19.bit

@@ -29,7 +29,7 @@ class ssa_ctrl_base:
 		self.bias_dl_enable = False
 		self.seu_check_time = -1
 		self.testpad_is_enable = -1
-		self.seu_cntr = { 'A':{'peri':[0]*2, 'strip':[0]*8, 'all':0}, 'S':{'peri':[0]*2, 'strip':[0]*8, 'all':0} }
+		self.seu_cntr = { 'A':{'peri':[0]*2, 'strip':[0]*15, 'all':0}, 'S':{'peri':[0]*2, 'strip':[0]*15, 'all':0} }
 		self.index = index
 		self.r = []
 
@@ -39,7 +39,7 @@ class ssa_ctrl_base:
 
 	#####################################################################
 	def resync(self, display=True):
-		SendCommand_CTRL("fast_fast_reset");
+		self.fc7.SendCommand_CTRL("fast_fast_reset");
 		if(display):
 			utils.print_log('->  Sent Re-Sync command')
 		#sleep(0.001)
@@ -237,7 +237,7 @@ class ssa_ctrl_base:
 			done = False
 		return  done
 
-	def phase_tuning(self, method = 'old'):
+	def phase_tuning(self, method = 'new'):
 		self.setup_readout_chip_id()
 		self.activate_readout_shift()
 		if(self.fc7.invert):
@@ -654,19 +654,19 @@ class ssa_ctrl_base:
 			return True
 
 	#####################################################################
-	def read_seu_counter(self, display=True, return_rate=False, return_short_array=False, printmode='info'):
+	def read_seu_counter(self, display=True, return_rate=False, return_short_array=False, printmode='info', sync=1, async=1):
 		if(tbconfig.VERSION['SSA'] >= 2):
 			## read counters ##############
 			seu_rate = {}
 			check_time = time.time()
 			prev = copy.deepcopy(self.seu_cntr)
-			self.seu_cntr['S']['peri'][0]  = self.I2C.peri_read(register = 'Sync_SEUcnt_blk0',  field = False)
-			self.seu_cntr['S']['peri'][1]  = self.I2C.peri_read(register = 'Sync_SEUcnt_blk1',  field = False)
-			self.seu_cntr['A']['peri'][0]  = self.I2C.peri_read(register = 'Async_SEUcnt_blk0', field = False)
-			self.seu_cntr['A']['peri'][1]  = self.I2C.peri_read(register = 'Async_SEUcnt_blk1', field = False)
-			for i in range(8):
-				self.seu_cntr['S']['strip'][i] = 0 # TODO
-				self.seu_cntr['A']['strip'][i] = 0 # TODO
+			if(sync):  self.seu_cntr['S']['peri'][0]  = self.I2C.peri_read(register = 'Sync_SEUcnt_blk0',  field = False)
+			if(sync):  self.seu_cntr['S']['peri'][1]  = self.I2C.peri_read(register = 'Sync_SEUcnt_blk1',  field = False)
+			if(async): self.seu_cntr['A']['peri'][0]  = self.I2C.peri_read(register = 'Async_SEUcnt_blk0', field = False)
+			if(async): self.seu_cntr['A']['peri'][1]  = self.I2C.peri_read(register = 'Async_SEUcnt_blk1', field = False)
+			for i in range(0,15):
+				if(sync):  self.seu_cntr['S']['strip'][i] = self.I2C.peri_read('Sync_SEUcnt_StripBlock{:d}'.format(i) )
+				if(async): self.seu_cntr['A']['strip'][i] = self.I2C.peri_read('Async_SEUcnt_StripBlock{:d}'.format(i) )
 			################################
 			self.seu_cntr['time_since_last_check'] = (check_time - self.seu_check_time)
 			self.seu_check_time = check_time

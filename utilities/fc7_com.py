@@ -410,7 +410,7 @@ class fc7_com():
 		command_final = hybrid_raw + chip_raw + line_raw + command_raw
 		self.SendPhaseTuningCommand(command_final)
 		time.sleep(0.01)
-		line_done = self.GetPhaseTuningStatus(printStatus = True)
+		line_done = self.GetPhaseTuningStatus(printStatus = False)
 		if line_done >= 0:
 			pass
 		else:

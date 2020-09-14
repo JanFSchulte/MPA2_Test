@@ -138,7 +138,7 @@ class SSA_SEU_utilities():
 				self.print_all_info(
 					check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral,
 					message=message, display=display, header=1)
-				seucounter = self.ssa.ctrl.read_seu_counter(display=True, printmode='log')
+				seucounter = self.ssa.ctrl.read_seu_counter(display=True, printmode='log', sync=1, async=0)
 
 		self.fc7.write("ctrl_phy_SLVS_compare_stop",1)
 		timer = time.time()-timer_init
@@ -365,13 +365,13 @@ class SSA_SEU_utilities():
 		self.fc7.write("ctrl_phy_SLVS_compare_stop",1)
 		if(display>1): print("State of FSM after stopping: " + str(self.fc7.read("stat_phy_slvs_compare_state_machine")))
 		if(timer == run_time and FIFO_almost_full == 0):
-			utils.print_log("->  SEU Cluster-Data  -> data taking stopped because reached the adequate time")
+			utils.print_log("->  SEU Stub-Data     -> data taking stopped because reached the adequate time")
 		elif(self.fc7.read("stat_phy_slvs_compare_number_good_data") > (2**31-3)):
-			utils.print_log("->  SEU Cluster-Data  -> data taking stopped because reached the good-clusters counter size")
+			utils.print_log("->  SEU Stub-Data     -> data taking stopped because reached the good-clusters counter size")
 		elif(FIFO_almost_full == 1 and timer < run_time ):
-			utils.print_log("-X  \tSEU Cluster-Data  -> data taking stopped because the FIFO reached the 80%")
+			utils.print_log("-X  \tSEU Stub-Data     -> data taking stopped because the FIFO reached the 80%")
 		else:
-			utils.print_log("-X  \tSEU Cluster-Data  -> data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
+			utils.print_log("-X  \tSEU Stub-Data     -> data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)")
 
 
 	##############################################################
@@ -586,12 +586,12 @@ class SSA_SEU_utilities():
 			utils.print("________________________________________________________________________________________", logmode)
 			utils.print("%18s                      CORRECT                         ERROR " % message, logmode)
 		if(display==2):
-			utils.print("->  SEU Cluster-Data  -> State of FSM:      %12d" % (state), logmode)
-			utils.print("->  SEU Cluster-Data  -> FIFO almost full:  %12d" % (full), logmode)
-			utils.print("->  SEU Cluster-Data  -> Number of good BX: %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad)), logmode)
-			utils.print("->  SEU Cluster-Data  -> Number of bad  BX: %12d (%10.6f%%)" % (CntBad,  100*np.float(CntBad)/(CntGood+CntBad)), logmode)
+			utils.print("->  SEU Stub-Data     -> State of FSM:      %12d" % (state), logmode)
+			utils.print("->  SEU Stub-Data     -> FIFO almost full:  %12d" % (full), logmode)
+			utils.print("->  SEU Stub-Data     -> Number of good BX: %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad)), logmode)
+			utils.print("->  SEU Stub-Data     -> Number of bad  BX: %12d (%10.6f%%)" % (CntBad,  100*np.float(CntBad)/(CntGood+CntBad)), logmode)
 		elif(display==1):
-			utils.print("->  SEU Cluster-Data  -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad+1E-9), CntBad,  100*np.float(CntBad)/(CntGood+CntBad+1E-9)), logmode)
+			utils.print("->  SEU Stub-Data     -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (CntGood, 100*np.float(CntGood)/(CntGood+CntBad+1E-9), CntBad,  100*np.float(CntBad)/(CntGood+CntBad+1E-9)), logmode)
 		return [CntGood, CntBad]
 
 
