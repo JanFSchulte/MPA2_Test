@@ -43,20 +43,20 @@ class SSA_Measurements_All():
 		self.DIR = directory
 		self.dvdd_curr = self.dvdd
 		if(runtest == 'default'):
-			self.runtest.enable('Power')
-			self.runtest.enable('Initialize')
-			self.runtest.enable('Calibrate')
-			self.runtest.enable('Bias')
-			self.runtest.enable('alignment')
-			self.runtest.enable('Lateral_In')
-			self.runtest.enable('Cluster_Data')
-			self.runtest.enable('Pulse_Injection')
-			self.runtest.enable('L1_Data')
-			self.runtest.enable('Memory')
-			self.runtest.disable('noise_baseline')
-			self.runtest.enable('trim_gain_offset_noise')
-			self.runtest.enable('DACs')
-			self.runtest.enable('Configuration')
+			self.runtest.set_enable('Power', 'ON')
+			self.runtest.set_enable('Initialize', 'ON')
+			self.runtest.set_enable('Calibrate', 'ON')
+			self.runtest.set_enable('Bias', 'ON')
+			self.runtest.set_enable('alignment', 'ON')
+			self.runtest.set_enable('Lateral_In', 'ON')
+			self.runtest.set_enable('Cluster_Data', 'ON')
+			self.runtest.set_enable('Pulse_Injection', 'ON')
+			self.runtest.set_enable('L1_Data', 'ON')
+			self.runtest.set_enable('Memory', 'ON')
+			self.runtest.set_enable('noise_baseline', 'OFF')
+			self.runtest.set_enable('trim_gain_offset_noise', 'ON')
+			self.runtest.set_enable('DACs', 'ON')
+			self.runtest.set_enable('Configuration', 'ON')
 		else:
 			self.runtest = runtest
 
@@ -85,23 +85,23 @@ class SSA_Measurements_All():
 
 		## Main test routine ##################
 		if(not self.mode_2xSSA):
-			self.pwr.set_supply(mode='on', display=False, d=self.dvdd, a=self.avdd, p=self.pvdd)
+			self.pwr.set_supply(mode='ON', display=False, d=self.dvdd, a=self.avdd, p=self.pvdd)
 			self.pwr.reset(False, 0)
-			self.test_routine_power(        filename=fo, mode='reset')
+			self.test_routine_power(filename=fo, mode='reset')
 			self.pwr.reset(False, 1)
-			self.test_routine_power(        filename=fo, mode='startup')
-			self.test_routine_initialize(   filename=fo)
-			self.test_routine_power(        filename=fo, mode='uncalibrated')
+			self.test_routine_power(filename=fo, mode='startup')
+			self.test_routine_initialize(filename=fo)
+			self.test_routine_power(filename=fo, mode='uncalibrated')
 		self.test_routine_measure_bias( filename=fo, mode='uncalibrated')
-		self.test_routine_calibrate(    filename=fo)
+		self.test_routine_calibrate(filename=fo)
 		if(not self.mode_2xSSA):
-			self.test_routine_power(        filename=fo, mode='calibrated')
-		self.test_routine_measure_bias( filename=fo, mode='calibrated')
-		self.test_routine_dacs(         filename=fo)
-		self.test_routine_analog(       filename=fo)
-		self.test_routine_save_config   (filename=fo)
-		self.test_routine_L1_data(      filename=fo, vlist=[self.dvdd,1.2])
-		self.test_routine_stub_data(    filename=fo)
+			self.test_routine_power(filename=fo, mode='calibrated')
+		self.test_routine_measure_bias(filename=fo, mode='calibrated')
+		self.test_routine_dacs(filename=fo)
+		self.test_routine_analog(filename=fo)
+		self.test_routine_save_config(filename=fo)
+		self.test_routine_L1_data(filename=fo, vlist=[self.dvdd,1.2])
+		self.test_routine_stub_data(filename=fo)
 
 		## Save summary ######################
 		self.summary.save(directory=self.DIR, filename=("Chip_{c:s}_v{v:d}/".format(c=str(chip_info), v=version)), runname='')
@@ -126,6 +126,8 @@ class SSA_Measurements_All():
 				self.summary.set('I_PVDD_'+mode, Ip, 'mA', '',  runname)
 				if(not st): self.test_good = False
 				break
+			except(KeyboardInterrupt):
+				break
 			except:
 				utils.print_warning("X>\tpower measurements error. Reiterating...")
 				wd +=1;
@@ -142,6 +144,8 @@ class SSA_Measurements_All():
 				self.summary.set('Initialize', int(r1), '', '',  runname)
 				if(not r1): self.test_good = False
 				break
+			except(KeyboardInterrupt):
+				break
 			except:
 				utils.print_warning("X>\tInitializing SSA error. Reiterating...")
 				wd +=1;
@@ -156,6 +160,8 @@ class SSA_Measurements_All():
 			try:
 				r1 = self.biascal.calibrate_to_nominals(measure=False)
 				self.summary.set('Calibration', int(r1), '', '',  runname)
+				break
+			except(KeyboardInterrupt):
 				break
 			except:
 				utils.print_warning("X>\tBias Calibration error. Reiterating...")
@@ -173,6 +179,8 @@ class SSA_Measurements_All():
 				for i in r1:
 					self.summary.set( i[0]+'_'+mode, i[1], 'mV', '',  runname)
 				break
+			except(KeyboardInterrupt):
+				break
 			except:
 				utils.print_warning("X>\tBias measurements error. Reiterating...")
 				print("X>  \tError in Bias test. Reiterating.")
@@ -189,6 +197,8 @@ class SSA_Measurements_All():
 			try:
 				self.ssa.save_configuration(filename + 'configuration' + str(runname) + '.csv', display=False)
 				utils.print_good("->  Config registers readout via I2C and saved corrrectly.")
+				break
+			except(KeyboardInterrupt):
 				break
 			except:
 				utils.print_warning("X>\tConfig registers save error. Reiterating...")
@@ -356,6 +366,8 @@ class SSA_Measurements_All():
 				self.caldac = self.measure.dac_linearity(name = 'Bias_CALDAC', eval_inl_dnl = False, nbits = 8, npoints = 10, filename = filename, plot = False, filemode = 'a', runname = runname)
 				self.summary.set('Bias_CALDAC_GAIN'    , self.caldac[0], '', '',  runname)
 				self.summary.set('Bias_CALDAC_OFFS'    , self.caldac[1], '', '',  runname)
+				break
+			except(KeyboardInterrupt):
 				break
 			except:
 				utils.print_warning("X>\tBias_CALDAC test error. Reiterating...")

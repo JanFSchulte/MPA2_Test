@@ -23,6 +23,7 @@ from myScripts.BasicADC import *
 from ssa_methods.ssa_wp_analyze import *
 from ssa_methods.main_ssa_test_1 import *
 from ssa_methods.main_ssa_test_2 import *
+from ssa_methods.main_ssa_test_3 import *
 
 multimeter_gpib = keithley_multimeter()
 multimeter_lan  = Multimeter_LAN_Keithley()
@@ -46,7 +47,6 @@ class SSAwp:
 		self.measure       = SSA_measurements(self.chip, self.i2c, FC7, self.cal, self.ana_mux_map, self.pwr, self.seuutil, self.biascal)
 		self.test          = SSA_test_utility(self.chip, self.i2c, FC7, self.cal, self.pwr, self.seuutil)
 		self.toptest       = SSA_test_top(self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
-		self.xray          = SSA_test_xray(self.toptest, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
 		self.anl           = SSA_Analise_Test_results(self.toptest, self.test, self.measure, self.biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
 		self.seu           = SSA_SEU(self.chip, self.seuutil, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
 		self.init          = self.chip.init
@@ -55,6 +55,8 @@ class SSAwp:
 		self.inject        = self.chip.inject
 		self.readout       = self.chip.readout
 		self.main_test     = SSA_Measurements_All(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
+		self.main_test_3   = main_ssa_test_3(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
+		self.xray          = SSA_test_xray(self.main_test_3, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
 
 	def enable(self):  FC7.enable_chip(self.index)
 	def disable(self): FC7.disable_chip(self.index)

@@ -245,7 +245,7 @@ class ssa_ctrl_base:
 		elif(method == 'old'):
 			self.set_shift_pattern_all(0b10000000)
 		else:
-			self.set_shift_pattern_all(0b10100000)
+			self.set_shift_pattern_all(0b10100011)
 
 		time.sleep(0.01)
 		self.set_lateral_lines_alignament()
@@ -253,7 +253,7 @@ class ssa_ctrl_base:
 		if(method == 'old' or self.fc7.invert):
 			rt = self.align_out()
 		else:
-			rt = self.TuneSSA(0b10100000)
+			rt = self.TuneSSA(0b10100011)
 		if(tbconfig.VERSION['SSA']==1):
 			self.I2C.peri_write('OutPattern7/FIFOconfig', 7)
 		self.reset_pattern_injection()
@@ -324,7 +324,7 @@ class ssa_ctrl_base:
 		#		self.set_line_mode(pMode=cMode, pDelay=cDelay, pBitSlip=cBitslip, pMasterLine=0)
 
 	#####################################################################
-	def TuneSSA(self, pattern=0b10100000):
+	def TuneSSA(self, pattern=0b10100011):
 		self.setup_readout_chip_id()
 		state = True
 		for line in range(0,9):
