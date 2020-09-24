@@ -1,8 +1,13 @@
-
 from ssa_methods.main import *
-from ssa_methods.main_ssa_test_2 import *
+try:
+    from ssa_methods.main_ssa_test_2 import *
+except:
+    pass
 
 ssa  = ssa0
 
-ssa_main_measure = SSA_Measurements_All()
-wp = ssa_main_measure
+try:
+    ssa_main_measure = SSA_Measurements_All()
+    wp = ssa_main_measure
+except:
+    pass

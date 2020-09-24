@@ -654,7 +654,7 @@ class ssa_ctrl_base:
 			return True
 
 	#####################################################################
-	def read_seu_counter(self, display=True, return_rate=False, return_short_array=False, printmode='info', sync=1, async=1):
+	def read_seu_counter(self, display=True, return_rate=False, return_short_array=False, printmode='info', sync=1, async=1, filename=False):
 		if(tbconfig.VERSION['SSA'] >= 2):
 			## read counters ##############
 			seu_rate = {}
@@ -702,6 +702,20 @@ class ssa_ctrl_base:
 		else:
 			if(return_rate): rt = self.seu_cntr, seu_rate
 			else: rt = self.seu_cntr
+		if(filename):
+			dir = filename[:filename.rindex(os.path.sep)]
+			if not os.path.exists(dir): os.makedirs(dir)
+			with open(filename, 'a') as fo:
+				fo.write(str( self.seu_cntr['A']['peri'] ))
+				fo.write(',\t')
+				fo.write(str( self.seu_cntr['A']['strip'] ))
+				fo.write(',\t')
+				fo.write(str( self.seu_cntr['S']['peri'] ))
+				fo.write(',\t')
+				fo.write(str( self.seu_cntr['S']['strip'] ))
+				fo.write(',\t')
+
+				fo.write('\n')
 		return rt
 
 	##############################################################

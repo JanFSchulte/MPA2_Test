@@ -108,7 +108,10 @@ class fc7_com():
 
 	def set_chip_id(self, index = 0, address = 0):
 		self.chip_adr[index] = int('{:03b}'.format(address & 0b111)[::-1], 2)
-		self._write_id_enable()
+		try:
+			self._write_id_enable()
+		except:
+			pass
 		#print("->\tChip 0 address set to: {:2d}".format(self.chip_adr[0] & 0b111))
 		#print("->\tChip 1 address set to: {:2d}".format(self.chip_adr[1] & 0b111))
 
