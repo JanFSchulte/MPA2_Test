@@ -22,48 +22,39 @@ class SSA_test_xray():
 		#self.biascal.set_gpib_address(12)
 
 
-	def configure_tests(self):
+	def configure_tests(self, directory):
 			runtest = RunTest('xray')
-			runtest.enable('Lateral_In')
-			runtest.enable('Cluster_Data')
-			runtest.enable('Pulse_Injection')
-			runtest.enable('Cluster_Data2')
-			runtest.enable('Memory_1')
-			runtest.enable('Memory_2')
-			runtest.enable('L1_data')
-			runtest.enable('memory_vs_voltage')
-			runtest.enable('noise_baseline')
-			runtest.enable('gain_offset_noise')
-			runtest.enable('threshold_spread')
-			runtest.enable('Power')
-			runtest.enable('Bias')
-			runtest.enable('Bias_THDAC')
-			runtest.enable('Bias_CALDAC')
-			runtest.enable('Configuration')
-			self.toptest.configure_tests( runtest )
+			runtest.set_enable('Power', 'ON')
+			runtest.set_enable('Initialize', 'ON')
+			runtest.set_enable('Calibrate', 'ON')
+			runtest.set_enable('Bias', 'ON')
+			runtest.set_enable('alignment', 'ON')
+			runtest.set_enable('Lateral_In', 'ON')
+			runtest.set_enable('Cluster_Data', 'ON')
+			runtest.set_enable('Pulse_Injection', 'OFF')
+			runtest.set_enable('L1_Data', 'ON')
+			runtest.set_enable('Memory', 'ON')
+			runtest.set_enable('noise_baseline', 'OFF')
+			runtest.set_enable('trim_gain_offset_noise', 'ON')
+			runtest.set_enable('DACs', 'ON')
+			runtest.set_enable('Configuration', 'ON')
+			runtest.set_enable('ring_oscillators', 'ON')
+			runtest.set_enable('stub_l1_max_speed', 'ON')
+			self.toptest.Configure(directory,  runtest )
 
-	def initialise(self, filename):
-		self.toptest.initialise(file = filename, plot = True)
-
-	def xray_loop(self, filename, runtime = (60*60*100), rate = (30*60), init_wait = 1 ):
-		self.configure_tests()
-		self.pwr.set_dvdd(self.toptest.dvdd)
-		self.ssa.init(reset_board = True, reset_chip = False, read_current = True)
-		utils.activate_I2C_chip(self.fc7)
+	def xray_loop(self, runtime = 10E3, rate = 60*5, init_wait = 1, directory = '../SSA_Results/XRAY/' ):
+		self.configure_tests(directory)
 		time_init = time.time()
 		time_base = time_init - (rate - init_wait);
 		time_curr = time_init;
-
 		while ((time_curr-time_init) < runtime):
 			time_curr = time.time()
 			if( float(time_curr-time_base) > float(rate) ):
 				time_base = time_curr
-				self.toptest.test_routine_main(filename = filename, runname = utils.date_time())
-				utils.activate_I2C_chip(self.fc7)
+				self.toptest.RUN(runname = utils.date_time())
+				utils.print_info('->  Total run time: {:7.3f}'.format(time.time()-time_base) )
 			else:
-				time.sleep(0.1);
-				self.ssa.init(reset_board = True, reset_chip = False, read_current = False)
-				self.toptest.idle_routine(filename = filename, runname = utils.date_time())
+				self.toptest.idle_routine(filename = directory+'idle_routine', runname = utils.date_time(), duration=5)
 
 
 	def set_start_irradiation_time(self, filename, ):
