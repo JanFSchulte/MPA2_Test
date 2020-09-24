@@ -150,8 +150,8 @@ class SSA_test_utility():
 		if(mode == "analog"): shift += 2
 		L1_counter_init, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = True, shift = shift, latency = latency, multi = False)
 		if(L1_counter_init < 0):
-			utils.print_log(str(L1_counter_init))
-			return 'error'
+			utils.print_log('-> L1 COUNTER INIT ERROR ----------------------->  ' + str(L1_counter_init))
+			return [-1,-1,-1]
 		l1hitlistprev = []
 		hiplistprev = []
 		if(profile):
@@ -190,7 +190,8 @@ class SSA_test_utility():
 				else:  hip_hits = []
 
 				if(L1_counter < 0):
-					return 'error'
+					utils.print_log('-> L1 COUNTER < 0 -----------------------> ' + str(L1_counter_init))
+					return [-1,-1,-1]
 				if ((L1_counter & l1_counter_mask) != ((L1_counter_init + 1) & l1_counter_mask) ):
 					err[2] = True
 					is_error_l1counter = True
@@ -277,7 +278,7 @@ class SSA_test_utility():
 		elif(mode == "analog"):
 			self.ssa.inject.analog_pulse(hit_list = [], initialise = True)
 		else:
-			return False
+			return [-1,-1,-1]
 		if(lateral):
 			clrange = random.sample(range(-2, 125), 127)
 		else:
@@ -341,7 +342,7 @@ class SSA_test_utility():
 				fo.write(runname + ' ; ' + erlog + ' \n')
 				utils.print_log('\t' + erlog)
 				if(stop_on_error):
-					return [0,0,0]
+					return [-1,-1,-1]
 			utils.ShowPercent(cnt['cl_sum'], len(clrange), "Running clusters test based on " + mode + " test pulses")
 		utils.ShowPercent( len(clrange),  len(clrange), "Done                                                      ")
 		fo.close()
@@ -480,7 +481,7 @@ class SSA_test_utility():
 	##############################################################
 	def ring_oscillators_vs_dvdd(self,
 		dvdd_step=0.05, dvdd_max=1.3, dvdd_min=0.8, plot=False,
-		filename = '../SSA_Results/ring_oscillator_vs_dvdd/', filemode='w', runname = ''):
+		filename = '../SSA_Results/ring_oscillator_vs_dvdd/', filemode='w', runname = '', printmode='info'):
 		result = []
 		if not os.path.exists(filename): os.makedirs(filename)
 		fout = filename + 'ring_oscillator_vs_dvdd.csv'
@@ -491,7 +492,7 @@ class SSA_test_utility():
 			self.ssa.pwr.set_dvdd(dvdd)
 			time.sleep(0.1)
 			res = self.ssa.bist.ring_oscilaltor(
-				resolution_inv=127, resolution_del=127,
+				resolution_inv=127, resolution_del=127, printmode=printmode,
 				raw=0, asarray=1, display=1, note=' at DVDD={:5.3f}V'.format(dvdd) )
 			#rdv = self.ssa.pwr.get_dvdd()
 			result.append( np.append(dvdd , res) )
@@ -552,8 +553,10 @@ class SSA_test_utility():
 		rv = np.array([0,0])
 		for memory in [1,2]:
 			for i in range(nruns):
-				try:    result = self.ssa.bist.SRAM(memory_select=memory, configure=0, display=(display>=2))
-				except: result = 0
+				try:    result = self.ssa.bist.SRAM(memory_select=memory, configure=1, display=(display>=2))
+				except:
+					print('-> Impossible to read BIST registers')
+					result = 0
 				rv[memory-1] += result
 		rv = rv/np.float(nruns)
 		if(display>=1):
@@ -565,7 +568,7 @@ class SSA_test_utility():
 
 	##############################################################
 	def SRAM_BIST_vs_DVDD(self,
-		step=0.001, dvdd_max=0.800, dvdd_min=0.700, nruns_per_point=10, plot=False,
+		step=0.001, dvdd_max=0.800, dvdd_min=0.700, nruns_per_point=1, plot=False,
 		filename = '../SSA_Results/memory_bist_vs_dvdd/', filemode='w', runname = ''):
 
 		self.ssa.pwr.set_dvdd(1.0)
@@ -578,19 +581,21 @@ class SSA_test_utility():
 		#dvdd_range = np.linspace(dvdd_max, dvdd_min, npoints)
 		fine_range = np.arange(dvdd_max, dvdd_min-step, (-1)*step)
 		coarse_renge = np.arange(1.3, dvdd_max+step, -0.1)
+		coarse_renge = []
 		dvdd_range = np.append(coarse_renge, fine_range)
 
 		for dvdd in dvdd_range:
 			self.ssa.pwr.set_dvdd(dvdd)
-			time.sleep(0.1)
 			#self.ssa.reset()
+			time.sleep(0.1)
 			res = self.SRAM_BIST(nruns=nruns_per_point, note='[DVDD={:5.3f}] '.format(dvdd), display=True )
 			if(res[0]<0): res[0]=0
 			if(res[1]<0): res[1]=0
 			#rdv = self.ssa.pwr.get_dvdd()
-			result[dvdd] = [res[0], res[1]]
+			result[np.round(dvdd, 4)] = [res[0], res[1]]
 			with open(fout, 'a')  as fo:
 				fo.write("{:8s} , {:7.3f} , {:7.3f}, {:7.3f}, \n".format(runname, dvdd, res[0], res[1]))
+		self.ssa.pwr.set_dvdd(1.0)
 		if(plot):
 			self.SRAM_BIST_vs_DVDD_plot()
 		return result

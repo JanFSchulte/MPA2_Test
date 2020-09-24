@@ -93,10 +93,18 @@ class RunTest():
 			print('->  Test Configuration object [' + str(self.configname) + '] created.')
 
 	def enable(self, name):
-		 self.test[name] = True
+		self.test[name] = True
 
 	def disable(self, name):
 		self.test[name] = False
+
+	def set_enable(self, name, mode):
+		if(mode in [0, 'off', 'OFF', 'disable']):
+			self.test[name] = False
+		elif(mode in [1, 'on', 'ON', 'enable']):
+			self.test[name] = True
+		else:
+			print('Error configuring test-mode set_enable. Configuration not changed.')
 
 	def is_active(self, name):
 		if(not name in self.test):

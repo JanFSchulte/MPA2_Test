@@ -493,8 +493,8 @@ class SSA_cal_utility():
 			self.scurve_trimming = 'none'
 			error(1)
 		readback = np.zeros(120)
+		time.sleep(0.1)
 		for i in range(0,120):
-			time.sleep(0.001)
 			rr = self.ssa.strip.get_trimming(i+1)
 			if(isinstance(rr, str)):
 				utils.print_log('=>  ERROR : {:s}'.format(rr))

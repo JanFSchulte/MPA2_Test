@@ -35,7 +35,7 @@ class SSA_SEU_utilities():
 			strip =[10,20,30,40], centroids=[10,20,30,40], hipflags = [10,30], cal_pulse_period = 1, l1a_period = 39,
 			latency = 101, run_time = 5, display = 1, filename = '', runname = '',
 			delay = 74, create_errors = False, stop_if_fifo_full = True,
-			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0):
+			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0, show_every=1):
 
 		self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
@@ -51,9 +51,9 @@ class SSA_SEU_utilities():
 			strip_list = strip, hipflag_list = hipflags, analog_injection = 0,
 			latency = latency, create_errors = create_errors)
 
-		self.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = 2)
+		self.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = display)
 
-		self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = 2)
+		self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = display)
 		 # Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0, initial_reset = 1)
 		 # Configure_SEU(1, 39,0,1)
 		time.sleep(0.01); self.fc7.write("cnfg_fast_initial_fast_reset_enable", 1) #1
@@ -72,7 +72,7 @@ class SSA_SEU_utilities():
 
 		test_duration, fifo_full_stub, fifo_full_L1 = self.RunStateMachine_L1_and_Stubs(
 			check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral,
-			timer_data_taking=run_time, display=display, stop_if_fifo_full=stop_if_fifo_full)
+			timer_data_taking=run_time, display=display, stop_if_fifo_full=stop_if_fifo_full, show_every=show_every)
 
 		correction = int(latency/(l1a_period+1))
 		if(display==0): display=1
@@ -92,7 +92,7 @@ class SSA_SEU_utilities():
 		return self.last_test_duration
 
 	##############################################################
-	def RunStateMachine_L1_and_Stubs(self, check_stub=True, check_l1=True, check_lateral=True, timer_data_taking = 30, display = 2, stop_if_fifo_full = True):
+	def RunStateMachine_L1_and_Stubs(self, check_stub=True, check_l1=True, check_lateral=True, timer_data_taking = 30, display = 2, stop_if_fifo_full = True, show_every=1):
 		time.sleep(0.1)
 		FSM = self.fc7.read("stat_phy_slvs_compare_state_machine")
 		time.sleep(0.01); self.fc7.write('cnfg_fast_timeout_enable', 0)
@@ -133,7 +133,7 @@ class SSA_SEU_utilities():
 			else:
 				stop_condition = (timer < timer_data_taking)
 
-			if((timer-timer_prev)>=1):
+			if((timer-timer_prev)>=show_every):
 				timer_prev = timer
 				self.print_all_info(
 					check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral,

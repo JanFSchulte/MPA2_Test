@@ -49,15 +49,18 @@ class ssa_ctrl_builtin_selftest:
 		time.sleep(0.010); #Time needed byt the BIST
 		for i in range(3):
 			try:
-				flag = self.i2c.peri_read( register = "bist_output", field=False)
-				status = ((flag>>(1+memory_select))&0b1)
+				for k in range(30):
+					flag = self.i2c.peri_read( register = "bist_output", field=False)
+					status = ((flag>>(1+memory_select))&0b1)
+					#print(str(flag) + '   ' + str(memory_select) + '   ' + str(status) + '   ')
 				break
 			except:
 				#print("ERROR {:d}".format(i))
 				utils.activate_I2C_chip(self.fc7)
 				status = 0
 		if( status == 0):
-			if(display): utils.print_error("->  BIST memory {:d} test not working. Return status {:2b}: ".format(memory_select, (flag>>2) ))
+			if(display):
+				utils.print_error("->  BIST memory {:d} test not working. Return status {:2b}: ".format(memory_select, (flag>>2) ))
 			bisterr=-1
 		else:
 			for N in range(0,16):
@@ -89,7 +92,7 @@ class ssa_ctrl_builtin_selftest:
 
 
 	#######################################################################
-	def ring_oscilaltor(self, resolution_inv=127, resolution_del=127, raw=False, aslist=False, display=True, note='' , asarray=False):
+	def ring_oscilaltor(self, resolution_inv=127, resolution_del=127, raw=False, aslist=False, display=True, note='' , asarray=False, printmode='info'):
 		ringval   = {'top-right':[0,0] , 'bottom-right':[0,0], 'bottom-center':[0,0], 'bottom-left':[0,0]}
 		frequency = {'top-right':[0,0] , 'bottom-right':[0,0], 'bottom-center':[0,0], 'bottom-left':[0,0]}
 
@@ -144,7 +147,7 @@ class ssa_ctrl_builtin_selftest:
 			for i in ringval:
 				if(raw): sret += '\n    {:16s} : INV -> {:5d}     DEL -> {:5d}]'.format(i, ringval[i][0], ringval[i][1])
 				else:    sret += '\n    {:16s} : INV -> {:5.3f} MHz     DEL -> {:5.3f} MHz'.format(i, frequency[i][0], frequency[i][1])
-			utils.print_info(sret)
+			utils.print(sret, printmode)
 		if(not asarray):
 			rv = retval
 		else:
