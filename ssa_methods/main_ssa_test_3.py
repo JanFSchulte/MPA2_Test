@@ -50,7 +50,7 @@ class main_ssa_test_3():
 			self.runtest.set_enable('alignment', 'ON')
 			self.runtest.set_enable('Lateral_In', 'ON')
 			self.runtest.set_enable('Cluster_Data', 'ON')
-			self.runtest.set_enable('Pulse_Injection', 'ON')
+			self.runtest.set_enable('Pulse_Injection', 'OFF')
 			self.runtest.set_enable('L1_Data', 'ON')
 			self.runtest.set_enable('Memory', 'ON')
 			self.runtest.set_enable('noise_baseline', 'OFF')
@@ -82,16 +82,18 @@ class main_ssa_test_3():
 					fp.write( utils.date_time('csv') + '\n')
 					fp.close()
 					break
+			fo = curdir + "/Test_"
+			utils.close_log_files()
+			utils.set_log_files(curdir+'/OperationLog.txt',curdir+'/ErrorLog.txt')
 			utils.print_info('==============================================')
 			utils.print_info('TEST ROUTINE {:s}\n'.format(str(runname)))
 			utils.print_info("->  The log files are located in {:s}/ \n".format(curdir))
-			fo = curdir + "/Test_"
-			utils.set_log_files(curdir+'/OperationLog.txt',curdir+'/ErrorLog.txt')
 			## Main test routine ##################
 			self.pwr.set_supply(mode='ON', display=False, d=self.dvdd, a=self.avdd, p=self.pvdd)
 			self.pwr.reset(False, 0)
 			self.test_routine_power(filename=fo, mode='reset')
-			self.ssa.reset()
+			self.ssa.reset(); time.sleep(1);
+			self.ssa.resync(); time.sleep(0.1);
 			self.test_routine_power(filename=fo, mode='startup')
 			self.test_routine_initialize(filename=fo)
 			self.test_routine_power(filename=fo, mode='uncalibrated')
@@ -102,14 +104,13 @@ class main_ssa_test_3():
 			self.test_routine_dacs(filename=fo)
 			self.test_routine_analog(filename=fo)
 			self.test_routine_save_config(filename=fo)
-			self.test_routine_stub_data(filename=fo)
-			self.test_routine_L1_data(filename=fo)
+			self.test_routine_stub_data(filename=fo, samples=500)
+			self.test_routine_L1_data(filename=fo, samples=500)
 			self.test_routine_ring_oscillators(filename=fo)
-
 			## Save summary ######################
 			self.summary.save(directory=self.DIR, filename=("Chip_{c:s}_v{v:d}/".format(c=str(chip_info), v=version)), runname='')
 			self.summary.display()
-			utils.close_log_files()
+			#utils.close_log_files()
 			return self.test_good
 
 
@@ -141,7 +142,7 @@ class main_ssa_test_3():
 		while (en and wd < 3):
 			try:
 				time.sleep(1)
-				r1 = self.ssa.init(reset_board = False, reset_chip = False)
+				r1 = self.ssa.init()
 				self.summary.set('Initialize', int(r1), '', '',  runname)
 				if(not r1): self.test_good = False
 				break
@@ -175,8 +176,15 @@ class main_ssa_test_3():
 		while (en and wd < 3):
 			try:
 				r1 = self.biascal.measure_bias(return_data=True)
+				r2 = self.ssa.chip.analog.adc_measure_supply(nsamples=1, raw=True)
 				for i in r1:
 					self.summary.set( i[0]+'_'+mode, i[1], 'mV', '',  runname)
+				self.summary.set('adc_DVDD', r2[0], 'cnt', '',  runname)
+				self.summary.set('adc_AVDD', r2[1], 'cnt', '',  runname)
+				self.summary.set('adc_PVDD', r2[2], 'cnt', '',  runname)
+				self.summary.set('adc_GND' , r2[3], 'cnt', '',  runname)
+				self.summary.set('adc_VBG' , r2[4], 'cnt', '',  runname)
+				self.summary.set('adc_TEMP', r2[5], 'cnt', '',  runname)
 				break
 			except(KeyboardInterrupt): break
 			except:
@@ -202,16 +210,24 @@ class main_ssa_test_3():
 				if(wd>=3): self.test_good = False
 
 
-	def test_routine_stub_data(self, filename = 'default', runname = ''):
+	def test_routine_stub_data(self, filename = 'default', runname = '', samples=500):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		wd = 0
 		en = self.runtest.is_active('alignment')
-		self.ssa.reset()
+		self.ssa.reset(); time.sleep(1)
+		self.ssa.resync(); time.sleep(0.1);
 		while (en and wd < 3):
 			try:
-				self.ssa.init(reset_chip=0, display=0)
-				r1,r2,r3,r4 = self.ssa.chip.alignment_all(display = False)
+				self.ssa.init(reset_chip=0, display=1); time.sleep(0.1)
+				self.ssa.resync(); time.sleep(0.1);
+				time.sleep(0.1)
+				for i in range(5): #alignment sometimes don't work on FPGA side
+					r1,r2,r3,r4 = self.ssa.chip.alignment_all(display = False)
+					if([r1,r2,r3,r4] == [True, True, True, True]):
+						break
+					else:
+						utils.print_warning('->  Reiterating alignment')
 				self.summary.set('alignment_cluster_data',  int(r2), '', '',  runname)
 				self.summary.set('alignment_lateral_left',  int(r3), '', '',  runname)
 				self.summary.set('alignment_lateral_right', int(r4), '', '',  runname)
@@ -226,7 +242,7 @@ class main_ssa_test_3():
 		en = self.runtest.is_active('Cluster_Data')
 		while (en and wd < 3):
 			try:
-				r1 = self.test.cluster_data(mode = 'digital', nstrips='random', nruns = 100, shift='default', display=False, file=filename, filemode='a', runname=runname)
+				r1 = self.test.cluster_data(mode = 'digital', nstrips='random', nruns = samples, shift='default', display=False, file=filename, filemode='a', runname=runname, lateral=False)
 				self.summary.set('ClusterData_DigitalPulses',  r1, '%', '',  runname)
 				utils.print_good("->  Cluster Data with Digital Pulses test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 				if(r1<100.0): self.test_good = False
@@ -252,7 +268,7 @@ class main_ssa_test_3():
 				if(wd>=3): self.test_good = False
 
 
-	def test_routine_L1_data(self, filename = '../SSA_Results/Chip0/Chip_0', runname = '', shift = 1):
+	def test_routine_L1_data(self, filename = '../SSA_Results/Chip0/Chip_0', runname = '', shift = 1, samples=500):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		wd = 0
@@ -261,13 +277,12 @@ class main_ssa_test_3():
 		while (en and wd < 3):
 			try:
 				#self.pwr.set_dvdd(self.dvdd)
-				self.ssa.reset()
-				self.ssa.init(reset_chip=0, display=0)
-				time.sleep(0.1)
+				self.ssa.reset(); time.sleep(1)
+				self.ssa.init(reset_chip=0, display=1); time.sleep(0.1)
+				self.ssa.resync(); time.sleep(0.1);
 				result = self.test.l1_data(
-					mode = 'digital', runname =  runname, nruns = 100,
+					mode = 'digital', runname =  runname, nruns = samples,
 					shift = shift, filemode = 'a', file = filename)
-				print(result)
 				r1, r2, r3 = result
 				self.summary.set('L1_data',   r1, '%', '',  runname)
 				self.summary.set('HIP_flags', r2, '%', '',  runname)
@@ -312,15 +327,17 @@ class main_ssa_test_3():
 				results = self.test.ring_oscillators_vs_dvdd(
 					dvdd_step=0.05, dvdd_max=1.3, dvdd_min=0.8, plot=False, printmode='log',
 					filename = filename + '_ring_oscillator_vs_dvdd/', filemode='w', runname = '')
-				for res in results[4]:
-					self.summary.set('Ring_INV_BR', res, '%', '',  runname)
-					self.summary.set('Ring_INV_TR', res, '%', '',  runname)
-					self.summary.set('Ring_INV_BC', res, '%', '',  runname)
-					self.summary.set('Ring_INV_BL', res, '%', '',  runname)
-					self.summary.set('Ring_DEL_BR', res, '%', '',  runname)
-					self.summary.set('Ring_DEL_TR', res, '%', '',  runname)
-					self.summary.set('Ring_DEL_BC', res, '%', '',  runname)
-					self.summary.set('Ring_DEL_BL', res, '%', '',  runname)
+
+				self.summary.set('Ring_INV_BR', results[4][1], 'MHz', '',  runname)
+				self.summary.set('Ring_INV_TR', results[4][2], 'MHz', '',  runname)
+				self.summary.set('Ring_INV_BC', results[4][3], 'MHz', '',  runname)
+				self.summary.set('Ring_INV_BL', results[4][4], 'MHz', '',  runname)
+				self.summary.set('Ring_DEL_BR', results[4][5], 'MHz', '',  runname)
+				self.summary.set('Ring_DEL_TR', results[4][6], 'MHz', '',  runname)
+				self.summary.set('Ring_DEL_BC', results[4][7], 'MHz', '',  runname)
+				self.summary.set('Ring_DEL_BL', results[4][8], 'MHz', '',  runname)
+				self.pwr.set_dvdd(self.dvdd)
+				time.sleep(1)
 				break
 			except(KeyboardInterrupt): break
 			except:
@@ -342,13 +359,16 @@ class main_ssa_test_3():
 				results = self.ssa.seuutil.Run_Test_SEU(
 					check_stub=True, check_l1=True, check_lateral=False, create_errors = False,
 					strip = striplist, centroids=centroids, hipflags = hip_hits, delay = compare_del, run_time = run_time,
-					cal_pulse_period = 1, l1a_period = 39, latency = 501, display = 1, stop_if_fifo_full = 0)
+					cal_pulse_period = 1, l1a_period = 39, latency = 501, display = 1, stop_if_fifo_full = 1)
 
 				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1] = results
 
-				self.summary.set('stub_data_fast',   CL_er, '%', '',  runname)
-				self.summary.set('l1_data_fast',     L1_er, '%', '',  runname)
-				self.summary.set('l1_headers_fast',  LH_er, '%', '',  runname)
+				self.summary.set('stub_data_fast_err',   CL_er, 'cnt', '',  runname)
+				self.summary.set('l1_data_fast_err',     L1_er, 'cnt', '',  runname)
+				self.summary.set('l1_headers_fast_err',  LH_er, 'cnt', '',  runname)
+				self.summary.set('stub_data_fast_ok',    CL_ok, 'cnt', '',  runname)
+				self.summary.set('l1_data_fast_ok',      L1_ok, 'cnt', '',  runname)
+				self.summary.set('l1_headers_fast_ok',   LH_ok, 'cnt', '',  runname)
 				break
 			except(KeyboardInterrupt): break
 			except:
@@ -447,39 +467,50 @@ class main_ssa_test_3():
 		utils.print_warning("======================")
 
 
-	def idle_routine(self, filename = 'default', runname = '', duration=60):
+	def idle_routine(self, filename = 'default', runname = '', duration=5):
+		# run all functional test with STUB at BX rate, L1 data at 1MHz
+		# if during X-ray irradiation, this is running all time except
+		# of when the other tests are running
 		utils.print_info('==============================================')
 		utils.print_info('IDLE ROUTINE {:s}\n'.format(str(runname)))
 		wd=0
 		while (wd < 3):
 			try:
-				self.pwr.set_dvdd(self.dvdd)
-				self.ssa.reset()
-				self.ssa.init(reset_chip=0, display=0)
-				time.sleep(0.1)
+				self.pwr.set_dvdd(self.dvdd); time.sleep(1)
+				self.ssa.reset(); time.sleep(1)
+				self.ssa.init(reset_chip=0, display=1); time.sleep(0.1)
+				self.ssa.resync(); time.sleep(0.1);
+
 				striplist, centroids, hip_hits, hip_flags  = self.test.generate_clusters(
 					nclusters=8, min_clsize=1, max_clsize=2, smin=1,
 					smax=119, HIP_flags=True)
-
+				print(striplist)
 				results = self.ssa.seuutil.Run_Test_SEU(
 					check_stub=True, check_l1=True, check_lateral=False, create_errors = False,
-					strip = striplist, centroids=centroids, hipflags = hip_hits, delay = 74, run_time = duration,
-					cal_pulse_period = 1, l1a_period = 39, latency = 501, display = 1, stop_if_fifo_full = 0, show_every = 1E3)
+					strip = striplist, centroids=centroids, hipflags = hip_hits, delay = 75, run_time = duration,
+					cal_pulse_period = 1, l1a_period = 39, latency = 501, display = 1, stop_if_fifo_full = 0, show_every=-1)
 
 				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1] = results
 
-				self.summary.set('stub_data_fast',   CL_er, '%', '',  runname)
-				self.summary.set('l1_data_fast',     L1_er, '%', '',  runname)
-				self.summary.set('l1_headers_fast',  LH_er, '%', '',  runname)
+				#self.summary.set('stub_data_fast_err',   CL_er, 'cnt', '',  runname)
+				#self.summary.set('l1_data_fast_err',     L1_er, 'cnt', '',  runname)
+				#self.summary.set('l1_headers_fast_err',  LH_er, 'cnt', '',  runname)
+				#self.summary.set('stub_data_fast_ok',    CL_ok, 'cnt', '',  runname)
+				#self.summary.set('l1_data_fast_ok',      L1_ok, 'cnt', '',  runname)
+				#self.summary.set('l1_headers_fast_ok',   LH_ok, 'cnt', '',  runname)
+
+				fo = open(filename+'.csv', 'a')
+				fo.write('\n{:16s},{:10d},{:10d},{:10d},{:10d},{:10d},{:10d},{:10.3f}'.format(runname, CL_er, L1_er, LH_er, CL_ok, L1_ok, LH_ok, test_duration) )
+				fo.close()
 				break
-			except(KeyboardInterrupt): break
+			except(KeyboardInterrupt):
+				utils.print_info("\n\n\nUser interrupt. The routine will stop at the end of the iteration.\n\n\n")
+				return 'KeyboardInterrupt'
 			except:
 				self.print_exception(text="->  Error in Idle Routine.")
 				wd +=1;
 				if(wd>=3): self.test_good = False
-		fo = open(filename+'.csv', 'a')
-		fo.write('\n{:16s},{:10d},{:10d},{:10d},{:10d},{:10d},{:10d},{:10.3f}'.format(runname, CL_er, L1_er, LH_er, CL_ok, L1_ok, LH_ok, test_duration) )
-		fo.close()
+		return 0
 
 	def _init(self, chip):
 		self.ssa = chip;
@@ -491,7 +522,7 @@ class main_ssa_test_3():
 		self.test = chip.test;
 		self.measure = chip.measure;
 		self.dvdd = 1.00; #for the offset of the board
-		self.pvdd = 1.25;
-		self.avdd = 1.25;
+		self.pvdd = 1.20;
+		self.avdd = 1.20;
 		self.thdac = False
 		self.caldac = False

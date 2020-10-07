@@ -50,6 +50,7 @@ else
 	printf '\n->  Testbench correctly found on %s\n' "$IP"
 	printf '\n->  Starting loading the firmware\n'
 	cd ~/FC7/sw/fc7/tests
+	#./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit
 	./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit   # the SEU firmware 
 	

@@ -133,19 +133,21 @@ class SSA_SEU_utilities():
 			else:
 				stop_condition = (timer < timer_data_taking)
 
-			if((timer-timer_prev)>=show_every):
-				timer_prev = timer
-				self.print_all_info(
-					check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral,
-					message=message, display=display, header=1)
-				seucounter = self.ssa.ctrl.read_seu_counter(display=True, printmode='log', sync=1, async=0)
+			if(show_every>0):
+				if((timer-timer_prev)>=show_every):
+					timer_prev = timer
+					self.print_all_info(
+						check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral,
+						message=message, display=display, header=1)
+					seucounter = self.ssa.ctrl.read_seu_counter(display=True, printmode='log', sync=1, async=0)
 
 		self.fc7.write("ctrl_phy_SLVS_compare_stop",1)
 		timer = time.time()-timer_init
 		self.fc7.SendCommand_CTRL("stop_trigger")
-		self.print_all_info(
-			check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral,
-			message=message, display=display, header=1)
+		if(show_every>0):
+			self.print_all_info(
+				check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral,
+				message=message, display=display, header=1)
 		#time.sleep(0.1); self.fc7.SendCommand_CTRL("stop_trigger")
 		#print("State of FSM after stopping: " , self.fc7.read("stat_phy_slvs_compare_state_machine"))
 		if(display>-1):

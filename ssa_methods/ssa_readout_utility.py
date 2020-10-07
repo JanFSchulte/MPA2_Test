@@ -369,7 +369,7 @@ class SSA_readout():
 		#utils.print_log((time.time()-t)*1E3)
 		return failed, count
 
-	def align_counters_readout(self, threshold=100, amplitude=200, duration=1):
+	def align_counters_readout(self, threshold=50, amplitude=150, duration=1):
 		utils.print_log('->  Running counters readout alignment procedure')
 		self.fc7.SendCommand_CTRL("stop_trigger")
 		self.cluster_data(initialize=True)
@@ -388,6 +388,7 @@ class SSA_readout():
 		for countershift in range(-5,5):
 			failed, counters = self.counters_fast(range(1,121), shift = countershift, initialize = 1, silent=True)
 			mean = np.mean(counters)
+			print('->  ' + str([countershift, mean]))
 			if((not failed) and (mean>990) and (mean<1100)):
 				successfull = True
 				break

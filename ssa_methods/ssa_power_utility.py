@@ -123,16 +123,20 @@ class ssa_power_utility:
 	def get_power_digital(self, display = True, i2cact = True, rtv1 = False):
 		utils.print_enable(False)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
+		time.sleep(0.001)
 		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08)  # to SC3 on PCA9646
+		time.sleep(0.001)
 		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_6, 0, self.pcbread, 0x02, 0)  # read V on shunt
 		vret = 0.00125 * ret
 		pret = float(round(vret, 3))
 		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_6, 0, self.pcbread, 0x01, 0)  # read V on shunt
+		time.sleep(0.001)
 		iret = (self.Vcshunt * ret)/self.Rshunt
 		iret = float(round(iret, 3))
 		pret = iret * vret
 		pret = float(round(pret, 3))
 		if i2cact: utils.activate_I2C_chip(self.fc7)
+		time.sleep(0.001)
 		utils.print_enable(True)
 		if(display):
 			utils.print_log( '->  P_dig: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret))
@@ -160,8 +164,11 @@ class ssa_power_utility:
 	def get_dvdd(self):
 		utils.print_enable(False)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
+		time.sleep(0.001)
 		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08)  # to SC3 on PCA9646
+		time.sleep(0.001)
 		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_6, 0, self.pcbread, 0x02, 0)  # read V on shunt
+		time.sleep(0.001)
 		vret = 0.00125 * ret
 		pret = float(round(vret, 3))
 		utils.activate_I2C_chip(self.fc7)
@@ -172,11 +179,15 @@ class ssa_power_utility:
 	def get_power_analog(self, display = True, i2cact = True, rtv1 = False):
 		utils.print_enable(False)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
+		time.sleep(0.001)
 		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08)  # to SC3 on PCA9646
+		time.sleep(0.001)
 		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_5, 0, self.pcbread, 0x02, 0)  # read V on shunt
+		time.sleep(0.001)
 		vret = 0.00125 * ret
 		vret = float(round(vret, 3))
 		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_5, 0, self.pcbread, 0x01, 0)  # read V on shunt
+		time.sleep(0.001)
 		iret = (self.Vcshunt * ret)/self.Rshunt
 		iret = float(round(iret, 3))
 		pret = iret * vret
@@ -195,11 +206,15 @@ class ssa_power_utility:
 	def get_power_pads(self, display = True, i2cact = True, rtv1 = False):
 		utils.print_enable(False)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
+		time.sleep(0.001)
 		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08)  # to SC3 on PCA9646
+		time.sleep(0.001)
 		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_7, 0, self.pcbread, 0x02, 0)  # read V on shunt
+		time.sleep(0.001)
 		vret = 0.00125 * ret
 		vret = float(round(vret, 3))
 		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_7, 0, self.pcbread, 0x01, 0)  # read V on shunt
+		time.sleep(0.001)
 		iret = (self.Vcshunt * ret)/self.Rshunt
 		iret = float(round(iret, 3))
 		pret = iret * vret
@@ -223,10 +238,15 @@ class ssa_power_utility:
 		setvoltage = int(round(diffvoltage / self.Vc))
 		if (setvoltage > 4095): setvoltage = 4095
 		setvoltage = setvoltage << 4
+		time.sleep(0.001)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
+		time.sleep(0.001)
 		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
+		time.sleep(0.001)
 		self.fc7.Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x31, setvoltage)  # tx to DAC C
+		time.sleep(0.001)
 		utils.activate_I2C_chip(self.fc7)
+		time.sleep(0.001)
 		utils.print_enable(True)
 		self.state.dvdd = targetvoltage
 

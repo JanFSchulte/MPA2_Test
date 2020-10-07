@@ -490,7 +490,7 @@ class SSA_test_utility():
 		dvdd_range = np.arange(dvdd_min, dvdd_max, dvdd_step)
 		for dvdd in dvdd_range:
 			self.ssa.pwr.set_dvdd(dvdd)
-			time.sleep(0.1)
+			time.sleep(0.5)
 			res = self.ssa.bist.ring_oscilaltor(
 				resolution_inv=127, resolution_del=127, printmode=printmode,
 				raw=0, asarray=1, display=1, note=' at DVDD={:5.3f}V'.format(dvdd) )
@@ -500,6 +500,7 @@ class SSA_test_utility():
 				fo.write("{:8s}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f},\n".format(
 					runname, dvdd, res[0], res[1], res[2], res[3], res[4], res[5], res[6], res[7]))
 		self.ssa.pwr.set_dvdd(1.0)
+		time.sleep(0.5)
 		if(plot):
 			self.ring_oscillators_vs_dvdd_plot()
 		return result
@@ -572,6 +573,7 @@ class SSA_test_utility():
 		filename = '../SSA_Results/memory_bist_vs_dvdd/', filemode='w', runname = ''):
 
 		self.ssa.pwr.set_dvdd(1.0)
+		time.sleep(0.5)
 		self.ssa.reset()
 		result = {}
 		if not os.path.exists(filename): os.makedirs(filename)
@@ -596,6 +598,7 @@ class SSA_test_utility():
 			with open(fout, 'a')  as fo:
 				fo.write("{:8s} , {:7.3f} , {:7.3f}, {:7.3f}, \n".format(runname, dvdd, res[0], res[1]))
 		self.ssa.pwr.set_dvdd(1.0)
+		time.sleep(0.5)
 		if(plot):
 			self.SRAM_BIST_vs_DVDD_plot()
 		return result
@@ -762,6 +765,7 @@ class SSA_test_utility():
 			fo.write("\n    RUN ; DVDD;       EFFICIENCY;    ERROR LIST; \n")
 		for dvdd in np.arange(start, stop, -step):
 			self.pwr.set_dvdd( dvdd )
+			time.sleep(0.5)
 			rt = self.ssa.init(reset_board = True, reset_chip = False, display = False) #alignement
 			if not rt:
 				eff = 0; erlist = [];

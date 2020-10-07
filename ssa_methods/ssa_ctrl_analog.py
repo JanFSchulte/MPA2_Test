@@ -130,14 +130,23 @@ class ssa_ctrl_analog:
 		return self.adc_measure('Bias_CALDAC', nsamples=nsamples)
 
 	#####################################################################
-	def adc_measure_supply(self, nsamples=1, raw = True):
-		r = np.zeros(4)
+	def adc_measure_supply(self, nsamples=1, raw = True, display=True):
+		r = np.zeros(6)
 		r[0] = self.adc_measure('DVDD', nsamples=nsamples)
 		r[1] = self.adc_measure('AVDD', nsamples=nsamples)
 		r[2] = self.adc_measure('PVDD', nsamples=nsamples)
 		r[3] = self.adc_measure('GND',  nsamples=nsamples)
+		r[4] = self.adc_measure('VBG',  nsamples=nsamples)
+		r[5] = self.adc_measure('Temperature',  nsamples=nsamples)
 		if(not raw):
-			r = r/(2**11) # 12 bit ADC e partitore 1/2
+			r = [r[0]/(2**11), r[1]/(2**11), r[2]/(2**11), r[3], r[4], r[5]]   # 12 bit ADC e partitore 1/2
+		if(display):
+			utils.print_log('->  ADC measure - DVDD    : {:5d}'.format(int(r[0])))
+			utils.print_log('->  ADC measure - AVDD    : {:5d}'.format(int(r[1])))
+			utils.print_log('->  ADC measure - PVDD    : {:5d}'.format(int(r[2])))
+			utils.print_log('->  ADC measure - GND     : {:5d}'.format(int(r[3])))
+			utils.print_log('->  ADC measure - VBG     : {:5d}'.format(int(r[4])))
+			utils.print_log('->  ADC measure - Temp    : {:5d}'.format(int(r[5])))
 		return r
 
 	#####################################################################

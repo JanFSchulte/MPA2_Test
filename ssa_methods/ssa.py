@@ -63,47 +63,52 @@ class SSA_ASIC:
 		time.sleep(0.2)
 
 	def init(self, reset_board=False, reset_chip=False, resync=True, slvs_current=0b111, edge="rising", display=True, read_current=False, set_deskewing=False):
-		self.generic_parameters['cl_word_alignment'] = False
-		if(display):
-			sys.stdout.write("->  Initialising..\r")
-			sys.stdout.flush()
-		if(reset_board):
-			self.fc7.write("ctrl_command_global_reset", 1)
-			time.sleep(0.3);
-			if(display): utils.print_info("->  Reset FC7 Firmware")
-		if(reset_chip):
-			self.ctrl.reset_and_set_sampling_edge(display=False)
-			time.sleep(0.3);
-			if(display): utils.print_info("->  Reset SSA Chip")
-		utils.activate_I2C_chip(self.fc7)
-		#time.sleep(0.2)
-		self.ctrl.set_lateral_data(left=0, right=0)
-		if(display):
-			sys.stdout.write("->  Tuning sampling phases..\r")
-			sys.stdout.flush()
-		self.ctrl.set_t1_sampling_edge(edge)
-		self.ctrl.init_slvs(slvs_current)
-		rt = self.ctrl.phase_tuning()
-		if(rt):
-			if(display): utils.print_good("->  Shift register mode ok")
-			if(display): utils.print_good("->  Sampling phases tuned")
-		else:
-			if(display): utils.print_error("->  Impossible to complete phase tuning")
-		self.ctrl.activate_readout_normal()
-		if(set_deskewing):
-			self.ctrl.set_sampling_deskewing_coarse(value = 0)
-			self.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
-			self.ctrl.set_cal_pulse_delay(0)
-		if(resync):
-			self.ctrl.resync(display=False)
-			utils.print_info("->  ReSync request");
-		if(display):
-			utils.print_info("->  Activated normal readout mode");
-			sys.stdout.write("->  Ready!                  ")
-			sys.stdout.flush()
-			time.sleep(0.2)
-			if(read_current):
-				self.pwr.get_power(display = True)
+		for iteration in range(3):
+			self.generic_parameters['cl_word_alignment'] = False
+			if(display):
+				sys.stdout.write("->  Initialising..\r")
+				sys.stdout.flush()
+			if(reset_board):
+				self.fc7.write("ctrl_command_global_reset", 1)
+				time.sleep(0.3);
+				if(display): utils.print_info("->  Reset FC7 Firmware")
+			if(reset_chip):
+				self.ctrl.reset_and_set_sampling_edge(display=False)
+				time.sleep(0.3);
+				if(display): utils.print_info("->  Reset SSA Chip")
+			utils.activate_I2C_chip(self.fc7)
+			#time.sleep(0.2)
+			self.ctrl.set_lateral_data(left=0, right=0)
+			if(display):
+				sys.stdout.write("->  Tuning sampling phases..\r")
+				sys.stdout.flush()
+			self.ctrl.set_t1_sampling_edge(edge)
+			self.ctrl.init_slvs(slvs_current)
+			rt = self.ctrl.phase_tuning()
+			if(rt):
+				if(display): utils.print_good("->  Shift register mode ok")
+				if(display): utils.print_good("->  Sampling phases tuned")
+			else:
+				if(display): utils.print_error("->  Impossible to complete phase tuning")
+			self.ctrl.activate_readout_normal()
+			if(set_deskewing):
+				self.ctrl.set_sampling_deskewing_coarse(value = 0)
+				self.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
+				self.ctrl.set_cal_pulse_delay(0)
+			if(resync):
+				self.ctrl.resync(display=False)
+				utils.print_info("->  ReSync request");
+			if(display):
+				utils.print_info("->  Activated normal readout mode");
+				sys.stdout.write("->  Ready!                  ")
+				sys.stdout.flush()
+				time.sleep(0.2)
+				if(read_current):
+					self.pwr.get_power(display = True)
+			if(rt):
+				break
+			else:
+				utils.print_warning('->  Error in alignment. Reiterating init procedure {:d}'.format(iteration))
 		return rt
 
 	def init_all(self):
@@ -116,8 +121,11 @@ class SSA_ASIC:
 
 	def alignment_all(self, display = False, file = False):
 		r1 = self.init(reset_board = True, reset_chip = False, display = display)
+		time.sleep(0.1)
 		r2 = self.alignment_cluster_data_word()
+		time.sleep(0.1)
 		r3, r4 = self.alignment_lateral_input(file = file)
+		time.sleep(0.1)
 		rpst = "initialize={:0b}, stub-data={:0b}, left={:0b}, right={:0b}".format(r1,r2,r3,r4)
 		if(r1 and r2 and r3 and r4):
 			utils.print_good("->  SSA alignment successfull (" + rpst+ ")")

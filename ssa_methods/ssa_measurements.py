@@ -42,7 +42,8 @@ class SSA_measurements():
 		thrdac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
 		nevents = 1000,                 # Number of calibration pulses
 		plot = False,                    # Fast plot of the results
-		filename = '../SSA_Results/TestLogs/Chip_0_'
+		filename = '../SSA_Results/TestLogs/Chip_0_',
+		display = False
 		):
 		charge_fc_trim= np.float(charge_fc_trim)
 		charge_fc_test= np.float(charge_fc_test)
@@ -71,7 +72,7 @@ class SSA_measurements():
 		cal_ampl = self.cal.evaluate_caldac_ampl(charge_fc_test, t_caldac)
 		scurves['l_trim'] = self.cal.scurves(
 			cal_ampl = cal_ampl, nevents = nevents,
-			display = False, plot = False, speeduplevel = 2, countershift = 'auto',
+			display = display, plot = False, speeduplevel = 2, countershift = 'auto',
 			filename = False, mode = 'all', rdmode = 'fast')
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_trim))
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_test))

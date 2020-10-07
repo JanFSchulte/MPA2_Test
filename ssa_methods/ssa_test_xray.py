@@ -21,6 +21,30 @@ class SSA_test_xray():
 		self.test = test; self.measure = measure; self.toptest = toptest
 		#self.biascal.set_gpib_address(12)
 
+	def xray_loop(self, rate = 60*10, init_wait = 1, directory = '../SSA_Results/XRAY/', runtime = 10E6):
+		#logfile = directory + 'log' + '__full.log'
+		#errfile = directory + 'log' + '__errors.log'
+		#utils.set_log_files(logfile, errfile)
+		self.configure_tests(directory)
+		time_init = time.time()
+		time_base = time_init - (rate - init_wait);
+		time_curr = time_init;
+		active = True
+		while(((time_curr-time_init) < runtime) and active):
+			try:
+				time_curr = time.time()
+				if( float(time_curr-time_base) > float(rate) ):
+					time_base = time_curr
+					self.toptest.RUN(runname = utils.date_time())
+					utils.print_info('->  Total run time: {:7.3f}'.format(time.time()-time_base) )
+				else:
+					ret = self.toptest.idle_routine(filename = directory+'/idle_routine', runname = utils.date_time(), duration=30)
+					if(ret == 'KeyboardInterrupt'): active = False
+			except KeyboardInterrupt:
+				active = False
+				utils.print_info("\n\n\nUser interrupt. The routine will stop at the end of the iteration.\n\n\n")
+			except:
+				pass
 
 	def configure_tests(self, directory):
 			runtest = RunTest('xray')
@@ -41,20 +65,6 @@ class SSA_test_xray():
 			runtest.set_enable('ring_oscillators', 'ON')
 			runtest.set_enable('stub_l1_max_speed', 'ON')
 			self.toptest.Configure(directory,  runtest )
-
-	def xray_loop(self, runtime = 10E3, rate = 60*5, init_wait = 1, directory = '../SSA_Results/XRAY/' ):
-		self.configure_tests(directory)
-		time_init = time.time()
-		time_base = time_init - (rate - init_wait);
-		time_curr = time_init;
-		while ((time_curr-time_init) < runtime):
-			time_curr = time.time()
-			if( float(time_curr-time_base) > float(rate) ):
-				time_base = time_curr
-				self.toptest.RUN(runname = utils.date_time())
-				utils.print_info('->  Total run time: {:7.3f}'.format(time.time()-time_base) )
-			else:
-				self.toptest.idle_routine(filename = directory+'idle_routine', runname = utils.date_time(), duration=5)
 
 
 	def set_start_irradiation_time(self, filename, ):
