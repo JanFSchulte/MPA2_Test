@@ -1,8 +1,5 @@
-
 from myScripts.Multimeter_GPIB_Keithley import *
 from myScripts.Multimeter_LAN_Keithley import *
-
-
 #from utilities.tbconfig import *
 from utilities.tbsettings import *
 from utilities.configure_communication import *
@@ -24,6 +21,7 @@ from ssa_methods.ssa_wp_analyze import *
 from ssa_methods.main_ssa_test_1 import *
 from ssa_methods.main_ssa_test_2 import *
 from ssa_methods.main_ssa_test_3 import *
+from ssa_methods.ssa_test_2xSSA2 import *
 
 multimeter_gpib = keithley_multimeter()
 multimeter_lan  = Multimeter_LAN_Keithley()
@@ -64,6 +62,24 @@ class SSAwp:
 
 ssa0 = SSAwp(0, 0b001)
 ssa1 = SSAwp(1, 0b111)
+ssa  = ssa0
+
+t2xSSA2 = Test_2xSSA2(ssa0, ssa1, FC7)
+
+def reset_fc7():
+	FC7.write("ctrl_command_global_reset", 1);
+
+def set_clock(val = 'internal'):
+	SSA0.pwr.set_clock_source(val)
+	sleep(0.1);
+	SSA0.ssa.init(reset_board = False, reset_chip = False, display = True)
+
+def ssa_on():
+	utils.activate_I2C_chip(FC7)
+	sleep(0.1);  ssa_pwr.set_supply('on', display=False)
+	sleep(0.1);  ssa_pwr.set_clock_source('internal')
+	sleep(0.1);  ssa.init(reset_board = True, reset_chip = True, display = True)
+
 
 # FC7               = fc7_com(fc7_if)
 # ssa_i2c           = ssa_i2c_conf(FC7)
@@ -83,34 +99,3 @@ ssa1 = SSAwp(1, 0b111)
 # ssa_anl           = SSA_Analise_Test_results(ssa_toptest, ssa_test, ssa_measure, ssa_biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
 # ssa_seu           = SSA_SEU(ssa, ssa_seuutil, ssa_i2c, FC7, ssa_cal, ssa_biascal, ssa_pwr, ssa_test, ssa_measure)
 # SSA               = ssa
-
-
-
-def reset_fc7():
-	FC7.write("ctrl_command_global_reset", 1);
-
-def set_clock(val = 'internal'):
-	SSA0.pwr.set_clock_source(val)
-	sleep(0.1);
-	SSA0.ssa.init(reset_board = False, reset_chip = False, display = True)
-
-def ssa_on():
-	utils.activate_I2C_chip(FC7)
-	sleep(0.1);  ssa_pwr.set_supply('on', display=False)
-	sleep(0.1);  ssa_pwr.set_clock_source('internal')
-	sleep(0.1);  ssa.init(reset_board = True, reset_chip = True, display = True)
-
-def align_2xSSA():
-	ssa0.chip.ctrl.activate_readout_shift()
-	ssa1.chip.ctrl.activate_readout_shift()
-	ssa0.chip.ctrl.set_shift_pattern_all(0b10000000)
-	ssa1.chip.ctrl.set_shift_pattern_all(0b10000000)
-	rt = ssa0.chip.ctrl.align_out()
-	ssa0.chip.ctrl.I2C.peri_write('OutPattern7/FIFOconfig', 7)
-	ssa0.chip.ctrl.reset_pattern_injection()
-	ssa0.chip.ctrl.activate_readout_normal()
-	ssa1.chip.ctrl.I2C.peri_write('OutPattern7/FIFOconfig', 7)
-	ssa1.chip.ctrl.reset_pattern_injection()
-	ssa1.chip.ctrl.activate_readout_normal()
-	if(rt): utils.print_good( "->\tPhase alignment successfull")
-	else:   utils.print_error("->\tPhase alignment error")
