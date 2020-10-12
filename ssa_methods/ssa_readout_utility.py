@@ -43,7 +43,7 @@ class SSA_readout():
 		return [l1_data_ready, stub_data_ready, counters_ready]
 
 
-	def cluster_data(self, apply_offset_correction = False, display = False, shift = 'default', initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False, return_as_pattern = False, profile=False):
+	def cluster_data(self, apply_offset_correction = False, display = False, shift = 'default', initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False, return_as_pattern = False, profile=False, set_chip=False):
 		data = []; tmp = [];
 		if(shift == 'default'):
 			ishift = self.cl_shift['digital']
@@ -54,8 +54,10 @@ class SSA_readout():
 			ishift = shift
 		counter = 0; data_loc = 21 + ishift;
 		status = [0]*3; timeout = 10;
+
+		if(set_chip or initialize):
+			self.ctrl.setup_readout_chip_id(display=False)
 		if(initialize):
-			self.ctrl.setup_readout_chip_id()
 			#Configure_TestPulse_MPA_SSA(number_of_test_pulses = 1, delay_before_next_pulse = 1)
 			Configure_TestPulse_SSA(delay_after_fast_reset = 0, delay_after_test_pulse = 0, delay_before_next_pulse = 500, number_of_test_pulses = 1, enable_rst_L1 = 0)
 			time.sleep(0.005)

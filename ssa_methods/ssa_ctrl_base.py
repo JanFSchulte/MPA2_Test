@@ -34,8 +34,8 @@ class ssa_ctrl_base:
 		self.r = []
 
 	#####################################################################
-	def setup_readout_chip_id(self):
-		self.fc7.set_active_readout_chip(self.index)
+	def setup_readout_chip_id(self, display=True):
+		self.fc7.set_active_readout_chip(self.index, display=display)
 
 	#####################################################################
 	def resync(self, display=True):
@@ -238,14 +238,13 @@ class ssa_ctrl_base:
 		return  done
 
 	def phase_tuning(self, method = 'new'):
-		self.setup_readout_chip_id()
 		self.activate_readout_shift()
 		if(self.fc7.invert):
 			self.set_shift_pattern_all(0b01111111)
 		elif(method == 'old'):
 			self.set_shift_pattern_all(0b10000000)
 		else:
-			self.set_shift_pattern_all(0b10100000)
+			self.set_shift_pattern_all(0b10100000) #0b10100000
 
 		time.sleep(0.01)
 		self.set_lateral_lines_alignament()
@@ -253,7 +252,7 @@ class ssa_ctrl_base:
 		if(method == 'old' or self.fc7.invert):
 			rt = self.align_out()
 		else:
-			rt = self.TuneSSA(0b10100000)
+			rt = self.TuneSSA(0b10100000) #0b10100000
 		if(tbconfig.VERSION['SSA']==1):
 			self.I2C.peri_write('OutPattern7/FIFOconfig', 7)
 		self.reset_pattern_injection()
@@ -385,6 +384,7 @@ class ssa_ctrl_base:
 
 	#####################################################################
 	def activate_readout_shift(self):
+		self.setup_readout_chip_id()
 		if(tbconfig.VERSION['SSA'] >= 2):
 			self.I2C.peri_write(register="control_1", field='ReadoutMode', data=0b010)
 		else:
@@ -403,10 +403,10 @@ class ssa_ctrl_base:
 			self.I2C.peri_write(register="Shift_pattern_st_2",      field=False, data = ST[2])
 			self.I2C.peri_write(register="Shift_pattern_st_3",      field=False, data = ST[3])
 			self.I2C.peri_write(register="Shift_pattern_st_4_st_5", field=False, data = ST[4])
-			self.I2C.peri_write(register="Shift_pattern_st_6_st_7", field=False, data = ST[6])
+			self.I2C.peri_write(register="Shift_pattern_st_6_st_7", field=False, data = ST[6])# ST[6]
 			self.I2C.peri_write(register="Shift_pattern_Left",      field=False, data = Left)
 			self.I2C.peri_write(register="Shift_pattern_Right",     field=False, data = Right)
-			self.I2C.peri_write(register="Shift_pattern_L1",        field=False, data = L1)
+			self.I2C.peri_write(register="Shift_pattern_L1",        field=False, data = L1) # L1
 			R_ST[0] = self.I2C.peri_read(register="Shift_pattern_st_0",      field=False )
 			R_ST[1] = self.I2C.peri_read(register="Shift_pattern_st_1",      field=False )
 			R_ST[2] = self.I2C.peri_read(register="Shift_pattern_st_2",      field=False )
@@ -417,15 +417,15 @@ class ssa_ctrl_base:
 			R_Right = self.I2C.peri_read(register="Shift_pattern_Right",     field=False )
 			R_L1    = self.I2C.peri_read(register="Shift_pattern_L1",        field=False )
 			#print(ST)
-			if(R_ST[0] != ST[0] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[0] ))
-			if(R_ST[1] != ST[1] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[1] ))
-			if(R_ST[2] != ST[2] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[2] ))
-			if(R_ST[3] != ST[3] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[3] ))
-			if(R_ST[4] != ST[4] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[4] ))
-			if(R_ST[6] != ST[6] ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_ST[6] ))
-			if(R_Left  != Left  ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_Left  ))
-			if(R_Right != Right ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_Right ))
-			if(R_L1    != L1    ): utils.print_error('->  Shift pattern set I2C error: {:8b}'.format(R_L1    ))
+			if(R_ST[0] != ST[0] ): utils.print_error('->  Shift pattern set R_ST[0] I2C error: {:8b}'.format(R_ST[0] ))
+			if(R_ST[1] != ST[1] ): utils.print_error('->  Shift pattern set R_ST[1] I2C error: {:8b}'.format(R_ST[1] ))
+			if(R_ST[2] != ST[2] ): utils.print_error('->  Shift pattern set R_ST[2] I2C error: {:8b}'.format(R_ST[2] ))
+			if(R_ST[3] != ST[3] ): utils.print_error('->  Shift pattern set R_ST[3] I2C error: {:8b}'.format(R_ST[3] ))
+			if(R_ST[4] != ST[4] ): utils.print_error('->  Shift pattern set R_ST[4] I2C error: {:8b}'.format(R_ST[4] ))
+			if(R_ST[6] != ST[6] ): utils.print_error('->  Shift pattern set R_ST[6] I2C error: {:8b}'.format(R_ST[6] ))
+			if(R_Left  != Left  ): utils.print_error('->  Shift pattern set R_Left  I2C error: {:8b}'.format(R_Left  ))
+			if(R_Right != Right ): utils.print_error('->  Shift pattern set R_Right I2C error: {:8b}'.format(R_Right ))
+			if(R_L1    != L1    ): utils.print_error('->  Shift pattern set R_L1    I2C error: {:8b}'.format(R_L1    ))
 		else:
 			self.I2C.peri_write('OutPattern0', ST[0])
 			self.I2C.peri_write('OutPattern1', ST[1])

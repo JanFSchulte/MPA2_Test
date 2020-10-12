@@ -52,8 +52,8 @@ else
 	cd ~/FC7/sw/fc7/tests
 	#./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit
-	#./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit   # the SEU firmware 
-	./bin/fc7-d19c.exe  -i $IP -n d19c_2ssa_none_14082019.bit -f ~/MPA-SSA_Test/bitfiles/d19c_2ssa_none_14082019.bit
+	./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit   # the SEU firmware 
+	#./bin/fc7-d19c.exe  -i $IP -n d19c_2ssa_none_14082019.bit -f ~/MPA-SSA_Test/bitfiles/d19c_2ssa_none_14082019.bit
 	
 	cd -
 fi

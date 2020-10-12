@@ -66,11 +66,11 @@ class fc7_com():
 	def get_active_readout_chip(self):
 		return self.active_chip
 
-	def set_active_readout_chip(self, ID):
+	def set_active_readout_chip(self, ID, display=True):
 		if(ID != self.active_chip):
 			self.write("cnfg_phy_slvs_chip_switch", ID)
 			self.update_active_readout_chip()
-			print("->\tReadout switched to SSA-{:d}".format(ID))
+			if(display): print("->  Readout switched to SSA-{:d}".format(ID))
 		return self.active_chip
 
 	def set_invert(self, mode=False):
