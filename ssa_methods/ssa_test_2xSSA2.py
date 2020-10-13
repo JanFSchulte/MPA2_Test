@@ -37,7 +37,6 @@ class Test_2xSSA2():
 		self.ssa1.chip.ctrl.activate_readout_normal()
 		if(rt): utils.print_good( "->  Phase alignment successfull")
 		else:   utils.print_error("->  Phase alignment error")
-
 		return rt
 
 	def lateral_communication_select_phase(self):
@@ -70,6 +69,7 @@ class Test_2xSSA2():
 			else: utils.print_warning("->  Lateral communication ok. Phase value = {:d} -> not as expected but it is fine.".format(j))
 		else:
 			utils.print_error("->  Lateral communication not working properly")
+		return [i, j]
 
 	def lateral_communication_set_phase(self, p0, p1):
 		self.ssa0.i2c.peri_write(register='LateralRX_sampling', field='LateralRX_R_PhaseData', data=p0)
@@ -78,8 +78,10 @@ class Test_2xSSA2():
 #  min_clsize = 1; max_clsize = 4; nruns = 5; shift = -2; nstrips = 2
 
 	def test_l1_data(self, mode="digital", nstrips='random', nruns=100, calpulse=[100, 200], threshold=[20, 150], shift=0, display=False, latency=50, init=False, hfi=True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = ''):
-		self.ssa0.test.l1_data(mode=mode, nstrips=nstrips, nruns=nruns, calpulse=calpulse, threshold=threshold, shift=shift, display=display, latency=latency, init=init, hfi=hfi, file=file, filemode=filemode, runname=runname ,profile=False)
-		self.ssa1.test.l1_data(mode=mode, nstrips=nstrips, nruns=nruns, calpulse=calpulse, threshold=threshold, shift=shift, display=display, latency=latency, init=init, hfi=hfi, file=file, filemode=filemode, runname=runname ,profile=False)
+		rt = []
+		rt.extend( self.ssa0.test.l1_data(mode=mode, nstrips=nstrips, nruns=nruns, calpulse=calpulse, threshold=threshold, shift=shift, display=display, latency=latency, init=init, hfi=hfi, file=file, filemode=filemode, runname=runname ,profile=False) )
+		rt.extend( self.ssa1.test.l1_data(mode=mode, nstrips=nstrips, nruns=nruns, calpulse=calpulse, threshold=threshold, shift=shift, display=display, latency=latency, init=init, hfi=hfi, file=file, filemode=filemode, runname=runname ,profile=False) )
+		return rt
 
 	def test_cluster_data(self, mode = "digital",  nstrips = 'random', min_clsize = 1, max_clsize = 4, nruns = 100, shift = -2, display=False, init = False, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = True):
 		fo = open(file + "readout_cluster-data_" + mode + ".csv", filemode)
@@ -175,17 +177,17 @@ class Test_2xSSA2():
 
 	def test_ring_oscillators_vs_dvdd(self,
 		dvdd_step=0.05, dvdd_max=1.3, dvdd_min=0.8, plot=False,
-		filename = '../SSA_Results/ring_oscillator_vs_dvdd/', filemode='w', runname = '', printmode='info'):
+		filename = '../SSA_Results/test_2xSSA2/ring_oscillator_vs_dvdd/', filemode='w', runname = '', printmode='info'):
 		result = []
 		if not os.path.exists(filename): os.makedirs(filename)
-		fout = filename + 'ring_oscillator_vs_dvdd.csv'
+		fout = filename + 'ring_oscillator_vs_dvdd_' + runname + ".csv"
 		with open(fout, filemode)  as fo:
 			fo.write("    RUN ,   DVDD , INV BR , INV TR , INV BC , INV BL , DEL BR , DEL TR , DEL BC , DEL BL ,  \n")
 		dvdd_range = np.arange(dvdd_min, dvdd_max, dvdd_step)
 		for dvdd in dvdd_range:
-			self.ssa.pwr.set_dvdd(dvdd)
+			self.ssa0.pwr.set_dvdd(dvdd)
 			time.sleep(0.5)
-			res = self.ssa.bist.ring_oscilaltor(
+			res = self.ssa0.chip.bist.ring_oscilaltor(
 				resolution_inv=127, resolution_del=127, printmode=printmode,
 				raw=0, asarray=1, display=1, note=' at DVDD={:5.3f}V'.format(dvdd) )
 			#rdv = self.ssa.pwr.get_dvdd()
@@ -193,7 +195,7 @@ class Test_2xSSA2():
 			with open(fout, 'a')  as fo:
 				fo.write("{:8s}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f},\n".format(
 					runname, dvdd, res[0], res[1], res[2], res[3], res[4], res[5], res[6], res[7]))
-		self.ssa.pwr.set_dvdd(1.0)
+		self.ssa0.pwr.set_dvdd(1.0)
 		time.sleep(0.5)
 		if(plot):
 			self.ring_oscillators_vs_dvdd_plot()
@@ -208,7 +210,7 @@ class Test_2xSSA2():
 		self.ssa1.reset()
 		result = {}
 		if not os.path.exists(filename): os.makedirs(filename)
-		fout = filename + "memory_bist_vs_dvdd.csv"
+		fout = filename + "memory_bist_vs_dvdd_" + runname + ".csv"
 		with open(fout, filemode)  as fo:
 			fo.write("\n     RUN ,   DVDD   , 0-MEM0   , 0-MEM1   , 1-MEM0   , 1-MEM1    \n")
 		#dvdd_range = np.linspace(dvdd_max, dvdd_min, npoints)
@@ -231,7 +233,30 @@ class Test_2xSSA2():
 			with open(fout, 'a')  as fo:
 				fo.write("{:8s} , {:7.3f} , {:7.3f} , {:7.3f} , {:7.3f} , {:7.3f} , \n".format(runname, dvdd, res0[0], res0[1], res1[0], res1[1]))
 		self.ssa0.pwr.set_dvdd(1.0)
-		time.sleep(0.5)
+		time.sleep(0.1)
 		if(plot):
 			self.SRAM_BIST_vs_DVDD_plot()
 		return result
+
+
+	def initialize(self):
+		self.ssa0.reset()
+		self.ssa0.init()
+		self.align_2xSSA()
+		self.lateral_communication_select_phase()
+		self.test_cluster_data(nruns=50)
+		self.ssa0.test.l1_data(nruns=50)
+
+	def run(self, runname='Tp25', filename='../SSA_Results/test_2xSSA2/'):
+		rt = []
+		time.sleep(0.1); rt.extend( self.ssa0.pwr.get_power() )
+		time.sleep(0.1); rt.append( self.align_2xSSA() )
+		time.sleep(0.1); rt.extend( self.lateral_communication_select_phase() )
+		time.sleep(0.1); rt.append( self.test_cluster_data(nruns=1000) )
+		time.sleep(0.1); rt.extend( self.ssa0.test.l1_data(nruns=1000) )
+		self.test_SRAM_BIST_vs_DVDD(runname = runname, filename = filename+'/memory_bist_vs_dvdd/')
+		self.test_ring_oscillators_vs_dvdd(runname = runname, filename = filename+'/memory_bist_vs_dvdd/') 
+		with open(filename + 'summary_' + runname + '.csv', 'w') as fo:
+			fo.write(str(rt))
+		self.ssa0.pwr.set_dvdd(1.0)
+		return rt

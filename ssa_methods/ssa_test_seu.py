@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import fnmatch
 import re
 import traceback
+from scipy import stats
 
 from collections import OrderedDict
 from functools import reduce
@@ -153,62 +154,64 @@ class SSA_SEU():
 		dirs = os.listdir(directory)
 		dirs = [s for s in dirs if "Ion-" in s]
 		dirs.sort()
-		global_summary = {'latch_500':[], 'latch_100':[], 'sram_500':[], 'sram_100':[], 'stub':[]}
+		global_summary = {'latch_500':[], 'latch_100':[], 'sram_500':[], 'sram_100':[], 'stub':[],'sram_stub':[],'latch_stub':[] }
 		for ddd in dirs:
 			for f in os.listdir( directory +'/'+ ddd ):
 				run_summary = re.findall("SEU_SSA.+_summary.csv", f)
 				if(len(run_summary)>0):
 					run_summary = directory +'/'+ ddd +'/'+ run_summary[0]
-					[ion, angle, memory, run] = re.findall("SEU_SSA.+Ion-(.+)__Tilt-(.+)__Flux-(.+)_run(.+)____summary.csv", f)[0]
-					run_data = CSV.csv_to_array(  run_summary )
+					rfn = re.findall("SEU_SSA.+Ion-(.+)__Tilt-(.+)__Flux-(.+)_run(.+)____summary.csv", f)
+					if(len(rfn)>0):
+						[ion, angle, memory, run] = rfn[0]
+						run_data = CSV.csv_to_array(  run_summary )
+						if(use_run_precise_info):
+							index = np.where( (ion_info[0, :] == ion) & (ion_info[1, :] == run) )
+							if(len(index[0])>1):
+								print('    Found repeated test: ion={:s}, run={:s}, index={:s}'.format(ion, run, str(index)))
+							dose = run_info[index][0][9]
+							LET = run_info[index][0][11]
+							mean_flux = run_info[index][0][8]
+							fluence = mean_flux * np.sum( run_data[:, 5] )
+						else:
+							dose = 0
+							LET = let_map[ ion ] / np.cos(np.radians(float(angle)) )
+							mean_flux = 15000 #* np.cos(np.radians(float(angle)) )
+							fluence = mean_flux * np.sum( run_data[:, 5] )
 
-					if(use_run_precise_info):
-						index = np.where( (ion_info[0, :] == ion) & (ion_info[1, :] == run) )
-						dose = run_info[index][0][9]
-						LET = run_info[index][0][11]
-						mean_flux = run_info[index][0][8]
-						fluence = mean_flux * np.sum( run_data[:, 5] )
-					else:
-						dose = 0
-						LET = let_map[ ion ] / np.cos(np.radians(float(angle)) )
-						mean_flux = 15000 * np.cos(np.radians(float(angle)) )
-						fluence = mean_flux * np.sum( run_data[:, 5] )
+						print("->  Elaborating file: " + str(run_summary))
+						error_l1_sum = [0]*2; good_l1_sum = [0]*2; time_l1_sum = [0]*2 ; error_rate_l1_sum = [0]*2;
+						error_rate_l1_sum_normalised = [0]*2; error_rate_stub_sum_normalised = 0;
+						error_stub_sum = 0; good_stub_sum = 0; error_rate_stub_sum = 0; counters_a = 0; counters_s = 0;
+						for shortrun in run_data:
+							if(shortrun[14] < 1E4 and shortrun[14]>=0):
+								if(shortrun[6]>250): #high latency run
+									error_l1_sum[1] += shortrun[14]
+									good_l1_sum[1] += shortrun[10]
+								else:
+									error_l1_sum[0] += shortrun[14]
+									good_l1_sum[0] += shortrun[10]
+							if(shortrun[12] < 1E4 and shortrun[12]>=0):
+								error_stub_sum += shortrun[12]
+								good_stub_sum += shortrun[8]
+						try: error_rate_l1_sum[1] = error_l1_sum[1]/(error_l1_sum[1]+good_l1_sum[1])
+						except ZeroDivisionError: error_rate_l1_sum[1] = -1
+						try: error_rate_l1_sum[0] = error_l1_sum[0]/(error_l1_sum[0]+good_l1_sum[0])
+						except ZeroDivisionError: error_rate_l1_sum[0] = -1
+						try: error_rate_stub_sum  = error_stub_sum/(error_stub_sum+good_stub_sum)
+						except ZeroDivisionError: error_rate_stub_sum = -1
 
-					print("->  Elaborating file: " + str(run_summary))
-					error_l1_sum = [0]*2; good_l1_sum = [0]*2; time_l1_sum = [0]*2 ; error_rate_l1_sum = [0]*2;
-					error_rate_l1_sum_normalised = [0]*2; error_rate_stub_sum_normalised = 0;
-					error_stub_sum = 0; good_stub_sum = 0; error_rate_stub_sum = 0; counters_a = 0; counters_s = 0;
-					for shortrun in run_data:
-						if(shortrun[14] < 1E4 and shortrun[14]>=0):
-							if(shortrun[6]>250): #high latency run
-								error_l1_sum[1] += shortrun[14]
-								good_l1_sum[1] += shortrun[10]
-							else:
-								error_l1_sum[0] += shortrun[14]
-								good_l1_sum[0] += shortrun[10]
-						if(shortrun[12] < 1E4 and shortrun[12]>=0):
-							error_stub_sum += shortrun[12]
-							good_stub_sum += shortrun[8]
-
-					try: error_rate_l1_sum[1] = error_l1_sum[1]/(error_l1_sum[1]+good_l1_sum[1])
-					except ZeroDivisionError: error_rate_l1_sum[1] = -1
-					try: error_rate_l1_sum[0] = error_l1_sum[0]/(error_l1_sum[0]+good_l1_sum[0])
-					except ZeroDivisionError: error_rate_l1_sum[0] = -1
-					try: error_rate_stub_sum  = error_stub_sum/(error_stub_sum+good_stub_sum)
-					except ZeroDivisionError: error_rate_stub_sum = -1
-
-					error_rate_l1_sum_normalised[0] = error_rate_l1_sum[0] / np.float(mean_flux)
-					error_rate_l1_sum_normalised[1] = error_rate_l1_sum[1] / np.float(mean_flux)
-					error_rate_stub_sum_normalised  = error_rate_stub_sum / np.float(mean_flux)
-					print(mean_flux)
-
-					if(memory=='latch' ):
-						global_summary['latch_500'].append([ion, angle, LET, good_l1_sum[1], error_l1_sum[1], error_rate_l1_sum[1], error_rate_l1_sum_normalised[1] ])
-						global_summary['latch_100'].append([ion, angle, LET, good_l1_sum[0], error_l1_sum[0], error_rate_l1_sum[0], error_rate_l1_sum_normalised[0] ])
-					elif(memory=='sram'):
-						global_summary['sram_500'].append( [ion, angle, LET, good_l1_sum[1], error_l1_sum[1], error_rate_l1_sum[1], error_rate_l1_sum_normalised[1] ])
-						global_summary['sram_100'].append( [ion, angle, LET, good_l1_sum[0], error_l1_sum[0], error_rate_l1_sum[0], error_rate_l1_sum_normalised[0] ])
-					global_summary['stub'].append([ion, angle, LET, good_stub_sum, error_stub_sum, error_rate_stub_sum, error_rate_stub_sum_normalised] )
+						error_rate_l1_sum_normalised[0] = error_rate_l1_sum[0] / np.float(mean_flux)
+						error_rate_l1_sum_normalised[1] = error_rate_l1_sum[1] / np.float(mean_flux)
+						error_rate_stub_sum_normalised  = error_rate_stub_sum / np.float(mean_flux)
+						#print(mean_flux)
+						if(memory=='latch' ):
+							global_summary['latch_500'].append([ion, angle, LET, good_l1_sum[1], error_l1_sum[1], error_rate_l1_sum[1], error_rate_l1_sum_normalised[1], mean_flux ])
+							global_summary['latch_100'].append([ion, angle, LET, good_l1_sum[0], error_l1_sum[0], error_rate_l1_sum[0], error_rate_l1_sum_normalised[0], mean_flux ])
+							global_summary['latch_stub'].append([ion, angle, LET, good_stub_sum, error_stub_sum, error_rate_stub_sum, error_rate_stub_sum_normalised, mean_flux])
+						elif(memory=='sram'):
+							global_summary['sram_500'].append( [ion, angle, LET, good_l1_sum[1], error_l1_sum[1], error_rate_l1_sum[1], error_rate_l1_sum_normalised[1], mean_flux ])
+							global_summary['sram_100'].append( [ion, angle, LET, good_l1_sum[0], error_l1_sum[0], error_rate_l1_sum[0], error_rate_l1_sum_normalised[0], mean_flux ])
+							global_summary['sram_stub'].append([ion, angle, LET, good_stub_sum, error_stub_sum, error_rate_stub_sum, error_rate_stub_sum_normalised, mean_flux] )
 		#return global_summary
 		global_summary['latch_500'] = np.array(global_summary['latch_500'])
 		global_summary['latch_500'] = global_summary['latch_500'][np.argsort(np.array(global_summary['latch_500'][:,2],dtype=float ))]
@@ -223,6 +226,18 @@ class SSA_SEU():
 		CSV.array_to_csv( np.array(global_summary['sram_500']), directory+'sram_500.csv')
 		CSV.array_to_csv( np.array(global_summary['sram_100']), directory+'sram_100.csv')
 		tmpvect = {}
+		global_summary['stub'] = global_summary['latch_stub'].copy()
+		for idx in range(len(global_summary['stub'])):
+			if(global_summary['latch_stub'][idx][0:2] == global_summary['sram_stub'][idx][0:2]):
+				global_summary['stub'][idx][3] = global_summary['sram_stub'][idx][3] + global_summary['latch_stub'][idx][3] #good_stub_sum
+				global_summary['stub'][idx][4] = global_summary['sram_stub'][idx][4] + global_summary['latch_stub'][idx][4] #error_stub_sum
+				global_summary['stub'][idx][5] = global_summary['stub'][idx][4]/(global_summary['stub'][idx][4]+global_summary['stub'][idx][3]) #error_rate_stub_sum
+				global_summary['stub'][idx][7] = (
+					(global_summary['sram_stub'][idx][7]*(global_summary['sram_stub'][idx][4] + global_summary['sram_stub'][idx][3]) + global_summary['latch_stub'][idx][7] * (global_summary['latch_stub'][idx][4]+global_summary['latch_stub'][idx][3]))
+					/ (global_summary['sram_stub'][idx][4] +global_summary['sram_stub'][idx][3] + global_summary['latch_stub'][idx][4]+global_summary['latch_stub'][idx][3]))
+				global_summary['stub'][idx][6] = global_summary['stub'][idx][5]/global_summary['stub'][idx][7]	#error_rate_stub_sum_normalised
+			else:
+				print('ERROR')
 		for stubdata in global_summary['stub']:
 			if(stubdata[2] in tmpvect):
 				tmpvect[stubdata[2]][3] += stubdata[3]
@@ -236,7 +251,7 @@ class SSA_SEU():
 		global_summary['stub'] = np.array(global_summary['stub'])
 		global_summary['stub'] = global_summary['stub'][np.argsort(np.array(global_summary['stub'][:,2],dtype=float ))]
 		CSV.array_to_csv( np.array(global_summary['stub']), directory+'stub.csv')
-		#return global_summary
+		return global_summary
 
 	def quick_plot_logs(self, directory='../SSA_Results/SEU_Results/'):
 		stubs = CSV.csv_to_array( directory+'stub.csv')
@@ -257,23 +272,46 @@ class SSA_SEU():
 		color=iter(sns.color_palette('deep'))
 		#plt.ylim(bottom = 1E-9)
 		c = next(color)
-		plt.semilogy(
+		plt.plot(
 			np.array(stubs[:,3], dtype=float), np.array(stubs[:,7], dtype=float),
 			'--o', color = c, markersize = 10, markeredgewidth = 0, label='Stub data')
 		c = next(color)
-		plt.semilogy(
+		plt.plot(
 			np.array(sram_500[:,3], dtype=float), np.array(sram_500[:,7], dtype=float),
 			'--o', color = c, markersize = 10, markeredgewidth = 0, label='L1 SRAM')
 		c = next(color)
-		plt.semilogy(
+		plt.plot(
 			np.array(latch_500[:,3], dtype=float), np.array(latch_500[:,7], dtype=float),
 			'--o', color = c, markersize = 10, markeredgewidth = 0, label='L1 latch')
 		leg = plt.legend(fontsize = 12, loc=('lower right'), frameon=True )
 		plt.show()
 
+#	def fit(self):
+#		plt.plot(data, stats.exponweib.pdf(data, *stats.exponweib.fit(data, 1, 1, scale=02, loc=0)))
+#		_ = plt.hist(data, bins=np.linspace(0, 16, 33), normed=True, alpha=0.5);
+#		plt.show()
 
-
-
+#	import numpy as np
+#	import matplotlib.pyplot as plt
+#	from weibull import weibProbDist, weibCumDist
+#
+#	x = np.linspace(0, 5, 100)
+#	a_alpha = np.array([0.5, 1, 2, 5])
+#	label = r'${\alpha} = %s, {\beta} = %s$'
+#
+#	fig = plt.figure('Weibull')
+#	ax1 = fig.add_subplot(211)
+#	ax2 = fig.add_subplot(212)
+#	for i in a_alpha:
+#	    ax1.plot(x, weibProbDist(x, i, 1), label=label % (i, 1))
+#	    ax2.plot(x, weibCumDist(x, i, 1), label=label % (i, 1))
+#	ax1.set_title('Probability density function', size=12)
+#	ax2.set_title('Cumulative distribution function', size=12)
+#	ax1.legend(loc=1, prop={'size': 10})
+#	ax2.legend(loc=7, prop={'size': 10})
+#
+#	fig.subplots_adjust(hspace=0.5)
+#	plt.show()
 
 
 
@@ -707,42 +745,6 @@ class SSA_SEU():
 		global_summary['stub'] = global_summary['stub'][np.argsort(np.array(global_summary['stub'][:,2],dtype=float ))]
 		CSV.array_to_csv( np.array(global_summary['stub']), directory+'stub.csv')
 		return global_summary
-
-	def quick_plot_logs(self, directory='../SSA_Results/SEU_Results/'):
-		stubs = CSV.csv_to_array( directory+'stub.csv')
-		sram_500 = CSV.csv_to_array( directory+'sram_500.csv')
-		latch_500 = CSV.csv_to_array( directory+'latch_500.csv')
-
-		fig = plt.figure(figsize=(16,12))
-		plt.style.use('seaborn-deep')
-		ax = plt.subplot(111)
-		ax.spines["top"].set_visible(True)
-		ax.spines["right"].set_visible(True)
-		ax.get_xaxis().tick_bottom()
-		ax.get_yaxis().tick_left()
-		plt.xticks(fontsize=16)
-		plt.yticks(fontsize=16)
-		plt.ylabel("Errors per ..", fontsize=16)
-		plt.xlabel('LET', fontsize=16)
-		color=iter(sns.color_palette('deep'))
-		#plt.ylim(bottom = 1E-9)
-		c = next(color)
-		plt.semilogy(
-			np.array(stubs[:,3], dtype=float), np.array(stubs[:,6], dtype=float),
-			'--o', color = c, markersize = 10, markeredgewidth = 0, label='Stub data')
-		c = next(color)
-		plt.semilogy(
-			np.array(sram_500[:,3], dtype=float), np.array(sram_500[:,6], dtype=float),
-			'--o', color = c, markersize = 10, markeredgewidth = 0, label='L1 SRAM')
-		c = next(color)
-		plt.semilogy(
-			np.array(latch_500[:,3], dtype=float), np.array(latch_500[:,6], dtype=float),
-			'--o', color = c, markersize = 10, markeredgewidth = 0, label='L1 latch')
-		leg = plt.legend(fontsize = 12, loc=('lower right'), frameon=True )
-		plt.show()
-
-
-
 
 
 
