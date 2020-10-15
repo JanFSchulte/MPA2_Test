@@ -22,9 +22,15 @@ from scipy import stats
 from scipy import constants as ph_const
 from scipy import signal as scypy_signal
 from scipy import interpolate
+from scipy.optimize import curve_fit
+from scipy.special import erfc
+from scipy.special import erf
 import matplotlib.gridspec as gridspec
 from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
+import matplotlib.pyplot as plt
+from numpy import exp, loadtxt, pi, sqrt
+from lmfit import Model
 
 from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
@@ -162,6 +168,7 @@ class SSA_SEU():
 					run_summary = directory +'/'+ ddd +'/'+ run_summary[0]
 					rfn = re.findall("SEU_SSA.+Ion-(.+)__Tilt-(.+)__Flux-(.+)_run(.+)____summary.csv", f)
 					if(len(rfn)>0):
+						print("->  Elaborating file: " + str(run_summary))
 						[ion, angle, memory, run] = rfn[0]
 						run_data = CSV.csv_to_array(  run_summary )
 						if(use_run_precise_info):
@@ -171,47 +178,49 @@ class SSA_SEU():
 							dose = run_info[index][0][9]
 							LET = run_info[index][0][11]
 							mean_flux = run_info[index][0][8]
-							fluence = mean_flux * np.sum( run_data[:, 5] )
+							run_time = np.sum( run_data[:, 5] )
+							fluence = mean_flux * run_time
 						else:
 							dose = 0
 							LET = let_map[ ion ] / np.cos(np.radians(float(angle)) )
-							mean_flux = 15000 #* np.cos(np.radians(float(angle)) )
-							fluence = mean_flux * np.sum( run_data[:, 5] )
+							mean_flux = 15000 * np.cos(np.radians(float(angle)) )
+							run_time = np.sum( run_data[:, 5] )
+							fluence = mean_flux * run_time
 
-						print("->  Elaborating file: " + str(run_summary))
 						error_l1_sum = [0]*2; good_l1_sum = [0]*2; time_l1_sum = [0]*2 ; error_rate_l1_sum = [0]*2;
 						error_rate_l1_sum_normalised = [0]*2; error_rate_stub_sum_normalised = 0;
 						error_stub_sum = 0; good_stub_sum = 0; error_rate_stub_sum = 0; counters_a = 0; counters_s = 0;
 						for shortrun in run_data:
-							if(shortrun[14] < 1E4 and shortrun[14]>=0):
+							shortrun_duration = shortrun[5]
+							if(shortrun_duration>1): #exclude early stopped runs
+								error_stub_sum += shortrun[12]
+								good_stub_sum += shortrun[8]
 								if(shortrun[6]>250): #high latency run
 									error_l1_sum[1] += shortrun[14]
 									good_l1_sum[1] += shortrun[10]
 								else:
 									error_l1_sum[0] += shortrun[14]
 									good_l1_sum[0] += shortrun[10]
-							if(shortrun[12] < 1E4 and shortrun[12]>=0):
-								error_stub_sum += shortrun[12]
-								good_stub_sum += shortrun[8]
-						try: error_rate_l1_sum[1] = error_l1_sum[1]/(error_l1_sum[1]+good_l1_sum[1])
-						except ZeroDivisionError: error_rate_l1_sum[1] = -1
-						try: error_rate_l1_sum[0] = error_l1_sum[0]/(error_l1_sum[0]+good_l1_sum[0])
-						except ZeroDivisionError: error_rate_l1_sum[0] = -1
-						try: error_rate_stub_sum  = error_stub_sum/(error_stub_sum+good_stub_sum)
-						except ZeroDivisionError: error_rate_stub_sum = -1
-
-						error_rate_l1_sum_normalised[0] = error_rate_l1_sum[0] / np.float(mean_flux)
-						error_rate_l1_sum_normalised[1] = error_rate_l1_sum[1] / np.float(mean_flux)
-						error_rate_stub_sum_normalised  = error_rate_stub_sum / np.float(mean_flux)
+							#else:
+							#	print('Excluded: ' + str(shortrun_duration) + str(shortrun))
+						error_rate_l1_sum[0] = error_l1_sum[0] / fluence
+						error_rate_l1_sum[1] = error_l1_sum[1] / fluence
+						error_rate_stub_sum  = error_stub_sum  / fluence
+						try: error_rate_l1_sum_normalised[1] = (error_l1_sum[1]/(error_l1_sum[1]+good_l1_sum[1]))/ mean_flux
+						except ZeroDivisionError: error_rate_l1_sum_normalised[1] = -1
+						try: error_rate_l1_sum_normalised[0] = (error_l1_sum[0]/(error_l1_sum[0]+good_l1_sum[0]))/ mean_flux
+						except ZeroDivisionError: error_rate_l1_sum_normalised[0] = -1
+						try: error_rate_stub_sum_normalised  = (error_stub_sum/(error_stub_sum+good_stub_sum))/ mean_flux
+						except ZeroDivisionError: error_rate_stub_sum_normalised = -1
 						#print(mean_flux)
 						if(memory=='latch' ):
-							global_summary['latch_500'].append([ion, angle, LET, good_l1_sum[1], error_l1_sum[1], error_rate_l1_sum[1], error_rate_l1_sum_normalised[1], mean_flux ])
-							global_summary['latch_100'].append([ion, angle, LET, good_l1_sum[0], error_l1_sum[0], error_rate_l1_sum[0], error_rate_l1_sum_normalised[0], mean_flux ])
-							global_summary['latch_stub'].append([ion, angle, LET, good_stub_sum, error_stub_sum, error_rate_stub_sum, error_rate_stub_sum_normalised, mean_flux])
+							global_summary['latch_500'].append([ion, angle, LET, good_l1_sum[1], error_l1_sum[1], error_rate_l1_sum[1], error_rate_l1_sum_normalised[1], run_time, mean_flux, fluence])
+							global_summary['latch_100'].append([ion, angle, LET, good_l1_sum[0], error_l1_sum[0], error_rate_l1_sum[0], error_rate_l1_sum_normalised[0], run_time, mean_flux, fluence ])
+							global_summary['latch_stub'].append([ion, angle, LET, good_stub_sum, error_stub_sum, error_rate_stub_sum, error_rate_stub_sum_normalised, run_time, mean_flux, fluence])
 						elif(memory=='sram'):
-							global_summary['sram_500'].append( [ion, angle, LET, good_l1_sum[1], error_l1_sum[1], error_rate_l1_sum[1], error_rate_l1_sum_normalised[1], mean_flux ])
-							global_summary['sram_100'].append( [ion, angle, LET, good_l1_sum[0], error_l1_sum[0], error_rate_l1_sum[0], error_rate_l1_sum_normalised[0], mean_flux ])
-							global_summary['sram_stub'].append([ion, angle, LET, good_stub_sum, error_stub_sum, error_rate_stub_sum, error_rate_stub_sum_normalised, mean_flux] )
+							global_summary['sram_500'].append( [ion, angle, LET, good_l1_sum[1], error_l1_sum[1], error_rate_l1_sum[1], error_rate_l1_sum_normalised[1], run_time, mean_flux, fluence ])
+							global_summary['sram_100'].append( [ion, angle, LET, good_l1_sum[0], error_l1_sum[0], error_rate_l1_sum[0], error_rate_l1_sum_normalised[0], run_time, mean_flux, fluence ])
+							global_summary['sram_stub'].append([ion, angle, LET, good_stub_sum, error_stub_sum, error_rate_stub_sum, error_rate_stub_sum_normalised, run_time, mean_flux, fluence] )
 		#return global_summary
 		global_summary['latch_500'] = np.array(global_summary['latch_500'])
 		global_summary['latch_500'] = global_summary['latch_500'][np.argsort(np.array(global_summary['latch_500'][:,2],dtype=float ))]
@@ -231,11 +240,11 @@ class SSA_SEU():
 			if(global_summary['latch_stub'][idx][0:2] == global_summary['sram_stub'][idx][0:2]):
 				global_summary['stub'][idx][3] = global_summary['sram_stub'][idx][3] + global_summary['latch_stub'][idx][3] #good_stub_sum
 				global_summary['stub'][idx][4] = global_summary['sram_stub'][idx][4] + global_summary['latch_stub'][idx][4] #error_stub_sum
-				global_summary['stub'][idx][5] = global_summary['stub'][idx][4]/(global_summary['stub'][idx][4]+global_summary['stub'][idx][3]) #error_rate_stub_sum
-				global_summary['stub'][idx][7] = (
-					(global_summary['sram_stub'][idx][7]*(global_summary['sram_stub'][idx][4] + global_summary['sram_stub'][idx][3]) + global_summary['latch_stub'][idx][7] * (global_summary['latch_stub'][idx][4]+global_summary['latch_stub'][idx][3]))
-					/ (global_summary['sram_stub'][idx][4] +global_summary['sram_stub'][idx][3] + global_summary['latch_stub'][idx][4]+global_summary['latch_stub'][idx][3]))
-				global_summary['stub'][idx][6] = global_summary['stub'][idx][5]/global_summary['stub'][idx][7]	#error_rate_stub_sum_normalised
+				global_summary['stub'][idx][5] = (global_summary['sram_stub'][idx][5] + global_summary['latch_stub'][idx][5])/2.0 #error_rate_stub_sum
+				global_summary['stub'][idx][6] = (global_summary['sram_stub'][idx][6] + global_summary['latch_stub'][idx][6])/2.0	#error_rate_stub_sum_normalised
+				global_summary['stub'][idx][7] = global_summary['sram_stub'][idx][7] + global_summary['latch_stub'][idx][7] #error_stub_sum
+				global_summary['stub'][idx][8] = (global_summary['sram_stub'][idx][8] + global_summary['latch_stub'][idx][8])/2.0	#error_rate_stub_sum_normalised
+				global_summary['stub'][idx][9] = global_summary['sram_stub'][idx][9] + global_summary['latch_stub'][idx][9] #error_stub_sum
 			else:
 				print('ERROR')
 		for stubdata in global_summary['stub']:
@@ -251,13 +260,14 @@ class SSA_SEU():
 		global_summary['stub'] = np.array(global_summary['stub'])
 		global_summary['stub'] = global_summary['stub'][np.argsort(np.array(global_summary['stub'][:,2],dtype=float ))]
 		CSV.array_to_csv( np.array(global_summary['stub']), directory+'stub.csv')
-		return global_summary
+		#return global_summary
 
-	def quick_plot_logs(self, directory='../SSA_Results/SEU_Results/'):
+	def quick_plot_logs(self, directory='../SSA_Results/SEU_Results/', cross_section_or_error_rate=0):
 		stubs = CSV.csv_to_array( directory+'stub.csv')
 		sram_500 = CSV.csv_to_array( directory+'sram_500.csv')
 		latch_500 = CSV.csv_to_array( directory+'latch_500.csv')
-
+		if(cross_section_or_error_rate): selindex = 6
+		else: selindex = 7
 		fig = plt.figure(figsize=(16,12))
 		plt.style.use('seaborn-deep')
 		ax = plt.subplot(111)
@@ -272,21 +282,41 @@ class SSA_SEU():
 		color=iter(sns.color_palette('deep'))
 		#plt.ylim(bottom = 1E-9)
 		c = next(color)
-		plt.plot(
-			np.array(stubs[:,3], dtype=float), np.array(stubs[:,7], dtype=float),
+		plt.semilogy(
+			np.array(stubs[:,3], dtype=float), np.array(stubs[:,selindex], dtype=float),
 			'--o', color = c, markersize = 10, markeredgewidth = 0, label='Stub data')
 		c = next(color)
-		plt.plot(
-			np.array(sram_500[:,3], dtype=float), np.array(sram_500[:,7], dtype=float),
+		plt.semilogy(
+			np.array(sram_500[:,3], dtype=float), np.array(sram_500[:,selindex], dtype=float),
 			'--o', color = c, markersize = 10, markeredgewidth = 0, label='L1 SRAM')
 		c = next(color)
-		plt.plot(
-			np.array(latch_500[:,3], dtype=float), np.array(latch_500[:,7], dtype=float),
+		plt.semilogy(
+			np.array(latch_500[:,3], dtype=float), np.array(latch_500[:,selindex], dtype=float),
 			'--o', color = c, markersize = 10, markeredgewidth = 0, label='L1 latch')
 		leg = plt.legend(fontsize = 12, loc=('lower right'), frameon=True )
-		plt.show()
 
-#	def fit(self):
+		#par, cov = curve_fit(f = f_weibull_cumulative, xdata = stubs[:,3], ydata = np.array(stubs[:,7])*1E6, p0 = [1E-4, 1E-2, 1E-2, 1])
+		x = np.array(stubs[:,3], dtype=float)
+		y = np.array(stubs[:,selindex], dtype=float),
+		#par, cov = curve_fit(f = f_weibull_cumulative, xdata = x, ydata = y,  p0 = [1E-1, 1E-2, 1E-2, 10])
+		#s0, s, E0, W = par
+		#plt.semilogy(x, f_weibull_cumulative1(x, s0, s, E0, W) )
+		return [x, y]
+
+		#print(par)
+		#print(cov)
+
+		#return
+
+	#def weibool_fit(self, directory='../SSA_Results/SEU_Results/', sensitive_depth=1E-6):
+
+
+
+
+
+
+
+
 #		plt.plot(data, stats.exponweib.pdf(data, *stats.exponweib.fit(data, 1, 1, scale=02, loc=0)))
 #		_ = plt.hist(data, bins=np.linspace(0, 16, 33), normed=True, alpha=0.5);
 #		plt.show()
@@ -1140,3 +1170,49 @@ class SSA_SEU():
 
 
 #6 10, 30, 45, 60
+
+
+def fit():
+	directory = '../SSA_Results/SEU_Results/'
+	sensitive_depth=1E-6
+	si_density   = [2.3290, 'g/cm3']
+	sens_depth   = [sensitive_depth*10E2, 'cm']
+	sens_volume  = [1*1*sensitive_depth, 'um^3']
+	rate_tracker = CSV.csv_to_array(directory + 'seu_rate_lhc_tracker.csv')
+	stub_data    = CSV.csv_to_array( directory+'stub.csv')
+	sram_500     = CSV.csv_to_array( directory+'sram_500.csv')
+	latch_500    = CSV.csv_to_array( directory+'latch_500.csv')
+	dataset = stub_data
+	LET  = np.array(dataset[:,3], dtype=double)
+	Edep = LET * (sens_depth[0] * si_density[0])
+	cross_section = np.array(dataset[:,6], dtype=double)
+	color=iter(sns.color_palette('deep'))
+	c = next(color)
+	y = np.array(dataset[:,6], dtype=double)
+	param_bounds =([0,0,0,0],[1E-2,1E0,1E1,1E2])
+	init_param   = [1E-2, 1, 0, 1E2]
+	par, cov = curve_fit(f = f_weibull_cumulative, xdata = Edep, ydata = cross_section,  p0 = init_param, bounds=param_bounds)
+	perr = np.sqrt(np.diag(cov))
+	s0, s, E0, W = par
+	s0_e, s_e, E0_e, W_e = perr
+	print("            Value   |  Error")
+	print("    W  = {:10.6f} | {:10.3f}".format(W, W_e))
+	print("    s  = {:10.6f} | {:10.3f}".format(s, s_e))
+	print("    s0 = {:10.6f} | {:10.3f}".format(s0, s0_e))
+	print("    E0 = {:10.6f} | {:10.3f}".format(E0, E0_e))
+	plt.semilogy(Edep, cross_section,'o--', color = c)
+	xl = np.linspace(-5,Edep[-1], 10000)
+	plt.semilogy(xl, f_weibull_cumulative1(xl, s0, s, E0, W) , color = c)
+	print(par)
+	#print([-4, 0, 0, 1])
+	plt.show()
+	total_crossection = 0
+	for i in range(len(rate_tracker)-1):
+		delta = (f_weibull_cumulative1(rate_tracker[i+1,0], s0,s,E0,W) - f_weibull_cumulative1(rate_tracker[i,0], s0,s,E0,W))
+		if(delta >0):
+			total_crossection += (s0 / 1E-8) * rate_tracker[i,1] * delta
+			#print(delta)
+	print(total_crossection)
+
+
+fit()

@@ -311,6 +311,14 @@ def f_errorfc(x, *p):
 	a, mu, sigma = p
 	return a*0.5*erfc((x-mu)/(sigma*np.sqrt(2)))
 
+def f_weibull_cumulative(x, *p):
+	s0, s, E0, W = p
+	return s0*(1-np.exp( (-1)*(((x-E0)/W)**s) ))
+
+def f_weibull_cumulative1(x, s0, s, E0, W):
+	return np.double(s0)*(1-np.exp( (-1)*(((np.double(x)-np.double(E0))/np.double(W))**np.double(s)) ))
+
+
 def try_fc7_com(fc7_if):
 	for i in range(4):
 		fc7_if.write("cnfg_mpa_ssa_board_i2c_freq", i)

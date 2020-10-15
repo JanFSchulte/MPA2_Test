@@ -132,8 +132,8 @@ class fc7_com():
 		val = ((self.chip_adr[1] & 0b111) << 5) | ((self.chip_adr[0] & 0b111) << 1)
 		val = val | ((self.enable[1] & 0b1) << 4)  | ((self.enable[0] & 0b1) << 0)
 		time.sleep(0.01); self.Configure_MPA_SSA_I2C_Master(1, 2, verbose=0);
-		time.sleep(0.01); self.Send_MPA_SSA_I2C_Command(0, 0, 0, 0, 0x02, verbose=0); # route to 2nd PCF8574
-		time.sleep(0.01); self.Send_MPA_SSA_I2C_Command(1, 0, 0, 0, val, verbose=0);  # set reset bit
+		time.sleep(0.01); self.Send_MPA_SSA_I2C_Command(0, 0, 0, 0, 0x02, verbose=0, note='route to 2nd PCF8574'); # route to 2nd PCF8574
+		time.sleep(0.01); self.Send_MPA_SSA_I2C_Command(1, 0, 0, 0, val, verbose=0, note='set reset bit');  # set reset bit
 		time.sleep(0.01);
 		#print(bin(val))
 		self.activate_I2C_chip(verbose=0)
@@ -242,7 +242,7 @@ class fc7_com():
 		time.sleep(0.1)
 
 
-	def Send_MPA_SSA_I2C_Command(self, slave_id, board_id, read, register_address, data, verbose = 1):
+	def Send_MPA_SSA_I2C_Command(self, slave_id, board_id, read, register_address, data, verbose = 1, note = ''):
 		# this peace of code just shifts the data, also checks if it fits the field
 		# general
 		shifted_command_type = fc7AddrTable.getItem("mpa_ssa_i2c_request_command_type").shiftDataToMask(8)
@@ -290,7 +290,8 @@ class fc7_com():
 		#print("Full Reply Word: ", hex(reply))
 		# check the data
 		if reply_err == 1:
-			utils.print_warning("ERROR! Error flag is set to 1. The data is treated as the error code.")
+			utils.print_warning("ERROR! Error flag is set to 1. The data is treated as the error code. ")
+			utils.print_warning("Send_MPA_SSA_I2C_Command slave_id [{:s}] board_id={:d}, read={:d}, register_address={:d}, data={:d}".format(note, board_id, read, register_address, data))
 			utils.print_warning("Error code: " + hex(reply_data))
 		elif reply_slave_id != slave_id:
 			utils.print_warning("ERROR! Slave ID doesn't correspond to the one sent")

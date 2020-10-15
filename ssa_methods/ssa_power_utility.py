@@ -124,12 +124,12 @@ class ssa_power_utility:
 		utils.print_enable(False)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
 		time.sleep(0.001)
-		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08)  # to SC3 on PCA9646
+		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08, note='i2cmux')  # to SC3 on PCA9646
 		time.sleep(0.001)
-		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_6, 0, self.pcbread, 0x02, 0)  # read V on shunt
+		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_6, 0, self.pcbread, 0x02, 0, note='ina226_6')  # read V on shunt
 		vret = 0.00125 * ret
 		pret = float(round(vret, 3))
-		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_6, 0, self.pcbread, 0x01, 0)  # read V on shunt
+		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_6, 0, self.pcbread, 0x01, 0, note='ina226_6')  # read V on shunt
 		time.sleep(0.001)
 		iret = (self.Vcshunt * ret)/self.Rshunt
 		iret = float(round(iret, 3))
@@ -165,9 +165,9 @@ class ssa_power_utility:
 		utils.print_enable(False)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
 		time.sleep(0.001)
-		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08)  # to SC3 on PCA9646
+		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08, note='i2cmux')  # to SC3 on PCA9646
 		time.sleep(0.001)
-		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_6, 0, self.pcbread, 0x02, 0)  # read V on shunt
+		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_6, 0, self.pcbread, 0x02, 0, note='ina226_6')  # read V on shunt
 		time.sleep(0.001)
 		vret = 0.00125 * ret
 		pret = float(round(vret, 3))
@@ -180,13 +180,13 @@ class ssa_power_utility:
 		utils.print_enable(False)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
 		time.sleep(0.001)
-		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08)  # to SC3 on PCA9646
+		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08, note='i2cmux')  # to SC3 on PCA9646
 		time.sleep(0.001)
-		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_5, 0, self.pcbread, 0x02, 0)  # read V on shunt
+		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_5, 0, self.pcbread, 0x02, 0, note='ina226_5')  # read V on shunt
 		time.sleep(0.001)
 		vret = 0.00125 * ret
 		vret = float(round(vret, 3))
-		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_5, 0, self.pcbread, 0x01, 0)  # read V on shunt
+		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_5, 0, self.pcbread, 0x01, 0, note='ina226_5')  # read V on shunt
 		time.sleep(0.001)
 		iret = (self.Vcshunt * ret)/self.Rshunt
 		iret = float(round(iret, 3))
@@ -207,13 +207,13 @@ class ssa_power_utility:
 		utils.print_enable(False)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
 		time.sleep(0.001)
-		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08)  # to SC3 on PCA9646
+		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x08, note='i2cmux')  # to SC3 on PCA9646
 		time.sleep(0.001)
-		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_7, 0, self.pcbread, 0x02, 0)  # read V on shunt
+		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_7, 0, self.pcbread, 0x02, 0, note='ina226_7')  # read V on shunt
 		time.sleep(0.001)
 		vret = 0.00125 * ret
 		vret = float(round(vret, 3))
-		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_7, 0, self.pcbread, 0x01, 0)  # read V on shunt
+		ret  = self.fc7.Send_MPA_SSA_I2C_Command(self.ina226_7, 0, self.pcbread, 0x01, 0, note='ina226_7')  # read V on shunt
 		time.sleep(0.001)
 		iret = (self.Vcshunt * ret)/self.Rshunt
 		iret = float(round(iret, 3))
@@ -241,9 +241,9 @@ class ssa_power_utility:
 		time.sleep(0.001)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
 		time.sleep(0.001)
-		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
+		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01, note='i2cmux')  # to SCO on PCA9646
 		time.sleep(0.001)
-		self.fc7.Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x31, setvoltage)  # tx to DAC C
+		self.fc7.Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x31, setvoltage, note='dac7678')  # tx to DAC C
 		time.sleep(0.001)
 		utils.activate_I2C_chip(self.fc7)
 		time.sleep(0.001)
@@ -260,8 +260,8 @@ class ssa_power_utility:
 		if (setvoltage > 4095): setvoltage = 4095
 		setvoltage = setvoltage << 4
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
-		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
-		self.fc7.Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x35, setvoltage)  # tx to DAC C
+		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01, note='i2cmux')  # to SCO on PCA9646
+		self.fc7.Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x35, setvoltage, note='dac7678')  # tx to DAC C
 		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 		self.state.avdd = targetvoltage
@@ -276,8 +276,8 @@ class ssa_power_utility:
 		if (setvoltage > 4095): setvoltage = 4095
 		setvoltage = setvoltage << 4
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
-		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
-		self.fc7.Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x33, setvoltage)  # tx to DAC C
+		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01, note='i2cmux')  # to SCO on PCA9646
+		self.fc7.Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x33, setvoltage, note='dac7678')  # tx to DAC C
 		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 		self.state.pvdd = targetvoltage
@@ -291,16 +291,16 @@ class ssa_power_utility:
 		setvoltage = int(round(targetvoltage * Vc2))
 		setvoltage = setvoltage << 4
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
-		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
-		self.fc7.Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x37, setvoltage)  # tx to DAC C
+		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01, note='i2cmux')  # to SCO on PCA9646
+		self.fc7.Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x37, setvoltage, note='dac7678')  # tx to DAC C
 		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 
 	def mainpoweron(self):
 		utils.print_enable(False)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
-		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x02)  # route to 2nd PCF8574
-		self.fc7.Send_MPA_SSA_I2C_Command(self.powerenable, 0, self.pcbwrite, 0, 0b010)  # send on bit
+		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x02, note='i2cmux')  # route to 2nd PCF8574
+		self.fc7.Send_MPA_SSA_I2C_Command(self.powerenable, 0, self.pcbwrite, 0, 0b010, note='powerenable')  # send on bit
 		utils.print_enable(True)
 		self.state.main = 1
 
@@ -308,8 +308,8 @@ class ssa_power_utility:
 	def mainpoweroff(self):
 		utils.print_enable(False)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
-		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,0, self.pcbwrite, 0, 0x02)  # route to 2nd PCF8574
-		self.fc7.Send_MPA_SSA_I2C_Command(self.powerenable, 0, self.pcbwrite, 0, 0b111)  # send off bit
+		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,0, self.pcbwrite, 0, 0x02, note='i2cmux')  # route to 2nd PCF8574
+		self.fc7.Send_MPA_SSA_I2C_Command(self.powerenable, 0, self.pcbwrite, 0, 0b111, note='powerenable')  # send off bit
 		utils.print_enable(True)
 		self.state.main = 0
 
@@ -326,14 +326,14 @@ class ssa_power_utility:
 		#time.sleep(0.01);
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2);
 		#time.sleep(0.01);
-		self.fc7.Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
+		self.fc7.Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02, note='pcbi2cmux'); # route to 2nd PCF8574
 		if(mode == 'auto'):
-			self.fc7.Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0);  # drop reset bit
+			self.fc7.Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0, note='pcf8574');  # drop reset bit
 			time.sleep(0.01);
-			self.fc7.Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1);  # set reset bit
+			self.fc7.Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1, note='pcf8574');  # set reset bit
 			if(display): utils.print_log( '->  Sent Hard-Reset pulse ')
 		else:
-			self.fc7.Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, int(mode));  # drop reset bit
+			self.fc7.Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, int(mode), note='pcf8574');  # drop reset bit
 			if(display): utils.print_log( '->  SSA Enabled ' if mode == 1 else '->  SSA Disabled ')
 		time.sleep(0.01);
 		utils.activate_I2C_chip(self.fc7)
@@ -348,8 +348,8 @@ class ssa_power_utility:
 	def _disable_ssa(self, display=True):
 		utils.print_enable(False)
 		time.sleep(0.01); self.fc7.Configure_MPA_SSA_I2C_Master(1, 2);
-		time.sleep(0.01); self.fc7.Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
-		time.sleep(0.01); self.fc7.Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0);  # drop reset bit
+		time.sleep(0.01); self.fc7.Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02, note='pcbi2cmux'); # route to 2nd PCF8574
+		time.sleep(0.01); self.fc7.Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b0, note='pcf8574');  # drop reset bit
 		time.sleep(0.01);
 		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
@@ -358,8 +358,8 @@ class ssa_power_utility:
 	def _enable_ssa(self, display=True):
 		utils.print_enable(False)
 		time.sleep(0.01); self.fc7.Configure_MPA_SSA_I2C_Master(1, 2);
-		time.sleep(0.01); self.fc7.Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
-		time.sleep(0.01); self.fc7.Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1);  # set reset bit
+		time.sleep(0.01); self.fc7.Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02, note='pcbi2cmux'); # route to 2nd PCF8574
+		time.sleep(0.01); self.fc7.Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0b1, note='pcf8574');  # set reset bit
 		time.sleep(0.01);
 		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
@@ -374,8 +374,8 @@ class ssa_power_utility:
 		setvoltage = int(round(targetvoltage * Vc2))
 		setvoltage = setvoltage << 4
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
-		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
-		self.fc7.Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, val, setvoltage)  # tx to DAC C
+		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01, note='i2cmux')  # to SCO on PCA9646
+		self.fc7.Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, val, setvoltage, note='dac7678')  # tx to DAC C
 		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 

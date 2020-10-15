@@ -239,13 +239,13 @@ class Test_2xSSA2():
 		return result
 
 
-	def initialize(self):
+	def initialize(self, nruns=50):
 		self.ssa0.reset()
 		self.ssa0.init()
 		self.align_2xSSA()
 		self.lateral_communication_select_phase()
-		self.test_cluster_data(nruns=50)
-		self.ssa0.test.l1_data(nruns=50)
+		self.test_cluster_data(nruns=nruns)
+		self.ssa0.test.l1_data(nruns=nruns)
 
 	def run(self, runname='Tp25', filename='../SSA_Results/test_2xSSA2/'):
 		rt = []
@@ -255,7 +255,7 @@ class Test_2xSSA2():
 		time.sleep(0.1); rt.append( self.test_cluster_data(nruns=1000) )
 		time.sleep(0.1); rt.extend( self.ssa0.test.l1_data(nruns=1000) )
 		self.test_SRAM_BIST_vs_DVDD(runname = runname, filename = filename+'/memory_bist_vs_dvdd/')
-		self.test_ring_oscillators_vs_dvdd(runname = runname, filename = filename+'/memory_bist_vs_dvdd/') 
+		self.test_ring_oscillators_vs_dvdd(runname = runname, filename = filename+'/memory_bist_vs_dvdd/')
 		with open(filename + 'summary_' + runname + '.csv', 'w') as fo:
 			fo.write(str(rt))
 		self.ssa0.pwr.set_dvdd(1.0)
