@@ -29,7 +29,7 @@ class SSA_Analise_Test_results():
 
 	def __init__(self, toptest, test, measure, biascal):
 		self.test = test; self.measure = measure; self.toptest = toptest; self.biascal = biascal;
-		self.set_configuration(0)
+		self.set_configuration(9)
 		### temporary:
 		#self.set_data_path('/home/acaratel/MPA-SSA_Test/SSA_Results/TestLogs/')
 		#self.set_data_path('Chip_0_frontend')
@@ -1217,7 +1217,14 @@ class SSA_Analise_Test_results():
 			self.instances_to_plot = [0, -1] #first and last
 			self.pltname = ''
 			self.label = [' Pre-Rad :', '100 Mrad :', '200 Mrad :']
-
+		elif(n==9):
+			self.path =  '../SSA_Results/XRAY/'
+			self.run_name = 'X-Ray_ChipC7_T25C_RECALIB'
+			self.measure_rate = 1
+			self.XLabel_Series = 'Total Ionising Dose [Mrad]'
+			self.instances_to_plot = [0, -1] #first and last
+			self.pltname = ''
+			self.label = [' Pre-Rad :', '100 Mrad :', '200 Mrad :']
 
 
 
