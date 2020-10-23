@@ -33,6 +33,7 @@ class SSA_ASIC:
 	####### Initialize functions ###############
 
 	def reset(self, display=True):
+		if(display): utils.print_info('->  Sent Hard-Reset command')
 		self.fc7.reset_chip(self.index)
 
 	def resync(self):

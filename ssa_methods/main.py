@@ -58,7 +58,7 @@ class SSAwp:
 
 	def enable(self):  FC7.enable_chip(self.index)
 	def disable(self): FC7.disable_chip(self.index)
-	def reset(self):   FC7.reset_chip(self.index)
+	def reset(self, display=True): self.chip.reset(display=display)
 
 ssa0 = SSAwp(0, 0b001)
 ssa1 = SSAwp(1, 0b111)

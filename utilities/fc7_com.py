@@ -46,7 +46,8 @@ class fc7_com():
 		self.set_invert(False)
 		self.chip_adr = [0,0]
 		self.enable = [1,1]
-		self.update_active_readout_chip()
+		#self.update_active_readout_chip()
+		self.active_chip = 0
 
 	def compose_fast_command(self, duration = 0, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 0):
 		encode_resync = self.fc7AddrTable.getItem("ctrl_fast_signal_fast_reset").shiftDataToMask(resync_en)
@@ -402,7 +403,14 @@ class fc7_com():
 	def SendPhaseTuningCommand(self, value):
 		self.fc7.write("ctrl_phy_phase_tuning", value)
 
-	def CheckLineDone(self, hybrid_id, chip_id, line_id):
+	def get_lines_alignment_status(self, display=False):
+		status = []
+		for i in range(0,9):
+			status.append( self.CheckLineDone(0,0,i, display, True) )
+		status = np.array(status)
+		return status
+
+	def CheckLineDone(self, hybrid_id, chip_id, line_id, display=False, return_full_status=False):
 		# shifting
 		hybrid_raw = (hybrid_id & 0xF) << 28
 		chip_raw = (chip_id & 0xF) << 24
@@ -414,15 +422,16 @@ class fc7_com():
 		command_final = hybrid_raw + chip_raw + line_raw + command_raw
 		self.SendPhaseTuningCommand(command_final)
 		time.sleep(0.01)
-		line_done = self.GetPhaseTuningStatus(printStatus = False)
-		if line_done >= 0:
-			pass
-		else:
-			print("Tuning Failed or Wrong Status")
-		return line_done
+		line_status = self.GetPhaseTuningStatus(printStatus = display, return_full_status=return_full_status)
+		if(return_full_status): line_done = line_status[1]
+		else: line_done = line_status
+		if line_done >= 0:pass
+		else: print("Tuning Failed or Wrong Status")
+		if(return_full_status): return line_status
+		else: return line_done
 
 
-	def GetPhaseTuningStatus(self, printStatus = True):
+	def GetPhaseTuningStatus(self, printStatus = True, return_full_status=False):
 		# get data word
 		data = self.fc7.read("stat_phy_phase_tuning")
 		# parse commands
@@ -437,7 +446,10 @@ class fc7_com():
 			if printStatus:
 				print("Line Configuration: ")
 				print("\tLine ID: "+ str(line_id) +",\tMode: "+ str(mode)+ ",\tMaster line ID: "+ str(master_line_id)+ ",\tIdelay: "+ str(delay)+ ",\tBitslip: "+ str(bitslip))
-			return -1
+			if(not return_full_status):
+				return -1
+			else:
+				return [-1, line_id, mode, master_line_id, delay, bitslip]
 		# tuning status
 		elif(output_type == 1):
 			delay = (data & 0x00F80000) >> 19
@@ -449,7 +461,10 @@ class fc7_com():
 				print("Line Status: ")
 				print("\tTuning done/applied: "+ str(done))
 				print("\tLine ID: "+str(line_id)+ ",\tIdelay: " +str(delay)+ ",\tBitslip: " +str(bitslip)+ ",\tWA FSM State: " +str(wa_fsm_state)+ ",\tPA FSM State: "+str( pa_fsm_state))
-			return done
+			if(not return_full_status):
+				return done
+			else:
+				return [line_id, done, delay, bitslip, wa_fsm_state, pa_fsm_state]
 		# tuning status
 		elif output_type == 6:
 			default_fsm_state = (data & 0x000000FF) >> 0

@@ -297,6 +297,7 @@ class Test_2xSSA2():
 			lateral_com_phase = np.array(lateral_com_phase, dtype=int)
 			fig = plt.figure(figsize=(6,4))
 			plt.plot(temperature, lateral_com_phase[:, cnt], 'x-',  color=next(color))
+			ax = plt.subplot(111)
 			ax.get_xaxis().tick_bottom(); ax.get_yaxis().tick_left()
 			plt.xticks(fontsize=12)
 			plt.yticks(list(range(0,12,1)), fontsize=12)
@@ -313,7 +314,7 @@ class Test_2xSSA2():
 		power = np.array(power, dtype=float)
 		self.myplot(x=power[:,0], y=power[:,1]/2.0, type='x', color=next(color), dlabel='DVDD', xlabel='', ylabel='',newfig=True,  saveplot=False)
 		self.myplot(x=power[:,0], y=power[:,2]/2.0, type='x', color=next(color), dlabel='AVDD', xlabel='', ylabel='',newfig=False, saveplot=False)
-		self.myplot(x=power[:,0], y=power[:,3]/3.0, type='x', color=next(color), dlabel='PVDD', xlabel='', ylabel='',newfig=False, saveplot=directory+'/plot_power_vs_temperature.png')
+		self.myplot(x=power[:,0], y=power[:,3]/3.0, type='x', color=next(color), dlabel='PVDD', xlabel='Temperature [C]', ylabel='Current [mA]',newfig=False, saveplot=directory+'/plot_power_vs_temperature.png')
 
 		### plot_sram_min_operating_voltage_vs_temperature ####################
 		temperature = []
@@ -371,9 +372,15 @@ class Test_2xSSA2():
 		### plot_sram_vs_voltage_vs_temperature ####################
 		color=iter(sns.color_palette('deep'))
 		self.myplot(x=voltage, y=memory_results[25][1], type='x-', color=next(color), dlabel='T = {:3.1f}'.format(25), xlabel='', ylabel='',newfig=True,  saveplot=False)
-		self.myplot(x=voltage, y=memory_results[-35][1], type='x-', color=next(color), dlabel='T = {:3.1f}'.format(-35), xlabel='', ylabel='',newfig=False,  saveplot=False)
+		self.myplot(x=voltage, y=memory_results[-35][1], type='x-', color=next(color), dlabel='T = {:3.1f}'.format(-35), xlabel='DVDD [V]', ylabel='% correct data',newfig=False,  saveplot=False)
 		plt.savefig(directory+'plot_sram_vs_voltage_vs_temperature.png', bbox_inches="tight");
 
+
+		### plot_ring_oscillator__vs_voltage_vs_temperature ####################
+		color=iter(sns.color_palette('deep'))
+		self.myplot(x=voltage, y=memory_results[25][1], type='x-', color=next(color), dlabel='T = {:3.1f}'.format(25), xlabel='', ylabel='',newfig=True,  saveplot=False)
+		self.myplot(x=voltage, y=memory_results[-35][1], type='x-', color=next(color), dlabel='T = {:3.1f}'.format(-35), xlabel='DVDD [V]', ylabel='% correct data',newfig=False,  saveplot=False)
+		plt.savefig(directory+'plot_sram_vs_voltage_vs_temperature.png', bbox_inches="tight");
 		temperature = []
 		data = {}; voltage = {};
 		for ddd in oscilaltor_list:
@@ -386,6 +393,7 @@ class Test_2xSSA2():
 			data[T] = CSV.csv_to_array(directory+'/'+ddd)
 			voltage[T] = np.array(data[T][:,1], dtype=float)
 			data[T] = data[T][:,2:-1]
+
 		for oscillator in range(8):
 			fig = plt.figure(figsize=(6,6))
 			color=iter(sns.color_palette('deep')*3)
@@ -405,13 +413,40 @@ class Test_2xSSA2():
 			ax.get_xaxis().tick_bottom();
 			ax.get_yaxis().tick_left()
 			plt.ylabel('Ring oscillator frequency [MHz]', fontsize=16)
-			plt.xlabel('Temperature [C]', fontsize=16)
-			plt.xticks(list(arange(0.8,1.3,0.1)), fontsize=12)
+			plt.xlabel('DVDD [V]', fontsize=16)
+			plt.xticks(list(np.arange(0.8,1.3,0.1)), fontsize=12)
 			plt.yticks(fontsize=12)
 			plt.savefig(directory+'/plot_ring_oscillator_{:d}_vs_voltage_vs_temperature.png'.format(oscillator), bbox_inches="tight");
 
-
-
+		for oscillator in range(8):
+			fig = plt.figure(figsize=(6,6))
+			color=iter(sns.color_palette('deep')*3)
+			ax = plt.subplot(111)
+			index = 0
+			for V in voltage[temperature[0]]:
+				x = np.array(np.sort(temperature), dtype=float)
+				y = data[T][:,oscillator]
+				y = []
+				for T in x:
+					y.append(data[T][index,oscillator])
+				y = np.array(y, dtype=float)
+				xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
+				c = next(color);
+				helper_y3 = scipy_interpolate.make_interp_spline(x, np.array(y) )
+				y_smuth = helper_y3(xnew)
+				y_hat = scypy_signal.savgol_filter(x = y_smuth , window_length = 9, polyorder = 5)
+				plt.plot(xnew, y_hat , color=c, lw=1, alpha = 0.8)
+				plt.plot(x, y, 'x', label='V = {:3.1f}'.format(V), color=c)
+				index += 1
+			leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
+			leg.get_frame().set_linewidth(1.0)
+			ax.get_xaxis().tick_bottom();
+			ax.get_yaxis().tick_left()
+			plt.ylabel('Ring oscillator frequency [MHz]', fontsize=16)
+			plt.xlabel('Temperature [C]', fontsize=16)
+			plt.xticks(list(np.arange(-40,90,10)), fontsize=12)
+			plt.yticks(fontsize=12)
+			plt.savefig(directory+'/plot_ring_oscillator_{:d}_vs_temperature_vs_voltage.png'.format(oscillator), bbox_inches="tight");
 
 	###########################################################################
 	def myplot(self, x, y, type, color, dlabel='', xlabel='', ylabel='', newfig=True, saveplot=False):
