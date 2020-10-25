@@ -2,20 +2,7 @@ import socket
 import time
 import numpy as np
 
-'''
-*RST
-:SENS:FUNC "VOLT:DC"
-:SENS:VOLT:RANG 10
-:SENS:VOLT:INP AUTO
-:SENS:VOLT:NPLC 10
-:SENS:VOLT:AZER ON
-:SENS:VOLT:AVER:TCON REP
-:SENS:VOLT:AVER:COUN 100
-:SENS:VOLT:AVER ON
-:READ?
-'''
-
-class Multimeter_LAN_Keithley:
+class Instruments_Keithley_Multimeter_7510_LAN:
 
 	def __init__(self, name='Multimeter', IP='192.168.0.90', PORT=5025):
 		self.available = False

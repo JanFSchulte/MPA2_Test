@@ -35,10 +35,11 @@ USB-GPIB-HS with CentOS + Python:
 10. reconnect the device 
 11. sudo chown user  /dev/gpib* - sudo chown user /dev/usb_gpib
 11. try to run in python:
-	import Gpib
-	inst = Gpib.Gpib(0,16) # Device address 16
-	inst.write("*IDN?")
-	inst.read(100) # read 100 bytes
+
+import Gpib
+inst = Gpib.Gpib(0,16) # Device address 16
+inst.write("*IDN?")
+inst.read(100) # read 100 bytes
 
 In case of problems try to consult the article for Raspberry... https://xdevs.com/guide/ni_gpib_rpi/
 

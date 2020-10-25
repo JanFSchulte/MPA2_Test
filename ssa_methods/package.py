@@ -1,5 +1,5 @@
-from myScripts.Multimeter_GPIB_Keithley import *
-from myScripts.Multimeter_LAN_Keithley import *
+from myScripts.Instruments_Keithley_Multimeter_2000_GPIB import *
+from myScripts.Instruments_Keithley_Multimeter_7510_LAN import *
 #from utilities.tbconfig import *
 from utilities.tbsettings import *
 from utilities.configure_communication import *
