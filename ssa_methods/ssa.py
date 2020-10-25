@@ -64,7 +64,7 @@ class SSA_ASIC:
 		time.sleep(0.2)
 
 	def init(self, reset_board=False, reset_chip=False, resync=True, slvs_current=0b111, edge="rising", display=True, read_current=False, set_deskewing=False):
-		for iteration in range(1):
+		for iteration in range(3):
 			self.generic_parameters['cl_word_alignment'] = False
 			if(display):
 				sys.stdout.write("->  Initialising..\r")
@@ -121,9 +121,9 @@ class SSA_ASIC:
 	####### Data alignment functions ################################
 
 	def alignment_all(self, display = False, file = False):
-		r1 = self.init(reset_board = True, reset_chip = False, display = display)
+		r1 = self.init(reset_board = False, reset_chip = False, display = display)
 		time.sleep(0.1)
-		r2 = self.alignment_cluster_data_word()
+		r2 = self.alignment_cluster_data_word(display=display)
 		time.sleep(0.1)
 		r3, r4 = self.alignment_lateral_input(file = file)
 		time.sleep(0.1)
@@ -138,33 +138,32 @@ class SSA_ASIC:
 		return self.ctrl.phase_tuning()
 
 	def alignment_cluster_data_word(self, display=False):
-		tv = [1,3,5,116,118,120]
+		tvdt = [1,3,5,116,118,120]
 		self.ctrl.set_lateral_data(left=0, right=0)
 		sstatus = {'digital':False, 'analog':False}
 		lstatus = {'digital':False, 'analog':False}
+
 		for mode in ['digital', 'analog']:
 			if(mode == 'digital'):
 				self.inject.digital_pulse(initialise = True)
 			elif(mode == 'analog'):
 				self.inject.analog_pulse(initialise = True)
 			self.readout.cluster_data(initialize = True)
-
 			if(mode == 'digital'):
-				self.inject.digital_pulse(tv, initialise = False)
+				self.inject.digital_pulse(tvdt, initialise = False)
 			elif(mode == 'analog'):
-				self.inject.analog_pulse(tv, initialise = False)
-
+				self.inject.analog_pulse(tvdt, initialise = False)
 			for shift in range(-4,6):
 				ext = False
 				self.readout.cl_shift[mode] = shift
 				rp = []
-				for i in range(10):
+				for i in range(100):
 					rp.append(self.readout.cluster_data(initialize = False, shift = 'default'))
 					# with shift=='default', the shift value is the one set by "self.readout.cl_shift[mode]"
 					if(display):
-						print("->  Word alignment. Shift value = {:d}. Read Value = {:s}. Iteration = {:d}.".format(shift, str(list(map(float,rp[-1]))), i))
-					if(rp[-4:] == rp[-5:-1]):
-						if(list(map(float, rp[-1])) == list(map(float, tv))):
+						print("->  Word alignment {:s}. Shift value = {:d}. Read Value = {:s}. Iteration = {:d}.".format(mode, shift, str(list(map(float,rp[-1]))), i))
+					if(rp[-10:] == rp[-11:-1]):
+						if(list(map(float, rp[-1])) == list(map(float, tvdt))):
 							utils.print_info('->  Stub-data word alignment {m:7s} successfull ({r:d})'.format(m=mode, r=self.readout.cl_shift[mode]))
 							self.generic_parameters['cl_word_alignment_{m:s}'.format(m=mode)] = True
 							sstatus[mode] = True
@@ -172,38 +171,40 @@ class SSA_ASIC:
 							break
 						elif(list(map(float, rp[-1])) == list(map(float, []))):
 							break
-				if(ext): break
-			for shift in range(-4,6):
-				ext = False
-				self.readout.lateral_shift[mode] = shift
-				rp = []
-				for i in range(10):
-					rp.append(self.readout.lateral_data(initialize = False, shift = 'default'))
-					# with shift=='default', the shift value is the one set by "self.readout.lateral_shift[mode]"
-					if(display):
-						print("->  Word alignment. Shift value = {:d}. Read Value = {:s}. Iteration = {:d}.".format(shift, str(list(map(float,rp[-1]))), i))
-					if(rp[-4:] == rp[-5:-1]):
-						if(list(map(float, rp[-1])) == list(map(float, tv))):
-							utils.print_info('->  Lateral-data word alignment {m:7s} successfull ({r:d})'.format(m=mode, r=self.readout.lateral_shift[mode]))
-							self.generic_parameters['cl_word_alignment_{m:s}'.format(m=mode)] = True
-							lstatus[mode] = True
-							ext = True
-							break
-						elif(list(map(float, rp[-1])) == list(map(float, []))):
-							break
-				if(ext): break
+				if(ext):
+					break
+			#for shift in range(-4,6):
+			#	ext = False
+			#	self.readout.lateral_shift[mode] = shift
+			#	rp = []
+			#	for i in range(100):
+			#		rp.append(self.readout.lateral_data(initialize = False, shift = 'default'))
+			#		# with shift=='default', the shift value is the one set by "self.readout.lateral_shift[mode]"
+			#		if(display):
+			#			print("->  Lateral alignment {:s}. Shift value = {:d}. Read Value = {:s}. Iteration = {:d}.".format(mode, shift, str(list(map(float,rp[-1]))), i))
+			#		if(rp[-10:] == rp[-11:-1]):
+			#			if(list(map(float, rp[-1])) == list(map(float, tvdt))):
+			#				utils.print_info('->  Lateral-data word alignment {m:7s} successfull ({r:d})'.format(m=mode, r=self.readout.lateral_shift[mode]))
+			#				self.generic_parameters['cl_word_alignment_{m:s}'.format(m=mode)] = True
+			#				lstatus[mode] = True
+			#				ext = True
+			#				break
+			#			elif(list(map(float, rp[-1])) == list(map(float, []))):
+			#				break
+			#	if(ext):
+			#		break
 		if(not sstatus['digital']):
 			utils.print_error('->  Stub-data word alignment digital injection error')
 			self.generic_parameters['cl_word_alignment_{m:s}'.format(m='digital')] = True
 		if(not sstatus['analog']):
 			utils.print_error('->  Stub-data word alignment analog injection error')
 			self.generic_parameters['cl_word_alignment_{m:s}'.format(m='analog')] = True
-		if(not lstatus['digital']):
-			utils.print_error('->  Lateral-data word alignment digital injection error')
-			self.generic_parameters['lateral_word_alignment_{m:s}'.format(m='digital')] = True
-		if(not lstatus['analog']):
-			utils.print_error('->  Lateral-data word alignment analog injection error')
-			self.generic_parameters['lateral_word_alignment_{m:s}'.format(m='analog')] = True
+		#if(not lstatus['digital']):
+		#	utils.print_error('->  Lateral-data word alignment digital injection error')
+		#	self.generic_parameters['lateral_word_alignment_{m:s}'.format(m='digital')] = True
+		#if(not lstatus['analog']):
+		#	utils.print_error('->  Lateral-data word alignment analog injection error')
+		#	self.generic_parameters['lateral_word_alignment_{m:s}'.format(m='analog')] = True
 
 		#print(self.readout.cl_shift)
 		return (sstatus['digital'] and sstatus['analog'])

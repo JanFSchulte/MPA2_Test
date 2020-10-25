@@ -50,7 +50,7 @@ class main_ssa_test_3():
 			self.runtest.set_enable('alignment', 'ON')
 			self.runtest.set_enable('Lateral_In', 'ON')
 			self.runtest.set_enable('Cluster_Data', 'ON')
-			self.runtest.set_enable('Pulse_Injection', 'OFF')
+			self.runtest.set_enable('Pulse_Injection', 'ON')
 			self.runtest.set_enable('L1_Data', 'ON')
 			self.runtest.set_enable('Memory', 'ON')
 			self.runtest.set_enable('noise_baseline', 'OFF')
@@ -104,9 +104,10 @@ class main_ssa_test_3():
 			self.test_routine_dacs(filename=fo)
 			self.test_routine_analog(filename=fo)
 			self.test_routine_save_config(filename=fo)
-			self.test_routine_stub_data(filename=fo, samples=500)
-			self.test_routine_L1_data(filename=fo, samples=500)
+			self.test_routine_stub_data(filename=fo, samples=300, voltage=[1.0, 0.9, 1.1])
+			self.test_routine_L1_data(filename=fo, samples=300, voltage=[1.0, 0.9, 1.1])
 			self.test_routine_ring_oscillators(filename=fo)
+			#self.finalize()
 			## Save summary ######################
 			self.summary.save(directory=self.DIR, filename=("Chip_{c:s}_v{v:d}/".format(c=str(chip_info), v=version)), runname='')
 			self.summary.display()
@@ -210,90 +211,104 @@ class main_ssa_test_3():
 				if(wd>=3): self.test_good = False
 
 
-	def test_routine_stub_data(self, filename = 'default', runname = '', samples=500):
+	def test_routine_stub_data(self, filename = 'default', runname = '', samples=50, voltage='default'):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
-		wd = 0
-		en = self.runtest.is_active('alignment')
-		self.ssa.reset(); time.sleep(1)
-		self.ssa.resync(); time.sleep(0.1);
-		while (en and wd < 3):
-			try:
-				self.ssa.init(reset_chip=0, display=1); time.sleep(0.1)
-				self.ssa.resync(); time.sleep(0.1);
-				time.sleep(0.1)
-				for i in range(5): #alignment sometimes don't work on FPGA side
+		if(voltage=='default'):
+			voltage = [self.dvdd]
+		for vvv in voltage:
+			wd = 0
+			en = self.runtest.is_active('alignment')
+			while (wd < 3):
+				try:
+					self.pwr.set_dvdd(vvv); time.sleep(0.5)
+					utils.print_info('->  DVDD set to {:0.3f}'.format(vvv))
+					self.ssa.reset(); time.sleep(0.5)
+					self.ssa.resync();
 					r1,r2,r3,r4 = self.ssa.chip.alignment_all(display = False)
-					if([r1,r2,r3,r4] == [True, True, True, True]):
-						break
+					if(en):
+						self.summary.set('alignment_cluster_data_{:3.1f}'.format(vvv),  int(r2), '', '',  runname)
+						self.summary.set('alignment_lateral_left_{:3.1f}'.format(vvv),  int(r3), '', '',  runname)
+						self.summary.set('alignment_lateral_right_{:3.1f}'.format(vvv), int(r4), '', '',  runname)
+					if(not r2):
+						self.test_good = False
+					break
+				except(KeyboardInterrupt): break
+				except:
+					self.print_exception("->  Alignment test error. Reiterating...")
+					wd +=1;
+					if(wd>=3): self.test_good = False
+			wd = 0
+			en = self.runtest.is_active('Cluster_Data')
+			while (en and wd < 3):
+				try:
+					self.ssa.resync();
+					r1 = self.test.cluster_data(mode = 'digital', nstrips='random', nruns = samples, display=False, file=filename, filemode='a', runname=runname, lateral=True)
+					self.summary.set('ClusterData_DigitalPulses_{:3.1f}'.format(vvv),  r1, '%', '',  runname)
+					if(r1<100.0):
+						self.test_good = False
+						utils.print_error("->  Cluster Data with Digital Pulses test NOT successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
 					else:
-						utils.print_warning('->  Reiterating alignment')
-				self.summary.set('alignment_cluster_data',  int(r2), '', '',  runname)
-				self.summary.set('alignment_lateral_left',  int(r3), '', '',  runname)
-				self.summary.set('alignment_lateral_right', int(r4), '', '',  runname)
-				if(not r2): self.test_good = False
-				break
-			except(KeyboardInterrupt): break
-			except:
-				self.print_exception("->  Alignment test error. Reiterating...")
-				wd +=1;
-				if(wd>=3): self.test_good = False
-		wd = 0
-		en = self.runtest.is_active('Cluster_Data')
-		while (en and wd < 3):
-			try:
-				r1 = self.test.cluster_data(mode = 'digital', nstrips='random', nruns = samples, shift='default', display=False, file=filename, filemode='a', runname=runname, lateral=False)
-				self.summary.set('ClusterData_DigitalPulses',  r1, '%', '',  runname)
-				utils.print_good("->  Cluster Data with Digital Pulses test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
-				if(r1<100.0): self.test_good = False
-				break
-			except(KeyboardInterrupt): break
-			except:
-				self.print_exception("->  Cluster Data with Digital Pulses test error. Reiterating...")
-				wd +=1;
-				if(wd>=3): self.test_good = False
-		wd = 0
-		en = self.runtest.is_active('Pulse_Injection')
-		while (en and wd < 3):
-			try:
-				r1 = self.test.cluster_data(mode = 'analog', lateral=0, nstrips='random', nruns = 100, shift='default', display=False, file=filename, filemode='a', runname=runname)
-				self.summary.set('ClusterData_ChargeInjection',  r1, '%', '',  runname)
-				utils.print_good("->  Cluster Data with ChargeInjection test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
-				if(r1<100.0): self.test_good = False
-				break
-			except(KeyboardInterrupt): break
-			except:
-				self.print_exception("->  Cluster Data with Charge Injection test error. Reiterating...")
-				wd +=1;
-				if(wd>=3): self.test_good = False
+						utils.print_good("->  Cluster Data with Digital Pulses test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
+					break
+				except(KeyboardInterrupt): break
+				except:
+					self.print_exception("->  Stub Data with Digital Pulses test error. Reiterating...")
+					wd +=1;
+					if(wd>=3): self.test_good = False
+			wd = 0
+			time.sleep(0.5)
+			en = self.runtest.is_active('Pulse_Injection')
+			while (en and wd < 3):
+				try:
+					self.ssa.resync();
+					r1 = self.test.cluster_data(mode = 'analog', lateral=0, nstrips='random', nruns = samples, display=False, file=filename, filemode='a', runname=runname)
+					self.summary.set('ClusterData_ChargeInjection_{:3.1f}'.format(vvv),  r1, '%', '',  runname)
+					if(r1<100.0):
+						self.test_good = False
+						utils.print_error("->  Cluster Data with ChargeInjection test NOT successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
+					else:
+						utils.print_good("->  Cluster Data with ChargeInjection test successfull (%7.2fs)" % (time.time() - time_init)); time_init = time.time();
+
+					break
+				except(KeyboardInterrupt): break
+				except:
+					self.print_exception("->  Stub Data with Charge Injection test error. Reiterating...")
+					wd +=1;
+					if(wd>=3): self.test_good = False
 
 
-	def test_routine_L1_data(self, filename = '../SSA_Results/Chip0/Chip_0', runname = '', shift = 1, samples=500):
+	def test_routine_L1_data(self, filename = '../SSA_Results/Chip0/Chip_0', runname = '', shift = 1, samples=500, voltage='default'):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
-		wd = 0
-		memtest = False
-		en = self.runtest.is_active('L1_Data')
-		while (en and wd < 3):
-			try:
-				#self.pwr.set_dvdd(self.dvdd)
-				self.ssa.reset(); time.sleep(1)
-				self.ssa.init(reset_chip=0, display=1); time.sleep(0.1)
-				self.ssa.resync(); time.sleep(0.1);
-				result = self.test.l1_data(
-					mode = 'digital', runname =  runname, nruns = samples,
-					shift = shift, filemode = 'a', file = filename)
-				r1, r2, r3 = result
-				self.summary.set('L1_data',   r1, '%', '',  runname)
-				self.summary.set('HIP_flags', r2, '%', '',  runname)
-				if(r1<100): self.test_good = False
-				if(r2<100): self.test_good = False
-				break
-			except(KeyboardInterrupt): break
-			except:
-				self.print_exception("->  L1_Data test error. Reiterating...")
-				wd +=1;
-				if(wd>=3): self.test_good = False
+		if(voltage=='default'):
+			voltage = [self.dvdd]
+		for vvv in voltage:
+			wd = 0
+			memtest = False
+			en = self.runtest.is_active('L1_Data')
+			while (en and wd < 3):
+				try:
+					#self.pwr.set_dvdd(self.dvdd)
+					self.pwr.set_dvdd(vvv); time.sleep(0.5)
+					utils.print_info('->  DVDD set to {:0.3f}'.format(vvv))
+					self.ssa.reset(); time.sleep(0.5)
+					self.ssa.init(reset_chip=0, display=1); time.sleep(0.1)
+					self.ssa.resync(); time.sleep(0.1);
+					result = self.test.l1_data(
+						mode = 'digital', runname =  runname, nruns = samples,
+						shift = shift, filemode = 'a', file = filename)
+					r1, r2, r3 = result
+					self.summary.set('L1_data',   r1, '%', '',  runname)
+					self.summary.set('HIP_flags', r2, '%', '',  runname)
+					if(r1<100): self.test_good = False
+					if(r2<100): self.test_good = False
+					break
+				except(KeyboardInterrupt): break
+				except:
+					self.print_exception("->  L1_Data test error. Reiterating...")
+					wd +=1;
+					if(wd>=3): self.test_good = False
 		wd  = 0
 		en = self.runtest.is_active('Memory')
 		while (en and wd < 3):
@@ -466,6 +481,13 @@ class main_ssa_test_3():
 			utils.print_warning(extx)
 		utils.print_warning("======================")
 
+	def finalize(self):
+		while (wd < 3):
+			try:
+				self.pwr.set_dvdd(self.dvdd); time.sleep(1)
+				self.ssa.reset(); time.sleep(1)
+			except:
+				wd +=1;
 
 	def idle_routine(self, filename = 'default', runname = '', duration=5):
 		# run all functional test with STUB at BX rate, L1 data at 1MHz
@@ -478,27 +500,19 @@ class main_ssa_test_3():
 			try:
 				self.pwr.set_dvdd(self.dvdd); time.sleep(1)
 				self.ssa.reset(); time.sleep(1)
-				self.ssa.init(reset_chip=0, display=1); time.sleep(0.1)
-				self.ssa.resync(); time.sleep(0.1);
 
 				striplist, centroids, hip_hits, hip_flags  = self.test.generate_clusters(
 					nclusters=8, min_clsize=1, max_clsize=2, smin=1,
 					smax=119, HIP_flags=True)
+
 				print(striplist)
+
 				results = self.ssa.seuutil.Run_Test_SEU(
 					check_stub=True, check_l1=True, check_lateral=False, create_errors = False,
 					strip = striplist, centroids=centroids, hipflags = hip_hits, delay = 75, run_time = duration,
 					cal_pulse_period = 1, l1a_period = 39, latency = 501, display = 1, stop_if_fifo_full = 0, show_every=-1)
 
-				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1] = results
-
-				#self.summary.set('stub_data_fast_err',   CL_er, 'cnt', '',  runname)
-				#self.summary.set('l1_data_fast_err',     L1_er, 'cnt', '',  runname)
-				#self.summary.set('l1_headers_fast_err',  LH_er, 'cnt', '',  runname)
-				#self.summary.set('stub_data_fast_ok',    CL_ok, 'cnt', '',  runname)
-				#self.summary.set('l1_data_fast_ok',      L1_ok, 'cnt', '',  runname)
-				#self.summary.set('l1_headers_fast_ok',   LH_ok, 'cnt', '',  runname)
-
+				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1, alignment] = results
 				fo = open(filename+'.csv', 'a')
 				fo.write('\n{:16s},{:10d},{:10d},{:10d},{:10d},{:10d},{:10d},{:10.3f}'.format(runname, CL_er, L1_er, LH_er, CL_ok, L1_ok, LH_ok, test_duration) )
 				fo.close()
