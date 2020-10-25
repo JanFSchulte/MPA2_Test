@@ -36,9 +36,9 @@ class SSA_test_utility():
 			self.ssa.alignment_cluster_data_word()
 			self.ssa.alignment_lateral_input()
 		time.sleep(0.1)
-		self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
-		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
-		self.ssa.ctrl.set_cal_pulse_delay(0)
+		#self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
+		#self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
+		#self.ssa.ctrl.set_cal_pulse_delay(0)
 		prev = [0xff]*8
 		if(mode == "digital"):
 			self.ssa.inject.digital_pulse(initialise = True, times = 1)

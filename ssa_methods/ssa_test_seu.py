@@ -49,22 +49,23 @@ class SSA_SEU():
 		self.init_parameters()
 
 	##############################################################
-	def main_test(self, niterations=16, run_time=30, memory_select='SRAM', delay_adjust=0):
+	def main_test(self, niterations=16, run_time=30, memory_select='SRAM', delay_adjust=0, reset_chip=True):
 		self.run_time = run_time
 		self.set_info()
 		self.time   = utils.date_time()
 		self.filename = "SEU_SSA_" + self.time + "__Ion-" + self.ion + "__Tilt-" + str(self.tilt) + "__Flux-" + str(self.flux) + "__"
 		self.seu_test(
 			filename=self.filename, folder=self.folder, niterations=niterations,
-			memory_select=memory_select, delay_adjust=delay_adjust)
+			memory_select=memory_select, delay_adjust=delay_adjust, reset_fc7=True, reset_chip=reset_chip, align=True)
 
 	##############################################################
-	def seu_test(self, filename = 'Try', folder = 'PROVA0', niterations=16, memory_select='SRAM', delay_adjust=0):
+	def seu_test(self, filename = 'Try', folder = '../SSA_Results/SEU_tmp/', niterations=16, memory_select='SRAM', delay_adjust=0, reset_fc7=True, reset_chip=True, align=True):
 		print(folder)
 		runname = self.run_info()
 		logfile = folder + filename + '__full.log'
 		errfile = folder + filename + '__errors.log'
 		summary = folder + filename + '__summary.csv'
+		fc7_al  = folder + filename + '__fc7_phase_status.csv'
 		stublog = folder + '/CL-FIFO/'+ filename +'__'+str(runname)+'__'
 		l1dtlog = folder + '/L1-FIFO/'+ filename +'__'+str(runname)+'__'
 		conflog = folder + '/CONFIG/' + filename +'__'+str(runname)+'__'
@@ -84,13 +85,16 @@ class SSA_SEU():
 					try:
 						utils.print_info('_____________________________________')
 						utils.print_info('Starting iteration {:d}'.format(iteration))
-						self.ssa.reset(display = False)
+						if(reset_chip):
+							self.ssa.reset(display = True)
+						else:
+							print('->  No reset')
 						init_time = time.time();
 						start_date_time = utils.date_and_time()
 						time.sleep(0.2); #after reset
 						self.ssa.ctrl.load_basic_calib_configuration(strips=[], peri=True, display=0)
 						self.ssa.ctrl.set_active_memory(memory_select, memory_select)
-						#self.ssa.init(edge = 'negative', display = False)
+						#if(align): self.ssa.init(edge = 'negative', display = False)
 						#self.test.lateral_input_phase_tuning(shift = 1)
 						#stavailable = [x for x in stavailable if x not in striplist]
 						#striplist = sorted(random.sample(stavailable, 7))
@@ -104,8 +108,10 @@ class SSA_SEU():
 						results = self.seuutil.Run_Test_SEU(
 							check_stub=True, check_l1=True, check_lateral=False, create_errors = False,
 							strip = striplist, centroids=centroids, hipflags = hip_hits, delay = compare_del, run_time = self.run_time,
-							cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 1, stop_if_fifo_full = 1)
+							cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 1, stop_if_fifo_full = 1, reset_fc7=reset_fc7, align=align)
 
+						[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1, fc7_alignment_status]  = results
+							
 						utils.print_info("->  Active strips     -> " + str(striplist))
 						utils.print_info("->  HIP strips        -> " + str(hip_hits))
 						utils.print_info("->  L1 Latency        -> " + str(latency))
@@ -124,7 +130,7 @@ class SSA_SEU():
 							latency = latency, memory_select=memory_select)
 
 						self.write_summary(
-							summary, results, striplist, hip_hits, time_since_reset, seucounter, iteration,
+							summary, results, fc7_al, striplist, hip_hits, time_since_reset, seucounter, iteration,
 							latency, runname,  conf_p_er,  conf_s_er, memory_select, start_date_time)
 
 						utils.print_log('->  Total time since the start of testing is {:s}'.format(utils.time_delta(time_init=starttime) ))
@@ -147,8 +153,103 @@ class SSA_SEU():
 		utils.print_good('->  SEE test procedure completed! (total time: {:s})'.format(utils.time_delta(time_init=starttime) ))
 
 	##############################################################
-	def quick_compile_logs(self, directory='../SSA_Results/SEU_Results/', use_run_precise_info = True):
+	def evaluate_error_rate(self, directory = '../SSA_Results/SEU_Results/'):
+		data_set = {};
+
+		compile_logs(self,
+			directory=directory,
+			use_run_precise_info = True)
+
+		data_set['stub_data'] = CSV.csv_to_array( directory+'stub.csv')
+		data_set['sram_500']  = CSV.csv_to_array( directory+'sram_500.csv')
+		data_set['latch_500'] = CSV.csv_to_array( directory+'latch_500.csv')
+		# s0_e, s_e, E0_e, W_e
+		self.fit_and_evaluate_error_rate(
+			name_list    = ['stub_data'],
+			dataset_list = [data_set['stub_data']],
+			corr_list    = [[1E-3,1E-1,1E-2,1E3]] )
+
+		self.fit_and_evaluate_error_rate(
+			name_list = ['sram_500', 'latch_500'],
+			dataset_list = [data_set['sram_500'], data_set['latch_500']],
+			corr_list = [[1E-4,1E-2,1E-1,100] ,[1E-4,1E-2,1E-1,100]]  )
+
+	##############################################################
+	def fit_and_evaluate_error_rate(self, name_list, dataset_list, corr_list=[[0,0,0,0]], sensitive_depth=1E-6, directory = '../SSA_Results/SEU_Results/'):
+		si_density   = [2.3290E3, 'mg/cm3']
+		sens_volume  = [1*1*sensitive_depth, 'um^3']
+		rate_tracker = CSV.csv_to_array( directory+'seu_rate_lhc_tracker.csv')
+		total_crossection = {};
+		hadron_flux  = CSV.csv_to_array( directory+'fluka_hadrons_gt20MeV_central_region_data.csv', noheader=True)
+		fig = plt.figure(figsize=(12,8))
+		color=iter(sns.color_palette('deep'))
+		select = 0; filename = '';
+		for data in dataset_list:
+			#data = data_set[name_list]
+			LET  = np.array(data[:,3], dtype=np.double)
+			Edep = LET * (sensitive_depth  * 1E2 * si_density[0] )
+			cross_section = np.array(data[:,6], dtype=np.double)
+			c = next(color)
+			y = np.array(data[:,6], dtype=np.double)
+			param_bounds =([0,0,0,0],[1E-1,1E2,1E2,1E5])
+			init_param   = [corr_list[select][0], corr_list[select][1], corr_list[select][2], corr_list[select][3]]
+			par, cov = curve_fit(f = f_weibull_cumulative, xdata = Edep, ydata = cross_section,  p0 = init_param, bounds=param_bounds)
+			perr = np.sqrt(np.diag(cov))
+			s0, s, E0, W = par
+			s0_e, s_e, E0_e, W_e = perr
+			utils.print_good('\nCumulative weibull fitting parameters: \n            Value   |  Error')
+			utils.print_good('    W  = {:10.6e} | {:10.6e}'.format(W, W_e))
+			utils.print_good('    s  = {:10.6e} | {:10.6e}'.format(s, s_e))
+			utils.print_good('    s0 = {:10.6e} | {:10.6e}'.format(s0, s0_e))
+			utils.print_good('    E0 = {:10.6e} | {:10.6e}\n'.format(E0, E0_e))
+			plt.semilogy(Edep, cross_section,'o--', color = c)
+			xl = np.linspace(-5,Edep[-1], 10000)
+			plt.semilogy(xl, f_weibull_cumulative1(xl, s0, s, E0, W) , color = c)
+			total_crossection[select] = [0, '[cm^2]']
+			for i in range(len(rate_tracker)-1):
+				delta = (f_weibull_cumulative1(rate_tracker[i+1,0], s0,s,E0,W) - f_weibull_cumulative1(rate_tracker[i,0], s0,s,E0,W))/s0
+				if(delta >0): total_crossection[select][0] += (s0 / 1E-8) * rate_tracker[i,1] * delta
+			utils.print_good('\nCross-section for CMS tracker environment: ')
+			utils.print_good("    cs = {:10.6e}  | {:10.6e}\n".format(total_crossection[select][0], 0))
+			filename += '_{:s}'.format(name_list[select])
+			select += 1
+		ax = plt.subplot(111)
+		leg = ax.legend(fontsize = 16, loc=('lower right'), frameon=True )
+		leg.get_frame().set_linewidth(1.0)
+		ax.get_xaxis().tick_bottom(); ax.get_yaxis().tick_left()
+		plt.ylabel("$ \sigma [cm^{2}] $", fontsize=20)
+		plt.xlabel("$ E_{DEP} [MeV] $", fontsize=20)
+		plt.xticks(fontsize=16)
+		plt.yticks(fontsize=16)
+		plt.savefig(directory+'/see_plot_cross_section_fit_{:s}.png'.format(filename), bbox_inches="tight");
+		select = 0
+		for data in dataset_list:
+			fig = plt.figure(figsize=(12,8))
+			color=iter(sns.color_palette('deep'))
+			for r in [22, 40, 60]:
+				r_index = np.where(hadron_flux[:,0]==r)[0][0]
+				z_index = [hadron_flux[0,1:], '[cm]']
+				z_flux = [hadron_flux[r_index, 1:], '[cm^{-2} s^{-1}]']
+				upset_rate = [z_flux[0]*total_crossection[select][0], '[s^{-1} chip^{-1}]']
+				c = next(color)
+				plt.plot(z_index[0], upset_rate[0], '.', label='r = {:6.1f}'.format(r))
+				ax = plt.subplot(111)
+				leg = ax.legend(fontsize=16, loc=('lower right'), frameon=True )
+				leg.get_frame().set_linewidth(1.0)
+				ax.get_xaxis().tick_bottom(); ax.get_yaxis().tick_left()
+				plt.ylabel("Upset rate "+upset_rate[1], fontsize=20)
+				plt.xlabel("z "+z_index[1], fontsize=20)
+				plt.xticks(fontsize=16)
+				plt.yticks(fontsize=16)
+				errors_expected = upset_rate[0][ np.where(z_index[0]==(r))[0][0] ]
+				utils.print_good('Expected errorr at r={:0} z={:0} -> {:9.6e} errors/(s*chip)'.format(r, z, errors_expected))
+			plt.savefig(directory+'/see_plot_error_rate_tracker_{:s}.png'.format(name_list[select]), bbox_inches="tight");
+			select += 1
+
+	##############################################################
+	def compile_logs(self, directory='../SSA_Results/SEU_Results/', use_run_precise_info = True):
 		let_map = {'C':1.3, 'Al':5.7, 'Ar':9.9, 'Cr':16.1, 'Ni':20.4, 'Kr':32.4, 'Rh':46.1, 'Xe':62.5}
+		fluence_limit_all_ions = 0
 		if(use_run_precise_info):
 			run_info = CSV.csv_to_array(directory+'see_test_ions_flux.csv')
 			ion_info = [[],[]]
@@ -156,7 +257,6 @@ class SSA_SEU():
 				ion_info[0].append( (re.split('-', info[10])[0]).strip() ) # run ion
 				ion_info[1].append( info[5] ) # run number
 			ion_info = np.array(ion_info)
-		directory='../SSA_Results/SEU_Results/'
 		dirs = os.listdir(directory)
 		dirs = [s for s in dirs if "Ion-" in s]
 		dirs.sort()
@@ -186,7 +286,7 @@ class SSA_SEU():
 							mean_flux = 15000 * np.cos(np.radians(float(angle)) )
 							run_time = np.sum( run_data[:, 5] )
 							fluence = mean_flux * run_time
-
+						fluence_limit_all_ions += fluence
 						error_l1_sum = [0]*2; good_l1_sum = [0]*2; time_l1_sum = [0]*2 ; error_rate_l1_sum = [0]*2;
 						error_rate_l1_sum_normalised = [0]*2; error_rate_stub_sum_normalised = 0;
 						error_stub_sum = 0; good_stub_sum = 0; error_rate_stub_sum = 0; counters_a = 0; counters_s = 0;
@@ -260,8 +360,10 @@ class SSA_SEU():
 		global_summary['stub'] = np.array(global_summary['stub'])
 		global_summary['stub'] = global_summary['stub'][np.argsort(np.array(global_summary['stub'][:,2],dtype=float ))]
 		CSV.array_to_csv( np.array(global_summary['stub']), directory+'stub.csv')
+		utils.print_good('Fluence limit for all ions -> {:9.6f}E+6'.format(fluence_limit_all_ions*1E-6))
 		#return global_summary
 
+	##############################################################
 	def quick_plot_logs(self, directory='../SSA_Results/SEU_Results/', cross_section_or_error_rate=0):
 		stubs = CSV.csv_to_array( directory+'stub.csv')
 		sram_500 = CSV.csv_to_array( directory+'sram_500.csv')
@@ -294,73 +396,11 @@ class SSA_SEU():
 			np.array(latch_500[:,3], dtype=float), np.array(latch_500[:,selindex], dtype=float),
 			'--o', color = c, markersize = 10, markeredgewidth = 0, label='L1 latch')
 		leg = plt.legend(fontsize = 12, loc=('lower right'), frameon=True )
-
-		#par, cov = curve_fit(f = f_weibull_cumulative, xdata = stubs[:,3], ydata = np.array(stubs[:,7])*1E6, p0 = [1E-4, 1E-2, 1E-2, 1])
 		x = np.array(stubs[:,3], dtype=float)
 		y = np.array(stubs[:,selindex], dtype=float),
-		#par, cov = curve_fit(f = f_weibull_cumulative, xdata = x, ydata = y,  p0 = [1E-1, 1E-2, 1E-2, 10])
-		#s0, s, E0, W = par
-		#plt.semilogy(x, f_weibull_cumulative1(x, s0, s, E0, W) )
 		return [x, y]
 
-		#print(par)
-		#print(cov)
-
-		#return
-
-	#def weibool_fit(self, directory='../SSA_Results/SEU_Results/', sensitive_depth=1E-6):
-
-
-
-
-
-
-
-
-#		plt.plot(data, stats.exponweib.pdf(data, *stats.exponweib.fit(data, 1, 1, scale=02, loc=0)))
-#		_ = plt.hist(data, bins=np.linspace(0, 16, 33), normed=True, alpha=0.5);
-#		plt.show()
-
-#	import numpy as np
-#	import matplotlib.pyplot as plt
-#	from weibull import weibProbDist, weibCumDist
-#
-#	x = np.linspace(0, 5, 100)
-#	a_alpha = np.array([0.5, 1, 2, 5])
-#	label = r'${\alpha} = %s, {\beta} = %s$'
-#
-#	fig = plt.figure('Weibull')
-#	ax1 = fig.add_subplot(211)
-#	ax2 = fig.add_subplot(212)
-#	for i in a_alpha:
-#	    ax1.plot(x, weibProbDist(x, i, 1), label=label % (i, 1))
-#	    ax2.plot(x, weibCumDist(x, i, 1), label=label % (i, 1))
-#	ax1.set_title('Probability density function', size=12)
-#	ax2.set_title('Cumulative distribution function', size=12)
-#	ax1.legend(loc=1, prop={'size': 10})
-#	ax2.legend(loc=7, prop={'size': 10})
-#
-#	fig.subplots_adjust(hspace=0.5)
-#	plt.show()
-
-
-
-
-#plt.clf()
-#for pldata in global_summary:
-#	if(pldata in ['latch_500', 'sram_500']):
-#		x = np.array( np.array(global_summary[pldata])[:,2] , dtype=float)
-#		y = np.array( np.array(global_summary[pldata])[:,4] , dtype=float)
-#		plt.plot(x, y, 'o', label=pldata)
-#
-#
-#leg = plt.legend(fontsize = 12, loc=('lower right'), frameon=True )
-#plt.show()
-
-			#print(error_rate_l1_sum[0])
-
-
-
+	##############################################################
 	def seucounter_try(self, iterations = 1000):
 		curtime = time.time()
 		for i in range(iterations):
@@ -416,11 +456,11 @@ class SSA_SEU():
 			os.makedirs(self.folder)
 
 	##############################################################
-	def write_summary(self, summary, results, striplist, hip_hits, time_since_reset, seucounter, iteration, latency, runname, conf_p_er,  conf_s_er, memory, start_time):
+	def write_summary(self, summary, results, fc7_al, striplist, hip_hits, time_since_reset, seucounter, iteration, latency, runname, conf_p_er,  conf_s_er, memory, start_time):
 		striplist.extend([0]*(8-len(striplist)))
 		hip_hits.extend([0]*(8-len(hip_hits)))
 		utils.print_log('->  Writing summary')
-		[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1]  = results
+		[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1, fc7_alignment_status]  = results
 		logdata = list(pandas_flatten([
 			runname, iteration, start_time,  time_since_reset, test_duration, latency, memory,
 			CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, conf_p_er,  conf_s_er, fifo_full_stub, fifo_full_L1,
@@ -441,6 +481,11 @@ class SSA_SEU():
 			msg += self.__write_fixed_width(data)
 		with open(summary, 'a') as fo:
 			fo.write(msg + '\n')
+		with open(fc7_al, 'a') as fo:
+			fc7_alignment = np.concatenate( [[runname, iteration, start_time[0], start_time[1]], fc7_alignment_status[:,1], fc7_alignment_status[:,2], fc7_alignment_status[:,3], fc7_alignment_status[:,4], fc7_alignment_status[:,5]] )
+			for st in fc7_alignment:
+				fo.write('{:8s}, '.format(str(st)))
+			fo.write('\n')
 
 	##############################################################
 	def __write_fixed_width(self, data):
@@ -460,11 +505,28 @@ class SSA_SEU():
 		self.terminate = False
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	##############################################################
 	##### OLD METHODS ############################################
 	##############################################################
 
-	def analyse_stub_error_buffer(self, folder = "../SSA_Results/SEU_Results_anl"):
+	def analyse_stub_error_buffer_OLD(self, folder = "../SSA_Results/SEU_Results_anl"):
 		labels = []
 		datalog = []
 		self.dirs = os.listdir(folder)
@@ -473,7 +535,7 @@ class SSA_SEU():
 
 
 	##############################################################
-	def run_seu_counter(self, folder, filename, runtime = 60):
+	def run_seu_counter_OLD(self, folder, filename, runtime = 60):
 		logfile = "../SSA_Results/SEU/" + folder + "/" + filename + "_seucounter.csv"
 		tinit = time.time()
 		while True:
@@ -489,10 +551,8 @@ class SSA_SEU():
 	def run_info(self):
 		return ''
 
-
-
 	##############################################################
-	def plot_logs(self, folder = "../SSA_Results/SEU_Results", compile_data = True, cl_cut = 70, l1_cut = 70):
+	def plot_logs_OLD(self, folder = "../SSA_Results/SEU_Results", compile_data = True, cl_cut = 70, l1_cut = 70):
 		if(compile_data):
 			self.compile_logs(folder = folder, cl_cut = cl_cut, l1_cut = l1_cut)
 		datalog = CSV.csv_to_array(folder + "/cmplog.csv" )
@@ -524,7 +584,6 @@ class SSA_SEU():
 		er_clus = np.array(er_clus)
 		er_l100 = np.array(er_l100)
 		er_l500 = np.array(er_l500)
-
 		#plt.clf()
 		fig = plt.figure(figsize=(16,12))
 		plt.style.use('seaborn-deep')
@@ -547,7 +606,7 @@ class SSA_SEU():
 		plt.semilogy(er_l500[:,0], er_l500[:,1], '--o', color = c, markersize = 10, markeredgewidth = 0)
 
 	##############################################################
-	def CheckConfiguration(self, folder = "../SSA_Results/SEU_Results/"):
+	def CheckConfiguration_OLD(self, folder = "../SSA_Results/SEU_Results/"):
 		labels = []; datalog = [];
 		dirs = os.listdir(folder)
 		dirs = [s for s in dirs  if "Test_" in s]
@@ -581,440 +640,7 @@ class SSA_SEU():
 					CSV.array_to_csv(conf_read[:,1:], folder + '/' + dt + "/CONFIG/" + f )
 			CSV.array_to_csv(errors, folder + '/' + dt + "/CONFIG/Conf_ErLog.csv")
 
-	def I2C_test(self, file='../SSA_Results/I2C/I2C_fast_test', niterations=1000, display=1):
-		for iter in range(niterations):
-			registers = []; rm = []
-
-			peri_reg_map  = self.ssa.ctrl.ssa_peri_reg_map.copy()
-			for i in peri_reg_map:
-				if('Fuse' in i): rm.append(i)
-				if('SEU' in i): rm.append(i)
-				if('mask' in i): rm.append(i)
-			for k in rm:
-				peri_reg_map.pop(k, None)
-
-			strip_reg_map = self.ssa.ctrl.ssa_strip_reg_map.copy()
-			for i in strip_reg_map:
-				if('ReadCounter' in i): rm.append(i)
-				if('Fuse' in i): rm.append(i)
-				if('mask' in i): rm.append(i)
-				if('SEU' in i): rm.append(i)
-			for k in rm:
-				strip_reg_map.pop(k, None)
-
-			for reg in peri_reg_map:
-				if(peri_reg_map[reg]['permissions']=='RW'):
-					time.sleep(0.001)
-					self.I2C.peri_write(register=reg, field=False, data=0x1)
-					time.sleep(0.001)
-					r = self.I2C.peri_read(register=reg)
-					time.sleep(0.001)
-					registers.append([ reg,  r])
-					if(r != 0x1):
-						if(display>0): utils.print_error([ reg,  r])
-					else:
-						if(display>1): utils.print_good([ reg,  r])
-
-			for reg in strip_reg_map:
-				for strip in range(1,120):
-					if(strip_reg_map[reg]['permissions']=='RW'):
-						time.sleep(0.001)
-						self.I2C.strip_write( register=reg, field=False, strip=strip, data=0x1)
-						time.sleep(0.001)
-						r = self.I2C.strip_read(register=reg,  strip=strip)
-						time.sleep(0.001)
-						registers.append([ reg,  r])
-						if(r != 0x1):
-							if(display>0): utils.print_error([ reg,  r])
-						else:
-							if(display>1): utils.print_good([ reg,  r])
-			CSV.ArrayToCSV(registers, file+ str(iter))
-
 	##############################################################
-	def compile_logs_old(self, folder = "../SSA_Results/SEU_Results", cl_cut = 100, l1_cut = 100):
-		labels = []
-		datalog = []
-		self.dirs = os.listdir(folder)
-		self.dirs = [s for s in self.dirs  if "Test_" in s]
-		self.dirs.sort()
-		datalog.append( ["LET", "TILT", "LATENCY", "FLUX", "Run Time", "Average SEU Counter in 30sec", "Average Cluster Errors in 30sec", "Average L1 Errors in 30sec", "Average Cluster Errors / (30sec*Flux)", "Average L1 Errors in 30sec / (30sec*Flux)", "Duration Cluster test [s]", "Cluster data errors", "Duration L1 test [s]", "L1 data errors"])
-		for dt in self.dirs:
-			summary = []
-			l1er_lowlatency  = []
-			l1er_highlatency = []
-			info = CSV.csv_to_array( folder + "/" + dt + "/info.csv" )
-			ION  = info[0,1]
-			LET  = float(info[3,1])
-			FLUX = float(info[4,1])
-			TILT = float(info[5,1])
-			for f in os.listdir(folder + '/' + dt):
-				if(len(re.findall("\W?SEU_SSA(.+).csv", f))>0):
-					#print(folder + '/' + dt + '/' + f)
-					summary = CSV.csv_to_array( folder + '/' + dt + '/' + f )
-			self.summary = summary
-
-			tmp = summary[np.where(summary[:,21] < 100)][:,21]
-			seucnt = np.mean(tmp)
-
-			tmp = summary[np.where( (summary[:,22] != 'X') * (summary[:,2]<250) )][:,15]
-			cor = summary[np.where( (summary[:,22] != 'X') * (summary[:,2]<250) )][:,24]
-			clusterr_l_sum = np.sum(tmp + cor)
-			clusterr_l_len = len(tmp + cor)
-			clusterr_l = np.float(np.mean(tmp + cor))
-
-			tmp = summary[np.where( (summary[:,22] != 'X') * (summary[:,2]>250) )][:,15]
-			cor = summary[np.where( (summary[:,22] != 'X') * (summary[:,2]>250) )][:,24]
-			clusterr_h = np.mean(tmp + cor)
-			clusterr_h_sum = np.sum(tmp + cor)
-			clusterr_h_len = len(tmp + cor)
-			clusterr_h = np.float(np.mean(tmp + cor))
-
-			tmp = summary[np.where( (summary[:,23] != 'X') * (summary[:,2]<250)  )][:,17]
-			cor = summary[np.where( (summary[:,23] != 'X') * (summary[:,2]<250)  )][:,25]
-			l1dataer_l_sum = np.sum(tmp + cor)
-			l1dataer_l_len = len(tmp + cor)
-			l1dataer_l = np.float(np.mean(tmp + cor))
-
-			tmp = summary[np.where( (summary[:,23] != 'X') * (summary[:,2]>250)  )][:,17]
-			cor = summary[np.where( (summary[:,23] != 'X') * (summary[:,2]>250)  )][:,25]
-			l1dataer_h_sum = np.sum(tmp + cor)
-			l1dataer_h_len = len(tmp + cor)
-			l1dataer_h = np.float(np.mean(tmp + cor))
-
-			print( "->  {:2s}   {:%7.3f}   {:7.3f}  {:7.3f}  {:7.3f} ".format(ION, LET,  clusterr_l+clusterr_h, l1dataer_l, l1dataer_h)  )
-
-			datalog.append( [LET, TILT, 100 , FLUX, 30, seucnt, clusterr_l, l1dataer_l, clusterr_l/(float(FLUX)*30), l1dataer_l/(float(FLUX)*30), clusterr_l_len*30,  clusterr_l_sum, l1dataer_l_len*30,  l1dataer_l_sum ])
-			#print(datalog[-1])
-			datalog.append( [LET, TILT, 500 , FLUX, 30, seucnt, clusterr_h, l1dataer_h, clusterr_h/(float(FLUX)*30), l1dataer_h/(float(FLUX)*30), clusterr_h_len*30,  clusterr_h_sum, l1dataer_h_len*30,  l1dataer_h_sum ])
-			#print(datalog[-1])
-			#time.sleep(2)
-		CSV.array_to_csv( datalog , folder + "/cmplog.csv" )
-		print("->  Compiled log saved in: " + str( folder + "/cmplog.csv") )
-
-
-		#fig = plt.figure(figsize=(16,12))
-		#color=iter(sns.color_palette('deep'))
-		#plt.semilogy(er_clus_100_t00[:,0], er_clus_100_t00[:,1], 'ro')
-		#plt.semilogy(er_clus_500_t00[:,0], er_clus_500_t00[:,1], 'ro')
-		#plt.semilogy(er_l100_t00[:,0], er_l100_t00[:,1], 'bo')
-		#plt.semilogy(er_l500_t00[:,0], er_l500_t00[:,1], 'go')
-		#plt.semilogy(er_l100_t30[:,0], er_l100_t30[:,1], 'bo')
-		#plt.semilogy(er_l500_t30[:,0], er_l500_t30[:,1], 'go')
-		#plt.show()
-		#plt.figure(7)
-		#plt.semilogy(er_l100[:,0], er_l100[:,1], '-ro')
-		#plt.semilogy(l1_data100[:,0], l1_data100[:,1], '-go')
-		#plt.semilogy(er_l100_t00[:,0], er_l100_t00[:,1], '-bo')
-		#plt.semilogy(er_l100_t30[:,0], er_l100_t30[:,1], '-bo')
-		#plt.show()C':1.3, 'Al':5.7, 'Ar':9.9, 'Cr':16.1, 'Ni':20.4, 'Kr':32.4, 'Rh':46.1, 'Xe':62.5}
-		directory='../SSA_Results/SEU_Results/'
-		dirs = os.listdir(directory)
-		dirs = [s for s in dirs if "Ion-" in s]
-		dirs.sort()
-		global_summary = {'latch_500':[], 'latch_100':[], 'sram_500':[], 'sram_100':[], 'stub':[]}
-		for ddd in dirs:
-			for f in os.listdir( directory +'/'+ ddd ):
-				run_summary = re.findall("SEU_SSA.+_summary.csv", f)
-				if(len(run_summary)>0):
-					run_summary = directory +'/'+ ddd +'/'+ run_summary[0]
-					[ion, angle, memory, run] = re.findall("SEU_SSA.+Ion-(.+)__Tilt-(.+)__Flux-(.+)_run(.+)____summary.csv", f)[0]
-					run_data = CSV.csv_to_array(  run_summary )
-					print("->  Elaborating file: " + str(run_summary))
-					error_l1_sum = [0]*2; good_l1_sum = [0]*2; time_l1_sum = [0]*2 ; error_rate_l1_sum = [0]*2;
-					error_stub_sum = 0; good_stub_sum = 0; error_rate_stub_sum = 0; counters_a = 0; counters_s = 0;
-					LET = let_map[ ion ] / np.cos(np.radians(float(angle)) )
-					for shortrun in run_data:
-						if(shortrun[14] < 1E4 and shortrun[14]>=0):
-							if(shortrun[6]>250): #high latency run
-								error_l1_sum[1] += shortrun[14]
-								good_l1_sum[1] += shortrun[10]
-							else:
-								error_l1_sum[0] += shortrun[14]
-								good_l1_sum[0] += shortrun[10]
-						if(shortrun[12] < 1E4 and shortrun[12]>=0):
-							error_stub_sum += shortrun[12]
-							good_stub_sum += shortrun[8]
-					try: error_rate_l1_sum[1] = error_l1_sum[1]/(error_l1_sum[1]+good_l1_sum[1])
-					except ZeroDivisionError: error_rate_l1_sum[1] = -1
-					try: error_rate_l1_sum[0] = error_l1_sum[0]/(error_l1_sum[0]+good_l1_sum[0])
-					except ZeroDivisionError: error_rate_l1_sum[0] = -1
-					try: error_rate_stub_sum  = error_stub_sum/(error_stub_sum+good_stub_sum)
-					except ZeroDivisionError: error_rate_stub_sum = -1
-					if(memory=='latch' ):
-						global_summary['latch_500'].append([ion, angle, LET, good_l1_sum[1], error_l1_sum[1], error_rate_l1_sum[1] ])
-						global_summary['latch_100'].append([ion, angle, LET, good_l1_sum[0], error_l1_sum[0], error_rate_l1_sum[0] ])
-					elif(memory=='sram'):
-						global_summary['sram_500'].append( [ion, angle, LET, good_l1_sum[1], error_l1_sum[1], error_rate_l1_sum[1] ])
-						global_summary['sram_100'].append( [ion, angle, LET, good_l1_sum[0], error_l1_sum[0], error_rate_l1_sum[0] ])
-					global_summary['stub'].append([ion, angle, LET, good_stub_sum, error_stub_sum, error_rate_stub_sum] )
-		#return global_summary
-		global_summary['latch_500'] = np.array(global_summary['latch_500'])
-		global_summary['latch_500'] = global_summary['latch_500'][np.argsort(np.array(global_summary['latch_500'][:,2],dtype=float ))]
-		global_summary['latch_100'] = np.array(global_summary['latch_100'])
-		global_summary['latch_100'] = global_summary['latch_100'][np.argsort(np.array(global_summary['latch_100'][:,2],dtype=float ))]
-		global_summary['sram_500'] = np.array(global_summary['sram_500'])
-		global_summary['sram_500'] = global_summary['sram_500'][np.argsort(np.array(global_summary['sram_500'][:,2],dtype=float ))]
-		global_summary['sram_100'] = np.array(global_summary['sram_100'])
-		global_summary['sram_100'] = global_summary['sram_100'][np.argsort(np.array(global_summary['sram_100'][:,2],dtype=float ))]
-		CSV.array_to_csv( np.array(global_summary['latch_500']), directory+'latch_500.csv')
-		CSV.array_to_csv( np.array(global_summary['latch_100']), directory+'latch_100.csv')
-		CSV.array_to_csv( np.array(global_summary['sram_500']), directory+'sram_500.csv')
-		CSV.array_to_csv( np.array(global_summary['sram_100']), directory+'sram_100.csv')
-		tmpvect = {}
-		for stubdata in global_summary['stub']:
-			if(stubdata[2] in tmpvect):
-				tmpvect[stubdata[2]][3] += stubdata[3]
-				tmpvect[stubdata[2]][4] += stubdata[4]
-				tmpvect[stubdata[2]][5] += stubdata[5]
-			else:
-				tmpvect[stubdata[2]] = stubdata
-		global_summary['stub'] = []
-		for i in tmpvect:
-			global_summary['stub'].append(tmpvect[i])
-		global_summary['stub'] = np.array(global_summary['stub'])
-		global_summary['stub'] = global_summary['stub'][np.argsort(np.array(global_summary['stub'][:,2],dtype=float ))]
-		CSV.array_to_csv( np.array(global_summary['stub']), directory+'stub.csv')
-		return global_summary
-
-
-
-
-
-#plt.clf()
-#for pldata in global_summary:
-#	if(pldata in ['latch_500', 'sram_500']):
-#		x = np.array( np.array(global_summary[pldata])[:,2] , dtype=float)
-#		y = np.array( np.array(global_summary[pldata])[:,4] , dtype=float)
-#		plt.plot(x, y, 'o', label=pldata)
-#
-#
-#leg = plt.legend(fontsize = 12, loc=('lower right'), frameon=True )
-#plt.show()
-
-			#print(error_rate_l1_sum[0])
-
-
-
-	def seucounter_try(self, iterations = 1000):
-		curtime = time.time()
-		for i in range(iterations):
-			cnt = self.ssa.ctrl.read_seu_counter()
-			print("->  %10.6f -> %3d" % ( (time.time()-curtime), cnt))
-
-	##############################################################
-	def check_configuration(self, filename = '../SSA_Results/SEU/test', active_strip_list = [], active_HIP_list = [], latency = 500, memory_select='SRAM'):
-		#t = time.time()
-		utils.print_info("->  Saving configuration to " + str(filename))
-
-		conf_new = self.ssa.ctrl.save_configuration(
-			rtarray = True, display=False, strip_list = 'all',
-			file = (filename+'__configuration.scv'),
-			notes = [['note','active_strip_and_HIPs','[{:s}] - [{:s}]'.format(
-				', '.join(map(str, active_strip_list)), ', '.join(map(str, active_HIP_list))   ) ]] )
-
-		utils.print_info("->  Reading default configuration ")
-		conf_ref = self.ssa.ctrl.load_configuration(
-			rtarray = True, display=False, upload_on_chip = False,
-			file = 'ssa_methods/Configuration/ssa_configuration_base_calib_v{:d}.csv'.format(tbconfig.VERSION['SSA']))
-		ctrl_3_val = latency & 0x00ff
-		if(memory_select == 'LATCH'):
-			ctrl_1_val = ((latency&0x0100)>>4)|0b01100100
-		else:
-			ctrl_1_val = ((latency&0x0100)>>4)|0b00000100
-		conf_ref = self.ssa.ctrl._change_config_value(field='StripControl1',     new_value=0b00001001,  conf=conf_ref, strips=active_strip_list )
-		conf_ref = self.ssa.ctrl._change_config_value(field='DigCalibPattern_L', new_value=0b00000001,  conf=conf_ref, strips=active_strip_list )
-		conf_ref = self.ssa.ctrl._change_config_value(field='DigCalibPattern_H', new_value=0b00000001,  conf=conf_ref, strips=active_HIP_list )
-		conf_ref = self.ssa.ctrl._change_config_value(field='control_1',         new_value=ctrl_1_val,  conf=conf_ref, strips=[-1] )
-		conf_ref = self.ssa.ctrl._change_config_value(field='control_3',         new_value=ctrl_3_val,  conf=conf_ref, strips=[-1] )
-
-		utils.print_info("->  Comparing configuration")
-		error = self.ssa.ctrl.compare_configuration(conf_new, conf_ref)
-		#print(time.time() - t)
-		peri_er = bool(error[0])
-		strip_er = not all(v == 0 for v in error[1:])
-		if(peri_er):
-			utils.print_error("->  SEU Configuration -> Error in Periphery configuration")
-		if(strip_er):
-			utils.print_error("->  SEU Configuration -> Error in Strip configuration")
-		if(not peri_er and not strip_er):
-			utils.print_good("->  SEU Configuration -> Correct")
-		return peri_er, strip_er
-
-	##############################################################
-	def set_info(self):
-		self.ion    = input("Ion    : ")
-		self.tilt   = input("Angle  : ")
-		self.flux   = input("Flux : ")
-		self.folder = "../SSA_Results/SEU_Results/" + "Ion-" + self.ion + "__Tilt-" + str(self.tilt) + "__Flux-" + str(self.flux) + '/'
-		if not os.path.exists(self.folder):
-			os.makedirs(self.folder)
-
-	##############################################################
-	def write_summary(self, summary, results, striplist, hip_hits, time_since_reset, seucounter, iteration, latency, runname, conf_p_er,  conf_s_er, memory, start_time):
-		striplist.extend([0]*(8-len(striplist)))
-		hip_hits.extend([0]*(8-len(hip_hits)))
-		utils.print_log('->  Writing summary')
-		[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1]  = results
-		logdata = list(pandas_flatten([
-			runname, iteration, start_time,  time_since_reset, test_duration, latency, memory,
-			CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, conf_p_er,  conf_s_er, fifo_full_stub, fifo_full_L1,
-			seucounter, list(striplist), list(hip_hits),
-			]))
-		header = [
-			'runname'   , 'iteration' , 'date',     'start_time'  , 'time_reset', 'time_test' , 'latency'  , 'memory',
-			'CL_ok'     , 'LA_ok'     , 'L1_ok'     , 'LH_ok'     , 'CL_er'     , 'LA_er'     , 'L1_er'    , 'LH_er', 'conf_p_er',  'conf_s_er',
-			'FIFO_Stub' , 'FIFO_L1'   , 'seucnt_A_P', 'seucnt_A_S', 'seucnt_S_P', 'seucnt_S_S', 'seucnt_T' ,
-			'strip_0'   , 'strip_1'   , 'strip_2'   , 'strip_3'   , 'strip_4'   , 'strip_5'   , 'strip_6'  , 'strip_7',
-			'hip_0'     , 'hip_1'     , 'hip_2'     , 'hip_3'     , 'hip_4'     , 'hip_5'     , 'hip_6'    , 'hip_7'  ]
-		msg = ''
-		if(not os.path.exists(summary)):
-			for data in header:
-				msg += self.__write_fixed_width(data)
-			msg += '\n'
-		for data in logdata:
-			msg += self.__write_fixed_width(data)
-		with open(summary, 'a') as fo:
-			fo.write(msg + '\n')
-
-	##############################################################
-	def __write_fixed_width(self, data):
-		if  (type(data)==int):    msg = '{:10d}, '.format(data)
-		elif(type(data)==str):    msg = '{:10s}, '.format(data)
-		elif(type(data)==float):  msg = '{:10.3f}, '.format(data)
-		elif(type(data)==bool):   msg = '{:10s}, '.format(str(data))
-		else:                     msg = str(data)
-		return msg
-
-	##############################################################
-	def init_parameters(self):
-		self.summary = results()
-		self.runtest = RunTest('default')
-		self.l1_latency = [501, 101]
-		self.run_time = 5 #sec
-		self.terminate = False
-
-
-	##############################################################
-	##### OLD METHODS ############################################
-	##############################################################
-
-	def analyse_stub_error_buffer(self, folder = "../SSA_Results/SEU_Results_anl"):
-		labels = []
-		datalog = []
-		self.dirs = os.listdir(folder)
-		self.dirs = [s for s in self.dirs  if "Test_" in s]
-		self.dirs.sort()
-
-
-	##############################################################
-	def run_seu_counter(self, folder, filename, runtime = 60):
-		logfile = "../SSA_Results/SEU/" + folder + "/" + filename + "_seucounter.csv"
-		tinit = time.time()
-		while True:
-			seucounter = self.ssa.ctrl.read_seu_counter()
-			fo = open(logfile, 'a')
-			fo.write(str(time.time()-tinit) + ", " + str(seucounter) + '\n')
-			fo.close()
-			time.sleep(0.2)
-			print(str(seucounter))
-			if( (time.time()-tinit) > runtime):
-				return
-
-	def run_info(self):
-		return ''
-
-
-
-	##############################################################
-	def plot_logs(self, folder = "../SSA_Results/SEU_Results", compile_data = True, cl_cut = 70, l1_cut = 70):
-		if(compile_data):
-			self.compile_logs(folder = folder, cl_cut = cl_cut, l1_cut = l1_cut)
-		datalog = CSV.csv_to_array(folder + "/cmplog.csv" )
-		xvalues = np.unique(datalog[1: , 1])
-		er_clus_100_t00 = np.array( datalog[ np.where( (datalog[:,2]== '0.0') * (datalog[:,3]=='100') )][:,[1, 9]] , dtype=float)
-		er_clus_500_t00 = np.array( datalog[ np.where( (datalog[:,2]== '0.0') * (datalog[:,3]=='500') )][:,[1, 9]] , dtype=float)
-		er_l100_t00     = np.array( datalog[ np.where( (datalog[:,2]== '0.0') * (datalog[:,3]=='100') )][:,[1,10]] , dtype=float)
-		er_l500_t00     = np.array( datalog[ np.where( (datalog[:,2]== '0.0') * (datalog[:,3]=='500') )][:,[1,10]] , dtype=float)
-		er_clus_100_t30 = np.array( datalog[ np.where( (datalog[:,2]=='30.0') * (datalog[:,3]=='100') )][:,[1, 9]] , dtype=float)
-		er_clus_500_t30 = np.array( datalog[ np.where( (datalog[:,2]=='30.0') * (datalog[:,3]=='500') )][:,[1, 9]] , dtype=float)
-		er_l100_t30     = np.array( datalog[ np.where( (datalog[:,2]=='30.0') * (datalog[:,3]=='100') )][:,[1,10]] , dtype=float)
-		er_l500_t30     = np.array( datalog[ np.where( (datalog[:,2]=='30.0') * (datalog[:,3]=='500') )][:,[1,10]] , dtype=float)
-		l1_data100      = np.array( datalog[ np.where( (datalog[:,3]=='100') )][:,[1,10]] , dtype=float)
-		l1_data500      = np.array( datalog[ np.where( (datalog[:,3]=='500') )][:,[1,10]] , dtype=float)
-		clust_data100   = np.array( datalog[ np.where( (datalog[:,3]=='100') )][:,[1, 9]] , dtype=float)
-		clust_data500   = np.array( datalog[ np.where( (datalog[:,3]=='500') )][:,[1, 9]] , dtype=float)
-		clust_data      = np.array( datalog[1: ,[1,9]] , dtype=float)
-		er_clus = []; er_l100 = []; er_l500 = [];
-		for i in np.unique(clust_data[:,0]):
-			tmp = np.array(  clust_data[ np.where((clust_data[:,0] == i)) ] )[:,1]
-			tmp = np.mean( np.array(tmp) )
-			er_clus.append( [i , tmp] )
-			tmp = np.array(  l1_data100[ np.where((l1_data100[:,0] == i)) ] )[:,1]
-			tmp = np.mean( np.array(tmp) )
-			er_l100.append( [i , tmp] )
-			tmp = np.array(  l1_data500[ np.where((l1_data500[:,0] == i)) ] )[:,1]
-			tmp = np.mean( np.array(tmp) )
-			er_l500.append( [i , tmp] )
-		er_clus = np.array(er_clus)
-		er_l100 = np.array(er_l100)
-		er_l500 = np.array(er_l500)
-
-		#plt.clf()
-		fig = plt.figure(figsize=(16,12))
-		plt.style.use('seaborn-deep')
-		ax = plt.subplot(111)
-		ax.spines["top"].set_visible(False)
-		ax.spines["right"].set_visible(False)
-		ax.get_xaxis().tick_bottom()
-		ax.get_yaxis().tick_left()
-		plt.xticks(fontsize=32)
-		plt.yticks(fontsize=32)
-		plt.ylabel("Errors per particle", fontsize=32)
-		plt.xlabel('LET', fontsize=16)
-		color=iter(sns.color_palette('deep'))
-		#plt.ylim(bottom = 1E-9)
-		c = next(color)
-		plt.semilogy(er_clus[:,0], er_clus[:,1], '--o', color = c, markersize = 10, markeredgewidth = 0)
-		c = next(color)
-		plt.semilogy(er_l100[:,0], er_l100[:,1], '--o', color = c, markersize = 10, markeredgewidth = 0)
-		c = next(color)
-		plt.semilogy(er_l500[:,0], er_l500[:,1], '--o', color = c, markersize = 10, markeredgewidth = 0)
-
-	##############################################################
-	def CheckConfiguration(self, folder = "../SSA_Results/SEU_Results/"):
-		labels = []; datalog = [];
-		dirs = os.listdir(folder)
-		dirs = [s for s in dirs  if "Test_" in s]
-		dirs.sort()
-		conf_correct = CSV.csv_to_array('ssa_methods/Configuration/ssa_configuration_base.csv')
-		conf_default = CSV.csv_to_array('ssa_methods/Configuration/ssa_configuration_reset.csv')
-		for dt in dirs:
-			errors = []
-			for f in os.listdir( folder + '/' + dt + "/CONFIG/" ):
-				if(len(re.findall("SEU_SSA_(.+)_configuration.scv", f))>0):
-					filename = folder + '/' + dt + "/CONFIG/" + f
-					tmp = CSV.csv_to_array( filename )
-					print("->  Elaborating file: " + filename)
-					conf_read = np.zeros([np.shape(tmp)[0], 8], dtype="|S32")
-					conf_read[:,0:4] = tmp[:,0:4]
-					for reg in conf_read:
-						correct_val = conf_correct[map(lambda x : (str(x[1]) == reg[1]) and (str(x[2]) == reg[2]) , conf_correct )][0][3]
-						default_val = conf_default[map(lambda x : (str(x[1]) == reg[1]) and (str(x[2]) == reg[2]) , conf_default )][0][3]
-						reg[4] = ''
-						reg[6] = str(correct_val)
-						reg[7] = str(default_val)
-						if((reg[3] == str(correct_val)) or ((reg[2] == 'L1_Latency_lsb') and (reg[3] in ['101', '501'])) or ((reg[2] == 'L1_Latency_msb') and (reg[3] in ['0', '1']))):
-							reg[5] = ""
-						elif(reg[3] == str(default_val)):
-							reg[5] = "Reset"
-							errors.append(np.array([filename, reg[0], reg[1], reg[2], reg[3], reg[4], reg[5], reg[6], reg[7]]))
-						else:
-							reg[5] = "Error"
-							errors.append(np.array([filename, reg[0], reg[1], reg[2], reg[3], reg[4], reg[5], reg[6], reg[7]]))
-
-					CSV.array_to_csv(conf_read[:,1:], folder + '/' + dt + "/CONFIG/" + f )
-			CSV.array_to_csv(errors, folder + '/' + dt + "/CONFIG/Conf_ErLog.csv")
-
 	def I2C_test(self, file='../SSA_Results/I2C/I2C_fast_test', niterations=1000, display=1):
 		for iter in range(niterations):
 			registers = []; rm = []
@@ -1172,47 +798,150 @@ class SSA_SEU():
 #6 10, 30, 45, 60
 
 
-def fit():
-	directory = '../SSA_Results/SEU_Results/'
-	sensitive_depth=1E-6
+
+
+
+
+
+
+
+
+
+'''
+	def fit_and_evaluate_error_rate_2(self, name_list, dataset_list, corr_list=[[0,0,0,0]], sensitive_depth=1E-6, directory = '../SSA_Results/SEU_Results/'):
+		si_density   = [2.3290E3, 'mg/cm3']
+		sens_volume  = [1*1*sensitive_depth, 'um^3']
+		rate_tracker = CSV.csv_to_array( directory+'seu_rate_lhc_tracker.csv')
+		total_crossection = {};
+		hadron_flux  = CSV.csv_to_array( directory+'fluka_hadrons_gt20MeV_central_region_data.csv', noheader=True)
+		fig = plt.figure(figsize=(6,4))
+		color=iter(sns.color_palette('deep'))
+		select = 0; filename = '';
+		for data in dataset_list:
+			#data = data_set[name_list]
+			LET  = np.array(data[:,3], dtype=np.double)
+			#Edep = LET * (sensitive_depth  * 1E2 * si_density[0] )
+			cross_section = np.array(data[:,6], dtype=np.double)
+			c = next(color)
+			y = np.array(data[:,6], dtype=np.double)
+			param_bounds =([0,0,0,0],[5E-2,5E0,1E1,1E3])
+			init_param   = [corr_list[select][0], corr_list[select][1], corr_list[select][2], corr_list[select][3]]
+			par, cov = curve_fit(f = f_weibull_cumulative, xdata = LET, ydata = cross_section,  p0 = init_param, bounds=param_bounds)
+			perr = np.sqrt(np.diag(cov))
+			s0, s, E0, W = par
+			s0_e, s_e, E0_e, W_e = perr
+			utils.print_good('\nCumulative weibull fitting parameters: \n            Value   |  Error')
+			utils.print_good('    W  = {:10.6e} | {:10.6e}'.format(W, W_e))
+			utils.print_good('    s  = {:10.6e} | {:10.6e}'.format(s, s_e))
+			utils.print_good('    s0 = {:10.6e} | {:10.6e}'.format(s0, s0_e))
+			utils.print_good('    E0 = {:10.6e} | {:10.6e}\n'.format(E0, E0_e))
+			plt.semilogy(LET, cross_section,'o--', color = c)
+			xl = np.linspace(-5,LET[-1], 10000)
+			plt.semilogy(xl, f_weibull_cumulative1(xl, s0, s, E0, W) , color = c)
+			total_crossection[select] = [0, '[cm^2]']
+
+			for i in range(len(rate_tracker)-1):
+				E_i0 = rate_tracker[i,0]
+				E_i1 = rate_tracker[i+1,0]
+				LET_i0 = E_i0 / (sensitive_depth  * 1E2 * si_density[0] )
+				LET_i1 = E_i1 / (sensitive_depth  * 1E2 * si_density[0] )
+				delta = (f_weibull_cumulative1(LET_i1, s0,s,E0,W) - f_weibull_cumulative1(LET_i0, s0,s,E0,W))/s0
+				if(delta >0): #below E0 the value is not defined
+					total_crossection[select][0] += (s0 * 1E8) * rate_tracker[i+1,1] * delta
+				print(LET_i1)
+				print(LET_i0)
+				print('=====')
+			utils.print_good('\nCross-section for CMS tracker environment: ')
+			utils.print_good("    cs = {:10.6e}  | {:10.6e}\n".format(total_crossection[select][0], 0))
+			print(total_crossection)
+			filename += '_{:s}'.format(name_list[select])
+			select += 1
+		plt.savefig(directory+'/plot_cross_section_fit_{:s}.png'.format(filename), bbox_inches="tight");
+		select = 0
+		for data in dataset_list:
+			fig = plt.figure(figsize=(6,4))
+			color=iter(sns.color_palette('deep'))
+			for r in [21, 40, 60]:
+				r_index = np.where(hadron_flux[:,0]==r)[0][0]
+				z_index = [hadron_flux[0,1:], '[cm]']
+				z_flux = [hadron_flux[r_index, 1:], '[cm^{-2} s^{-1}]']
+				upset_rate = [z_flux[0]*total_crossection[select][0], '[s^{-1} chip^{-1}]']
+				c = next(color)
+				plt.plot(z_index[0], upset_rate[0], '.', label='r = {:6.1f}'.format(r))
+				ax = plt.subplot(111)
+				leg = ax.legend(fontsize = 12, loc=('lower right'), frameon=True )
+				leg.get_frame().set_linewidth(1.0)
+				ax.get_xaxis().tick_bottom(); ax.get_yaxis().tick_left()
+				plt.ylabel("Upset rate "+upset_rate[1], fontsize=16)
+				plt.xlabel("z "+z_index[1], fontsize=16)
+				plt.xticks(fontsize=12)
+				plt.yticks(fontsize=12)
+			plt.savefig(directory+'/plot_error_rate_tracker_{:s}.png'.format(name_list[select]), bbox_inches="tight");
+			select += 1
+
+
+def evaluate_error_rate_cic(s0, s, E0, W, sensitive_depth=1E-6, directory = '../SSA_Results/SEU_Results/'):
 	si_density   = [2.3290, 'g/cm3']
 	sens_depth   = [sensitive_depth*10E2, 'cm']
 	sens_volume  = [1*1*sensitive_depth, 'um^3']
-	rate_tracker = CSV.csv_to_array(directory + 'seu_rate_lhc_tracker.csv')
-	stub_data    = CSV.csv_to_array( directory+'stub.csv')
-	sram_500     = CSV.csv_to_array( directory+'sram_500.csv')
-	latch_500    = CSV.csv_to_array( directory+'latch_500.csv')
-	dataset = stub_data
-	LET  = np.array(dataset[:,3], dtype=double)
-	Edep = LET * (sens_depth[0] * si_density[0])
-	cross_section = np.array(dataset[:,6], dtype=double)
+	rate_tracker = CSV.csv_to_array( directory+'seu_rate_lhc_tracker.csv')
+	total_crossection = {};
+	hadron_flux  = CSV.csv_to_array( directory+'fluka_hadrons_gt20MeV_central_region_data.csv', noheader=True)
+	fig = plt.figure(figsize=(6,4))
 	color=iter(sns.color_palette('deep'))
+	select = 0; filename = '';
 	c = next(color)
-	y = np.array(dataset[:,6], dtype=double)
-	param_bounds =([0,0,0,0],[1E-2,1E0,1E1,1E2])
-	init_param   = [1E-2, 1, 0, 1E2]
-	par, cov = curve_fit(f = f_weibull_cumulative, xdata = Edep, ydata = cross_section,  p0 = init_param, bounds=param_bounds)
-	perr = np.sqrt(np.diag(cov))
-	s0, s, E0, W = par
-	s0_e, s_e, E0_e, W_e = perr
-	print("            Value   |  Error")
-	print("    W  = {:10.6f} | {:10.3f}".format(W, W_e))
-	print("    s  = {:10.6f} | {:10.3f}".format(s, s_e))
-	print("    s0 = {:10.6f} | {:10.3f}".format(s0, s0_e))
-	print("    E0 = {:10.6f} | {:10.3f}".format(E0, E0_e))
-	plt.semilogy(Edep, cross_section,'o--', color = c)
-	xl = np.linspace(-5,Edep[-1], 10000)
+	utils.print_good('\nCumulative weibull fitting parameters: \n            Value   |  Error')
+	utils.print_good('    W  = {:10.6e}'.format(W))
+	utils.print_good('    s  = {:10.6e}'.format(s))
+	utils.print_good('    s0 = {:10.6e}'.format(s0))
+	utils.print_good('    E0 = {:10.6e}\n'.format(E0))
+	xl = np.linspace(-5, 0.4, 10000)
 	plt.semilogy(xl, f_weibull_cumulative1(xl, s0, s, E0, W) , color = c)
-	print(par)
-	#print([-4, 0, 0, 1])
-	plt.show()
-	total_crossection = 0
+	total_crossection[select] = [0, '[cm^2]']
 	for i in range(len(rate_tracker)-1):
 		delta = (f_weibull_cumulative1(rate_tracker[i+1,0], s0,s,E0,W) - f_weibull_cumulative1(rate_tracker[i,0], s0,s,E0,W))
 		if(delta >0):
-			total_crossection += (s0 / 1E-8) * rate_tracker[i,1] * delta
-			#print(delta)
+			total_crossection[select][0] += (s0 / 1E-8) * rate_tracker[i,1] * delta
+	utils.print_good('\nCross-section for CMS tracker environment: ')
+	utils.print_good("    cs = {:10.6e}  | {:10.6e}\n".format(total_crossection[select][0], 0))
 	print(total_crossection)
+	select += 1
+	select = 0
+	fig = plt.figure(figsize=(6,4))
+	color=iter(sns.color_palette('deep'))
+	for r in [21, 40, 60]:
+		r_index = np.where(hadron_flux[:,0]==r)[0][0]
+		z_index = [hadron_flux[0,1:], '[cm]']
+		z_flux = [hadron_flux[r_index, 1:], '[cm^{-2} s^{-1}]']
+		upset_rate = [z_flux[0]*total_crossection[select][0], '[s^{-1} chip^{-1}]']
+		c = next(color)
+		plt.plot(z_index[0], upset_rate[0], '.', label='r = {:6.1f}'.format(r))
+		ax = plt.subplot(111)
+		leg = ax.legend(fontsize = 12, loc=('lower right'), frameon=True )
+		leg.get_frame().set_linewidth(1.0)
+		ax.get_xaxis().tick_bottom(); ax.get_yaxis().tick_left()
+		plt.ylabel("Upset rate "+upset_rate[1], fontsize=16)
+		plt.xlabel("z "+z_index[1], fontsize=16)
+		plt.xticks(fontsize=12)
+		plt.yticks(fontsize=12)
+	select += 1
+
+'''
+
+# evaluate_error_rate_cic(2.079979e-02, 9.520022e-01, 6.366344e-04, 1.362656e+02)
 
 
-fit()
+
+	# 1E-2, 1, 0, 100
+
+
+		#plt.show()
+
+
+
+# fit(['stub_data'], [0,0,0,0])
+# fit(['sram_500'], [0,0,0,0])
+#
+# correction = {'stub_data':[0,0,0,0],'sram_500':[-5E-3,-0.25,0,0], 'latch_500':[0,0,0,0]}
+# fit(['stub_data', 'sram_500'], correction)

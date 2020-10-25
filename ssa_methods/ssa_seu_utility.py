@@ -35,13 +35,39 @@ class SSA_SEU_utilities():
 			strip =[10,20,30,40], centroids=[10,20,30,40], hipflags = [10,30], cal_pulse_period = 1, l1a_period = 39,
 			latency = 101, run_time = 5, display = 1, filename = '', runname = '',
 			delay = 74, create_errors = False, stop_if_fifo_full = True,
-			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0, show_every=1):
+			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0, show_every=1, reset_fc7=True, align=True):
 
-		self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
+		CL_ok=0; L1_ok=0; LH_ok=0; iter_counter=0;
+
+		while((CL_ok==0 or L1_ok==0 or LH_ok==0) and iter_counter<3):
+			if(iter_counter!=0):
+				utils.print_warning('->  Reiterating test after just re-running the phase alignment on the FPGA. ')
+				utils.print_warning('    It seems to be the usual firmware alignment issue.')
+
+			results = self.run_seu_test(
+				check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral, create_errors = create_errors,
+				strip = strip, centroids=centroids, hipflags = hipflags, delay = delay, run_time = run_time,
+				cal_pulse_period = cal_pulse_period, l1a_period = l1a_period, latency = latency,
+				display = display, stop_if_fifo_full = stop_if_fifo_full, reset_fc7=reset_fc7, align=align)
+
+			[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1, fc7_alignment_status]  = results
+			iter_counter += 1
+		return results
+
+	##############################################################
+	def run_seu_test(self,
+			check_stub=True, check_l1=True, check_lateral=False,
+			strip =[10,20,30,40], centroids=[10,20,30,40], hipflags = [10,30], cal_pulse_period = 1, l1a_period = 39,
+			latency = 101, run_time = 5, display = 1, filename = '', runname = '',
+			delay = 74, create_errors = False, stop_if_fifo_full = True,
+			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0, show_every=1, reset_fc7=True, align=True):
+
+		if(reset_fc7): self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
 		self.fc7.write("ctrl_fast", 0x10000)
-		self.ssa.init(edge = 'negative', display = False)
+		if(align): self.ssa.init(edge = 'positive', display = True)
 		self.ssa.resync()
+		fc7_alignment_status = self.fc7.get_lines_alignment_status()
 		#print(tbconfig.VERSION['SSA'])
 
 		s1, s2, s3 = self.Stub_Evaluate_Pattern(strip)
@@ -85,7 +111,7 @@ class SSA_SEU_utilities():
 		else:      utils.print_warning('->  L1 data comparison    -> Found errors due to SEEs')
 		if(LH_er==0): utils.print_good('->  L1 headers comparison -> No errors due to SEEs')
 		else:        utils.print_error('->  L1 headers comparison -> Found errors due to SEEs')
-		return [CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1]
+		return [CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1, fc7_alignment_status]
 
 	##############################################################
 	def last_test_duration(self):

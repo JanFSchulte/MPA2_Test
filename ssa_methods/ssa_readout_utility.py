@@ -52,9 +52,9 @@ class SSA_readout():
 					ishift = self.cl_shift['analog']
 		else:
 			ishift = shift
+		#utils.print_good(ishift)
 		counter = 0; data_loc = 21 + ishift;
 		status = [0]*3; timeout = 10;
-
 		if(set_chip or initialize):
 			self.ctrl.setup_readout_chip_id(display=False)
 		if(initialize):
