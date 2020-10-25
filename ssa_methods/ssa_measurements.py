@@ -999,6 +999,38 @@ class SSA_measurements():
 			plt.savefig(save+'.png', bbox_inches="tight")
 			print('->  Plot saved in ' + save +'.png')
 
+	#####################################################################################################
+
+	def adc_measure_curve(self, nsamples=10, npoints=2**17, output_file='../SSA_Results/ADC/', plot=True):
+		vrange = np.linspace(-.005, 0.9, npoints+1)
+		rcode = []
+		self.ssa.analog.set_output_mux('highimpedence')
+		self.ssa.analog.adc_measure_ext_pad(nsamples=1)
+		self.bias.SetMode('Keithley_Sourcemeter_2410_GPIB')
+		self.bias.multimeter.config__voltage_source(compliance=10E-3, range=1)
+		time.sleep(0.1)
+		for vinput in vrange:
+			self.bias.multimeter.set_voltage(vinput)
+			time.sleep(0.001)
+			r = self.ssa.analog.adc_measure_ext_pad(nsamples=nsamples)
+			utils.print_inline('    Converting {:7.3f} mV to code {:7.3f}'.format( (vinput*1E3), r) )
+			rcode.append(r)
+		self.bias.multimeter.config__voltage_measure()
+		self.bias.multimeter.disable()
+		self.ssa.analog.set_output_mux('highimpedence')
+		print('\n')
+		rtvect = np.array([vrange, rcode], dtype=float).transpose()
+		CSV.array_to_csv( rtvect,  output_file+'ssa_adc_measurements.csv')
+		fitvect = rtvect[ [rtvect[:,0]>0] ]
+		fitvect = fitvect[ fitvect[:,0]<0.85 ]
+		gain, ofs, sigma = utils.linear_fit(fitvect[:,0], fitvect[:,1])
+		utils.print_good("->  Gain({:12s}) = {:9.3f} mV/cnt".format('ADC', gain*1.0E3))
+		utils.print_good("->  Offs({:12s}) = {:9.3f} mV    ".format('ADC', ofs*1.0E3))
+		if(plot):
+			plt.plot(rtvect[:,0], rtvect[:,1], 'x', c='blue')
+			plt.plot(np.array([0,0.9]), gain*np.array([0,0.9])+ofs, '-', c='red')
+			plt.show()
+		return [gain, ofs, sigma]
 
 
 '''

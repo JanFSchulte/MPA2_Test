@@ -25,12 +25,13 @@ class SSA_test_xray():
 	##########################################################################
 	def xray_loop(self, period = 10, directory = '../SSA_Results/XRAY/', runtime = 1E8):
 		rate = period * 60
-		init_wait = 1
+		init_wait = 0
 		self.configure_tests(directory)
 		time_init = time.time()
 		time_base = time_init - (rate - init_wait);
 		time_curr = time_init;
 		active = True
+		self.toptest.ssa.pwr.on(display=False)
 		while(((time_curr-time_init) < runtime) and active):
 			try:
 				time_curr = time.time()
@@ -66,6 +67,7 @@ class SSA_test_xray():
 		runtest.set_enable('Configuration', 'ON')
 		runtest.set_enable('ring_oscillators', 'ON')
 		runtest.set_enable('stub_l1_max_speed', 'ON')
+		runtest.set_enable('ADC', 'ON')
 		self.toptest.Configure(directory,  runtest )
 
 		#runtest = RunTest('xray')

@@ -56,11 +56,14 @@ class main_ssa_test_3():
 			self.runtest.set_enable('noise_baseline', 'OFF')
 			self.runtest.set_enable('trim_gain_offset_noise', 'ON')
 			self.runtest.set_enable('DACs', 'ON')
+			self.runtest.set_enable('ADC', 'OFF')
 			self.runtest.set_enable('Configuration', 'ON')
 			self.runtest.set_enable('ring_oscillators', 'ON')
 			self.runtest.set_enable('stub_l1_max_speed', 'ON')
 		else:
 			self.runtest = runtest
+		if(self.runtest.is_active('ADC', display=False)):
+			self.ssa.biascal.SetMode('Keithley_Sourcemeter_2410_GPIB')
 
 	def RUN(self, runname='default'):
 		if(not self.mode_2xSSA):
@@ -422,6 +425,18 @@ class main_ssa_test_3():
 				wd +=1;
 				if(wd>=3): self.test_good = False
 		wd = 0
+		en = self.runtest.is_active('ADC')
+		while (en and wd < 3):
+			try:
+				r_adc = self.measure.adc_measure_curve(nsamples=1, npoints=2**10, output_file=(filename), plot=False)
+				self.summary.set('ADC_GAIN'    , r_adc[0], '', '',  runname)
+				self.summary.set('ADC_OFFS'    , r_adc[1], '', '',  runname)
+				break
+			except(KeyboardInterrupt): break
+			except:
+				self.print_exception("->  Bias_ADC test error. Reiterating...")
+				wd +=1;
+				if(wd>=3): self.test_good = False
 
 
 	def test_routine_analog(self, filename='../SSA_Results/Chip0/', runname = ''):
@@ -500,6 +515,7 @@ class main_ssa_test_3():
 			try:
 				self.pwr.set_dvdd(self.dvdd); time.sleep(1)
 				self.ssa.reset(); time.sleep(1)
+				pwr = self.pwr.get_power()
 
 				striplist, centroids, hip_hits, hip_flags  = self.test.generate_clusters(
 					nclusters=8, min_clsize=1, max_clsize=2, smin=1,
@@ -514,7 +530,8 @@ class main_ssa_test_3():
 
 				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1, alignment] = results
 				fo = open(filename+'.csv', 'a')
-				fo.write('\n{:16s},{:10d},{:10d},{:10d},{:10d},{:10d},{:10d},{:10.3f}'.format(runname, CL_er, L1_er, LH_er, CL_ok, L1_ok, LH_ok, test_duration) )
+				fo.write('\n{:16s},{:8.3f},{:8.3f},{:8.3f},{:10d},{:10d},{:10d},{:10d},{:10d},{:10d},{:10.3f}'.format(
+					pwr[0], pwr[1], pwr[2], runname, CL_er, L1_er, LH_er, CL_ok, L1_ok, LH_ok, test_duration) )
 				fo.close()
 				break
 			except(KeyboardInterrupt):

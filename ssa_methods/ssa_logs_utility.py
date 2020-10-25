@@ -106,12 +106,12 @@ class RunTest():
 		else:
 			print('Error configuring test-mode set_enable. Configuration not changed.')
 
-	def is_active(self, name):
+	def is_active(self, name, display=True):
 		if(not name in self.test):
 			return False
 		else:
 			r = self.test[name]
-			if(r):
+			if(r and display):
 				utils.print_info("\n___________________________________________________")
 				utils.print_info("Running test: {:s}\n".format(name))
 			return r
