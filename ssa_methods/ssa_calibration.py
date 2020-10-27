@@ -296,7 +296,7 @@ class ssa_calibration():
 	def _d5_value(self, name, mode = 'r', value = -1):
 		if ((mode == 'w') & (value == -1)):# check the read value
 			utils.print_log("Error! Can not use default value for writing. Please set the value")
-			exit(1)
+			#exit(1)
 		if (mode == 'w'):# write now
 			self.I2C.peri_write(name, value)
 		if(name in self.ssa_peri_reg_map):

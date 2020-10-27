@@ -64,7 +64,7 @@ class SSA_ASIC:
 		time.sleep(0.2)
 
 	def init(self, reset_board=False, reset_chip=False, resync=True, slvs_current=0b111, edge="rising", display=True, read_current=False, set_deskewing=False):
-		for iteration in range(3):
+		for iteration in range(5):
 			self.generic_parameters['cl_word_alignment'] = False
 			if(display):
 				sys.stdout.write("->  Initialising..\r")

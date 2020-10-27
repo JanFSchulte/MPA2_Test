@@ -23,22 +23,23 @@ class SSA_test_xray():
 		#self.biascal.set_gpib_address(12)
 
 	##########################################################################
-	def xray_loop(self, period = 10, directory = '../SSA_Results/XRAY/', runtime = 1E8):
+	def xray_loop(self, period = 20, directory = '../SSA_Results/XRAY/', runtime = 1E8, init_wait=1):
 		rate = period * 60
-		init_wait = 0
 		self.configure_tests(directory)
+		self.toptest.ssa.pwr.on(display=False)
 		time_init = time.time()
 		time_base = time_init - (rate - init_wait);
 		time_curr = time_init;
 		active = True
-		self.toptest.ssa.pwr.on(display=False)
+		run_counter = 0
 		while(((time_curr-time_init) < runtime) and active):
 			try:
 				time_curr = time.time()
 				if( float(time_curr-time_base) > float(rate) ):
 					time_base = time_curr
-					self.toptest.RUN(runname = utils.date_time())
+					self.toptest.RUN(runname = utils.date_time(), write_header = (run_counter==0))
 					utils.print_info('->  Total run time: {:7.3f}'.format(time.time()-time_base) )
+					run_counter += 1
 				else:
 					ret = self.toptest.idle_routine(filename = directory+'/idle_routine', runname = utils.date_time(), duration=60)
 					if(ret == 'KeyboardInterrupt'): active = False
@@ -47,6 +48,7 @@ class SSA_test_xray():
 				utils.print_info("\n\n\nUser interrupt. The routine will stop at the end of the iteration.\n\n\n")
 			except:
 				pass
+
 
 	##########################################################################
 	def configure_tests(self, directory):

@@ -62,10 +62,9 @@ class main_ssa_test_3():
 			self.runtest.set_enable('stub_l1_max_speed', 'ON')
 		else:
 			self.runtest = runtest
-		if(self.runtest.is_active('ADC', display=False)):
-			self.ssa.biascal.SetMode('Keithley_Sourcemeter_2410_GPIB')
 
-	def RUN(self, runname='default'):
+
+	def RUN(self, runname='default', write_header=True):
 		if(not self.mode_2xSSA):
 			self.test_good = True
 			## Setup log files #####################
@@ -91,6 +90,8 @@ class main_ssa_test_3():
 			utils.print_info('==============================================')
 			utils.print_info('TEST ROUTINE {:s}\n'.format(str(runname)))
 			utils.print_info("->  The log files are located in {:s}/ \n".format(curdir))
+			if(self.runtest.is_active('ADC', display=False)):
+				self.ssa.biascal.SetMode('Keithley_Sourcemeter_2410_GPIB')
 			## Main test routine ##################
 			self.pwr.set_supply(mode='ON', display=False, d=self.dvdd, a=self.avdd, p=self.pvdd)
 			self.pwr.reset(False, 0)
@@ -112,7 +113,9 @@ class main_ssa_test_3():
 			self.test_routine_ring_oscillators(filename=fo)
 			#self.finalize()
 			## Save summary ######################
-			self.summary.save(directory=self.DIR, filename=("Chip_{c:s}_v{v:d}/".format(c=str(chip_info), v=version)), runname='')
+			self.summary.save(
+				directory=self.DIR, filename=("Chip_{c:s}_v{v:d}/".format(c=str(chip_info), v=version)),
+				runname='', write_header = write_header)
 			self.summary.display()
 			#utils.close_log_files()
 			return self.test_good
@@ -246,7 +249,9 @@ class main_ssa_test_3():
 			while (en and wd < 3):
 				try:
 					self.ssa.resync();
-					r1 = self.test.cluster_data(mode = 'digital', nstrips='random', nruns = samples, display=False, file=filename, filemode='a', runname=runname, lateral=True)
+					r1 = self.test.cluster_data(
+						mode = 'digital', nstrips='random', nruns = samples, display=False,
+						file=filename, filemode='a', runname=runname+'V{:0.1f}'.format(vvv), lateral=False)
 					self.summary.set('ClusterData_DigitalPulses_{:3.1f}'.format(vvv),  r1, '%', '',  runname)
 					if(r1<100.0):
 						self.test_good = False
@@ -265,7 +270,9 @@ class main_ssa_test_3():
 			while (en and wd < 3):
 				try:
 					self.ssa.resync();
-					r1 = self.test.cluster_data(mode = 'analog', lateral=0, nstrips='random', nruns = samples, display=False, file=filename, filemode='a', runname=runname)
+					r1 = self.test.cluster_data(
+						mode = 'analog', nstrips='random', nruns = samples, display=False,
+						file=filename, filemode='a', runname=runname+'V{:0.1f}'.format(vvv), lateral=False)
 					self.summary.set('ClusterData_ChargeInjection_{:3.1f}'.format(vvv),  r1, '%', '',  runname)
 					if(r1<100.0):
 						self.test_good = False
@@ -299,11 +306,39 @@ class main_ssa_test_3():
 					self.ssa.init(reset_chip=0, display=1); time.sleep(0.1)
 					self.ssa.resync(); time.sleep(0.1);
 					result = self.test.l1_data(
-						mode = 'digital', runname =  runname, nruns = samples,
+						mode = 'digital', runname =  runname+'V{:0.1f}'.format(vvv), nruns = samples,
 						shift = shift, filemode = 'a', file = filename)
 					r1, r2, r3 = result
-					self.summary.set('L1_data',   r1, '%', '',  runname)
-					self.summary.set('HIP_flags', r2, '%', '',  runname)
+					self.summary.set('L1_data_{:3.1f}'.format(vvv),   r1, '%', '',  runname)
+					self.summary.set('HIP_flags_{:3.1f}'.format(vvv), r2, '%', '',  runname)
+					if(r1<100): self.test_good = False
+					if(r2<100): self.test_good = False
+					break
+				except(KeyboardInterrupt): break
+				except:
+					self.print_exception("->  L1_Data test error. Reiterating...")
+					wd +=1;
+					if(wd>=3): self.test_good = False
+		for vvv in voltage:
+			wd = 0
+			memtest = False
+			en = self.runtest.is_active('L1_Data')
+			while (en and wd < 3):
+				try:
+					#self.pwr.set_dvdd(self.dvdd)
+					self.pwr.set_dvdd(vvv); time.sleep(0.5)
+					utils.print_info('->  DVDD set to {:0.3f}'.format(vvv))
+					self.ssa.reset(); time.sleep(0.5)
+					self.ssa.init(reset_chip=0, display=1); time.sleep(0.1)
+					self.ssa.resync(); time.sleep(0.1);
+					self.ssa.chip.ctrl.set_active_memory('latch', 'latch')
+					time.sleep(0.1);
+					result = self.test.l1_data(
+						mode = 'digital', runname =  runname+'V{:0.1f}'.format(vvv), nruns = samples,
+						shift = shift, filemode = 'a', file = filename)
+					r1, r2, r3 = result
+					self.summary.set('L1_data_latch_{:3.1f}'.format(vvv),   r1, '%', '',  runname)
+					self.summary.set('HIP_flags_latch_{:3.1f}'.format(vvv), r2, '%', '',  runname)
 					if(r1<100): self.test_good = False
 					if(r2<100): self.test_good = False
 					break
@@ -531,7 +566,7 @@ class main_ssa_test_3():
 				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1, alignment] = results
 				fo = open(filename+'.csv', 'a')
 				fo.write('\n{:16s},{:8.3f},{:8.3f},{:8.3f},{:10d},{:10d},{:10d},{:10d},{:10d},{:10d},{:10.3f}'.format(
-					pwr[0], pwr[1], pwr[2], runname, CL_er, L1_er, LH_er, CL_ok, L1_ok, LH_ok, test_duration) )
+					runname, pwr[0], pwr[1], pwr[2], CL_er, L1_er, LH_er, CL_ok, L1_ok, LH_ok, test_duration) )
 				fo.close()
 				break
 			except(KeyboardInterrupt):

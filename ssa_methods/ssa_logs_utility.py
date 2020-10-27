@@ -25,7 +25,7 @@ class results():
 
 	def __init__(self):
 		self.d = OrderedDict()
-		self.summary = ["", "", ""]
+		self.summary = ["", "", "", ""]
 		#self.clean()
 
 	def set(self, name, value, unit = '', descr = '', run = 'Run-0'):
@@ -48,8 +48,10 @@ class results():
 				temp = 'conversion error'
 			self.summary[0] += '%s, %s, %s, %s, %s\n'  % (self.d[i].run,   self.d[i].name,   temp,  self.d[i].unit,  self.d[i].descr)
 			self.summary[1] += '%32s : %12s %4s %24s\n'  % (self.d[i].name,   temp,  self.d[i].unit,  self.d[i].descr)
-			self.summary[2] += '%s, ' % (temp)
+			self.summary[2] += '%32s, ' % (temp)
+			self.summary[3] += '%32s, ' % (i)
 		self.summary[2] += '\n'
+		self.summary[3] += '\n'
 
 	def display(self, runname = 'Run-0'):
 		utils.print_info("\n___________________________________________________")
@@ -57,7 +59,7 @@ class results():
 		self.update(runname = runname)
 		utils.print_log(self.summary[1])
 
-	def save(self, directory='../SSA_Results/Chip0/', filename='default', runname=''):
+	def save(self, directory='../SSA_Results/Chip0/', filename='default', runname='', write_header=False):
 		utils.print_info("\n___________________________________________________")
 		utils.print_info("Saving summary:")
 		self.update(runname = runname)
@@ -66,11 +68,18 @@ class results():
 		utils.print_log("->  Log saved in {:s}".format(fn))
 
 		fn =  (directory+'/'+self.get_file_name(filename)+"Summary.csv")
-		fo = open(fn, 'w');  fo.write(self.summary[2]);  fo.close();
+		fo = open(fn, 'w');
+		fo.write(self.summary[3]);
+		fo.write(self.summary[2]);
+		fo.close();
 		utils.print_log("->  Summary saved in {:s}".format(fn))
 
 		fn = (directory+'/'+"GlobalSummary.csv")
-		fo = open( fn, 'a'); fo.write("{:s}, {:s},".format(filename, runname) + self.summary[2]);  fo.close();
+		fo = open( fn, 'a');
+		if(write_header):
+			fo.write("{:32s}, {:32s},".format('directory', 'runname') + self.summary[3]);
+		fo.write("{:32s}, {:32s},".format(filename, runname) + self.summary[2]);
+		fo.close();
 		utils.print_log("->  Global summary saved in {:s}".format(fn))
 
 
