@@ -226,8 +226,23 @@ class ssa_ctrl_analog:
 		return dnlh, inlh
 		#adc_dnl_inl_histogram()
 
+	def adc_plot(filename = '../SSA_Results/adc_measures/Test_ssa_adc_measurements.csv'):
+		data = CSV.csv_to_array(filename)
+		fig = plt.figure(figsize=(8,6))
+		plt.style.use('seaborn-deep')
+		ax = plt.subplot(111)
+		ax.spines["top"].set_visible(True)
+		ax.spines["right"].set_visible(True)
+		plt.xticks(list(arange(0,0.9,0.1)), fontsize=16)
+		plt.yticks(list(range(0,2**12+1,2**8)), fontsize=16)
+		plt.xlabel('Input voltage [V]', fontsize=16)
+		plt.ylabel('Converted code', fontsize=16)
+		plt.plot(data[:,1]	, data[:,2], 'x')
+
+
+
 	## quick and dirty test
-	def adc_manual_measure():
+	def adc_manual_measure(self):
 		result={}
 		for vin in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
 			utils.print_log("set input voltage to {:5.3f}".format(vin))
@@ -237,10 +252,10 @@ class ssa_ctrl_analog:
 		return result
 
 	## quick and dirty test
-	def adc_manual_measure_plot():
+	def adc_manual_measure_plot(self):
 		data = {}
 		plt.clf()
-		fig = plt.figure(figsize=(10,8))
+		fig = plt.figure(figsize=(8,6))
 		data['0']  = {0.0: 22.44, 0.1: 646.34, 0.2: 1306.04, 0.3: 1979.96, 0.4: 2647.79, 0.5: 3305.76, 0.6: 3969.82, 0.7: 4095.00, 0.8: 4095.0}
 		data['7']  = {0.0: 11.07, 0.1: 600.59, 0.2: 1229.38, 0.3: 1854.88, 0.4: 2474.18, 0.5: 3105.9,  0.6: 3721.64, 0.7: 4093.68, 0.8: 4095.0}
 		data['15'] = {0.0: 11.23, 0.1: 566.62, 0.2: 1143.58, 0.3: 1729.33, 0.4: 2310.25, 0.5: 2891.36, 0.6: 3471.86, 0.7: 4006.68, 0.8: 4095.0}
@@ -252,10 +267,10 @@ class ssa_ctrl_analog:
 		ax.spines["right"].set_visible(True)
 		ax.get_xaxis().tick_bottom()
 		ax.get_yaxis().tick_left()
-		plt.xticks(list(arange(0,0.9,0.1)), fontsize=16)
+		plt.xticks(list(np.arange(0,0.9,0.1)), fontsize=16)
 		plt.yticks(list(range(0,2**12+1,2**8)), fontsize=16)
-		plt.ylabel('Input voltage [V]', fontsize=16)
-		plt.xlabel('Converted code', fontsize=16)
+		plt.xlabel('Input voltage [V]', fontsize=16)
+		plt.ylabel('Converted code', fontsize=16)
 		color=iter(sns.color_palette('deep'))
 		for v in data:
 			x = list(data[v].keys())
@@ -271,7 +286,7 @@ class ssa_ctrl_analog:
 			plt.plot(xnew, y_smuth, lw=1, alpha = 0.5, color=c)
 			#plt.plot(xnew, y_hat, color=c, lw=1, alpha = 0.8)
 			plt.plot(x, y, 'x', label= "DAC = {:s}".format(v), color=c)
-			leg = ax.legend(fontsize = 12, loc=('lower right'), frameon=True )
+			leg = ax.legend(fontsize = 14, loc=('lower right'), frameon=True )
 			leg.get_frame().set_linewidth(1.0)
 			ax.get_xaxis().tick_bottom()
 			ax.get_yaxis().tick_left()

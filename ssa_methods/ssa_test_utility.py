@@ -178,9 +178,10 @@ class SSA_test_utility():
 				counter[2][0] += 1
 				time.sleep(0.005) ##important to wait complete I2C operations
 				L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = False, shift = shift, latency = latency, multi = False)
-				if (hfi): # for FC7 firmware issue in sending some times the fast command
+				if (hfi): # for FC7 firmware issue in sampling some times the fast command (very rare)
 					while(l1hitlist == l1hitlistprev):
 						time.sleep(0.001); wd += 1
+						utils.print_warning('HFI!!!')
 						L1_counter, BX_counter, l1hitlist, hiplist = self.ssa.readout.l1_data(initialise = False, shift = shift, latency = latency, multi = False)
 						if(wd>5): break
 				missing_hit=[]; exceding_hit=[];
@@ -192,26 +193,27 @@ class SSA_test_utility():
 				if(L1_counter < 0):
 					utils.print_log('-> L1 COUNTER < 0 -----------------------> ' + str(L1_counter_init))
 					return [-1,-1,-1]
+				#if(random.sample(range(1, 100), 1)[0]==1): err[2] = True
 				if ((L1_counter & l1_counter_mask) != ((L1_counter_init + 1) & l1_counter_mask) ):
 					err[2] = True
 					is_error_l1counter = True
-				else:
-					for k in cl_hits:
-						if k not in l1hitlist:
-							err[H] = True
-							missing_hit.append(k)
-					for k in l1hitlist:
-						if k not in cl_hits:
-							err[H] = True
-							exceding_hit.append(k)
-					for k in hip_hits:
-						if k not in hiplist:
-							err[H] = True
-							missing_hip.append(k)
-					for k in hiplist:
-						if k not in hip_hits:
-							err[H] = True
-							exceding_hip.append(k)
+				#else:
+				for k in cl_hits:
+					if k not in l1hitlist:
+						err[H] = True
+						missing_hit.append(k)
+				for k in l1hitlist:
+					if k not in cl_hits:
+						err[H] = True
+						exceding_hit.append(k)
+				for k in hip_hits:
+					if k not in hiplist:
+						err[H] = True
+						missing_hip.append(k)
+				for k in hiplist:
+					if k not in hip_hits:
+						err[H] = True
+						exceding_hip.append(k)
 				##if(H and (len(hiplist) != len(cl_hits))): err[H] = True
 				#if(not H and (len(hiplist) != 0)): err[1] = True
 				stexpected   = utils.cl2str(cl_hits,   flag=missing_hit,  color_flagged='red', color_others='green');
@@ -233,8 +235,11 @@ class SSA_test_utility():
 				L1_counter_init +=1
 				if(err[H]): counter[H][1] += 1
 				if(err[2]): counter[2][1] += 1
+				if(err[H] or err[2]):
+					fo.write(runname + ' , ' + '    L1 data error ' + fstr + ' \n')
+				else:
+					fo.write(runname + ' , ' + '    L1 data ok    ' + fstr + ' \n')
 				if (err[H] or err[2]):
-					fo.write(runname + ' ; ' + fstr + ' \n')
 					utils.print_log( "\n    L1 data error " + dstr + "                                  ")
 				else:
 					if(display == True):
@@ -250,10 +255,20 @@ class SSA_test_utility():
 			(1.0 - float(counter[1][1])/float(counter[1][0]))*100.0  ,
 			(1.0 - float(counter[2][1])/float(counter[2][0]))*100.0  ]
 		#return "%5.2f%%" % (result)
-		if(result[0] == 100 and result[1] == 100):
-			utils.print_good("->  L1 data test scan with {mode:s} injection -> 100%".format(mode=mode))
+		print('\n')
+		if(result[2] == 100.0):
+			utils.print_good( "->  L1-data (Headers)   test scan with {mode:s} injection -> {res0:7.3f}%".format(mode=mode, res0=result[2]))
 		else:
-			utils.print_error("->  Cluster data test scan with {mode:s} injection -> {res0:5.3f}% hit - {res1:5.3f}% HIP flags".format(mode=mode, res0=result[0], res1=result[1]))
+			utils.print_error("->  L1-data (Headers)   test scan with {mode:s} injection -> {res0:7.3f}%".format(mode=mode, res0=result[2]))
+		if(result[0] == 100.0):
+			utils.print_good( "->  L1-data (RAW DATA)  test scan with {mode:s} injection -> {res0:7.3f}%".format(mode=mode, res0=result[0]))
+		else:
+			utils.print_error("->  L1-data (RAW DATA)  test scan with {mode:s} injection -> {res0:7.3f}%".format(mode=mode, res0=result[0]))
+		if(result[1] == 100.0):
+			utils.print_good( "->  L1-data (HIP FLAGS) test scan with {mode:s} injection -> {res0:7.3f}%".format(mode=mode, res0=result[1]))
+		else:
+			utils.print_error("->  L1-data (HIP FLAGS) test scan with {mode:s} injection -> {res0:7.3f}%".format(mode=mode, res0=result[1]))
+
 		if(profile):
 			tres = time.time()-pr_start
 			utils.print_log('->  Test time = {:0.3f}s - Time per cycle = {:0.3f}ms'.format(tres, 1000*tres/float(pr_cnt)))

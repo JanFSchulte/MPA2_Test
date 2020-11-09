@@ -175,7 +175,7 @@ class main_ssa_test_3():
 				wd +=1;
 				if(wd>=3): self.test_good = False
 
-	def test_routine_measure_bias(self, filename = 'default', runname = '', mode = ''):
+	def test_routine_measure_bias(self, filename = 'default', runname = '', mode = '', nsamples=100):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		wd = 0
@@ -183,7 +183,7 @@ class main_ssa_test_3():
 		while (en and wd < 3):
 			try:
 				r1 = self.biascal.measure_bias(return_data=True)
-				r2 = self.ssa.chip.analog.adc_measure_supply(nsamples=1, raw=True)
+				r2 = self.ssa.chip.analog.adc_measure_supply(nsamples=nsamples, raw=True)
 				for i in r1:
 					self.summary.set( i[0]+'_'+mode, i[1], 'mV', '',  runname)
 				self.summary.set('adc_DVDD', r2[0], 'cnt', '',  runname)
@@ -311,6 +311,7 @@ class main_ssa_test_3():
 					r1, r2, r3 = result
 					self.summary.set('L1_data_{:3.1f}'.format(vvv),   r1, '%', '',  runname)
 					self.summary.set('HIP_flags_{:3.1f}'.format(vvv), r2, '%', '',  runname)
+					self.summary.set('L1_headers_{:3.1f}'.format(vvv), r3, '%', '',  runname)
 					if(r1<100): self.test_good = False
 					if(r2<100): self.test_good = False
 					break

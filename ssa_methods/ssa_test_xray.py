@@ -91,8 +91,18 @@ class SSA_test_xray():
 		#runtest.set_enable('stub_l1_max_speed', 'ON')
 		#self.toptest.Configure(directory,  runtest )
 
-	##########################################################################
-	def plot_results(self, directory='../SSA_Results/XRAY/', doserate = 5.12E6):
+	def check_data_integrity(self, directory='../SSA_Results/XRAY/'):
+		dirs = os.listdir(directory)
+		dirs = np.sort([s for s in dirs if "Chip_" in s])
+		rdsummary = CSV.csv_to_array(directory+'GlobalSummary.csv', noheader = True)
+		loglist =  [str(x).strip(' /') for x in rdsummary[1:,:][:,0]]
+		for i in loglist:
+			if(i not in dirs): print('Missing {:s} from dirs'.format(i))
+		for i in dirs:
+			if(i not in loglist): print('Missing {:s} from dirs'.format(i))
+
+
+	def plot_parameter_variation(self, parameters = [], name='',  ylabel = '', newfigure=True, directory='../SSA_Results/XRAY/', doserate = 0.512E6, dlabel=''):
 		dirs = os.listdir(directory)
 		dirs = np.sort([s for s in dirs if "Chip_" in s])
 		timestart = -1
@@ -102,11 +112,62 @@ class SSA_test_xray():
 		header = [str(x).strip(' ') for x in rdsummary[0]]
 		for run in global_summary:
 			timetag = re.findall("Chip_(.+)-(.+)-(.+)_(.+)-(.+)_.+", run[0])[0]
-			timesec = 60*np.int(timetag[4])+3600*np.int(timetag[3])+3600*24*np.int(timetag[2])
+			#timesec = 60*np.int(timetag[4])+3600*np.int(timetag[3])+3600*24*np.int(timetag[2])
+			date = datetime.datetime(int(timetag[0]), int(timetag[1]), int(timetag[2]), int(timetag[3]), int(timetag[4]))
+			time_tuple = date.timetuple()
+			timesec = time.mktime(time_tuple)
 			if(timestart<0): timestart = timesec
 			TID.append( (timesec-timestart)*(doserate/3600.0)*1E-6 )
 			run[0] = TID[-1]
-			print("->  TID = {:7.3f}".format(TID[-1]))
+			#print("->  TID = {:7.3f} Mrad".format(TID[-1]))
+		TID[0] = 1E-1
+		######################################################################
+		if(newfigure): fig = plt.figure(figsize=(8,6))
+		color=iter(sns.color_palette('deep')*3)
+		ax = plt.subplot(111)
+		for dataset in parameters:
+			variation = np.array(global_summary[:,header.index(dataset)], dtype=float)/np.float(global_summary[:,header.index(dataset)][0])
+			plt.semilogx(TID, variation, 'x', label=dataset+dlabel)
+		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
+		leg.get_frame().set_linewidth(1.0)
+		ax.get_xaxis().tick_bottom();
+		ax.get_yaxis().tick_left()
+		plt.ylabel(ylabel, fontsize=16)
+		plt.xlabel('TID [rad]', fontsize=16)
+		plt.xticks(fontsize=12)
+		plt.yticks(fontsize=12)
+		if(newfigure): plt.savefig(directory+'/xray_'+name+'_variation.png', bbox_inches="tight");
+
+	def plot_parameter_variation_doserates(self, parameter, name, dirh='../SSA_Results/XRAY_HDR/', dirl='../SSA_Results/XRAY_LDR/'):
+		fig = plt.figure(figsize=(8,6))
+		self.plot_parameter_variation(parameters = parameter, name=name, ylabel='variation', dlabel=' [5.12e5 Mrad/h]', doserate=0.512E6, directory=dirl, newfigure=0)
+		self.plot_parameter_variation(parameters = parameter, name=name, ylabel='variation', dlabel=' [5.12e6 Mrad/h]', doserate=5.120E6, directory=dirh, newfigure=0)
+		plt.savefig(dirl+'/xray_'+name+'_variation.png', bbox_inches="tight");
+		plt.savefig(dirh+'/xray_'+name+'_variation.png', bbox_inches="tight");
+
+	##########################################################################
+	def plot_results(self, directory='../SSA_Results/XRAY/', doserate = 0.512E6):
+
+		dirs = os.listdir(directory)
+		dirs = np.sort([s for s in dirs if "Chip_" in s])
+		timestart = -1
+		TID=[]
+		rdsummary = CSV.csv_to_array(directory+'GlobalSummary.csv', noheader = True)
+		global_summary = rdsummary[1:,:]
+		header = [str(x).strip(' ') for x in rdsummary[0]]
+
+		for run in global_summary:
+			timetag = re.findall("Chip_(.+)-(.+)-(.+)_(.+)-(.+)_.+", run[0])[0]
+			#timesec = 60*np.int(timetag[4])+3600*np.int(timetag[3])+3600*24*np.int(timetag[2])
+			date = datetime.datetime(int(timetag[0]), int(timetag[1]), int(timetag[2]), int(timetag[3]), int(timetag[4]))
+			time_tuple = date.timetuple()
+			timesec = time.mktime(time_tuple)
+			if(timestart<0): timestart = timesec
+			TID.append( (timesec-timestart)*(doserate/3600.0)*1E-6 )
+			run[0] = TID[-1]
+			print("->  TID = {:7.3f} Mrad".format(TID[-1]))
+
+
 		TID[0] = 1E-1
 		######################################################################
 		fig = plt.figure(figsize=(8,6))
@@ -128,9 +189,28 @@ class SSA_test_xray():
 		fig = plt.figure(figsize=(8,6))
 		color=iter(sns.color_palette('deep')*3)
 		ax = plt.subplot(111)
+		for dataset in ['I_DVDD_calibrated', 'I_AVDD_calibrated', 'I_PVDD_calibrated']:
+			variation = np.array(global_summary[:,header.index(dataset)], dtype=float)/np.float(global_summary[:,header.index(dataset)][0])
+			plt.semilogx(TID, variation, 'x', label=dataset)
+		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
+		leg.get_frame().set_linewidth(1.0)
+		ax.get_xaxis().tick_bottom();
+		ax.get_yaxis().tick_left()
+		plt.ylabel('Current [mA]', fontsize=16)
+		plt.xlabel('TID [rad]', fontsize=16)
+		plt.xticks(fontsize=12)
+		plt.yticks(fontsize=12)
+		plt.savefig(directory+'/xray_power_consumption_variation.png', bbox_inches="tight");
+
+		######################################################################
+		fig = plt.figure(figsize=(8,6))
+		color=iter(sns.color_palette('deep')*3)
+		ax = plt.subplot(111)
 		for dataset in ['I_DVDD_calibrated', 'I_AVDD_calibrated']:
 			values = np.array(global_summary[:,header.index(dataset)], dtype=float)
 			plt.semilogx(TID, values, 'x', label=dataset)
+
+
 		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
 		leg.get_frame().set_linewidth(1.0)
 		ax.get_xaxis().tick_bottom();
@@ -149,6 +229,8 @@ class SSA_test_xray():
 			x = TID
 			y = np.array(global_summary[:,header.index(dataset)], dtype=float)
 			plt.semilogx(x, y, 'x', label=dataset, color=c)
+
+
 		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
 		leg.get_frame().set_linewidth(1.0)
 		ax.get_xaxis().tick_bottom();
@@ -173,6 +255,8 @@ class SSA_test_xray():
 			#y_smuth = helper_y3(xnew)
 			#y_hat = scypy_signal.savgol_filter(x = y_smuth , window_length = 511, polyorder = 5)
 			#plt.semilogx(xnew, y_hat , color=c, lw=1, alpha = 0.5)
+
+
 		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
 		leg.get_frame().set_linewidth(1.0)
 		ax.get_xaxis().tick_bottom();
@@ -189,14 +273,20 @@ class SSA_test_xray():
 		cal_list = [1.2, 2.5]
 		for cal in cal_list:
 			noise[cal] = [];
+
+
 		for ddd in dirs:
 			dpath = directory+'/'+ddd+'/'
 			if(not os.path.exists(dpath+'Test_frontend_cal_values.csv')): continue
 			timetag = CSV.csv_to_array(dpath+'timetag.log', noheader = True)[0]
-			timesec = timetag[5]+60*timetag[4]+3600*timetag[3]+3600*24*timetag[2]
+			#timesec = timetag[5]+60*timetag[4]+3600*timetag[3]+3600*24*timetag[2]
+			date = datetime.datetime(int(timetag[0]), int(timetag[1]), int(timetag[2]), int(timetag[3]), int(timetag[4]))
+			time_tuple = date.timetuple()
+			timesec = time.mktime(time_tuple)
 			if(timestart<0): timestart = timesec
 			TID = (timesec-timestart) * (doserate/3600.0)
-			print("->  TID = {:7.3f}".format(TID*1E-6))
+			print(timetag)
+			print("->  TID = {:7.3f} Mrad - ".format(TID*1E-6))
 			TID_list.append(TID)
 			for f in os.listdir( directory +'/'+ ddd ):
 				rfn = re.findall(".+_frontend_Q-(.+)_noise.csv", f)
@@ -206,19 +296,24 @@ class SSA_test_xray():
 						noise[cal].append( CSV.csv_to_array(dpath+'Test_frontend_Q-{:0.3f}_noise.csv'.format(cal), noheader=False) )
 						fe_gain.append( CSV.csv_to_array(dpath+'/Test_frontend_gain_mVfC.csv', noheader=False)[:,1] )
 
+
+
 		######################################################################
 		for cal in cal_list:
 			noise[cal] = np.array(noise[cal], dtype=float);
+
+
 		fig = plt.figure(figsize=(8,6))
 		ax = plt.subplot(111)
 		ax.get_xaxis().tick_bottom()
 		ax.get_yaxis().tick_left()
-		x = TID_list
+		x = np.sort(TID_list)
 		plt.ylabel("Front-End Noise", fontsize=16)
 		plt.xlabel('TID [rad]', fontsize=16)
 		ser = noise[1.2][:,0,1:]
-		noise_mean = np.array([np.mean(ser[:,i]) for i in range(len(x)) ])
-		noise_std  = np.array([ np.std(ser[:,i]) for i in range(len(x)) ])
+		#return ser, x
+		noise_mean = np.array([np.mean(ser[i,:]) for i in range(len(x)) ])
+		noise_std  = np.array([ np.std(ser[i,:]) for i in range(len(x)) ])
 		xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
 		helper_y3 = scipy_interpolate.make_interp_spline(x, noise_mean)
 		noise_mean_smooth = helper_y3(xnew)
@@ -234,6 +329,7 @@ class SSA_test_xray():
 		leg.get_frame().set_linewidth(1.0)
 		ax.get_xaxis().tick_bottom();
 		ax.get_yaxis().tick_left()
+		ax.set_ylim([0,2])
 		plt.ylabel('Noise [ThDAC LSB]', fontsize=16)
 		plt.xlabel('TID [rad]', fontsize=16)
 		plt.xticks(fontsize=12)
@@ -246,7 +342,7 @@ class SSA_test_xray():
 		ax = plt.subplot(111)
 		ax.get_xaxis().tick_bottom()
 		ax.get_yaxis().tick_left()
-		x = TID_list
+		x = np.sort(TID_list)
 		ser = fe_gain
 		gain_mean = np.array([np.mean(ser[i]) for i in range(len(x)) ])
 		gain_std  = np.array([ np.std(ser[i]) for i in range(len(x)) ])
@@ -265,6 +361,7 @@ class SSA_test_xray():
 		leg.get_frame().set_linewidth(1.0)
 		ax.get_xaxis().tick_bottom();
 		ax.get_yaxis().tick_left()
+		ax.set_ylim([0,80])
 		plt.ylabel('Gain [mV/fC]', fontsize=16)
 		plt.xlabel('TID [rad]', fontsize=16)
 		plt.xticks(fontsize=12)
@@ -292,6 +389,8 @@ class SSA_test_xray():
 			pdf_g = scipy_stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
 			plt.plot(lnspc, pdf_g, 'r') # plot i
 			sermean = np.mean(ser)
+
+
 		plt.xlim(47,58)
 		plt.xticks(fontsize=16)
 		plt.yticks(fontsize=16)
@@ -309,15 +408,18 @@ class SSA_test_xray():
 		plt.ylabel("Front-End Noise", fontsize=16)
 		plt.xlabel('TID [rad]', fontsize=16)
 		ser = []
+		#return global_summary, header, TID_list, noise, fe_gain
 		for i in range(len(TID_list)):
 			ser.append(
 				self.Convert_Noise_dac_to_electrons(
 					noise = noise[1.2][i ,0,1:],
 					ThDAC_Gain = -np.float(global_summary[:,header.index('Bias_THDAC_GAIN')][i]) ,
-					FE_Gain = fe_gain[i]))
+					FE_Gain = fe_gain[i] ))
+
+
 		ser = np.array(ser)
-		noise_mean = np.array([np.mean(ser[:,i]) for i in range(len(x)) ])
-		noise_std  = np.array([ np.std(ser[:,i]) for i in range(len(x)) ])
+		noise_mean = np.array([np.mean(ser[i,:]) for i in range(len(x)) ])
+		noise_std  = np.array([ np.std(ser[i,:]) for i in range(len(x)) ])
 		xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
 		helper_y3 = scipy_interpolate.make_interp_spline(x, noise_mean)
 		noise_mean_smooth = helper_y3(xnew)
@@ -333,6 +435,7 @@ class SSA_test_xray():
 		leg.get_frame().set_linewidth(1.0)
 		ax.get_xaxis().tick_bottom();
 		ax.get_yaxis().tick_left()
+		ax.set_ylim([200,400])
 		plt.ylabel('Noise [e]', fontsize=16)
 		plt.xlabel('TID [rad]', fontsize=16)
 		plt.xticks(fontsize=12)
@@ -361,6 +464,9 @@ class SSA_test_xray():
 			pdf_g = scipy_stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
 			plt.plot(lnspc, pdf_g, 'r') # plot i
 			valmean = np.mean(val)
+
+
+
 		#plt.xlim(47,58)
 		plt.xticks(fontsize=16)
 		plt.yticks(fontsize=16)
@@ -377,6 +483,6 @@ class SSA_test_xray():
 		Noise_e = ( np.array(noise) * ThDAC_Gain * 1E-3) / (FE_Gain * 1E12 * ph_const.elementary_charge )
 		for i in range(len(Noise_e)):
 			if Noise_e[i] > 600:
-				print('High Noise strip: ' + str(i) + '   ' + str(noise[i]) + '   ' +   str(ThDAC_Gain) + '   ' +   str(FE_Gain) +  '   ' +   str(Noise[i]))
-				print('Average:          ' + '  '   + '   ' + str(np.mean(noise)) + '   ' +   str(np.mean(ThDAC_Gain)) + '   ' +   str(np.mean(FE_Gain)) +  '   ' +   str(np.mean(Noise)))
+				print('High Noise strip: ' + str(i) + '   ' + str(noise[i]) + '   ' +   str(ThDAC_Gain) + '   ' +   str(FE_Gain) +  '   ' +   str(noise[i]))
+				print('Average:          ' + '  '   + '   ' + str(np.mean(noise)) + '   ' +   str(np.mean(ThDAC_Gain)) + '   ' +   str(np.mean(FE_Gain)) +  '   ' +   str(np.mean(noise)))
 		return Noise_e

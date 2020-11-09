@@ -353,7 +353,7 @@ class Test_2xSSA2():
 			helper_y3 = scipy_interpolate.make_interp_spline(x, np.array(y) )
 			y_smuth = helper_y3(xnew)
 			y_hat = scypy_signal.savgol_filter(x = y_smuth , window_length = 1001, polyorder = 5)
-			plt.plot(xnew, y_hat , color=c, lw=1, alpha = 0.5)
+			#plt.plot(xnew, y_hat , color=c, lw=1, alpha = 0.5)
 			plt.plot(x, y, 'x', label='SRAM {:d}'.format(mem), color=c)
 
 		ax = plt.subplot(111)

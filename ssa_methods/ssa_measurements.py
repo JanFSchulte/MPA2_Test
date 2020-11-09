@@ -273,7 +273,7 @@ class SSA_measurements():
 				pret, vret, iret = self.pwr.get_power_digital_average(nsamples=nsamples)
 				res[nclusters] = [pret, vret, iret]
 				self.fc7.SendCommand_CTRL("stop_trigger")
-				print('L1 rate = {:6.1f}, Occupancy = {:d} cl  ->  Current = {:5.3f}'.format(lr, nclusters, iret))
+				utils.print_log('L1 rate = {:6.1f}, Occupancy = {:d} cl  ->  Current = {:5.3f}'.format(lr, nclusters, iret))
 			CSV.array_to_csv(array=res, filename = filename+'/power_vs_occupancy_l1rate_{:0.0f}MHz'.format(lr))
 			results[lr] = res
 		self.fc7.SendCommand_CTRL("global_reset");time.sleep(0.1);
@@ -367,7 +367,7 @@ class SSA_measurements():
 
 	###########################################################
 	def baseline_noise(self, striplist = range(1,121), mode = 'sbs', ret_average = True, filename = False, runname= '', plot = True, filemode = 'w', set_trim = False):
-		print("->  Baseline Noise Measurement")
+		utils.print_log("->  Baseline Noise Measurement")
 		data = np.zeros([120, 256])
 		A = []; sigma = []; mu = []; cnt = 0;
 		if(mode == 'sbs'):
@@ -377,7 +377,7 @@ class SSA_measurements():
 			if isinstance(filename, str):
 				fo = "../SSA_Results/" + filename + "_" + str(runname) + "_scurve_SbS__cal_" + str(0) + ".csv"
 				CSV.ArrayToCSV (array = data, filename = fo, transpose = False)
-				print("->  Data saved in" + fo)
+				utils.print_log("->  Data saved in" + fo)
 		elif(mode == 'all'):
 			tmp = self.cal.scurves(cal_ampl='baseline', filename = "../SSA_Results/" + filename + "_" + str(runname), rdmode = 'fast', mode = 'all', striplist = striplist, plot = False, speeduplevel = 2, set_trim = set_trim)
 			data = np.transpose(tmp)
@@ -540,7 +540,6 @@ class SSA_measurements():
 	def threshold_spread(self, calpulse = 50, file = '../SSA_results/TestLogs/', runname = '', use_stored_data = False, plot = True, nevents=1000, speeduplevel = 2, filemode = 'w'):
 		utils.print_log( "->  threshold Spread Measurement")
 		fi = "../SSA_Results/" + file + "_" + str(runname) + "_scurve_" + "trim" + "__cal_" + str(calpulse) + ".csv"
-		print(fi)
 		if(use_stored_data):
 			if(os.path.exists(fi)):
 				s = CSV.CsvToArray(fi)
@@ -876,7 +875,7 @@ class SSA_measurements():
 		else:
 			a, mu, sigma = self.baseline_noise([strip], plot=False)[0]
 			self.cal.baseline = int(np.round(mu))
-			print("->  Baseline = {:3.2f}".format(self.cal.baseline))
+			utils.print_log("->  Baseline = {:3.2f}".format(self.cal.baseline))
 		thmin = self.cal.baseline+5   # thmin measured = 8.5 THDAC (0.3fC)
 		for cal in calrange:
 			latency, thlist = self.cal.shaper_pulse_rising(
@@ -907,7 +906,7 @@ class SSA_measurements():
 	###########################################################
 	def _display_power_value(self, data, field, display):
 		if(display):
-			print("->  {:8s} : Digital = {:7.3f}, Analog = {:7.3f}, Pads = {:7.3f}".format( field, data[field][0], data[field][1], data[field][2]))
+			utils.print_log("->  {:8s} : Digital = {:7.3f}, Analog = {:7.3f}, Pads = {:7.3f}".format( field, data[field][0], data[field][1], data[field][2]))
 
 	###########################################################
 	def __set_variables(self):
@@ -955,7 +954,7 @@ class SSA_measurements():
 			plt.text(0.95,0.95, mean_label + '= {:6.2f}'.format(sermean), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=32, color='darkred')
 		if(save):
 			plt.savefig(save+'.png', bbox_inches="tight")
-			print('->  Plot saved in ' + save +'.png')
+			utils.print_log('->  Plot saved in ' + save +'.png')
 		#fpl = self.path + 'ANALYSIS/S-Curve_Gain_hist'+self.pltname+'.png'
 		#plt.savefig(fpl, bbox_inches="tight");
 		#print("->  Plot saved in %s" % (fpl))

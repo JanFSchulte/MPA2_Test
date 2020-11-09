@@ -111,7 +111,7 @@ class SSA_SEU():
 							cal_pulse_period = 1, l1a_period = 39, latency = latency, display = 1, stop_if_fifo_full = 1, reset_fc7=reset_fc7, align=align)
 
 						[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1, fc7_alignment_status]  = results
-							
+
 						utils.print_info("->  Active strips     -> " + str(striplist))
 						utils.print_info("->  HIP strips        -> " + str(hip_hits))
 						utils.print_info("->  L1 Latency        -> " + str(latency))
@@ -156,7 +156,7 @@ class SSA_SEU():
 	def evaluate_error_rate(self, directory = '../SSA_Results/SEU_Results/'):
 		data_set = {};
 
-		compile_logs(self,
+		self.compile_logs(
 			directory=directory,
 			use_run_precise_info = True)
 
@@ -183,7 +183,7 @@ class SSA_SEU():
 		hadron_flux  = CSV.csv_to_array( directory+'fluka_hadrons_gt20MeV_central_region_data.csv', noheader=True)
 		fig = plt.figure(figsize=(12,8))
 		color=iter(sns.color_palette('deep'))
-		select = 0; filename = '';
+		dataselect = 0; filename = '';
 		for data in dataset_list:
 			#data = data_set[name_list]
 			LET  = np.array(data[:,3], dtype=np.double)
@@ -192,7 +192,7 @@ class SSA_SEU():
 			c = next(color)
 			y = np.array(data[:,6], dtype=np.double)
 			param_bounds =([0,0,0,0],[1E-1,1E2,1E2,1E5])
-			init_param   = [corr_list[select][0], corr_list[select][1], corr_list[select][2], corr_list[select][3]]
+			init_param   = [corr_list[dataselect][0], corr_list[dataselect][1], corr_list[dataselect][2], corr_list[dataselect][3]]
 			par, cov = curve_fit(f = f_weibull_cumulative, xdata = Edep, ydata = cross_section,  p0 = init_param, bounds=param_bounds)
 			perr = np.sqrt(np.diag(cov))
 			s0, s, E0, W = par
@@ -205,14 +205,14 @@ class SSA_SEU():
 			plt.semilogy(Edep, cross_section,'o--', color = c)
 			xl = np.linspace(-5,Edep[-1], 10000)
 			plt.semilogy(xl, f_weibull_cumulative1(xl, s0, s, E0, W) , color = c)
-			total_crossection[select] = [0, '[cm^2]']
+			total_crossection[dataselect] = [0, '[cm^2]']
 			for i in range(len(rate_tracker)-1):
 				delta = (f_weibull_cumulative1(rate_tracker[i+1,0], s0,s,E0,W) - f_weibull_cumulative1(rate_tracker[i,0], s0,s,E0,W))/s0
-				if(delta >0): total_crossection[select][0] += (s0 / 1E-8) * rate_tracker[i,1] * delta
+				if(delta >0): total_crossection[dataselect][0] += (s0 / 1E-8) * rate_tracker[i,1] * delta
 			utils.print_good('\nCross-section for CMS tracker environment: ')
-			utils.print_good("    cs = {:10.6e}  | {:10.6e}\n".format(total_crossection[select][0], 0))
-			filename += '_{:s}'.format(name_list[select])
-			select += 1
+			utils.print_good("    cs = {:10.6e}  | {:10.6e}\n".format(total_crossection[dataselect][0], 0))
+			filename += '_{:s}'.format(name_list[dataselect])
+			dataselect += 1
 		ax = plt.subplot(111)
 		leg = ax.legend(fontsize = 16, loc=('lower right'), frameon=True )
 		leg.get_frame().set_linewidth(1.0)
@@ -222,7 +222,7 @@ class SSA_SEU():
 		plt.xticks(fontsize=16)
 		plt.yticks(fontsize=16)
 		plt.savefig(directory+'/see_plot_cross_section_fit_{:s}.png'.format(filename), bbox_inches="tight");
-		select = 0
+		dataselect = 0
 		for data in dataset_list:
 			fig = plt.figure(figsize=(12,8))
 			color=iter(sns.color_palette('deep'))
@@ -230,7 +230,7 @@ class SSA_SEU():
 				r_index = np.where(hadron_flux[:,0]==r)[0][0]
 				z_index = [hadron_flux[0,1:], '[cm]']
 				z_flux = [hadron_flux[r_index, 1:], '[cm^{-2} s^{-1}]']
-				upset_rate = [z_flux[0]*total_crossection[select][0], '[s^{-1} chip^{-1}]']
+				upset_rate = [z_flux[0]*total_crossection[dataselect][0], '[s^{-1} chip^{-1}]']
 				c = next(color)
 				plt.plot(z_index[0], upset_rate[0], '.', label='r = {:6.1f}'.format(r))
 				ax = plt.subplot(111)
@@ -242,9 +242,15 @@ class SSA_SEU():
 				plt.xticks(fontsize=16)
 				plt.yticks(fontsize=16)
 				errors_expected = upset_rate[0][ np.where(z_index[0]==(r))[0][0] ]
-				utils.print_good('Expected errorr at r={:0} z={:0} -> {:9.6e} errors/(s*chip)'.format(r, z, errors_expected))
-			plt.savefig(directory+'/see_plot_error_rate_tracker_{:s}.png'.format(name_list[select]), bbox_inches="tight");
-			select += 1
+				self.r = r; self.b = z_flux[0]; self.c = errors_expected
+				#utils.print_good('Expected errorr at r={:d} z=- flux={:7.3e} -> {:9.6e} errors/(s*chip)'.format(r, z_flux[0], errors_expected))
+			self.total_crossection =  total_crossection
+			plt.savefig(directory+'/see_plot_error_rate_tracker_{:s}.png'.format(name_list[dataselect]), bbox_inches="tight");
+
+			max_flux_compare_cic = 4.3E7
+			upset_rate = [max_flux_compare_cic*total_crossection[dataselect][0], '[s^{-1} chip^{-1}]']
+			dataselect += 1
+			utils.print_good('Expected errorr at flux = {:7.3e} -> {:9.6e} errors/(s*chip)'.format(max_flux_compare_cic, upset_rate[0]))
 
 	##############################################################
 	def compile_logs(self, directory='../SSA_Results/SEU_Results/', use_run_precise_info = True):
@@ -816,7 +822,7 @@ class SSA_SEU():
 		hadron_flux  = CSV.csv_to_array( directory+'fluka_hadrons_gt20MeV_central_region_data.csv', noheader=True)
 		fig = plt.figure(figsize=(6,4))
 		color=iter(sns.color_palette('deep'))
-		select = 0; filename = '';
+		dataselect = 0; filename = '';
 		for data in dataset_list:
 			#data = data_set[name_list]
 			LET  = np.array(data[:,3], dtype=np.double)
@@ -825,7 +831,7 @@ class SSA_SEU():
 			c = next(color)
 			y = np.array(data[:,6], dtype=np.double)
 			param_bounds =([0,0,0,0],[5E-2,5E0,1E1,1E3])
-			init_param   = [corr_list[select][0], corr_list[select][1], corr_list[select][2], corr_list[select][3]]
+			init_param   = [corr_list[dataselect][0], corr_list[dataselect][1], corr_list[dataselect][2], corr_list[dataselect][3]]
 			par, cov = curve_fit(f = f_weibull_cumulative, xdata = LET, ydata = cross_section,  p0 = init_param, bounds=param_bounds)
 			perr = np.sqrt(np.diag(cov))
 			s0, s, E0, W = par
@@ -838,7 +844,7 @@ class SSA_SEU():
 			plt.semilogy(LET, cross_section,'o--', color = c)
 			xl = np.linspace(-5,LET[-1], 10000)
 			plt.semilogy(xl, f_weibull_cumulative1(xl, s0, s, E0, W) , color = c)
-			total_crossection[select] = [0, '[cm^2]']
+			total_crossection[dataselect] = [0, '[cm^2]']
 
 			for i in range(len(rate_tracker)-1):
 				E_i0 = rate_tracker[i,0]
@@ -847,17 +853,17 @@ class SSA_SEU():
 				LET_i1 = E_i1 / (sensitive_depth  * 1E2 * si_density[0] )
 				delta = (f_weibull_cumulative1(LET_i1, s0,s,E0,W) - f_weibull_cumulative1(LET_i0, s0,s,E0,W))/s0
 				if(delta >0): #below E0 the value is not defined
-					total_crossection[select][0] += (s0 * 1E8) * rate_tracker[i+1,1] * delta
+					total_crossection[dataselect][0] += (s0 * 1E8) * rate_tracker[i+1,1] * delta
 				print(LET_i1)
 				print(LET_i0)
 				print('=====')
 			utils.print_good('\nCross-section for CMS tracker environment: ')
-			utils.print_good("    cs = {:10.6e}  | {:10.6e}\n".format(total_crossection[select][0], 0))
+			utils.print_good("    cs = {:10.6e}  | {:10.6e}\n".format(total_crossection[dataselect][0], 0))
 			print(total_crossection)
-			filename += '_{:s}'.format(name_list[select])
-			select += 1
+			filename += '_{:s}'.format(name_list[dataselect])
+			dataselect += 1
 		plt.savefig(directory+'/plot_cross_section_fit_{:s}.png'.format(filename), bbox_inches="tight");
-		select = 0
+		dataselect = 0
 		for data in dataset_list:
 			fig = plt.figure(figsize=(6,4))
 			color=iter(sns.color_palette('deep'))
@@ -865,7 +871,7 @@ class SSA_SEU():
 				r_index = np.where(hadron_flux[:,0]==r)[0][0]
 				z_index = [hadron_flux[0,1:], '[cm]']
 				z_flux = [hadron_flux[r_index, 1:], '[cm^{-2} s^{-1}]']
-				upset_rate = [z_flux[0]*total_crossection[select][0], '[s^{-1} chip^{-1}]']
+				upset_rate = [z_flux[0]*total_crossection[dataselect][0], '[s^{-1} chip^{-1}]']
 				c = next(color)
 				plt.plot(z_index[0], upset_rate[0], '.', label='r = {:6.1f}'.format(r))
 				ax = plt.subplot(111)
@@ -876,8 +882,8 @@ class SSA_SEU():
 				plt.xlabel("z "+z_index[1], fontsize=16)
 				plt.xticks(fontsize=12)
 				plt.yticks(fontsize=12)
-			plt.savefig(directory+'/plot_error_rate_tracker_{:s}.png'.format(name_list[select]), bbox_inches="tight");
-			select += 1
+			plt.savefig(directory+'/plot_error_rate_tracker_{:s}.png'.format(name_list[dataselect]), bbox_inches="tight");
+			dataselect += 1
 
 
 def evaluate_error_rate_cic(s0, s, E0, W, sensitive_depth=1E-6, directory = '../SSA_Results/SEU_Results/'):
@@ -889,7 +895,7 @@ def evaluate_error_rate_cic(s0, s, E0, W, sensitive_depth=1E-6, directory = '../
 	hadron_flux  = CSV.csv_to_array( directory+'fluka_hadrons_gt20MeV_central_region_data.csv', noheader=True)
 	fig = plt.figure(figsize=(6,4))
 	color=iter(sns.color_palette('deep'))
-	select = 0; filename = '';
+	dataselect = 0; filename = '';
 	c = next(color)
 	utils.print_good('\nCumulative weibull fitting parameters: \n            Value   |  Error')
 	utils.print_good('    W  = {:10.6e}'.format(W))
@@ -898,23 +904,23 @@ def evaluate_error_rate_cic(s0, s, E0, W, sensitive_depth=1E-6, directory = '../
 	utils.print_good('    E0 = {:10.6e}\n'.format(E0))
 	xl = np.linspace(-5, 0.4, 10000)
 	plt.semilogy(xl, f_weibull_cumulative1(xl, s0, s, E0, W) , color = c)
-	total_crossection[select] = [0, '[cm^2]']
+	total_crossection[dataselect] = [0, '[cm^2]']
 	for i in range(len(rate_tracker)-1):
 		delta = (f_weibull_cumulative1(rate_tracker[i+1,0], s0,s,E0,W) - f_weibull_cumulative1(rate_tracker[i,0], s0,s,E0,W))
 		if(delta >0):
-			total_crossection[select][0] += (s0 / 1E-8) * rate_tracker[i,1] * delta
+			total_crossection[dataselect][0] += (s0 / 1E-8) * rate_tracker[i,1] * delta
 	utils.print_good('\nCross-section for CMS tracker environment: ')
-	utils.print_good("    cs = {:10.6e}  | {:10.6e}\n".format(total_crossection[select][0], 0))
+	utils.print_good("    cs = {:10.6e}  | {:10.6e}\n".format(total_crossection[dataselect][0], 0))
 	print(total_crossection)
-	select += 1
-	select = 0
+	dataselect += 1
+	dataselect = 0
 	fig = plt.figure(figsize=(6,4))
 	color=iter(sns.color_palette('deep'))
 	for r in [21, 40, 60]:
 		r_index = np.where(hadron_flux[:,0]==r)[0][0]
 		z_index = [hadron_flux[0,1:], '[cm]']
 		z_flux = [hadron_flux[r_index, 1:], '[cm^{-2} s^{-1}]']
-		upset_rate = [z_flux[0]*total_crossection[select][0], '[s^{-1} chip^{-1}]']
+		upset_rate = [z_flux[0]*total_crossection[dataselect][0], '[s^{-1} chip^{-1}]']
 		c = next(color)
 		plt.plot(z_index[0], upset_rate[0], '.', label='r = {:6.1f}'.format(r))
 		ax = plt.subplot(111)
@@ -925,7 +931,7 @@ def evaluate_error_rate_cic(s0, s, E0, W, sensitive_depth=1E-6, directory = '../
 		plt.xlabel("z "+z_index[1], fontsize=16)
 		plt.xticks(fontsize=12)
 		plt.yticks(fontsize=12)
-	select += 1
+	dataselect += 1
 
 '''
 

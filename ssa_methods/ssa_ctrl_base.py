@@ -91,7 +91,7 @@ class ssa_ctrl_base:
 			registers.insert(0, n)
 		if display:
 			for i in registers:
-				print(i)
+				utils.print_log(i)
 		dir = file[:file.rindex(os.path.sep)]
 		if not os.path.exists(dir): os.makedirs(dir)
 
@@ -108,15 +108,15 @@ class ssa_ctrl_base:
 				if((int(tmp[0]) == -1) and peri):
 					if ((not 'Fuse' in tmp[1]) and (not 'mask' in tmp[1])):
 						self.I2C.peri_write(tmp[1], int(tmp[2]))
-						if display: print([tmp[0], tmp[1], int(tmp[2])])
+						if display: utils.print_log([tmp[0], tmp[1], int(tmp[2])])
 					else:
-						if display: print(str([tmp[0], tmp[1], int(tmp[2])]) + ' -> skipped')
+						if display: utils.print_log(str([tmp[0], tmp[1], int(tmp[2])]) + ' -> skipped')
 				elif((int(tmp[0])>=1) and (int(tmp[0])<=120) and (int(tmp[0]) in strips) ):
 					if ((not 'ReadCounter' in tmp[1]) and (not 'mask' in tmp[1]) and ((not 'Fuse' in tmp[1]))):
 						self.I2C.strip_write(tmp[1], int(tmp[0]), int(tmp[2]))
-						if display: print([tmp[0], tmp[1], int(tmp[2])])
+						if display: utils.print_log([tmp[0], tmp[1], int(tmp[2])])
 					else:
-						if display: print(str([tmp[0], tmp[1], int(tmp[2])]) + ' -> skipped')
+						if display: utils.print_log(str([tmp[0], tmp[1], int(tmp[2])]) + ' -> skipped')
 
 			utils.print_log("->  Configuration Loaded from file")
 		if(rtarray):
@@ -231,7 +231,7 @@ class ssa_ctrl_base:
 		#print(self.fc7.read("stat_phy_phase_tuning_done"))
 		while(self.fc7.read("stat_phy_phase_tuning_done") == 0 and cnt < 5):
 			time.sleep(0.1)
-			print("Waiting for the phase tuning")
+			utils.print_log("Waiting for the phase tuning")
 			cnt += 1
 		if cnt>4:
 			done = False
