@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from scipy import stats
 import re
+import datetime
 
 
 class SSA_measurements():
@@ -999,27 +1000,39 @@ class SSA_measurements():
 			print('->  Plot saved in ' + save +'.png')
 
 	#####################################################################################################
-
-	def adc_measure_curve(self, nsamples=10, npoints=2**17, output_file='../SSA_Results/ADC/', plot=True):
-		vrange = np.linspace(-.005, 0.9, npoints+1)
+	def adc_measure_curve(self, nsamples=10, npoints=2**16, output_file='../SSA_Results/ADC/', plot=True, start_point=-0.005):
+		vrange = np.linspace(start_point, 0.9, npoints+1)
 		rcode = []
+		time.sleep(0.1)
 		self.ssa.analog.set_output_mux('highimpedence')
 		self.ssa.analog.adc_measure_ext_pad(nsamples=1)
 		self.bias.SetMode('Keithley_Sourcemeter_2410_GPIB')
 		self.bias.multimeter.config__voltage_source(compliance=10E-3, range=1)
 		time.sleep(0.1)
+		ratecounter = [time.time(), 0]
+		mrate = 0; timeleft=1
 		for vinput in vrange:
 			self.bias.multimeter.set_voltage(vinput)
 			time.sleep(0.001)
 			r = self.ssa.analog.adc_measure_ext_pad(nsamples=nsamples)
-			utils.print_inline('    Converting {:7.3f} mV to code {:7.3f}'.format( (vinput*1E3), r) )
 			rcode.append(r)
+			progress = len(rcode)/np.float(npoints)
+			ctime = time.time()
+			if((ctime-ratecounter[0]) > 1):
+				mrate = (len(rcode)-ratecounter[1]) / (ctime - ratecounter[0])
+				ratecounter = [ctime, len(rcode)]
+				timeleft = (npoints-len(rcode))/mrate
+			utils.print_inline(
+				'    Converting {:7.3f} mV to code {:9.3f} | progress: {:5.1f}% | rate: {:5.3f} sample/sec | time left: {:s}        '.format(
+				(vinput*1E3), r, progress*100, mrate, str(datetime.timedelta(seconds=timeleft))[:-7] ))
+			with open( (output_file+'ssa_adc_measurements.csv'), 'a') as fo:
+				fo.write('\n{:8d}, {:12.6f}, {:12.6f}'.format(len(rcode),(vinput*1E3),r) )
 		self.bias.multimeter.config__voltage_measure()
 		self.bias.multimeter.disable()
 		self.ssa.analog.set_output_mux('highimpedence')
 		print('\n')
-		rtvect = np.array([vrange, rcode], dtype=float).transpose()
-		CSV.array_to_csv( rtvect,  output_file+'ssa_adc_measurements.csv')
+		#rtvect = np.array([vrange, rcode], dtype=float).transpose()
+		#CSV.array_to_csv( rtvect,  output_file+'ssa_adc_measurements.csv')
 		fitvect = rtvect[ [rtvect[:,0]>0] ]
 		fitvect = fitvect[ fitvect[:,0]<0.85 ]
 		gain, ofs, sigma = utils.linear_fit(fitvect[:,0], fitvect[:,1])
