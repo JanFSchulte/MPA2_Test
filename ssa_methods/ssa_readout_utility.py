@@ -143,6 +143,14 @@ class SSA_readout():
 			cnt += 1
 		return delay
 
+	def cluster_data_delay_new(self):
+		rpdata = self.cluster_data(raw = 1)
+		locations = [[]]*8
+		for line in range(8):
+			locations[line] = [i for i, e in enumerate(rpdata[line]) if e != 0]
+		return locations
+
+
 	def send_trigger(self, duration = 0):
 		self.fc7.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 

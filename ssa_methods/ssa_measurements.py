@@ -1000,8 +1000,8 @@ class SSA_measurements():
 			print('->  Plot saved in ' + save +'.png')
 
 	#####################################################################################################
-	def adc_measure_curve(self, nsamples=10, npoints=2**16, output_file='../SSA_Results/ADC/', plot=True, start_point=-0.005):
-		vrange = np.linspace(start_point, 0.9, npoints+1)
+	def adc_measure_curve(self, nsamples=10, npoints=2**16, directory='../SSA_Results/ADC/', plot=True, start_point=-0.005, end_point=0.9, note=''):
+		vrange = np.linspace(start_point, end_point, npoints+1)
 		rcode = []
 		time.sleep(0.1)
 		self.ssa.analog.set_output_mux('highimpedence')
@@ -1025,14 +1025,14 @@ class SSA_measurements():
 			utils.print_inline(
 				'    Converting {:7.3f} mV to code {:9.3f} | progress: {:5.1f}% | rate: {:5.3f} sample/sec | time left: {:s}        '.format(
 				(vinput*1E3), r, progress*100, mrate, str(datetime.timedelta(seconds=timeleft))[:-7] ))
-			with open( (output_file+'ssa_adc_measurements.csv'), 'a') as fo:
+			with open( (directory+'ssa_adc_measurements'+note+'.csv'), 'a') as fo:
 				fo.write('\n{:8d}, {:12.6f}, {:12.6f}'.format(len(rcode),(vinput*1E3),r) )
 		self.bias.multimeter.config__voltage_measure()
 		self.bias.multimeter.disable()
 		self.ssa.analog.set_output_mux('highimpedence')
 		print('\n')
-		#rtvect = np.array([vrange, rcode], dtype=float).transpose()
-		#CSV.array_to_csv( rtvect,  output_file+'ssa_adc_measurements.csv')
+		rtvect = np.array([vrange, rcode], dtype=float).transpose()
+		#CSV.array_to_csv( rtvect,  (directory+'ssa_adc_measurements'+note+'.csv'))
 		fitvect = rtvect[ [rtvect[:,0]>0] ]
 		fitvect = fitvect[ fitvect[:,0]<0.85 ]
 		gain, ofs, sigma = utils.linear_fit(fitvect[:,0], fitvect[:,1])
@@ -1043,6 +1043,93 @@ class SSA_measurements():
 			plt.plot(np.array([0,0.9]), gain*np.array([0,0.9])+ofs, '-', c='red')
 			plt.show()
 		return [gain, ofs, sigma]
+
+	def adc_measure_curve_parametric(self, nsamples=100, npoints=2**7, adc_trimming_range=[0, 15, 31, 47, 63], adc_ref_range=[0, 7, 15, 23, 31], directory='../SSA_Results/ADC/parametric_ref_and_trimming/'):
+		self.bias.SetMode('Keithley_Sourcemeter_2410_GPIB')
+		for adc_ref in adc_ref_range:
+			self.ssa.analog.adc_set_referenence(adc_ref)
+			for adc_trimming in adc_trimming_range:
+				self.ssa.analog.adc_set_trimming(adc_trimming)
+				self.adc_measure_curve(
+					nsamples=nsamples, npoints=npoints, start_point=-0.005, end_point=0.9,
+					directory=directory, plot=False,
+					note='__ref_{:d}__trim_{:d}'.format(adc_ref, adc_trimming))
+
+	def adc_measure_curve_parametric_plot(self, directory='../SSA_Results/ADC/parametric_ref_and_trimming/'):
+		fig = plt.figure(figsize=(8,6))
+		color=iter(sns.color_palette('deep')*3)
+		ax = plt.subplot(111)
+		ref_range = []; trim_range = [];
+		for filename in os.listdir(directory):
+			refind = re.findall("ssa_adc_measurements__ref_(\d+)__trim_(\d+).csv", filename)
+			if(len(refind)>0):
+				ref_range.append(np.int(refind[0][0]))
+				trim_range.append(np.int(refind[0][1]))
+
+		for adc_trim in np.unique(trim_range):
+			c = next(color)
+			for adc_ref in np.unique(ref_range):
+				filename = "ssa_adc_measurements__ref_{:d}__trim_{:d}.csv".format(adc_ref, adc_trim)
+				data = CSV.csv_to_array(directory+filename)
+				plt.plot(data[:,1], data[:,2], 'x', color=c, label='ref_{:d}'.format(adc_ref))
+
+		#leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
+		#leg.get_frame().set_linewidth(1.0)
+		ax.get_xaxis().tick_bottom();
+		ax.get_yaxis().tick_left()
+		plt.ylabel('ADC Count', fontsize=16)
+		plt.xlabel('Input Voltage [V]', fontsize=16)
+		plt.xticks(fontsize=12)
+		plt.yticks(fontsize=12)
+		#plt.savefig(directory+'/xray_'+name+'_variation.png', bbox_inches="tight");
+
+
+	def quick_test_l1_fifo_overflow_counter(self, latency=11):
+		ret = {}
+		for l1_rate in [1500, 1600, 1700, 1750, 1800]:
+			l1a_period = int(1E6/(25.0*l1_rate)-1)
+			self.ssa.reset()
+			#rp = self.seuutil.run_seu_test(stop_if_fifo_full=False, latency=11, run_time=1, l1a_period=l1a_period, delay=73)
+			#time.sleep(0.1)
+			self.I2C.peri_write( register="control_1", field='L1_Latency_msb', data = ((latency & 0x0100)>>8) )
+			self.I2C.peri_write( register="control_3", field='L1_Latency_lsb', data = ((latency & 0x00ff)>>0) )
+			rp = self.seuutil.run_seu_test(stop_if_fifo_full=False, latency=11, run_time=1, l1a_period=l1a_period, delay=1)
+			self.fc7.SendCommand_CTRL("start_trigger")
+			time.sleep(0.1)
+			l1_trigger = self.ssa.readout.l1_data()[0][0]
+			ret[l1_rate] = self.ssa.ctrl.get_L1_FIFO_overflow_counter()
+			utils.print_good('->  L1 rate = {:d} kHz -> L1 FIFO Overflow Counter = {:d} | L1 Counter = {:d}'.format(l1_rate, ret[l1_rate], l1_trigger))
+		return ret
+
+	def quick_test_digital_pattern(self, strips=[10,20,30,40,50,60,70,80], calpulse_duration=8):
+		pattern_list = []
+		for cnt in range(8): pattern_list.append(0b0001<<cnt)
+		for cnt in range(7): pattern_list.append(0b0011<<cnt)
+		for cnt in range(6): pattern_list.append(0b0101<<cnt)
+		for cnt in range(5): pattern_list.append(0b1001<<cnt)
+		for pattern in pattern_list:
+			self.ssa.inject.digital_pulse(strips)
+			self.ssa.ctrl.set_pattern_injection(pattern, 0)
+			self.ssa.ctrl.set_cal_pulse(amplitude = 255, duration = calpulse_duration)
+			ret = self.ssa.readout.cluster_data_delay_new()
+			utils.print_info(ret)
+
+	def quick_test_stub_data_offset(self, shift=-3):
+		offset = [0]*6
+		self.ssa.inject.digital_pulse([19,20,21, 49,50,51, 79,80,81, 109,110,111])
+		for i in range(-16,16):
+			offset[4] = i
+			self.ssa.ctrl.set_stub_data_offset(0, offset[1], offset[2], offset[3], offset[4], 0)
+			ret = self.ssa.readout.cluster_data(shift=shift)
+			print(ret)
+
+
+
+
+
+
+		#ssa.test.l1_data(shift=1, nruns=10)
+
 
 
 '''

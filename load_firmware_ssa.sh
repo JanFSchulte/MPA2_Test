@@ -58,7 +58,10 @@ else
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_2.bit
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_3.bit   -f ~/MPA-SSA_Test/bitfiles/ssa2_111120_3.bit
 	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit   -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa2_seu_111120.bit
-	./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa1_seu_111120.bit -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa1_seu_111120.bit
+	./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa1_seu_111120.bit -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa1_seu_111120
+
+
+	.bit
 	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit
 	cd -
 fi
