@@ -161,6 +161,8 @@ def check_L1_data_fifos(directory, excluded_iterations=[], expected_vector=[]):
     cnt_l1_single_bit_seu = [0,0]
     cnt_l1_multi_bit_seu  = [0,0]
     cnt_l1_total_seu      = [0,0]
+    cnt_l1_trailer_error  = [0,0]
+    l1_trailers_errors  = [[],[]]
 
 
     for fifofile in os.listdir(directory+'/L1-FIFO/'):
@@ -190,11 +192,20 @@ def check_L1_data_fifos(directory, excluded_iterations=[], expected_vector=[]):
                         for event in l1fifodata:
                             #L1-counter errors
                             if(event[1] != event[2]): cnt_l1counter_errors[mode] += 1
+                            # trailer error
+                            if(event[5][163:167] != '1111'):
+                                cnt_l1_trailer_error[mode] += 1
+                                l1_trailers_errors[mode].append(event[5][163:167])
                             #bitstream errors
                             #errors = bin( np.int(event[4], 2) ^ np.int(l1hit_ref, 2) ).count('1')
+
+
     for mode in [0,1]:
         if(cnt_l1counter_errors[mode]>0):
             utils.print_warning('    L1 data {:5s} -> L1 counter errors = {:d}'.format(seachstr, cnt_l1counter_errors[mode]))
+        if(cnt_l1_trailer_error[mode]>0):
+            utils.print_warning('    L1 data {:5s} -> L1 trailer errors = {:d} [{:s}]'.format(seachstr, cnt_l1_trailer_error[mode], str(l1_trailers_errors[mode])))
+
 
     return cnt_l1counter_errors
 
@@ -202,7 +213,8 @@ def check_L1_data_fifos(directory, excluded_iterations=[], expected_vector=[]):
 directory='../SSA_Results/SEU_Results/'
 use_run_precise_info = True
 let_map = {'C':1.3, 'Al':5.7, 'Ar':9.9, 'Cr':16.1, 'Ni':20.4, 'Kr':32.4, 'Rh':46.1, 'Xe':62.5}
-fluence_limit_all_ions = 0
+fluence_limit_all_ions = 0;fluence_limit_xe = 0;
+flusence_per_let = {}
 if(use_run_precise_info):
         run_info = CSV.csv_to_array(directory+'see_test_ions_flux.csv')
         ion_info = [[],[]]
@@ -240,6 +252,9 @@ for ddd in dirs:
                                         run_time = np.sum( run_data[:, 5] )
                                         fluence = mean_flux * run_time
                                 fluence_limit_all_ions += fluence
+                                if(ion=='Xe'): fluence_limit_xe += fluence
+                                if(LET in flusence_per_let): flusence_per_let[LET] += fluence
+                                else: flusence_per_let[LET] = fluence
                                 error_l1_sum = [0]*2; good_l1_sum = [0]*2; time_l1_sum = [0]*2 ; error_rate_l1_sum = [0]*2;
                                 error_rate_l1_sum_normalised = [0]*2; error_rate_stub_sum_normalised = 0;
                                 error_stub_sum = 0; good_stub_sum = 0; error_rate_stub_sum = 0; counters_a = 0; counters_s = 0;
@@ -322,8 +337,115 @@ for i in tmpvect:
 global_summary['stub'] = np.array(global_summary['stub'])
 global_summary['stub'] = global_summary['stub'][np.argsort(np.array(global_summary['stub'][:,2],dtype=float ))]
 CSV.array_to_csv( np.array(global_summary['stub']), directory+'stub.csv')
-utils.print_good('Fluence limit for all ions -> {:9.6f}E+6'.format(fluence_limit_all_ions*1E-6))
+utils.print_good('Total fluence for all ions -> {:9.6f}E+6'.format(fluence_limit_all_ions*1E-6))
+#utils.print_good('Total fluence for Xe       -> {:9.6f}E+6'.format(fluence_limit_xe*1E-6))
+for fLET in sorted(flusence_per_let):
+    utils.print_good('Total fluence per LET = {:5.1f} -> {:9.6f}E+6'.format(fLET, flusence_per_let[fLET]*1E-6))
+
+
+
 #return global_summary
+
+
+
+##############################################################
+def fit_and_evaluate_error_rate(name_list, dataset_list, corr_list=[[0,0,0,0]], sensitive_depth=1E-6, directory = '../SSA_Results/SEU_Results/'):
+	si_density   = [2.3290E3, 'mg/cm3']
+	sens_volume  = [1*1*sensitive_depth, 'um^3']
+	rate_tracker = CSV.csv_to_array( directory+'seu_rate_lhc_tracker.csv')
+	total_crossection = {};
+	hadron_flux  = CSV.csv_to_array( directory+'fluka_hadrons_gt20MeV_central_region_data.csv', noheader=True)
+	fig = plt.figure(figsize=(12,8))
+	color=iter(sns.color_palette('deep'))
+	dataselect = 0; filename = '';
+	for data in dataset_list:
+		#data = data_set[name_list]
+		LET  = np.array(data[:,3], dtype=np.double)
+		Edep = LET * (sensitive_depth  * 1E2 * si_density[0] )
+		cross_section = np.array(data[:,6], dtype=np.double)
+		c = next(color)
+		y = np.array(data[:,6], dtype=np.double)
+		param_bounds =([0,0,0,0],[1E-1,1E2,1E2,1E5])
+		init_param   = [corr_list[dataselect][0], corr_list[dataselect][1], corr_list[dataselect][2], corr_list[dataselect][3]]
+		par, cov = curve_fit(f = f_weibull_cumulative, xdata = Edep, ydata = cross_section,  p0 = init_param, bounds=param_bounds)
+		perr = np.sqrt(np.diag(cov))
+		s0, s, E0, W = par
+		s0_e, s_e, E0_e, W_e = perr
+		utils.print_good('\nCumulative weibull fitting parameters: \n            Value   |  Error')
+		utils.print_good('    W  = {:10.6e} | {:10.6e}'.format(W, W_e))
+		utils.print_good('    s  = {:10.6e} | {:10.6e}'.format(s, s_e))
+		utils.print_good('    s0 = {:10.6e} | {:10.6e}'.format(s0, s0_e))
+		utils.print_good('    E0 = {:10.6e} | {:10.6e}\n'.format(E0, E0_e))
+		plt.semilogy(Edep, cross_section,'o--', color = c)
+		xl = np.linspace(-5,Edep[-1], 10000)
+		plt.semilogy(xl, f_weibull_cumulative1(xl, s0, s, E0, W) , color = c)
+		total_crossection[dataselect] = [0, '[cm^2]']
+		for i in range(len(rate_tracker)-1):
+			delta = (f_weibull_cumulative1(rate_tracker[i+1,0], s0,s,E0,W) - f_weibull_cumulative1(rate_tracker[i,0], s0,s,E0,W))/s0
+			if(delta >0): total_crossection[dataselect][0] += (s0 / 1E-8) * rate_tracker[i,1] * delta
+		utils.print_good('\nCross-section for CMS tracker environment: ')
+		utils.print_good("    cs = {:10.6e}  | {:10.6e}\n".format(total_crossection[dataselect][0], 0))
+		filename += '_{:s}'.format(name_list[dataselect])
+		dataselect += 1
+	ax = plt.subplot(111)
+	leg = ax.legend(fontsize = 16, loc=('lower right'), frameon=True )
+	leg.get_frame().set_linewidth(1.0)
+	ax.get_xaxis().tick_bottom(); ax.get_yaxis().tick_left()
+	plt.ylabel("$ \sigma [cm^{2}] $", fontsize=20)
+	plt.xlabel("$ E_{DEP} [MeV] $", fontsize=20)
+	plt.xticks(fontsize=16)
+	plt.yticks(fontsize=16)
+	plt.savefig(directory+'/see_plot_cross_section_fit_{:s}.png'.format(filename), bbox_inches="tight");
+	dataselect = 0
+	for data in dataset_list:
+		fig = plt.figure(figsize=(12,8))
+		color=iter(sns.color_palette('deep'))
+		for r in [22, 40, 60]:
+			r_index = np.where(hadron_flux[:,0]==r)[0][0]
+			z_index = [hadron_flux[0,1:], '[cm]']
+			z_flux = [hadron_flux[r_index, 1:], '[cm^{-2} s^{-1}]']
+			upset_rate = [z_flux[0]*total_crossection[dataselect][0], '[s^{-1} chip^{-1}]']
+			c = next(color)
+			plt.plot(z_index[0], upset_rate[0], '.', label='r = {:6.1f}'.format(r))
+			ax = plt.subplot(111)
+			leg = ax.legend(fontsize=16, loc=('lower right'), frameon=True )
+			leg.get_frame().set_linewidth(1.0)
+			ax.get_xaxis().tick_bottom(); ax.get_yaxis().tick_left()
+			plt.ylabel("Upset rate "+upset_rate[1], fontsize=20)
+			plt.xlabel("z "+z_index[1], fontsize=20)
+			plt.xticks(fontsize=16)
+			plt.yticks(fontsize=16)
+			errors_expected = upset_rate[0][ np.where(z_index[0]==(r))[0][0] ]
+			#self.r = r; self.b = z_flux[0]; self.c = errors_expected
+			#utils.print_good('Expected errorr at r={:d} z=- flux={:7.3e} -> {:9.6e} errors/(s*chip)'.format(r, z_flux[0], errors_expected))
+		#self.total_crossection =  total_crossection
+		plt.savefig(directory+'/see_plot_error_rate_tracker_{:s}.png'.format(name_list[dataselect]), bbox_inches="tight");
+		max_flux_compare_cic = 4.3E7
+		upset_rate = [max_flux_compare_cic*total_crossection[dataselect][0], '[s^{-1} chip^{-1}]']
+		dataselect += 1
+		utils.print_good('Expected errorr at flux = {:7.3e} -> {:9.6e} errors/(s*chip)'.format(max_flux_compare_cic, upset_rate[0]))
+
+##############################################################
+def evaluate_error_rate(directory = '../SSA_Results/SEU_Results/'):
+	data_set = {};
+	#self.compile_logs(	directory=directory,	use_run_precise_info = True)
+	data_set['stub_data'] = CSV.csv_to_array( directory+'stub.csv')
+	data_set['sram_500']  = CSV.csv_to_array( directory+'sram_500.csv')
+	data_set['latch_500'] = CSV.csv_to_array( directory+'latch_500.csv')
+	# s0_e, s_e, E0_e, W_e
+	fit_and_evaluate_error_rate(
+		name_list    = ['stub_data'],
+		dataset_list = [data_set['stub_data']],
+		corr_list    = [[1E-3,1E-1,1E-2,1E3]] )
+	fit_and_evaluate_error_rate(
+		name_list = ['sram_500', 'latch_500'],
+		dataset_list = [data_set['sram_500'], data_set['latch_500']],
+		corr_list = [[1E-4,1E-2,1E-1,100] ,[1E-4,1E-2,1E-1,100]]  )
+	fit_and_evaluate_error_rate(
+		name_list = ['stub_data', 'sram_500'],
+		dataset_list = [data_set['stub_data'], data_set['sram_500']],
+		corr_list = [[1E-3,1E-1,1E-2,1E3],[1E-4,1E-2,1E-1,100] ] )
+
 
 
 print('ciao')
