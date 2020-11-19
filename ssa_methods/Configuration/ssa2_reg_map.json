@@ -280,8 +280,8 @@
             "permissions": "RW",
             "mask_reg"   : "mask_peri_D",
             "fields_mask": {
-                "StripOffset_0" : "0b11111000",
-                "StripOffset_1" : "0b00000111"
+                "StripOffset_L" : "0b11111000",
+                "StripOffset_1_30" : "0b00000111"
             }
         },
         "StripOffset_byte1": {
@@ -289,9 +289,9 @@
             "permissions": "RW",
             "mask_reg"   : "mask_peri_D",
             "fields_mask": {
-                "StripOffset_1" : "0b11000000",
-                "StripOffset_2" : "0b00111110",
-                "StripOffset_3" : "0b00000001"
+                "StripOffset_1_30" : "0b11000000",
+                "StripOffset_31_60" : "0b00111110",
+                "StripOffset_61_90" : "0b00000001"
             }
         },
         "StripOffset_byte2": {
@@ -299,8 +299,8 @@
             "permissions": "RW",
             "mask_reg"   : "mask_peri_D",
             "fields_mask": {
-                "StripOffset_3" : "0b11110000",
-                "StripOffset_4" : "0b00001111"
+                "StripOffset_61_90"  : "0b11110000",
+                "StripOffset_91_120" : "0b00001111"
             }
         },
         "StripOffset_byte3": {
@@ -308,8 +308,8 @@
             "permissions": "RW",
             "mask_reg"   : "mask_peri_D",
             "fields_mask": {
-                "StripOffset_4" : "0b10000000",
-                "StripOffset_5" : "0b01111100"
+                "StripOffset_91_120" : "0b10000000",
+                "StripOffset_R" : "0b01111100"
             }
         },
         "ClkTree_control": {

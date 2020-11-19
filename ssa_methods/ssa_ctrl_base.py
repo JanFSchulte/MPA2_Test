@@ -210,6 +210,25 @@ class ssa_ctrl_base:
 			self.I2C.strip_write("DigCalibPattern_L", 120, 0xff)
 
 	#####################################################################
+	def set_pattern_injection(self, pattern_L=0b00000001, pattern_H=0b00000001):
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip='all', data=pattern_L)
+			self.I2C.strip_write( register="DigCalibPattern_H", field=False, strip='all', data=pattern_H)
+		else:
+			self.I2C.strip_write("DigCalibPattern_L", 0, pattern_L)
+			self.I2C.strip_write("DigCalibPattern_H", 0, pattern_H)
+
+	#####################################################################
+	def get_pattern_injection(self, strip=10):
+		if(tbconfig.VERSION['SSA'] >= 2):
+			r1 = self.I2C.strip_read( register="DigCalibPattern_L", field=False, strip=strip)
+			r2 = self.I2C.strip_read( register="DigCalibPattern_H", field=False, strip=strip)
+		else:
+			self.I2C.strip_read("DigCalibPattern_L", 0)
+			self.I2C.strip_read("DigCalibPattern_H", 0)
+		return [r1, r2]
+
+	#####################################################################
 	def reset_pattern_injection(self):
 		if(tbconfig.VERSION['SSA'] >= 2):
 			self.I2C.strip_write("StripControl1", 'all', 0b01001)
@@ -517,6 +536,37 @@ class ssa_ctrl_base:
 			self.I2C.peri_write("CalPulse_duration", duration)
 
 	#####################################################################
+	def set_cluster_cut(self, value = 5):
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.peri_write(register="control_2", field='ClusterCut', data=value)
+		else:
+			self.I2C.peri_write("ClusterCut", value)
+
+	#####################################################################
+	def get_cluster_cut(self):
+		if(tbconfig.VERSION['SSA'] >= 2):
+			rp = self.I2C.peri_read(register="control_2", field='ClusterCut')
+		else:
+			rp = self.I2C.peri_read("ClusterCut", value)
+		return rp
+
+	#####################################################################
+	def set_hit_phase_compensation(self, value = 5):
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.peri_write(register="Config_HitDelay", field='Config_HitDelay', data=value)
+		else:
+			utils.print_log('Request not available for SSAv1')
+
+	#####################################################################
+	def get_hit_phase_compensation(self):
+		if(tbconfig.VERSION['SSA'] >= 2):
+			rp = self.I2C.peri_read(register="Config_HitDelay", field='Config_HitDelay')
+		else:
+			utils.print_log('Request not available for SSAv1')
+			rp = 0
+		return rp
+
+	#####################################################################
 	def set_cal_pulse_delay(self, delay):
 		V = tbconfig.VERSION['SSA']
 		if(isinstance(delay, str)):
@@ -798,6 +848,7 @@ class ssa_ctrl_base:
 		rp = self.get_active_memory()
 		return rp
 
+	#####################################################################
 	def get_active_memory(self):
 		active = ['','']
 		rp = self.I2C.peri_read( register = 'control_1', field = 'memory_select_0')
@@ -808,6 +859,87 @@ class ssa_ctrl_base:
 		else  : active[1] = 'SRAM'
 		return active
 
+	#####################################################################
+	def set_clockgating_magic_number(self, value):
+		if((tbconfig.VERSION['SSA'] >= 2)):
+			rt = self.I2C.peri_write(register = 'ClkTreeMagicNumber', field = 'ClkTreeMagicNumber', data=value)
+			rp = self.I2C.peri_read( register = 'ClkTreeMagicNumber', field = 'ClkTreeMagicNumber')
+			ret = True if(rp == value) else False
+		else:
+			utils.print_log('Request not available for SSAv1')
+			rp = False
+		return ret
+
+	def set_clockgating_magic_control(self, val='disable'):
+		if(val == 'enable'): value = 0b01010101
+		else: value = 0b10101010
+		self.set_clockgating_magic_number(value)
+
+	def get_clockgating_magic_number(self):
+		if((tbconfig.VERSION['SSA'] >= 2)):
+			ret = self.I2C.peri_read( register = 'ClkTreeMagicNumber', field = 'ClkTreeMagicNumber')
+		else:
+			utils.print_log('Request not available for SSAv1')
+			ret = False
+		return ret
+
+	#####################################################################
+	def set_clockgating_enable(self, clock_A=1, clock_B=1, clock_C=1):
+		if((tbconfig.VERSION['SSA'] >= 2)):
+			if(clock_A): rt = self.I2C.peri_write(register = 'ClkTree_control', field = 'ClkTree_A', data=0b01)
+			else:        rt = self.I2C.peri_write(register = 'ClkTree_control', field = 'ClkTree_A', data=0b10)
+			if(clock_B): rt = self.I2C.peri_write(register = 'ClkTree_control', field = 'ClkTree_B', data=0b01)
+			else:        rt = self.I2C.peri_write(register = 'ClkTree_control', field = 'ClkTree_B', data=0b10)
+			if(clock_C): rt = self.I2C.peri_write(register = 'ClkTree_control', field = 'ClkTree_C', data=0b01)
+			else:        rt = self.I2C.peri_write(register = 'ClkTree_control', field = 'ClkTree_C', data=0b10)
+		else:
+			utils.print_log('Request not available for SSAv1')
+
+	def get_clockgating_enable(self):
+		ret = [-1,-1,-1]
+		if((tbconfig.VERSION['SSA'] >= 2)):
+			ret[0] = self.I2C.peri_read( register = 'ClkTree_control', field = 'ClkTree_A')
+			ret[1] = self.I2C.peri_read( register = 'ClkTree_control', field = 'ClkTree_B')
+			ret[2] = self.I2C.peri_read( register = 'ClkTree_control', field = 'ClkTree_C')
+		else:
+			utils.print_log('Request not available for SSAv1')
+			ret = False
+		return ret
+
+	#####################################################################
+	def get_L1_FIFO_overflow_counter(self):
+		if((tbconfig.VERSION['SSA'] >= 2)):
+			msb = self.I2C.peri_read( register = 'L1_FIFO_Overflow_Cnt_H', field = False)
+			lsb = self.I2C.peri_read( register = 'L1_FIFO_Overflow_Cnt_L', field = False)
+			ret = ((msb&0xff)<<9) | (lsb&0xff)
+		else:
+			utils.print_log('Request not available for SSAv1')
+			ret = 0
+		return ret
+
+	#####################################################################
+	def set_stub_data_offset(self, block_L=0, block_1_30=0, block_31_60=0, block_61_90=0, block_91_120=0, block_R=0):
+		#elf.I2C.peri_write( register = 'StripOffset_byte0', field='StripOffset_L'       data = (block_L      & 0b11111)>>0 )
+		#elf.I2C.peri_write( register = 'StripOffset_byte0', field='StripOffset_1_30'    data = (block_1_30   & 0b11100)>>2 )
+		#elf.I2C.peri_write( register = 'StripOffset_byte1', field='StripOffset_1_30'    data = (block_1_30   & 0b00000)>>0 )
+		#elf.I2C.peri_write( register = 'StripOffset_byte1', field='StripOffset_31_60'   data = (block_31_60  & 0b00000)>>0 )
+		#elf.I2C.peri_write( register = 'StripOffset_byte1', field='StripOffset_61_90'   data = (block_61_90  & 0b00000)>>0 )
+		#elf.I2C.peri_write( register = 'StripOffset_byte2', field='StripOffset_61_90'   data = (block_61_90  & 0b00000)>>0 )
+		#elf.I2C.peri_write( register = 'StripOffset_byte2', field='StripOffset_91_120'  data = (block_91_120 & 0b00000)>>0 )
+		#elf.I2C.peri_write( register = 'StripOffset_byte3', field='StripOffset_91_120'  data = (block_91_120 & 0b00000)>>0 )
+		#elf.I2C.peri_write( register = 'StripOffset_byte3', field='StripOffset_R'       data = (block_R      & 0b00000)>>0 )
+
+		data0 = ((block_L      & 0b11111)<<3) | ((block_1_30   & 0b11100)>>2)
+		data1 = ((block_1_30   & 0b00011)<<6) | ((block_31_60  & 0b11111)<<1) | ((block_61_90 & 0b10000)>>4)
+		data2 = ((block_61_90  & 0b01111)<<4) | ((block_91_120 & 0b11110)>>1)
+		data3 = ((block_91_120 & 0b00001)<<7) | ((block_R      & 0b11111)<<2)
+
+		self.I2C.peri_write( register = 'StripOffset_byte0', field=False, data = data0 )
+		self.I2C.peri_write( register = 'StripOffset_byte1', field=False, data = data1 )
+		self.I2C.peri_write( register = 'StripOffset_byte2', field=False, data = data2 )
+		self.I2C.peri_write( register = 'StripOffset_byte3', field=False, data = data3 )
+
+	#def set_clockgating_enable(self, clock_A=1, clock_A=2, clock_A=3):
 
 # ssa_peri_reg_map['Fuse_Mode']              = 43
 # ssa_peri_reg_map['Fuse_Prog_b0']           = 44

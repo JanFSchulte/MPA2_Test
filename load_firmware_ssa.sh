@@ -52,9 +52,17 @@ else
 	cd ~/FC7/sw/fc7/tests
 	#./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
 	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit
-	./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit   # the SEU firmware 
 	#./bin/fc7-d19c.exe  -i $IP -n d19c_2ssa_none_14082019.bit -f ~/MPA-SSA_Test/bitfiles/d19c_2ssa_none_14082019.bit
-	
+	#./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit   # the SEU firmware
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_2.bit  -f ~/MPA-SSA_Test/bitfiles/ssa2_111120_2.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_2.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_3.bit   -f ~/MPA-SSA_Test/bitfiles/ssa2_111120_3.bit
+	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit   -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa2_seu_111120.bit
+	./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa1_seu_111120.bit -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa1_seu_111120
+
+
+	.bit
+	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit
 	cd -
 fi
 
@@ -72,8 +80,8 @@ fi
 #./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_10092020.bin
 #./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA2_SEU_10092020_v2.bin
 #./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit -f ~/MPA-SSA_Test/bitfiles/SSAx1_SEU_oldFW_newPhT_14092020.bit
-	
-	
+
+
 #./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_2020.08.19.bit
 #./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
 #./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_2020.08.19.bit -f ~/MPA-SSA_Test/bitfiles/d19c_SSA_SEU_2020.08.19.bit

@@ -994,6 +994,14 @@ class SSA_test_utility():
 			filename = ('../SSA_Results/fast_digital_test/'+run+'/') )
 		self.ssa.pwr.off()
 
+	##############################################################
+#	def quick_test_cluster_cut(self, nruns = 10):
+#		
+#		self.ssa.ctrl.set_cluster_cut(0)
+#		cluster_size = 2
+#		self.cluster_data(mode = "digital",  nstrips = 8, min_clsize = cluster_size-1, max_clsize = cluster_size, nruns = 100, lateral=False)
+
+
 '''
 def prova(i):
 	ssa.inject.digital_pulse([i])

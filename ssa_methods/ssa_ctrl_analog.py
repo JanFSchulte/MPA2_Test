@@ -111,6 +111,11 @@ class ssa_ctrl_analog:
 		return r
 
 	#####################################################################
+	def adc_set_referenence(self, value):
+		r = self.I2C.peri_write( register="ADC_VREF", field='ADC_VREF', data=value)
+		return r
+
+	#####################################################################
 	def adc_get_trimming(self):
 		r = self.I2C.peri_read(  register="ADC_trimming", field='ADC_trimming_trim_val' )
 		return r

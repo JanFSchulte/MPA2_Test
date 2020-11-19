@@ -12,7 +12,7 @@ class ssa_i2c_conf:
 		self.__set_parameters(debug=debug)
 		self.fc7 = fc7
 		self.chip_adr = "SSA{:0d}".format(index)
-		self.i2c_address = address
+		#self.i2c_address = address
 		self.fc7AddrTable = fc7AddrTable
 
 	def __load_reg_map(self, version):
