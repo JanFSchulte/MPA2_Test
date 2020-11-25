@@ -51,36 +51,22 @@ else
 	printf '\n->  Starting loading the firmware\n'
 	cd ~/FC7/sw/fc7/tests
 	#./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
-	./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit   # the SEU firmware
-	
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_231120.bit                 -f ~/MPA-SSA_Test/bitfiles/november/ssa2_seu_231120.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_clk_inverted.bit           -f ~/MPA-SSA_Test/bitfiles/november/ssa2_seu_clk_inverted_231120.bit
-	./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_t1_inverted.bit            -f ~/MPA-SSA_Test/bitfiles/november/ssa2_seu_t1_inverted_241120.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_clk_t1_inverted.bit        -f ~/MPA-SSA_Test/bitfiles/november/ssa2_seu_clk_t1_inverted_241120.bit
-	
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_231120.bit                
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_clk_inverted.bit           
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_t1_inverted.bit           
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_clk_t1_inverted.bit       
-	
+	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit
+	#./bin/fc7-d19c.exe  -i $IP -n d19c_2ssa_none_14082019.bit -f ~/MPA-SSA_Test/bitfiles/d19c_2ssa_none_14082019.bit
+	#./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit   # the SEU firmware
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_2.bit  -f ~/MPA-SSA_Test/bitfiles/ssa2_111120_2.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_2.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_3.bit   -f ~/MPA-SSA_Test/bitfiles/ssa2_111120_3.bit
+	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit   -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa2_seu_111120.bit
+	./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit  
+	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa1_seu_111120.bit -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa1_seu_111120
+
+
+	.bit
+	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit
 	cd -
 fi
 
-
-#./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
-#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit
-#./bin/fc7-d19c.exe  -i $IP -n d19c_2ssa_none_14082019.bit -f ~/MPA-SSA_Test/bitfiles/d19c_2ssa_none_14082019.bit
-#./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit   # the SEU firmware
-#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_2.bit  -f ~/MPA-SSA_Test/bitfiles/ssa2_111120_2.bit
-#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_2.bit
-#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_3.bit   -f ~/MPA-SSA_Test/bitfiles/ssa2_111120_3.bit
-#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit   -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa2_seu_111120.bit
-#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit
-#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa1_seu_111120.bit -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa1_seu_111120.bit
-#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa1_seu_111120.bit 
-#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit
-	
-	
 #./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
 #./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_P2.bit -f ~/MPA-SSA_Test/bitfiles/d19c_SSA_SEU_P1.bit
 #./bin/fc7-d19c.exe  -i $IP -n d19c_SSA_SEU_P2.bit

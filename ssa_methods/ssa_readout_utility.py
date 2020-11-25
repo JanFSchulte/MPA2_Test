@@ -132,8 +132,8 @@ class SSA_readout():
 
 	def cluster_data_delay(self, shift = 'default', display = False, debug = False):
 		self.ctrl.setup_readout_chip_id()
-		if(shift == 'default'):
-			ishift = self.cl_shift
+		if(shift == 'default'): ishift = self.cl_shift
+		else: ishift = shift
 		cl_array = self.cluster_data(lookaround = True, display = display, display_pattern = debug)
 		delay = [] #[-np.inf]*len(cl_array[0])
 		cnt = -21 - ishift
@@ -499,7 +499,7 @@ class SSA_readout():
 
 #	def alignment_slvs(align_word = 128, step = 10):
 #	    t0 = time.time()
-#	    activate_I2C_chip(self.fc7)
+#	    utils. activate_I2C_chip(self.fc7)
 #	    I2C.peri_write('LFSR_data', align_word)
 #	    activate_shift()
 #	    phase = 0

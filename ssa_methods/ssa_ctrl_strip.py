@@ -20,7 +20,8 @@ class ssa_ctrl_strip:
 		self.dll_chargepump    = 0b00
 
 	def set_enable(self, strip, enable, polarity = 0, hitcounter = 0, digitalpulse = 0, analogpulse = 0):
-		value =((0b1 & analogpulse  ) << 4 |
+		value =(
+			(0b1 & analogpulse  ) << 4 |
 			(0b1 & digitalpulse ) << 3 |
 			(0b1 & hitcounter   ) << 2 |
 			(0b1 & polarity     ) << 1 |
@@ -171,3 +172,12 @@ class ssa_ctrl_strip:
 			else:
 				return False
 		return True
+
+	######################################################################
+	def set_pattern_injection(self, strip='all', pattern_L=0b00000001, pattern_H=0b00000001):
+		if(tbconfig.VERSION['SSA'] >= 2):
+			self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip='all', data=pattern_L)
+			self.I2C.strip_write( register="DigCalibPattern_H", field=False, strip='all', data=pattern_H)
+		else:
+			self.I2C.strip_write("DigCalibPattern_L", 0, pattern_L)
+			self.I2C.strip_write("DigCalibPattern_H", 0, pattern_H)

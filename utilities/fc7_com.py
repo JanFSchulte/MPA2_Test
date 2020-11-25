@@ -18,6 +18,8 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from datetime import datetime
 from myScripts.Utilities import *
+from utilities.tbsettings import *
+
 
 class I2C_MainSlaveMapItem:
 	def __init__(self):
@@ -142,6 +144,7 @@ class fc7_com():
 	def activate_I2C_chip(self, frequency = 0, verbose = 1):
 		i2cmux = 0
 		write = 0
+		#print('activate_I2C_chip')
 		self.SetSlaveMap(verbose = verbose)
 		self.Configure_MPA_SSA_I2C_Master(1, frequency, verbose = verbose)
 		self.Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x04, verbose = verbose) #enable only MPA-SSA chip I2C
@@ -311,9 +314,13 @@ class fc7_com():
 		#i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
 		# set the values
 		# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
-		i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA",  "MPA0")
-		i2c_slave_map[1].SetValues(0b0100001, 2, 1, 1, 1, 0, "SSA",  "SSA0")
-		i2c_slave_map[2].SetValues(0b0100111, 2, 1, 1, 1, 0, "SSA1", "SSA1")
+		i2c_slave_map[0].SetValues(tbconfig.MPA_ADR[0], 2, 1, 1, 1, 0, "MPA",  "MPA0")
+		i2c_slave_map[1].SetValues(tbconfig.SSA_ADR[0], 2, 1, 1, 1, 0, "SSA",  "SSA0")
+		i2c_slave_map[2].SetValues(tbconfig.SSA_ADR[1], 2, 1, 1, 1, 0, "SSA1", "SSA1")
+		print(bin(tbconfig.MPA_ADR[0]))
+		print(bin(tbconfig.SSA_ADR[0]))
+		print(bin(tbconfig.SSA_ADR[1]))
+
 		# updating the slave id table
 		if verbose:
 			print("---> Updating the Slave ID Map")
@@ -324,9 +331,10 @@ class fc7_com():
 
 	def SetSlaveMap(self, verbose = 1):
 		# define the map itself
-		i2c_slave_map = [I2C_SlaveMapItem() for i in range(16)]
+		i2c_slave_map = [I2C_SlaveMapItem() for i in range(31)]
 		# set the values
 		# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
+		print('SET SLAVE MAP2')
 		i2c_slave_map[0].SetValues(0b1110000, 0, 1, 1, 0, 1, "PCA9646")
 		i2c_slave_map[1].SetValues(0b0100000, 0, 1, 1, 0, 1, "PCF8574")
 		i2c_slave_map[2].SetValues(0b0100100, 0, 1, 1, 0, 1, "PCF8574")
@@ -339,7 +347,10 @@ class fc7_com():
 		i2c_slave_map[9].SetValues(0b1000101, 1, 2, 2, 0, 1, "INA226")
 		i2c_slave_map[10].SetValues(0b1000110, 1, 2, 2, 0, 1, "INA226")
 		i2c_slave_map[11].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA")
-		i2c_slave_map[12].SetValues(0b0100000, 2, 1, 1, 1, 0, "SSA")
+		i2c_slave_map[12].SetValues(0b0100001, 2, 1, 1, 1, 0, "SSA")
+		i2c_slave_map[11].SetValues(tbconfig.MPA_ADR[0], 2, 1, 1, 1, 0, "MPA")
+		i2c_slave_map[12].SetValues(tbconfig.SSA_ADR[0], 2, 1, 1, 1, 0, "SSA0")
+		i2c_slave_map[13].SetValues(tbconfig.SSA_ADR[1], 2, 1, 1, 1, 0, "SSA1")
 		i2c_slave_map[15].SetValues(0b1011111, 1, 1, 1, 1, 0, "CBC3")
 		# updating the slave id table
 		if verbose: print("---> Updating the Slave ID Map")
