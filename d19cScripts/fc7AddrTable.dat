@@ -319,6 +319,19 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
    cnfg_tlu_trigger_id_delay            40017000    00000f00     1     1 *Set trigger id delay
 *
    cnfg_ddr3_stub_debug_enable          40018000    00000001     1     1 *enable stub debug mode
+
+   cnfg_ddr3_scanchain_test_enable          40018000    00000002     1     1 *enable scanchain test mode
+   cnfg_ssa_scanchain_start_test         4001A000    00000001     1     1 * scanchain test start
+   cnfg_ssa_scanchain_is_scanchain_test         4001A000    00000002     1     1 * scanchain is_scan_test
+   cnfg_ssa_scanchain_is_reset_test         4001A000    00000004     1     1 * scanchain is_reset test
+   cnfg_ssa_scanchain_is_capture_test         4001A000    00000008     1     1 * scanchain is capture test
+*************   cnfg_ssa_scanchain_test_vector_word_to_write        4001A000    0000ff00     1     1 * scanchain vector which word you want to write
+*************   cnfg_ssa_scanchain_expected_response_word_to_write       4001A000    00ff0000     1     1 * scanchain exp resp which word you want to write
+*************   cnfg_ssa_scanchain_mask_word_to_write       4001A000    ff000000     1     1 *scanchain mask which word you want to write
+   cnfg_ssa_scanchain_vector       4001A001    ffffffff     1     1 * scanchain input vector
+   cnfg_ssa_scanchain_response       4001A002    ffffffff     1     1 * scanchain input response
+   cnfg_ssa_scanchain_mask       4001A003    ffffffff     1     1 * scanchain input mask
+
 * Optical Block
    cnfg_optical_general                 4001D000    ffffffff     1     1 *General configuration sel
 * Optical GBTSC Block
@@ -619,6 +632,15 @@ stat_gbtsc_3_sel                        4003d004    ffffffff     1     0
    stat_gbtsc_ic_ready                  4003d004    01000000     1     0
    stat_gbtsc_ic_empty                  4003d004    02000000     1     0
    stat_gbtsc_sca_rx_done               4003d004    04000000     1     0
+
+* status registers for scanchain
+scanchain_test_done                       4003A000    000000001     1     0
+scanchain_comparator                      4003A000    000000002     1     0
+scanchain_comparator_negedge              4003A000    000000004     1     0
+scanchain_comparator_negedge_next         4003A000    000000008     1     0
+scanchain_comparator_miscompares          4003A000    00000fff0     1     0
+
+
 *--------------------------------------------------------------------
 *---------------------------- MPA SSA BOARD -------------------------
 *--------------------------------------------------------------------
