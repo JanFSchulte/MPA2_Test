@@ -67,9 +67,9 @@ def reset_fc7():
 	FC7.write("ctrl_command_global_reset", 1);
 
 def set_clock(val = 'internal'):
-	SSA0.pwr.set_clock_source(val)
-	sleep(0.1);
-	SSA0.ssa.init(reset_board = False, reset_chip = False, display = True)
+	ssa0.pwr.set_clock_source(val)
+	#sleep(0.1);
+	#ssa0.chip.init(reset_board = False, reset_chip = False, display = True)
 
 def ssa_on():
 	utils.activate_I2C_chip(FC7)

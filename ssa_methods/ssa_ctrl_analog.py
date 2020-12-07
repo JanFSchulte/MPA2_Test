@@ -31,10 +31,10 @@ class ssa_ctrl_analog:
 		self.seu_cntr = { 'A':{'peri':[0]*2, 'strip':[0]*8, 'all':0}, 'S':{'peri':[0]*2, 'strip':[0]*8, 'all':0} }
 
 	#####################################################################
-	def set_output_mux(self, testline = 'highimpedence'):
+	def set_output_mux(self, testline = 'highimpedence', testpad_enable=1):
 		if(tbconfig.VERSION['SSA'] >= 2):
 			ctrl = self.analog_mux_map[testline]
-			self.I2C.peri_write(    register="ADC_trimming", field='TestPad_Enable',        data=0b1)
+			self.I2C.peri_write(    register="ADC_trimming", field='TestPad_Enable',        data=testpad_enable)
 			self.I2C.peri_write(    register="ADC_control",  field='ADC_control_input_sel', data=ctrl)
 			r = self.I2C.peri_read( register="ADC_control",  field='ADC_control_input_sel')
 		else:

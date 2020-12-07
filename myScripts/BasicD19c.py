@@ -415,30 +415,31 @@ def EncodeMainSlaveMapItem(slave_item):
     return final_command
 
 i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
-# setting the i2c slave map
-def SetMainSlaveMap(verbose = 1):
-	# define the map itself
-	#i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
-	# set the values
-	# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
-	i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA",  "MPA0")
-	i2c_slave_map[1].SetValues(0b0100001, 2, 1, 1, 1, 0, "SSA",  "SSA0")
-	i2c_slave_map[2].SetValues(0b0100111, 2, 1, 1, 1, 0, "SSA1", "SSA1")
-	# updating the slave id table
-	if verbose: print("---> Updating the Slave ID Map")
-	for slave_id in range(3):
-		fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
-		if verbose:
-			print("Writing","cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", hex(EncodeMainSlaveMapItem(i2c_slave_map[slave_id])))
 
-def activate_I2C_chip(frequency = 0, verbose = 1):
-    i2cmux = 0
-    write = 0
-    SetSlaveMap(verbose = verbose)
-    Configure_MPA_SSA_I2C_Master(1, frequency, verbose = verbose)
-    Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x04, verbose = verbose) #enable only MPA-SSA chip I2C
-    Configure_MPA_SSA_I2C_Master(0, frequency, verbose = verbose)
-    SetMainSlaveMap(verbose = verbose)
+# setting the i2c slave map
+#def SetMainSlaveMap(verbose = 1):
+#	# define the map itself
+#	#i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
+#	# set the values
+#	# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
+#	i2c_slave_map[0].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA",  "MPA0")
+#	i2c_slave_map[1].SetValues(0b0100001, 2, 1, 1, 1, 0, "SSA",  "SSA0")
+#	i2c_slave_map[2].SetValues(0b0100111, 2, 1, 1, 1, 0, "SSA1", "SSA1")
+#	# updating the slave id table
+#	if verbose: print("---> Updating the Slave ID Map")
+#	for slave_id in range(3):
+#		fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
+#		if verbose:
+#			print("Writing","cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", hex(EncodeMainSlaveMapItem(i2c_slave_map[slave_id])))
+#
+#def activate_I2C_chip(frequency = 0, verbose = 1):
+#    i2cmux = 0
+#    write = 0
+#    SetSlaveMap(verbose = verbose)
+#    Configure_MPA_SSA_I2C_Master(1, frequency, verbose = verbose)
+#    Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x04, verbose = verbose) #enable only MPA-SSA chip I2C
+#    Configure_MPA_SSA_I2C_Master(0, frequency, verbose = verbose)
+#    SetMainSlaveMap(verbose = verbose)
 
 def write_I2C (chip, address, data, frequency = 0):
 	MPA = 0

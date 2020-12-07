@@ -20,8 +20,13 @@ class ssa_power_utility:
 	def set_clock_source(self, value = 'internal'):
 		if(value == 'internal' or value == 0):
 			self.fc7.write("cnfg_clock_ext_clk_en", 0)
+			rp = self.fc7.read("cnfg_clock_ext_clk_en")
 		elif (value == 'external' or value == 1):
 			self.fc7.write("cnfg_clock_ext_clk_en", 1)
+			rp = self.fc7.read("cnfg_clock_ext_clk_en")
+		else:
+			rp = -1
+		return rp
 
 	def on(self, display=True):
 		self.set_supply(mode='on',  display=display)

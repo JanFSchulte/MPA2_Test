@@ -34,8 +34,8 @@ class ssa_calibration():
 		self.analog_mux_map = analog_mux_map;  self.initialised = False; self.minst = 0;
 		self.set_gpib_address(16);
 		self.get_value_and_voltage_averages = 1
-		self.SetMode('Keithley_Multimeter_7510_LAN');
-		#self.SetMode('Keithley_Sourcemeter_2410_GPIB');
+		#self.SetMode('Keithley_Multimeter_7510_LAN');
+		self.SetMode('Keithley_Sourcemeter_2410_GPIB');
 		self.par_list = [
 			######  FUNCTION | NAME| TARGET CALIB VALUE | .. | .. | Enable Autocalibration
 			self.Parameter("Analog Ground Interal ", "GND",                   0.0, -1, -1, 'set_dont_calibrate'),

@@ -951,7 +951,7 @@ class SSA_cal_utility():
 	def shaper_pulse_rising_old(self, calpulse = 60, mode = 'caldll', targetbx = 25, resolution = 1, strip = 5, display = False, display_pattern = False, plot = True, thmin = 20, thmax = 255, iterations = 1, basedelay = 'auto', samplingmode = 'level'):
 		# mode = [clkdll][caldll]
 		utils.print_enable(False)
-		activate_I2C_chip(self.fc7)
+		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 		thlist = np.array(range(thmin, thmax, resolution))
 		latency = np.ones(np.shape(thlist)[0], dtype = np.float16 )*(-np.inf)
@@ -1012,7 +1012,7 @@ class SSA_cal_utility():
 	def shaper_pulse_falling_old(self, calpulse = 60, mode = 'caldll', targetbx = 25, resolution = 1, strip = 5, display = False, display_pattern = False, plot = True, thmin = 20, thmax = 255, iterations = 1, basedelay = 'auto', samplingmode = 'level'):
 		# mode = [clkdll][caldll]
 		utils.print_enable(False)
-		activate_I2C_chip(self.fc7)
+		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 		thlist = np.array(range(thmin, thmax, resolution))
 		latency = np.ones(np.shape(thlist)[0], dtype = np.float16 )*(-np.inf)

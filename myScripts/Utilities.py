@@ -22,6 +22,7 @@ from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
+from sympy.combinatorics.graycode import GrayCode
 
 
 class FuncThread(threading.Thread):
@@ -282,6 +283,25 @@ class Utilities:
 		sys.stdout.write('(correct result)')
 		sys.stdout.write("\033[0;0m")
 		sys.stdout.write(text)
+
+	def gray_code(self, value):
+		if  (value==0):  val = 0b0000
+		elif(value==1):  val = 0b0001
+		elif(value==2):  val = 0b0011
+		elif(value==3):  val = 0b0010
+		elif(value==4):  val = 0b0110
+		elif(value==5):  val = 0b0111
+		elif(value==6):  val = 0b0101
+		elif(value==7):  val = 0b0100
+		elif(value==8):  val = 0b1100
+		elif(value==9):  val = 0b1101
+		elif(value==10): val = 0b1111
+		elif(value==11): val = 0b1110
+		elif(value==12): val = 0b1010
+		elif(value==13): val = 0b1011
+		elif(value==14): val = 0b1001
+		elif(value==15): val = 0b1000
+		return val
 
 def print_method(name):
 	lines = inspect.getsourcelines(name)

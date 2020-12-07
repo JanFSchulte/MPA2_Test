@@ -1109,7 +1109,7 @@ class SSA_measurements():
 		for cnt in range(5): pattern_list.append(0b1001<<cnt)
 		for pattern in pattern_list:
 			self.ssa.inject.digital_pulse(strips)
-			self.ssa.ctrl.set_pattern_injection(pattern, 0)
+			self.ssa.strip.set_pattern_injection('all', pattern, 0)
 			self.ssa.ctrl.set_cal_pulse(amplitude = 255, duration = calpulse_duration)
 			ret = self.ssa.readout.cluster_data_delay_new()
 			utils.print_info(ret)
@@ -1122,6 +1122,44 @@ class SSA_measurements():
 			self.ssa.ctrl.set_stub_data_offset(0, offset[1], offset[2], offset[3], offset[4], 0)
 			ret = self.ssa.readout.cluster_data(shift=shift)
 			print(ret)
+
+	def quick_dll_phase_measure_scope(self):
+
+		voltage = 0.9
+
+		ssa.pwr.set_supply(d=voltage)
+
+		ssa.pwr.set_dvdd(0.8, chip='MPA')
+
+		self.reset()
+
+		ssa.pwr.set_dvdd(1.0, chip='MPA')
+
+		ssa.chip.ctrl.set_sampling_deskewing_chargepump(1)
+
+
+		self.reset()
+
+		self.ctrl.init_slvs(0b111)
+		self.ctrl.activate_readout_shift()
+		self.ctrl.set_shift_pattern_all(0b10000000)
+
+		self.ctrl.init_slvs(0b111)
+		self.ctrl.set_t1_clock_output_select('clock')
+		self.ctrl.set_sampling_deskewing_coarse(0)
+
+		self.ctrl.set_sampling_deskewing_fine(enable=1, bypass=0, value=0)
+
+		self.ctrl.set_sampling_deskewing_fine(enable=1, bypass=0, value=15)
+
+
+
+
+#self.ctrl.set_sampling_deskewing_coarse(1)
+#self.ctrl.set_sampling_deskewing_fine(enable=1, bypass=0, value=0)
+
+
+
 
 
 

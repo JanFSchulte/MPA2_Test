@@ -43,17 +43,17 @@ def EncodeSlaveMapItem(slave_item):
 	return final_command
 
 # setting the i2c slave map
-def SetSlaveMap():
-
-	# set the values
-	# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
-	i2c_slave_map[0].SetValues(0b1000001, 1, 1, 1, 1, 1, "CBC", "CBC0")
-	i2c_slave_map[1].SetValues(0b1000010, 1, 1, 1, 1, 1, "CBC", "CBC1")
-
-	# updating the slave id table
-	print "---> Updating the Slave ID Map"
-	for slave_id in range(2):
-		fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeSlaveMapItem(i2c_slave_map[slave_id]))
+#def SetSlaveMap():
+#
+#	# set the values
+#	# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
+#	i2c_slave_map[0].SetValues(0b1000001, 1, 1, 1, 1, 1, "CBC", "CBC0")
+#	i2c_slave_map[1].SetValues(0b1000010, 1, 1, 1, 1, 1, "CBC", "CBC1")
+#
+#	# updating the slave id table
+#	print "---> Updating the Slave ID Map"
+#	for slave_id in range(2):
+#		fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeSlaveMapItem(i2c_slave_map[slave_id]))
 
 # this method overrides the number of the data bytes to be written/read - used for sequential data read/write
 def SetNumberOfDataBytes(slave_id, data_wr_nbytes, data_rd_nbytes):

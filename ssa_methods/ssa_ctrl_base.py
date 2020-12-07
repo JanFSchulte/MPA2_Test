@@ -209,14 +209,14 @@ class ssa_ctrl_base:
 			self.I2C.strip_write("DigCalibPattern_L",   7, 0xff)
 			self.I2C.strip_write("DigCalibPattern_L", 120, 0xff)
 
-	#####################################################################
-	def set_pattern_injection(self, pattern_L=0b00000001, pattern_H=0b00000001):
-		if(tbconfig.VERSION['SSA'] >= 2):
-			self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip='all', data=pattern_L)
-			self.I2C.strip_write( register="DigCalibPattern_H", field=False, strip='all', data=pattern_H)
-		else:
-			self.I2C.strip_write("DigCalibPattern_L", 0, pattern_L)
-			self.I2C.strip_write("DigCalibPattern_H", 0, pattern_H)
+	######################################################################
+	#def set_pattern_injection(self, pattern_L=0b00000001, pattern_H=0b00000001):
+	#	if(tbconfig.VERSION['SSA'] >= 2):
+	#		self.I2C.strip_write( register="DigCalibPattern_L", field=False, strip='all', data=pattern_L)
+	#		self.I2C.strip_write( register="DigCalibPattern_H", field=False, strip='all', data=pattern_H)
+	#	else:
+	#		self.I2C.strip_write("DigCalibPattern_L", 0, pattern_L)
+	#		self.I2C.strip_write("DigCalibPattern_H", 0, pattern_H)
 
 	#####################################################################
 	def get_pattern_injection(self, strip=10):
@@ -606,10 +606,13 @@ class ssa_ctrl_base:
 	#####################################################################
 	def set_sampling_deskewing_fine(self, value, enable = True, bypass = False):
 		if((tbconfig.VERSION['SSA'] >= 2)):
-			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_value',      data=value)
+			dllcode = utils.gray_code(value)
+			dllen = 0b1 if enable else 0b0
+			dllby = 0b0 if bypass else 0b1
+			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_value',      data=dllcode)
 			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_chargepump', data=self.dll_chargepump)
-			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_bypass',     data=bypass)
-			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_Enable',     data=enable)
+			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_bypass',     data=dllby)
+			self.I2C.peri_write(register="ClockDeskewing_fine", field='DLL_Enable',     data=dllen)
 		else:
 			word = (
 				((value & 0b1111) << 0) |
@@ -918,6 +921,21 @@ class ssa_ctrl_base:
 		return ret
 
 	#####################################################################
+	def set_t1_clock_output_select(self, mode='T1'):
+		if((tbconfig.VERSION['SSA'] >= 2)):
+			if(mode == 'clock'): value = 1
+			elif(mode == 'T1'):  value = 0
+			else: return False
+			rt = self.I2C.peri_write(register = 'control_1', field = 'T1_or_CLK_select', data=value)
+			rp = self.I2C.peri_read( register = 'control_1', field = 'T1_or_CLK_select')
+			ret = True if(rp == value) else False
+		else:
+			utils.print_log('Request not available for SSAv1')
+			rp = False
+		return ret
+
+
+	#####################################################################
 	def set_stub_data_offset(self, block_L=0, block_1_30=0, block_31_60=0, block_61_90=0, block_91_120=0, block_R=0):
 		#elf.I2C.peri_write( register = 'StripOffset_byte0', field='StripOffset_L'       data = (block_L      & 0b11111)>>0 )
 		#elf.I2C.peri_write( register = 'StripOffset_byte0', field='StripOffset_1_30'    data = (block_1_30   & 0b11100)>>2 )
@@ -938,6 +956,19 @@ class ssa_ctrl_base:
 		self.I2C.peri_write( register = 'StripOffset_byte1', field=False, data = data1 )
 		self.I2C.peri_write( register = 'StripOffset_byte2', field=False, data = data2 )
 		self.I2C.peri_write( register = 'StripOffset_byte3', field=False, data = data3 )
+
+	def set_termination_enable(self, clock=1, T1=1, lateral=1):
+		p1 = self.I2C.peri_write( register = 'SLVS_pad_current_Clk_T1',  field='SLVS_termination_clock',       data = clock )
+		p2 = self.I2C.peri_write( register = 'SLVS_pad_current_Clk_T1',  field='SLVS_termination_T1',          data = T1 )
+		p3 = self.I2C.peri_write( register = 'SLVS_pad_current_Lateral', field='SLVS_pad_termination_lateral', data = lateral )
+		r1 = self.I2C.peri_read(  register = 'SLVS_pad_current_Clk_T1',  field='SLVS_termination_clock')
+		r2 = self.I2C.peri_read(  register = 'SLVS_pad_current_Clk_T1',  field='SLVS_termination_T1')
+		r3 = self.I2C.peri_read(  register = 'SLVS_pad_current_Lateral', field='SLVS_pad_termination_lateral')
+		if(r1==clock and r2==T1 and r3==lateral): return True
+		else: return False
+
+
+
 
 	#def set_clockgating_enable(self, clock_A=1, clock_A=2, clock_A=3):
 

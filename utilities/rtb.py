@@ -111,29 +111,29 @@ def EncodeSlaveMapItem(slave_item):
 	return final_command
 
 # setting the i2c slave map
-def SetSlaveMap():
-	# define the map itself
-	i2c_slave_map = [I2C_SlaveMapItem() for i in range(16)]
-
-	# set the values
-	# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
-	i2c_slave_map[0].SetValues(0b1110000, 0, 1, 1, 0, 1, "PCA9646")
-	i2c_slave_map[1].SetValues(0b0100000, 0, 1, 1, 0, 1, "PCF8574")
-	i2c_slave_map[2].SetValues(0b0100100, 0, 1, 1, 0, 1, "PCF8574")
-	i2c_slave_map[3].SetValues(0b0010100, 0, 2, 3, 0, 1, "LTC2487")
-	i2c_slave_map[4].SetValues(0b1001000, 1, 2, 2, 0, 0, "DAC7678")
-	i2c_slave_map[5].SetValues(0b1000000, 1, 2, 2, 0, 1, "INA226")
-	i2c_slave_map[6].SetValues(0b1000001, 1, 2, 2, 0, 1, "INA226")
-	i2c_slave_map[7].SetValues(0b1000010, 1, 2, 2, 0, 1, "INA226")
-	i2c_slave_map[8].SetValues(0b1000100, 1, 2, 2, 0, 1, "INA226")
-	i2c_slave_map[9].SetValues(0b1000101, 1, 2, 2, 0, 1, "INA226")
-	i2c_slave_map[10].SetValues(0b1000110, 1, 2, 2, 0, 1, "INA226")
-	i2c_slave_map[15].SetValues(0b1011111, 1, 1, 1, 1, 0, "CBC3")
-
-	# updating the slave id table
-	print "---> Updating the Slave ID Map"
-	for slave_id in range(16):
-		fc7.write("cnfg_mpa_ssa_board_slave_" + str(slave_id) + "_config", EncodeSlaveMapItem(i2c_slave_map[slave_id]))
+#def SetSlaveMap():
+#	# define the map itself
+#	i2c_slave_map = [I2C_SlaveMapItem() for i in range(16)]
+#
+#	# set the values
+#	# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
+#	i2c_slave_map[0].SetValues(0b1110000, 0, 1, 1, 0, 1, "PCA9646")
+#	i2c_slave_map[1].SetValues(0b0100000, 0, 1, 1, 0, 1, "PCF8574")
+#	i2c_slave_map[2].SetValues(0b0100100, 0, 1, 1, 0, 1, "PCF8574")
+#	i2c_slave_map[3].SetValues(0b0010100, 0, 2, 3, 0, 1, "LTC2487")
+#	i2c_slave_map[4].SetValues(0b1001000, 1, 2, 2, 0, 0, "DAC7678")
+#	i2c_slave_map[5].SetValues(0b1000000, 1, 2, 2, 0, 1, "INA226")
+#	i2c_slave_map[6].SetValues(0b1000001, 1, 2, 2, 0, 1, "INA226")
+#	i2c_slave_map[7].SetValues(0b1000010, 1, 2, 2, 0, 1, "INA226")
+#	i2c_slave_map[8].SetValues(0b1000100, 1, 2, 2, 0, 1, "INA226")
+#	i2c_slave_map[9].SetValues(0b1000101, 1, 2, 2, 0, 1, "INA226")
+#	i2c_slave_map[10].SetValues(0b1000110, 1, 2, 2, 0, 1, "INA226")
+#	i2c_slave_map[15].SetValues(0b1011111, 1, 1, 1, 1, 0, "CBC3")
+#
+#	# updating the slave id table
+#	print "---> Updating the Slave ID Map"
+#	for slave_id in range(16):
+#		fc7.write("cnfg_mpa_ssa_board_slave_" + str(slave_id) + "_config", EncodeSlaveMapItem(i2c_slave_map[slave_id]))
 
 # i2c masters configuration
 def Configure_MPA_SSA_I2C_Master(enabled, frequency=4):
