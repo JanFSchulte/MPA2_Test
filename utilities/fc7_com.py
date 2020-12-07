@@ -128,8 +128,9 @@ class fc7_com():
 
 	def reset_chip(self, index = 0):
 		self.disable_chip()
-		time.sleep(0.5)
+		time.sleep(0.2)
 		self.enable_chip()
+		self.activate_I2C_chip(verbose=0)
 
 	def _write_id_enable(self):
 		val = ((self.chip_adr[1] & 0b111) << 5) | ((self.chip_adr[0] & 0b111) << 1)
@@ -137,9 +138,10 @@ class fc7_com():
 		time.sleep(0.01); self.Configure_MPA_SSA_I2C_Master(1, 2, verbose=0);
 		time.sleep(0.01); self.Send_MPA_SSA_I2C_Command(0, 0, 0, 0, 0x02, verbose=0, note='route to 2nd PCF8574'); # route to 2nd PCF8574
 		time.sleep(0.01); self.Send_MPA_SSA_I2C_Command(1, 0, 0, 0, val, verbose=0, note='set reset bit');  # set reset bit
+		time.sleep(0.01); self.Send_MPA_SSA_I2C_Command(1, 0, 0, 0, val, verbose=0, note='set reset bit');  # set reset bit
 		time.sleep(0.01);
 		#print(bin(val))
-		self.activate_I2C_chip(verbose=0)
+		#self.activate_I2C_chip(verbose=0)
 
 	def activate_I2C_chip(self, frequency = 0, verbose = 1):
 		i2cmux = 0
@@ -317,10 +319,9 @@ class fc7_com():
 		i2c_slave_map[0].SetValues(tbconfig.MPA_ADR[0], 2, 1, 1, 1, 0, "MPA",  "MPA0")
 		i2c_slave_map[1].SetValues(tbconfig.SSA_ADR[0], 2, 1, 1, 1, 0, "SSA",  "SSA0")
 		i2c_slave_map[2].SetValues(tbconfig.SSA_ADR[1], 2, 1, 1, 1, 0, "SSA1", "SSA1")
-		print(bin(tbconfig.MPA_ADR[0]))
-		print(bin(tbconfig.SSA_ADR[0]))
-		print(bin(tbconfig.SSA_ADR[1]))
-
+		#print(bin(tbconfig.MPA_ADR[0]))
+		#print(bin(tbconfig.SSA_ADR[0]))
+		#print(bin(tbconfig.SSA_ADR[1]))
 		# updating the slave id table
 		if verbose:
 			print("---> Updating the Slave ID Map")
@@ -334,7 +335,7 @@ class fc7_com():
 		i2c_slave_map = [I2C_SlaveMapItem() for i in range(31)]
 		# set the values
 		# --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
-		print('SET SLAVE MAP2')
+		#print('SET SLAVE MAP2')
 		i2c_slave_map[0].SetValues(0b1110000, 0, 1, 1, 0, 1, "PCA9646")
 		i2c_slave_map[1].SetValues(0b0100000, 0, 1, 1, 0, 1, "PCF8574")
 		i2c_slave_map[2].SetValues(0b0100100, 0, 1, 1, 0, 1, "PCF8574")
