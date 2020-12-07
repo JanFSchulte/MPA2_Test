@@ -47,17 +47,17 @@ class SSA_scanchain_test():
 		mask_list.append('{0:08b}'.format(249) + "0000" + input_mask[0:20] )
 		response_list.append('{0:08b}'.format(249) + "0000" + expected_response[0:20] )
 
-		for word in vector_list :
-			self.fc7.write("cnfg_ssa_scanchain_vector",word)
-			time.sleep(0.1)
+		#for word in vector_list :
+		#	self.fc7.write("cnfg_ssa_scanchain_vector",word)
+		#	time.sleep(0.1)
 
-		for word in response_list :
-			self.fc7.write("cnfg_ssa_scanchain_response",word)
-			time.sleep(0.1)
+		#for word in response_list :
+		#	self.fc7.write("cnfg_ssa_scanchain_response",word)
+		#	time.sleep(0.1)
 
-		for word in mask_list :
-			self.fc7.write("cnfg_ssa_scanchain_mask",word)
-			time.sleep(0.1)
+		#for word in mask_list :
+		#	self.fc7.write("cnfg_ssa_scanchain_mask",word)
+		#	time.sleep(0.1)
 
 ## to check if the list it' s correct
 ##string = ""
@@ -121,17 +121,17 @@ class SSA_scanchain_test():
 		response_list.append('{0:08b}'.format(249) + "0000" + expected_response[0:20] )
 
 
-		for word in vector_list :
-			self.fc7.write("cnfg_ssa_scanchain_vector",word)
-			time.sleep(0.1)
+		#for word in vector_list :
+		#	self.fc7.write("cnfg_ssa_scanchain_vector",word)
+		#	time.sleep(0.1)
 
-		for word in response_list :
-			self.fc7.write("cnfg_ssa_scanchain_response",word)
-			time.sleep(0.1)
+		#for word in response_list :
+		#	self.fc7.write("cnfg_ssa_scanchain_response",word)
+		#	time.sleep(0.1)
 
-		for word in mask_list :
-			self.fc7.write("cnfg_ssa_scanchain_mask",word)
-			time.sleep(0.1)
+		#for word in mask_list :
+		#	self.fc7.write("cnfg_ssa_scanchain_mask",word)
+		#	time.sleep(0.1)
 
         ###write registers : add write input_registers, expected_response, input_mask
 		self.fc7.write("cnfg_ssa_scanchain_is_capture_test",1)
@@ -165,17 +165,17 @@ class SSA_scanchain_test():
 		response_list.append('{0:08b}'.format(249) + "0000" + expected_response[0:20] )
 
 
-		for word in vector_list :
-			self.fc7.write("cnfg_ssa_scanchain_vector",word)
-			time.sleep(0.1)
+		#for word in vector_list :
+		#	self.fc7.write("cnfg_ssa_scanchain_vector",word)
+		#	time.sleep(0.1)
 
-		for word in response_list :
-			self.fc7.write("cnfg_ssa_scanchain_response",word)
-			time.sleep(0.1)
+		#for word in response_list :
+		#	self.fc7.write("cnfg_ssa_scanchain_response",word)
+		#	time.sleep(0.1)
 
-		for word in mask_list :
-			self.fc7.write("cnfg_ssa_scanchain_mask",word)
-			time.sleep(0.1)
+		#for word in mask_list :
+		#	self.fc7.write("cnfg_ssa_scanchain_mask",word)
+		#	time.sleep(0.1)
 
 		###write registers : add write input_registers, expected_response, input_mask
 		self.fc7.write("cnfg_ssa_scanchain_is_capture_test",0)
@@ -195,8 +195,8 @@ class SSA_scanchain_test():
 		comparator_neg_pre = self.fc7.read("scanchain_comparator_negedge")
 		comparator_neg_next = self.fc7.read("scanchain_comparator_negedge_next")
 		miscompares = self.fc7.read("scanchain_comparator_miscompares")
-		response = ""
-		response = read from ddr3
+		#response = ""
+		#response = read from ddr3
 		print  "Test done is %d " % test_done
 		if (test_done = 0 ):
 		    return
@@ -207,14 +207,14 @@ class SSA_scanchain_test():
 		    print "Test successfull"
 		else
 		    print "Test failed"
-		    print "%s" % response
-		    for word in lateral_data:
-		    utils.print_log(
-		        '    \t->' +
-		        '{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
-		        '{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
-		        '{:10s}'.format( bin(to_number(word,24,16)).lstrip('-0b').zfill(8) ) +
-		        '{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) ) )
+		    #print "%s" % response
+		    #for word in lateral_data:
+		    #utils.print_log(
+		    #    '    \t->' +
+		    #    '{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
+		    #    '{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
+		    #    '{:10s}'.format( bin(to_number(word,24,16)).lstrip('-0b').zfill(8) ) +
+		    #    '{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) ) )
 
 
 ##############################################################
@@ -222,7 +222,7 @@ class SSA_scanchain_test():
 	def restart_test(self):
         fc7.write("cnfg_ssa_scanchain_start_test",0)
 
- 
+
 
 
 
