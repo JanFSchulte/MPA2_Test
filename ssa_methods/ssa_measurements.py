@@ -747,7 +747,7 @@ class SSA_measurements():
 		return peakingTime
 
 	###########################################################
-	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, eval_inl_dnl = True, npoints = 10 ,filename = 'temp/temp', plot = True, filemode = 'w', runname = '', ideal_gain = 1.840, ideal_offset = 0.8):
+	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, eval_inl_dnl = True, npoints = 10, average=10, filename = 'temp/temp', plot = True, filemode = 'w', runname = '', return_raw=False):
 		utils.activate_I2C_chip(self.fc7)
 		if(self.bias == False): return False, False
 		if(not (name in self.muxmap)): return False, False
@@ -762,7 +762,7 @@ class SSA_measurements():
 			DNLMAX, INLMAX = nlin_params
 			x, data = raw
 		else:
-			g, ofs, raw = self.bias.measure_dac_gain_offset(name = name, nbits = 8, npoints = 10)
+			g, ofs, raw = self.bias.measure_dac_gain_offset(name = name, nbits = nbits, npoints = npoints)
 			x, data = raw
 		if name == 'Bias_THDAC':
 			baseline = self.bias.get_voltage('Bias_BOOSTERBASELINE')
@@ -784,9 +784,11 @@ class SSA_measurements():
 			plt.show()
 		#return DNL, INL, x, data
 		if(eval_inl_dnl):
-			return [DNLMAX, INLMAX, g, ofs]
+			if(return_raw): return [DNLMAX, INLMAX, g, ofs, raw]
+			else:           return [DNLMAX, INLMAX, g, ofs]
 		else:
-			return [g*1E3, ofs*1E3, baseline*1E3]
+			if(return_raw): return [g*1E3, ofs*1E3, baseline*1E3, raw]
+			else:           return [g*1E3, ofs*1E3, baseline*1E3]
 
 
 
@@ -1025,6 +1027,7 @@ class SSA_measurements():
 			utils.print_inline(
 				'    Converting {:7.3f} mV to code {:9.3f} | progress: {:5.1f}% | rate: {:5.3f} sample/sec | time left: {:s}        '.format(
 				(vinput*1E3), r, progress*100, mrate, str(datetime.timedelta(seconds=timeleft))[:-7] ))
+			if not os.path.exists(directory): os.makedirs(directory)
 			with open( (directory+'ssa_adc_measurements'+note+'.csv'), 'a') as fo:
 				fo.write('\n{:8d}, {:12.6f}, {:12.6f}'.format(len(rcode),(vinput*1E3),r) )
 		self.bias.multimeter.config__voltage_measure()
@@ -1044,7 +1047,7 @@ class SSA_measurements():
 			plt.show()
 		return [gain, ofs, sigma]
 
-	def adc_measure_curve_parametric(self, nsamples=100, npoints=2**7, adc_trimming_range=[0, 15, 31, 47, 63], adc_ref_range=[0, 7, 15, 23, 31], directory='../SSA_Results/ADC/parametric_ref_and_trimming/'):
+	def adc_measure_curve_parametric(self, nsamples=100, npoints=2**7, adc_trimming_range=[0, 15, 31, 47, 63], adc_ref_range=[0, 7, 15, 23, 31], directory='../SSA_Results/ADC/parametric_ref_and_trimming/', chip=''):
 		self.bias.SetMode('Keithley_Sourcemeter_2410_GPIB')
 		for adc_ref in adc_ref_range:
 			self.ssa.analog.adc_set_referenence(adc_ref)
@@ -1052,7 +1055,7 @@ class SSA_measurements():
 				self.ssa.analog.adc_set_trimming(adc_trimming)
 				self.adc_measure_curve(
 					nsamples=nsamples, npoints=npoints, start_point=-0.005, end_point=0.9,
-					directory=directory, plot=False,
+					directory=directory+chip, plot=False,
 					note='__ref_{:d}__trim_{:d}'.format(adc_ref, adc_trimming))
 
 	def adc_measure_curve_parametric_plot(self, directory='../SSA_Results/ADC/parametric_ref_and_trimming/'):
@@ -1082,6 +1085,70 @@ class SSA_measurements():
 		plt.xticks(fontsize=12)
 		plt.yticks(fontsize=12)
 		#plt.savefig(directory+'/xray_'+name+'_variation.png', bbox_inches="tight");
+
+	def adc_mesure_vref(self, filename='/ADC/VREF/', runname='', chip='chip_0/chip_0'):
+		# manual measure switching chips on the testboard
+		if not os.path.exists("../SSA_Results/" +filename+chip): os.makedirs("../SSA_Results/" +filename+chip)
+		VBG = self.bias.get_voltage('VBG')
+		vref = self.dac_linearity(
+			name = 'ADC_VREF', eval_inl_dnl = True, nbits = 5, npoints = -1,return_raw=True,
+			filename = filename+chip, plot = False, filemode = 'a', runname = runname)
+		iref = self.dac_linearity(
+			name = 'ADC_IREF', eval_inl_dnl = True, nbits = 5, npoints = -1, return_raw=True,
+			filename = filename+chip, plot = False, filemode = 'a', runname = runname)
+		[vref_DNL, vref_INL, vref_gain, vref_ofs, vref_raw]  = vref
+		[iref_DNL, iref_INL, iref_gain, iref_ofs, iref_raw]  = iref
+		vref_min =   vref_raw[1][0]; vref_max =   vref_raw[1][-1]
+		iref_min =   iref_raw[1][0]; iref_max =   iref_raw[1][-1]
+		fo = "../SSA_Results/" + filename+chip + "_" + str(runname) + "_parameters_" + 'ADC_VREF_IREF'
+		data = [['    ', 'vref_min', 'vref_max', 'vref_gain', 'vref_INL', 'vref_DNL', 'VBG'],
+		        ['VREF', vref_min*1E3, vref_max*1E3, vref_gain*1E3, vref_INL, vref_DNL, VBG*1E3],
+		        ['IREF', iref_min*1E3, iref_max*1E3, iref_gain*1E3, iref_INL, iref_DNL, VBG*1E3]]
+		CSV.ArrayToCSV(array = np.array(data), filename = fo + ".csv", transpose = True)
+		with open("../SSA_Results/" +filename+'ADC_VREF_summary.csv', 'a') as fo:
+			fo.write(('\n{:16s}, '+'{:9.3f}, '*9).format(chip, VBG*1E3, vref_min*1E3, vref_max*1E3, vref_gain*1E3, iref_min*1E3, iref_max*1E3, iref_gain*1E3, vref_INL, vref_DNL) )
+
+	def adc_analize_vref(self, filename='/ADC/VREF/'):
+
+		filename='/ADC/VREF/'
+		directory = "../SSA_Results/" +filename
+		data = CSV.csv_to_array(directory+'ADC_VREF_summary.csv')
+		VBG_data = np.array(data[:,1], dtype=float)
+		VBG_mean, VBG_std, VBG_rms = utils.eval_mean_std_rms(VBG_data)
+		vdacdata_overall = []
+		idacdata_overall = []
+		dirs = os.listdir(directory)
+		dirs = np.sort([s for s in dirs if "chip_" in s])
+		for i in dirs:
+			for file in os.listdir(directory+i):
+				if(fnmatch.fnmatch(file, '*Caracteristics_ADC_VREF.csv')):
+					vdacdata = CSV.csv_to_array(directory+'/'+i+'/'+file)[:,1]
+				if(fnmatch.fnmatch(file, '*Caracteristics_ADC_IREF.csv')):
+					idacdata = CSV.csv_to_array(directory+'/'+i+'/'+file)[:,1]
+			VREF_LSB_mv = 1E3*(vdacdata[1:]-vdacdata[0:-1])
+			VREF_LSB_mv_mean, VREF_LSB_mv_std, VREF_LSB_mv_rms = utils.eval_mean_std_rms(VREF_LSB_mv)
+			IREF_LSB_mv = 1E3*(idacdata[1:]-idacdata[0:-1])
+			IREF_LSB_mv_mean, IREF_LSB_mv_std, IREF_LSB_mv_rms = utils.eval_mean_std_rms(IREF_LSB_mv)
+			print(('|{:8s} | '+'{:7.3f} |'*6).format(i, VREF_LSB_mv_mean, VREF_LSB_mv_std, VREF_LSB_mv_rms, IREF_LSB_mv_mean, IREF_LSB_mv_std, IREF_LSB_mv_rms ))
+			vdacdata_overall.extend(vdacdata)
+			idacdata_overall.extend(vdacdata)
+
+
+		VREF_LSB_mv = 1E3*(vdacdata_overall[1:]-vdacdata_overall[0:-1])
+		VREF_LSB_mv_mean, VREF_LSB_mv_std, VREF_LSB_mv_rms = utils.eval_mean_std_rms(VREF_LSB_mv)
+		IREF_LSB_mv = 1E3*(idacdata_overall[1:]-idacdata_overall[0:-1])
+		IREF_LSB_mv_mean, IREF_LSB_mv_std, IREF_LSB_mv_rms = utils.eval_mean_std_rms(IREF_LSB_mv)
+		print(('|{:8s} | '+'{:7.3f} |'*6).format('ALL', VREF_LSB_mv_mean, VREF_LSB_mv_std, VREF_LSB_mv_rms, IREF_LSB_mv_mean, IREF_LSB_mv_std, IREF_LSB_mv_rms ))
+
+	#LSB = float(dacdata[fullscale-1] - dacdata[0]) / (fullscale-1)
+	#for i in range(0, fullscale):
+	#	INL[i] = ((dacdata[i]-dacdata[0])/LSB)-float(i)
+	#for i in range(1, fullscale):
+	#	DNL[i] = ((dacdata[i]-dacdata[i-1])/LSB)-1
+
+
+
+
 
 
 	def quick_test_l1_fifo_overflow_counter(self, latency=11):

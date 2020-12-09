@@ -21,6 +21,8 @@ from ssa_methods.main_ssa_test_1 import *
 from ssa_methods.main_ssa_test_2 import *
 from ssa_methods.main_ssa_test_3 import *
 from ssa_methods.ssa_test_2xSSA2 import *
+from ssa_methods.ssa_scanchain_test import *
+
 
 ipaddr, fc7AddrTable, fc7_if = configure_communication()
 FC7 = fc7_com(fc7_if, fc7AddrTable)
@@ -52,6 +54,7 @@ class SSAwp:
 		self.main_test     = SSA_Measurements_All(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
 		self.main_test_3   = main_ssa_test_3(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
 		self.xray          = SSA_test_xray(self.main_test_3, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
+		self.scanchain     = SSA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
 
 	def enable(self):  FC7.enable_chip(self.index)
 	def disable(self): FC7.disable_chip(self.index)

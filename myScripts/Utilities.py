@@ -49,6 +49,15 @@ class Utilities:
 		def __repr__(self):
 			return "{:6.1f}".format(self)
 
+	def rms(self, x, axis=None):
+		return np.sqrt(np.mean(x**2, axis=axis))
+
+	def eval_mean_std_rms(self, x):
+		mean = np.mean(x)
+		std = np.std(x)
+		rms = self.rms(x, None)
+		return mean, std, rms
+
 	def set_log_files(self, logfile, errorlog):
 		#if(self.logfile):  self.logfile.close()
 		#if(self.errorlog): self.errorlog.close()

@@ -55,7 +55,7 @@ else
 	
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_231120.bit                 -f ~/MPA-SSA_Test/bitfiles/november/ssa2_seu_231120.bit
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_clk_inverted.bit           -f ~/MPA-SSA_Test/bitfiles/november/ssa2_seu_clk_inverted_231120.bit
-	./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_t1_inverted.bit            -f ~/MPA-SSA_Test/bitfiles/november/ssa2_seu_t1_inverted_241120.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_t1_inverted.bit            -f ~/MPA-SSA_Test/bitfiles/november/ssa2_seu_t1_inverted_241120.bit
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_clk_t1_inverted.bit        -f ~/MPA-SSA_Test/bitfiles/november/ssa2_seu_clk_t1_inverted_241120.bit
 	
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_231120.bit                

@@ -624,7 +624,14 @@
                 "ADC_VREF" : "0b00011111"
             }
         },
-
+        "ADC_IREF": {
+            "adr": "0x103B",
+            "permissions": "RW",
+            "mask_reg"   : "mask_peri_A",
+            "fields_mask": {
+                "ADC_IREF" : "0b00011111"
+            }
+        },
 
         "status_reg": {
             "adr": "0x1040",

@@ -42,7 +42,7 @@ class ssa_power_utility:
 			time.sleep(0.20); self.set_dvdd(d, chip='SSA'); self.set_dvdd(d, chip='MPA');
 			time.sleep(0.00); self.set_avdd(a, chip='SSA'); self.set_avdd(a, chip='MPA');
 			time.sleep(0.10); self.set_vbf(bg)
-			time.sleep(2.00); self.reset(display=display)
+			time.sleep(0.50); self.reset(display=display)
 			time.sleep(0.10)
 			if(display):
 				time.sleep(0.4); self.get_power(display = True, chip='SSA')
