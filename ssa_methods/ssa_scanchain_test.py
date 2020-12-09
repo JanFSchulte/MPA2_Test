@@ -217,6 +217,42 @@ class SSA_scanchain_test():
 		    #    '{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) ) )
 
 
+
+def do_reset_test(self):
+	fc7.write("cnfg_ssa_scanchain_start_test",1)
+	time.sleep(0.5)
+	ssa.reset()
+	time.sleep(0.1)
+	fc7.write("cnfg_ssa_scanchain_continue_reset_test",1)
+	test_done = self.fc7.read("scanchain_test_done")
+	comparator = self.fc7.read("scanchain_comparator")
+	comparator_neg_pre = self.fc7.read("scanchain_comparator_negedge")
+	comparator_neg_next = self.fc7.read("scanchain_comparator_negedge_next")
+	miscompares = self.fc7.read("scanchain_comparator_miscompares")
+	#response = ""
+	#response = read from ddr3
+	print  "Test done is %d " % test_done
+	if (test_done = 0 ):
+		return
+	print  "Comparator is %d " % comparator
+	print  "Comparator neg pre is %d " % comparator_neg_pre
+	print  "Comparator neg next is %d " % comparator_neg_next
+	if (comparator or comparator_neg_pre or comparator_neg_next ):
+		print "Test successfull"
+	else
+		print "Test failed"
+		#print "%s" % response
+		#for word in lateral_data:
+		#utils.print_log(
+		#    '    \t->' +
+		#    '{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
+		#    '{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
+		#    '{:10s}'.format( bin(to_number(word,24,16)).lstrip('-0b').zfill(8) ) +
+		#    '{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) ) )
+
+
+
+
 ##############################################################
 
 	def restart_test(self):
