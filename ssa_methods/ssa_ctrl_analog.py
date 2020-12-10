@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import copy
 import seaborn as sns
 from random import randint
+from matplotlib.ticker import (AutoMinorLocator, MultipleLocator)
 
 from utilities.tbsettings import *
 from d19cScripts.fc7_daq_methods import *
@@ -53,7 +54,7 @@ class ssa_ctrl_analog:
 			return True
 
 	#####################################################################
-	def adc_measure(self, testline = 'highimpedence', testpad_enable=False, nsamples=1, fast=True):
+	def adc_measure(self, testline = 'highimpedence', testpad_enable=False, nsamples=1, fast=True, reinit_if_error=True):
 		r1 = []
 		# default: self.testpad_is_enable = -1
 		if(testpad_enable or (testline=='TESTPAD')):
@@ -65,7 +66,7 @@ class ssa_ctrl_analog:
 				self.I2C.peri_write( register="ADC_trimming", field='TestPad_Enable', data=0b0)
 				self.testpad_is_enable = 0
 		for i in range(nsamples):
-			r1.append( self._adc_measure(testline=testline, fast=fast) )
+			r1.append( self._adc_measure(testline=testline, fast=fast, reinit_if_error=reinit_if_error) )
 		if(nsamples>1):
 			r = np.sum(r1) / float(nsamples)
 		else:
@@ -73,7 +74,7 @@ class ssa_ctrl_analog:
 		return r
 
 	#####################################################################
-	def _adc_measure(self, testline = 'highimpedence', fast=True):
+	def _adc_measure(self, testline = 'highimpedence', fast=True, reinit_if_error=True):
 		#start=time.time()
 		input_sel = self.analog_mux_map[testline]
 		if(fast):
@@ -94,8 +95,12 @@ class ssa_ctrl_analog:
 		#print('{:8.3f} ms'.format(1E3*(time.time()-start))); start=time.time()
 		if((msb==None) or (lsb==None) or (msb=='Null') or (lsb=='Null') ):
 			utils.activate_I2C_chip(self.fc7)
-			msb = self.I2C.peri_read( register="ADC_out_H", field=False )
-			lsb = self.I2C.peri_read( register="ADC_out_L", field=False )
+			if(reinit_if_error):
+				msb = self.I2C.peri_read( register="ADC_out_H", field=False )
+				lsb = self.I2C.peri_read( register="ADC_out_L", field=False )
+			else:
+				msb = 0
+				lsb = 0
 		if((msb==None) or (lsb==None) or (msb=='Null') or (lsb=='Null') ):
 			return False
 		res = ((msb<<8) | lsb)
@@ -155,34 +160,36 @@ class ssa_ctrl_analog:
 		return r
 
 	#####################################################################
-	def adc_measure_ext_pad(self, nsamples=10):
+	def adc_measure_ext_pad(self, nsamples=10, reinit_if_error=True):
 		#start = time.time()
-		rp = self.adc_measure(testline='TESTPAD', testpad_enable=True, nsamples=nsamples, fast=True)
+		rp = self.adc_measure(testline='TESTPAD', testpad_enable=True, nsamples=nsamples, fast=True, reinit_if_error=reinit_if_error )
 		#utils.print_log('{:8.3f} ms'.format(1E3*(time.time()-start)))
 		return rp
 
 	#####################################################################
-	def adc_sample_histogram(self, runtime=3600, freq=0.1, show=1, filename='../SSA_Results/adc_measures/ADC_samples.csv', continue_on_same_file=0):
-		if(continue_on_same_file):
-			adchist = CSV.csv_to_array(filename=filename)[:,1]
+	def adc_sample_histogram(self, runtime=3600, freq=0.1, show=0, directory='../SSA_Results/adc_measures/', filename='ADC_samples.csv', continue_on_same_file=1):
+		if(continue_on_same_file and os.path.exists(directory+'/'+filename)):
+			adchist = CSV.csv_to_array(filename=directory+'/'+filename)[:,1]
 		else:
-			adchist = np.zeros(2**13, dtype=int)
+			adchist = np.zeros(2**12+1, dtype=int)
 		cnt  = 0; told = 0; wd = 0
 		self.adc_measure_ext_pad()
 		runtime = round(float(runtime)*freq)/freq #to have n copleate cycles
 		#ret = self.WVF.SetWaveform(func='ramp', freq=freq, offset=-0.1, vpp=1.1)
 		#if ret is False: return False
 		if(filename == False):
-			filename = '../SSA_Results/ADC_samples_'+str(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H-%M-%S')+'.csv')
+			filename = 'ADC_samples_'+str(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H-%M-%S')+'.csv')
 		timestart = time.time()
 		while ((time.time()-timestart) < runtime):
 			wd = 0
 			while(wd < 3):
 				try:
-					res = int(np.round(self.adc_measure_ext_pad(nsamples=1)))
+					res = int(np.round(self.adc_measure_ext_pad(nsamples=1, reinit_if_error=False)))
 					utils.print_inline('{:8d}'.format(res) )
-					time.sleep( randint(0,3)*0.0005 )
+					#time.sleep( randint(0,3)*0.0005 )
 					break
+				except(KeyboardInterrupt):
+					return('User interrupt')
 				except:
 					wd +=1;
 					utils.print_warning('Exception {:d}'.format(wd))
@@ -190,23 +197,23 @@ class ssa_ctrl_analog:
 			else: adchist[int(res)]+=1
 			cnt+=1
 			tcur = time.time()
-			if ((tcur-told)>1): #update histogram every second
+			if ((tcur-told)>1.1): #update histogram every second
 				told = tcur
 				utils.print_inline('{:8d} ->  ADC collected {:d} samples'.format(res, cnt))
 				#with open(filename, 'w') as fo:
 				#	fo.write('{:8d},\n'.format(res))
-				CSV.array_to_csv(adchist, filename=filename)
-		f.close()
+				CSV.array_to_csv(adchist, filename=directory+'/'+filename)
+		#f.close()
 		utils.print_log('->  ADC total number of samples taken is '+str(cnt))
-		dnlh, inlh = self.adc_dnl_inl_histogram(filename=filename)
+		dnlh, inlh = self.adc_dnl_inl_histogram(directory=directory, filename=filename, plot=show)
 		return dnlh, inlh, adchist
 
 	#####################################################################
-	def adc_dnl_inl_histogram(self, minc=3, maxc=4092, filename='../SSA_Results/adc_measures/ADC_samples.csv'):
+	def adc_dnl_inl_histogram(self, minc=1, maxc=4095, directory='../SSA_Results/adc_measures/', filename='ADC_samples.csv', plot=True):
 		dnlh = np.zeros(4096)
 		inlh = np.zeros(4096)
 		maxim = 0; inl=0.0;
-		adchist = CSV.csv_to_array(filename)[:,1]
+		adchist = CSV.csv_to_array(directory+'/'+filename)[:,1]
 		fo=open("../SSA_Results//adc_dnl_inl.csv","w")
 		stepsize = float(np.sum(adchist[minc:maxc]))/(maxc-minc)
 		for i in range(minc,maxc+1):
@@ -218,16 +225,57 @@ class ssa_ctrl_analog:
 		fo.close()
 		plt.clf()
 		color=iter(sns.color_palette('deep'))
-		fig = plt.figure(1, figsize=(18,12))
-		c = next(color);
-		plt.plot(range(minc,maxc,1), adchist[minc:maxc], 'x', color=c)
-		fig = plt.figure(2, figsize=(18,12))
-		c = next(color);
-		plt.plot(range(minc,maxc,1), dnlh[minc:maxc], 'x', color=c)
-		fig = plt.figure(3, figsize=(18,12))
-		c = next(color);
-		plt.plot(range(minc,maxc,1), inlh[minc:maxc], 'x', color=c)
-		plt.show()
+		if(plot):
+			fig = plt.figure(figsize=(18,6))
+			ax = plt.subplot(111)
+			c = next(color);
+			plt.ticklabel_format(axis='y', style='sci')
+			plt.plot(range(minc,maxc,1), np.array(adchist[minc:maxc])/np.sum(adchist[minc:maxc]), '-', color=c)
+			plt.ylabel('Normalised probability', fontsize=16)
+			plt.xlabel('ADC converted value', fontsize=16)
+			ax.get_xaxis().tick_bottom();
+			ax.get_yaxis().tick_left()
+			ax.set_xlim([0, 4096])
+			ax.set_xticks(list(range(0,4097, 256)))
+			ax.xaxis.set_minor_locator(MultipleLocator(64))
+			ax.grid(which='major', axis='x', linestyle='--')
+			ax.grid(which='minor', axis='x', linestyle='--')
+			plt.savefig(directory+'histogram.png', bbox_inches="tight");
+			######################################################
+			fig = plt.figure(figsize=(18,6))
+			ax = plt.subplot(111)
+			c = next(color);
+			plt.plot(range(minc,maxc,1), dnlh[minc:maxc], '-', color=c)
+			plt.ylabel('DNL', fontsize=16)
+			plt.xlabel('ADC converted value', fontsize=16)
+			ax.get_xaxis().tick_bottom();
+			ax.get_yaxis().tick_left()
+			ax.set_xlim([0, 4096])
+			ax.set_ylim([-0.25, 1])
+			ax.set_xticks(list(range(0,4097, 256)))
+			ax.xaxis.set_minor_locator(MultipleLocator(64))
+			ax.grid(which='major', axis='x', linestyle='--')
+			ax.grid(which='minor', axis='x', linestyle='--')
+			plt.savefig(directory+'DNL.png', bbox_inches="tight");
+			######################################################
+			fig = plt.figure(figsize=(18,6))
+			ax = plt.subplot(111)
+			c = next(color);
+			plt.plot(range(minc,maxc,1), inlh[minc:maxc], '-', color=c)
+			plt.ylabel('INL', fontsize=16)
+			plt.xlabel('ADC converted value', fontsize=16)
+			ax.get_xaxis().tick_bottom();
+			ax.get_yaxis().tick_left()
+			ax.set_xlim([0, 4096])
+			ax.set_ylim([-2.2, 2.2])
+			ax.set_xticks(list(range(0,4097, 256)))
+			ax.xaxis.set_minor_locator(MultipleLocator(64))
+			ax.grid(which='major', axis='x', linestyle='--')
+			ax.grid(which='minor', axis='x', linestyle='--')
+			plt.savefig(directory+'INL.png', bbox_inches="tight");
+		#leg = ax.legend(fontsize = 10, frameon=True )
+		#leg.get_frame().set_linewidth(1.0)
+		#plt.show()
 		return dnlh, inlh
 		#adc_dnl_inl_histogram()
 

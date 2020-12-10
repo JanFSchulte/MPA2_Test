@@ -14,9 +14,6 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 
-
-
-
 class SSA_scanchain_test():
 
 
@@ -24,6 +21,7 @@ class SSA_scanchain_test():
 	def __init__(self, ssa, I2C, FC7, pwr):
 		self.ssa = ssa; self.I2C = I2C; self.fc7 = FC7; self.pwr = pwr;
 		self.seu_check_time = -1; self.last_test_duration = 0;
+
 
 	##############################################################
 	def load_inputs_scan_test(self):
@@ -36,7 +34,7 @@ class SSA_scanchain_test():
 		vector_list = []
 		response_list = []
 		mask_list = []
-### the list contains in position 0 the 24 lsb 23 : 0 , which are in position 5972: 5996 in the string in my file ). In position 249 i have the 20 msb (and 0000)
+		### the list contains in position 0 the 24 lsb 23 : 0 , which are in position 5972: 5996 in the string in my file ). In position 249 i have the 20 msb (and 0000)
 		for i in range(249):
 
 			vector_list.append('{0:08b}'.format(i) + input_vector[(5996 - 24*i - 24) : (5996 - 24*i)])
@@ -90,14 +88,14 @@ class SSA_scanchain_test():
 ###print "%s" % string == input_vector
 ###
 
-        ###write registers : add write input_registers, expected_response, input_mask
+		###write registers : add write input_registers, expected_response, input_mask
 		self.fc7.write("cnfg_ssa_scanchain_is_capture_test",0)
 		time.sleep(0.1)
 		self.fc7.write("cnfg_ssa_scanchain_is_reset_test",0)
 		time.sleep(0.1)
 		self.fc7.write("cnfg_ssa_scanchain_is_scanchain_test",1)
+		print("Loaded inputs for scan test")
 
-		print "Loaded inputs for scan test"
 	##############################################################
 	def load_inputs_capture_test(self):
 
@@ -133,16 +131,14 @@ class SSA_scanchain_test():
 		#	self.fc7.write("cnfg_ssa_scanchain_mask",word)
 		#	time.sleep(0.1)
 
-        ###write registers : add write input_registers, expected_response, input_mask
+		###write registers : add write input_registers, expected_response, input_mask
 		self.fc7.write("cnfg_ssa_scanchain_is_capture_test",1)
 		time.sleep(0.1)
 		self.fc7.write("cnfg_ssa_scanchain_is_reset_test",0)
 		time.sleep(0.1)
 		self.fc7.write("cnfg_ssa_scanchain_is_scanchain_test",0)
+		print("Loaded inputs for capture test")
 
-
-
-        print "Loaded inputs for capture test"
 	##############################################################
 	def load_inputs_reset_test(self):
 
@@ -184,7 +180,7 @@ class SSA_scanchain_test():
 		time.sleep(0.1)
 		self.fc7.write("cnfg_ssa_scanchain_is_scanchain_test",0)
 		time.sleep(0.1)
-		print "Loaded inputs for reset test"
+		print( "Loaded inputs for reset test")
 
 	##############################################################
 	def do_test(self):
@@ -197,34 +193,64 @@ class SSA_scanchain_test():
 		miscompares = self.fc7.read("scanchain_comparator_miscompares")
 		#response = ""
 		#response = read from ddr3
-		print  "Test done is %d " % test_done
-		if (test_done = 0 ):
-		    return
-		print  "Comparator is %d " % comparator
-		print  "Comparator neg pre is %d " % comparator_neg_pre
-		print  "Comparator neg next is %d " % comparator_neg_next
+		print("Test done is {:d} ".format(test_done))
+		if (test_done == 0):
+			return
+		print("Comparator is %d " % comparator)
+		print("Comparator neg pre is %d " % comparator_neg_pre)
+		print("Comparator neg next is %d " % comparator_neg_next)
 		if (comparator or comparator_neg_pre or comparator_neg_next ):
-		    print "Test successfull"
-		else
-		    print "Test failed"
-		    #print "%s" % response
-		    #for word in lateral_data:
-		    #utils.print_log(
-		    #    '    \t->' +
-		    #    '{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
-		    #    '{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
-		    #    '{:10s}'.format( bin(to_number(word,24,16)).lstrip('-0b').zfill(8) ) +
-		    #    '{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) ) )
+			print("Test successfull")
+		else:
+			print("Test failed")
+			#print "%s" % response
+			#for word in lateral_data:
+			#utils.print_log(
+			#    '    \t->' +
+			#    '{:10s}'.format( bin(to_number(word, 8, 0)).lstrip('-0b').zfill(8) ) +
+			#    '{:10s}'.format( bin(to_number(word,16, 8)).lstrip('-0b').zfill(8) ) +
+			#    '{:10s}'.format( bin(to_number(word,24,16)).lstrip('-0b').zfill(8) ) +
+			#    '{:10s}'.format( bin(to_number(word,32,24)).lstrip('-0b').zfill(8) ) )
 
 
 ##############################################################
 
 	def restart_test(self):
-        fc7.write("cnfg_ssa_scanchain_start_test",0)
+		fc7.write("cnfg_ssa_scanchain_start_test",0)
+
+	def enable_scanchain(self, val=1):
+		fc7.write("cnfg_dio5_en" ,1)
+		fc7.write("cnfg_dio5_ch1_out_en", 1)
+		fc7.write("cnfg_dio5_ch2_out_en", 1)
+		fc7.write("cnfg_dio5_ch3_out_en", 1)
+		fc7.write("cnfg_dio5_ch4_out_en", 1)
+		fc7.write("cnfg_dio5_ch5_out_en", 1)
+		#fc7.write("cnfg_ddr3_scanchain_test_enable",1)
+		#fc7.write("cnfg_ssa_scanchain_is_scanchain_test",1)
+
+	def prova2(self):
+		fc7.write("cnfg_ssa_scanchain_start_test",0)
+		fc7.write("cnfg_ssa_scanchain_start_test",1)
 
 
+	def prova1(self):
+
+		self.fc7.write("cnfg_ssa_scanchain_is_capture_test",0)
+		time.sleep(1)
+		self.fc7.write("cnfg_ssa_scanchain_is_reset_test",0)
+		time.sleep(1)
+		self.fc7.write("cnfg_ssa_scanchain_is_scanchain_test",1)
+		time.sleep(1)
+		fc7.write("cnfg_ssa_scanchain_start_test",1)
 
 
-
+#   cnfg_ddr3_scanchain_test_enable          40018000    00000002     1     1 *enable scanchain test mode
+#   cnfg_ssa_scanchain_start_test            4001A000    00000001     1     1 * scanchain test start
+#   cnfg_ssa_scanchain_is_scanchain_test     4001A000    00000002     1     1 * scanchain is_scan_test
+#   cnfg_ssa_scanchain_is_reset_test         4001A000    00000004     1     1 * scanchain is_reset test
+#   cnfg_ssa_scanchain_is_capture_test       4001A000    00000008     1     1 * scanchain is capture test
+#   cnfg_ssa_scanchain_vector                4001A001    ffffffff     1     1 * scanchain input vector
+#   cnfg_ssa_scanchain_response              4001A002    ffffffff     1     1 * scanchain input response
+#   cnfg_ssa_scanchain_mask                  4001A003    ffffffff     1     1 * scanchain input mask
 
 ###################################################

@@ -60,11 +60,11 @@ else
 	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit   -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa2_seu_111120.bit
 	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit  
 	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa1_seu_111120.bit -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa1_seu_111120
-	./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_071220.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_071220.bit
-
-
-	.bit
 	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_CG_bypass.bit   -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_CG_bypass.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_CG_disabled.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_CG_disabled.bit
+	./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_CG_enabled.bit  -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_CG_enabled.bit
+	
 	cd -
 fi
 

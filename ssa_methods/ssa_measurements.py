@@ -1115,8 +1115,8 @@ class SSA_measurements():
 		data = CSV.csv_to_array(directory+'ADC_VREF_summary.csv')
 		VBG_data = np.array(data[:,1], dtype=float)
 		VBG_mean, VBG_std, VBG_rms = utils.eval_mean_std_rms(VBG_data)
-		vdacdata_overall = []
-		idacdata_overall = []
+		vdacdata_overall = []; idacdata_overall = []
+		vref_min_overall = []; vref_max_overall = []
 		dirs = os.listdir(directory)
 		dirs = np.sort([s for s in dirs if "chip_" in s])
 		for i in dirs:
@@ -1127,18 +1127,97 @@ class SSA_measurements():
 					idacdata = CSV.csv_to_array(directory+'/'+i+'/'+file)[:,1]
 			VREF_LSB_mv = 1E3*(vdacdata[1:]-vdacdata[0:-1])
 			VREF_LSB_mv_mean, VREF_LSB_mv_std, VREF_LSB_mv_rms = utils.eval_mean_std_rms(VREF_LSB_mv)
+			VREF_MIN_mv = 1E3*(vdacdata[0])
+			vref_min_overall.append(VREF_MIN_mv)
+			VREF_MAX_mv = 1E3*(vdacdata[-1])
+			vref_max_overall.append(VREF_MAX_mv)
 			IREF_LSB_mv = 1E3*(idacdata[1:]-idacdata[0:-1])
 			IREF_LSB_mv_mean, IREF_LSB_mv_std, IREF_LSB_mv_rms = utils.eval_mean_std_rms(IREF_LSB_mv)
-			print(('|{:8s} | '+'{:7.3f} |'*6).format(i, VREF_LSB_mv_mean, VREF_LSB_mv_std, VREF_LSB_mv_rms, IREF_LSB_mv_mean, IREF_LSB_mv_std, IREF_LSB_mv_rms ))
+			print(('|{:8s} | '+'{:7.3f} |'*8).format(i, VREF_LSB_mv_mean, VREF_LSB_mv_std, VREF_LSB_mv_rms, IREF_LSB_mv_mean, IREF_LSB_mv_std, IREF_LSB_mv_rms, VREF_MIN_mv, VREF_MAX_mv  ))
 			vdacdata_overall.extend(vdacdata)
 			idacdata_overall.extend(vdacdata)
+
+		vdacdata_overall = np.array(vdacdata_overall)
+		idacdata_overall = np.array(idacdata_overall)
 
 
 		VREF_LSB_mv = 1E3*(vdacdata_overall[1:]-vdacdata_overall[0:-1])
 		VREF_LSB_mv_mean, VREF_LSB_mv_std, VREF_LSB_mv_rms = utils.eval_mean_std_rms(VREF_LSB_mv)
 		IREF_LSB_mv = 1E3*(idacdata_overall[1:]-idacdata_overall[0:-1])
 		IREF_LSB_mv_mean, IREF_LSB_mv_std, IREF_LSB_mv_rms = utils.eval_mean_std_rms(IREF_LSB_mv)
+
+		VREF_MIN_mv_mean, VREF_MIN_mv_std, VREF_MIN_mv_rms = utils.eval_mean_std_rms(np.array(vref_min_overall))
+		VREF_MAX_mv_mean, VREF_MAX_mv_std, VREF_MAX_mv_rms = utils.eval_mean_std_rms(np.array(vref_max_overall))
+
 		print(('|{:8s} | '+'{:7.3f} |'*6).format('ALL', VREF_LSB_mv_mean, VREF_LSB_mv_std, VREF_LSB_mv_rms, IREF_LSB_mv_mean, IREF_LSB_mv_std, IREF_LSB_mv_rms ))
+		print(('|{:8s} | '+'{:7.3f} |'*6).format('ALL', VREF_MIN_mv_mean, VREF_MIN_mv_std, VREF_MIN_mv_rms, VREF_MAX_mv_mean, VREF_MAX_mv_std, VREF_MAX_mv_rms ))
+
+
+	def adc_calibrate(self, refvoltage=0.825, calib_point=0.8):
+
+
+		self.ssa.analog.set_output_mux('highimpedence')
+		self.ssa.analog.adc_measure_ext_pad(nsamples=1)
+		self.bias.SetMode('Keithley_Sourcemeter_2410_GPIB')
+		self.bias.multimeter.config__voltage_measure(range=1)
+		sign=9;prevsign=9; time.sleep(0.1);
+		while((sign+prevsign)!=0):
+			prevval = value
+			prevsetting, value = self.bias.get_value_and_voltage('ADC_VREF')
+			prevsign = sign
+			if(value < refvoltage):
+				newsetting = prevsetting+1; sign=1
+			else:
+				newsetting = prevsetting-1; sign=-1
+			self.ssa.analog.adc_set_referenence(newsetting)
+
+
+
+		if( np.abs(prevval-refvoltage) >  np.abs(value-refvoltage) ):
+			self.ssa.analog.adc_set_referenence(prevsetting)
+
+
+
+		setting, value = self.bias.get_value_and_voltage('ADC_VREF')
+		utils.print_info('->  VREF set to {:2d} [{:7.3f} mV]'.format(setting, value*1E3))
+#
+#
+#self.ssa.analog.set_output_mux('highimpedence')
+#self.ssa.analog.adc_measure_ext_pad(nsamples=1)
+#self.bias.multimeter.config__voltage_source(compliance=10E-3, range=1)
+#self.bias.multimeter.set_voltage(refvoltage*calib_point)
+#expected = (2**12-1)*calib_point
+#time.sleep(0.001)
+#r = self.ssa.analog.adc_measure_ext_pad(nsamples=10)
+#sign=9;prevsign=9;  time.sleep(0.1);
+#setting, tmp = self.bias.get_value_and_voltage('ADC_VREF')
+##setting=15;
+##self.ssa.analog.adc_set_trimming(setting)
+#
+#value = self.ssa.analog.adc_measure_ext_pad(nsamples=100)
+#while((sign+prevsign)!=0):
+#	prevval = value
+#	prevsetting = setting
+#	value = self.ssa.analog.adc_measure_ext_pad(nsamples=100)
+#	prevsign = sign
+#	if(value < expected):
+#		setting = prevsetting-1; sign=1
+#	else:
+#		setting = prevsetting+1; sign=-1
+#	#if(setting<0 or setting>63): break
+#	print([prevsetting, value])
+#	#self.ssa.analog.adc_set_trimming(setting)
+#	self.ssa.analog.adc_set_referenence(setting)
+#
+#
+#if( np.abs(prevval-expected) >  np.abs(value-refvoltage) ):
+#	self.ssa.analog.adc_set_referenence(prevsetting)
+
+
+
+
+
+
 
 	#LSB = float(dacdata[fullscale-1] - dacdata[0]) / (fullscale-1)
 	#for i in range(0, fullscale):
