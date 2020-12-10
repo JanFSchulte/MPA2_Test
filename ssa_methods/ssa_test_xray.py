@@ -16,10 +16,10 @@ import matplotlib.pyplot as plt
 
 class SSA_test_xray():
 
-	def __init__(self, toptest, ssa, I2C, fc7, cal, biascal, pwr, test, measure):
+	def __init__(self, toptest, ssa, I2C, fc7, cal, biascal, pwr, test):
 		self.ssa = ssa;	  self.I2C = I2C;	self.fc7 = fc7;
 		self.cal = cal;   self.pwr = pwr;   self.biascal = biascal;
-		self.test = test; self.measure = measure; self.toptest = toptest
+		self.test = test; self.toptest = toptest
 		#self.biascal.set_gpib_address(12)
 
 	##########################################################################

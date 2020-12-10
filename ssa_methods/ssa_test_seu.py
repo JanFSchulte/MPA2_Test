@@ -43,9 +43,9 @@ from myScripts.ArrayToCSV import *
 
 class SSA_SEU():
 
-	def __init__(self, ssa, seuutil, I2C, fc7, cal, biascal, pwr, test, measure):
+	def __init__(self, ssa, seuutil, I2C, fc7, cal, biascal, pwr, test):
 		self.ssa = ssa;	  self.I2C = I2C;	self.seuutil = seuutil; self.fc7 = fc7; self.cal = cal;
-		self.pwr = pwr;   self.test = test; self.biascal = biascal; self.measure = measure;
+		self.pwr = pwr;   self.test = test; self.biascal = biascal;
 		self.init_parameters()
 
 	##############################################################

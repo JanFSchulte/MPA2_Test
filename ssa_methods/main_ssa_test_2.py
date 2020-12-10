@@ -20,7 +20,7 @@ It run most of tests on the SSA ASIC in ~2min.
 This class is used in th ewafer probing mpl_toolkits
 
 Example:
-ssa_main_measure = SSA_Measurements_All()
+ssa_main_measure = main_ssa_test_2()
 ssa_main_measure.RUN()
 '''
 try:
@@ -28,7 +28,7 @@ try:
 except:
 	ssa = False
 
-class SSA_Measurements_All():
+class main_ssa_test_2():
 
 	def __init__(self, tag="ChipN_0", runtest='default', directory='../SSA_Results/Wafer0/', chip = ssa, mode_2xSSA=False):
 		self.mode_2xSSA = mode_2xSSA

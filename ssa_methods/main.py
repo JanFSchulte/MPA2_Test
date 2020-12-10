@@ -23,7 +23,6 @@ from ssa_methods.main_ssa_test_3 import *
 from ssa_methods.ssa_test_2xSSA2 import *
 from ssa_methods.ssa_scanchain_test import *
 
-
 ipaddr, fc7AddrTable, fc7_if = configure_communication()
 FC7 = fc7_com(fc7_if, fc7AddrTable)
 
@@ -43,18 +42,20 @@ class SSAwp:
 		self.seuutil       = SSA_SEU_utilities(self.chip, self.i2c, FC7, self.pwr)
 		self.measure       = SSA_measurements(self.chip, self.i2c, FC7, self.cal, self.ana_mux_map, self.pwr, self.seuutil, self.biascal)
 		self.test          = SSA_test_utility(self.chip, self.i2c, FC7, self.cal, self.pwr, self.seuutil)
-		self.toptest       = SSA_test_top(self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
-		self.anl           = SSA_Analise_Test_results(self.toptest, self.test, self.measure, self.biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
-		self.seu           = SSA_SEU(self.chip, self.seuutil, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
+		self.main_test_1   = main_ssa_test_1(self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure.fe)
+		self.anl           = SSA_Analise_Test_results(self.main_test_1, self.test, self.measure.fe, self.biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
+		self.seu           = SSA_SEU(self.chip, self.seuutil, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
+		self.main_test_2   = main_ssa_test_2(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
+		self.main_test_3   = main_ssa_test_3(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
+		self.xray          = SSA_test_xray(self.main_test_3, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
+		self.scanchain     = SSA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
 		self.init          = self.chip.init
 		self.resync        = self.chip.resync
 		self.debug         = self.chip.debug
 		self.inject        = self.chip.inject
 		self.readout       = self.chip.readout
-		self.main_test     = SSA_Measurements_All(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
-		self.main_test_3   = main_ssa_test_3(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
-		self.xray          = SSA_test_xray(self.main_test_3, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure)
-		self.scanchain     = SSA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
+		self.ctrl          = self.chip.ctrl
+		self.analog        = self.chip.analog
 
 	def enable(self):  FC7.enable_chip(self.index)
 	def disable(self): FC7.disable_chip(self.index)

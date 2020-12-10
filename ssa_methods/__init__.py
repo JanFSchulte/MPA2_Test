@@ -7,7 +7,7 @@ except:
 ssa  = ssa0
 
 try:
-    ssa_main_measure = SSA_Measurements_All()
+    ssa_main_measure = main_ssa_test_2()
     wp = ssa_main_measure
 except:
     pass

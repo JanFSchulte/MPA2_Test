@@ -227,16 +227,16 @@ def do_reset_test(self):
 	miscompares = self.fc7.read("scanchain_comparator_miscompares")
 	#response = ""
 	#response = read from ddr3
-	print  "Test done is %d " % test_done
-	if (test_done = 0 ):
+	print("Test done is %d " % test_done)
+	if (test_done == 0 ):
 		return
-	print  "Comparator is %d " % comparator
-	print  "Comparator neg pre is %d " % comparator_neg_pre
-	print  "Comparator neg next is %d " % comparator_neg_next
+	print(  "Comparator is %d " % comparator)
+	print(  "Comparator neg pre is %d " % comparator_neg_pre)
+	print(  "Comparator neg next is %d " % comparator_neg_next)
 	if (comparator or comparator_neg_pre or comparator_neg_next ):
-		print "Test successfull"
-	else
-		print "Test failed"
+		print("Test successfull")
+	else:
+		print("Test failed")
 		#print "%s" % response
 		#for word in lateral_data:
 		#utils.print_log(

@@ -20,7 +20,7 @@ It run most of tests on the SSA ASIC in ~2min.
 This class is used in th ewafer probing mpl_toolkits
 
 Example:
-ssa_main_measure = SSA_Measurements_All()
+ssa_main_measure = main_ssa_test_3()
 ssa_main_measure.RUN()
 '''
 try:

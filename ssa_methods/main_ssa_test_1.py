@@ -14,7 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-class SSA_test_top():
+class main_ssa_test_1():
 
 	def __init__(self, ssa, I2C, fc7, cal, biascal, pwr, test, measure):
 		self.ssa = ssa;	  self.I2C = I2C;	self.fc7 = fc7;
