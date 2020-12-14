@@ -50,7 +50,7 @@ class ssa_calibration():
 			self.Parameter("Threshold Low DAC     ", "Bias_THDAC",          622.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Threshold High DAC    ", "Bias_THDACHIGH",      622.0, -1, -1, 'set_dont_calibrate'),
 			self.Parameter("Calibration DAC       ", "Bias_CALDAC",         100.0, -1, -1, 'set_dont_calibrate'),
-			self.Parameter("ADC_VREF              ", "ADC_VREF",            858.0, -1, -1, 'set_calibrate') ]
+			self.Parameter("ADC_VREF              ", "ADC_VREF",            825.0, -1, -1, 'set_calibrate') ]
 
 	def SetMode(self, mode = 'Keithley_Multimeter_7510_LAN'):
 		self.mode = mode

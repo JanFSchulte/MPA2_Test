@@ -34,7 +34,7 @@ class SSA_measurements_adc():
 
 
 	#####################################################################
-	def adc_dnl_inl_histogram_sample(self, runtime=3600, freq=0.1, show=0, directory='../SSA_Results/adc_measures/', filename='ADC_samples.csv', continue_on_same_file=1):
+	def dnl_inl_histogram_sample(self, runtime=3600, freq=0.1, show=0, directory='../SSA_Results/adc_measures/', filename='ADC_samples.csv', continue_on_same_file=1):
 		if(continue_on_same_file and os.path.exists(directory+'/'+filename)):
 			adchist = CSV.csv_to_array(filename=directory+'/'+filename)[:,1]
 		else:
@@ -72,11 +72,11 @@ class SSA_measurements_adc():
 				CSV.array_to_csv(adchist, filename=directory+'/'+filename)
 		#f.close()
 		utils.print_log('->  ADC total number of samples taken is '+str(cnt))
-		dnlh, inlh = self.adc_dnl_inl_histogram_plot(directory=directory, filename=filename, plot=show)
+		dnlh, inlh = self.dnl_inl_histogram_plot(directory=directory, filename=filename, plot=show)
 		return dnlh, inlh, adchist
 
 	#####################################################################
-	def adc_dnl_inl_histogram_plot(self, minc=1, maxc=4095, directory='../SSA_Results/adc_measures/', filename='ADC_samples.csv', plot=True):
+	def dnl_inl_histogram_plot(self, minc=1, maxc=4095, directory='../SSA_Results/adc_measures/', filename='ADC_samples.csv', plot=True):
 		dnlh = np.zeros(4096)
 		inlh = np.zeros(4096)
 		maxim = 0; inl=0.0;
@@ -146,6 +146,13 @@ class SSA_measurements_adc():
 		return dnlh, inlh
 		#adc_dnl_inl_histogram()
 
+	def noise_distribution(nsamples=1E3, directory='../SSA_Results/adc_measures/', filename='ADC_noise_samples.csv'):
+
+		res = int(np.round(self.ssa.analog.adc_measure_ext_pad(nsamples=1, reinit_if_error=False)))
+		utils.print_inline('{:8d}'.format(res) )
+
+		#f.close()
+
 	#####################################################################################################
 	def adc_plot(filename = '../SSA_Results/adc_measures/Test_ssa_adc_measurements.csv'):
 		data = CSV.csv_to_array(filename)
@@ -161,7 +168,7 @@ class SSA_measurements_adc():
 		plt.plot(data[:,1]	, data[:,2], 'x')
 
 	#####################################################################################################
-	def adc_measure_curve(self, nsamples=10, npoints=2**16, directory='../SSA_Results/ADC/', plot=True, start_point=-0.005, end_point=0.9, note=''):
+	def measure_curve(self, nsamples=10, npoints=2**16, directory='../SSA_Results/ADC/', plot=True, start_point=-0.005, end_point=0.9, note=''):
 		vrange = np.linspace(start_point, end_point, npoints+1)
 		rcode = []
 		time.sleep(0.1)
@@ -207,19 +214,19 @@ class SSA_measurements_adc():
 		return [gain, ofs, sigma]
 
 	#####################################################################################################
-	def adc_measure_curve_parametric(self, nsamples=100, npoints=2**7, adc_trimming_range=[0, 15, 31, 47, 63], adc_ref_range=[0, 7, 15, 23, 31], directory='../SSA_Results/ADC/parametric_ref_and_trimming/', chip=''):
+	def measure_curve_parametric(self, nsamples=100, npoints=2**7, adc_trimming_range=[0, 15, 31, 47, 63], adc_ref_range=[0, 7, 15, 23, 31], directory='../SSA_Results/ADC/parametric_ref_and_trimming/', chip=''):
 		self.bias.SetMode('Keithley_Sourcemeter_2410_GPIB')
 		for adc_ref in adc_ref_range:
 			self.ssa.analog.adc_set_referenence(adc_ref)
 			for adc_trimming in adc_trimming_range:
 				self.ssa.analog.adc_set_trimming(adc_trimming)
-				self.adc_measure_curve(
+				self.measure_curve(
 					nsamples=nsamples, npoints=npoints, start_point=-0.005, end_point=0.9,
 					directory=directory+chip, plot=False,
 					note='__ref_{:d}__trim_{:d}'.format(adc_ref, adc_trimming))
 
 	#####################################################################################################
-	def adc_measure_curve_parametric_plot(self, directory='../SSA_Results/ADC/parametric_ref_and_trimming/'):
+	def measure_curve_parametric_plot(self, directory='../SSA_Results/ADC/parametric_ref_and_trimming/'):
 		fig = plt.figure(figsize=(8,6))
 		color=iter(sns.color_palette('deep')*3)
 		ax = plt.subplot(111)
@@ -248,7 +255,25 @@ class SSA_measurements_adc():
 		#plt.savefig(directory+'/xray_'+name+'_variation.png', bbox_inches="tight");
 
 	#####################################################################################################
-	def adc_mesure_vref(self, filename='/ADC/VREF/', runname='', chip='chip_0/chip_0'):
+	def temperature_sensor(self,  nsamples=100, directory='../SSA_Results/ADC/temperature_sensor/'):
+		if(not os.path.exists(directory)): os.makedirs(directory)
+		rep = self.ssa.analog.adc_measure_temperature(nsamples=nsamples, raw=True)
+		CSV.ArrayToCSV(array = np.array(rep), filename = directory+"adc_Temperature_Sensor_samples.csv", transpose = True)
+		tsens_mean, tsens_std, tsens_rms = utils.eval_mean_std_rms(rep)
+		utils.print_good('->  ADC parameter measure [{:s}] ->  mean = {:7.3f},  std={:7.3f}'.format('temperature', tsens_mean, tsens_std))
+		return [tsens_mean, tsens_std]
+
+	#####################################################################################################
+	def measure_param(self, parameter='DVDD', nsamples=100, directory='../SSA_Results/ADC/param/'):
+		if(not os.path.exists(directory)): os.makedirs(directory)
+		rep = self.ssa.analog.adc_measure(testline=parameter, nsamples=nsamples, raw=True)
+		CSV.ArrayToCSV(array = np.array(rep), filename = directory+"adc_{:s}_samples.csv".format(parameter), transpose = True)
+		tsens_mean, tsens_std, tsens_rms = utils.eval_mean_std_rms(rep)
+		utils.print_good('->  ADC parameter measure [{:s}] ->  mean = {:7.3f},  std={:7.3f}'.format(parameter, tsens_mean, tsens_std))
+		return [tsens_mean, tsens_std]
+
+	#####################################################################################################
+	def mesure_vref(self, filename='/ADC/VREF/', runname='', chip='chip_0/chip_0'):
 		# manual measure switching chips on the testboard
 		if not os.path.exists("../SSA_Results/" +filename+chip): os.makedirs("../SSA_Results/" +filename+chip)
 		VBG = self.bias.get_voltage('VBG')
@@ -271,7 +296,7 @@ class SSA_measurements_adc():
 			fo.write(('\n{:16s}, '+'{:9.3f}, '*9).format(chip, VBG*1E3, vref_min*1E3, vref_max*1E3, vref_gain*1E3, iref_min*1E3, iref_max*1E3, iref_gain*1E3, vref_INL, vref_DNL) )
 
 	#####################################################################################################
-	def adc_analize_vref(self, filename='/ADC/VREF/'):
+	def analize_vref(self, filename='/ADC/VREF/'):
 		filename='/ADC/VREF/'
 		directory = "../SSA_Results/" +filename
 		data = CSV.csv_to_array(directory+'ADC_VREF_summary.csv')
@@ -310,7 +335,7 @@ class SSA_measurements_adc():
 		print(('|{:8s} | '+'{:7.3f} |'*6).format('ALL', VREF_MIN_mv_mean, VREF_MIN_mv_std, VREF_MIN_mv_rms, VREF_MAX_mv_mean, VREF_MAX_mv_std, VREF_MAX_mv_rms ))
 
 	#####################################################################################################
-	def adc_calibrate(self, refvoltage=0.825, calib_point=0.8):
+	def calibrate(self, refvoltage=0.825, calib_point=0.8):
 		self.ssa.analog.set_output_mux('highimpedence')
 		self.ssa.analog.adc_measure_ext_pad(nsamples=1)
 		self.bias.SetMode('Keithley_Sourcemeter_2410_GPIB')
@@ -365,7 +390,7 @@ class SSA_measurements_adc():
 
 	#########################################################################
 	## quick and dirty test
-	def adc_manual_measure(self):
+	def manual_measure(self):
 		result={}
 		for vin in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
 			utils.print_log("set input voltage to {:5.3f}".format(vin))
@@ -376,7 +401,7 @@ class SSA_measurements_adc():
 
 	#########################################################################
 	## quick and dirty test
-	def adc_manual_measure_plot(self):
+	def manual_measure_plot(self):
 		data = {}
 		plt.clf()
 		fig = plt.figure(figsize=(8,6))
@@ -415,3 +440,48 @@ class SSA_measurements_adc():
 			ax.get_xaxis().tick_bottom()
 			ax.get_yaxis().tick_left()
 		plt.show()
+
+	###########################################################
+	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, eval_inl_dnl = True, npoints = 10, average=10, filename = 'temp/temp', plot = True, filemode = 'w', runname = '', return_raw=False):
+		utils.activate_I2C_chip(self.fc7)
+		if(self.bias == False): return False, False
+		if(not (name in self.muxmap)): return False, False
+		if(isinstance(filename, str)):
+			fo = "../SSA_Results/" + filename
+		print(fo)
+		if(eval_inl_dnl):
+			nlin_params, nlin_data, fit_params, raw = self.bias.measure_dac_linearity(
+				name = name, nbits = nbits,	filename = fo,	filename2 = "",
+				plot = False, average = 1, runname = runname, filemode = filemode)
+			g, ofs, sigma = fit_params
+			DNL, INL = nlin_data
+			DNLMAX, INLMAX = nlin_params
+			x, data = raw
+		else:
+			g, ofs, raw = self.bias.measure_dac_gain_offset(name = name, nbits = nbits, npoints = npoints)
+			x, data = raw
+		if name == 'Bias_THDAC':
+			baseline = self.bias.get_voltage('Bias_BOOSTERBASELINE')
+			data = (0 - np.array(data)) + baseline
+		elif name in self.muxmap:
+			data = np.array(data)
+			baseline = 0
+		else:
+			return False
+		if plot:
+			plt.clf()
+			plt.figure(1)
+			#plt.plot(x, f_line(x, ideal_gain/1000, ideal_offset/1000), '-b', linewidth=5, alpha = 0.5)
+			plt.plot(x, data, '-r', linewidth=5,  alpha = 0.5)
+			if(eval_inl_dnl):
+				plt.figure(2); plt.ylim(-1, 1); plt.bar( x, DNL, color='b', edgecolor = 'b', align='center')
+				plt.figure(3); plt.ylim(-1, 1); plt.bar( x, INL, color='r', edgecolor = 'r', align='center')
+				plt.figure(4); plt.ylim(-1, 1); plt.plot(x, INL, color='r')
+			plt.show()
+		#return DNL, INL, x, data
+		if(eval_inl_dnl):
+			if(return_raw): return [DNLMAX, INLMAX, g, ofs, raw]
+			else:           return [DNLMAX, INLMAX, g, ofs]
+		else:
+			if(return_raw): return [g*1E3, ofs*1E3, baseline*1E3, raw]
+			else:           return [g*1E3, ofs*1E3, baseline*1E3]

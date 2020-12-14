@@ -54,7 +54,7 @@ class ssa_ctrl_analog:
 			return True
 
 	#####################################################################
-	def adc_measure(self, testline = 'highimpedence', testpad_enable=False, nsamples=1, fast=True, reinit_if_error=True):
+	def adc_measure(self, testline = 'highimpedence', testpad_enable=False, nsamples=1, fast=True, reinit_if_error=True, raw=False):
 		r1 = []
 		# default: self.testpad_is_enable = -1
 		if(testpad_enable or (testline=='TESTPAD')):
@@ -67,10 +67,10 @@ class ssa_ctrl_analog:
 				self.testpad_is_enable = 0
 		for i in range(nsamples):
 			r1.append( self._adc_measure(testline=testline, fast=fast, reinit_if_error=reinit_if_error) )
-		if(nsamples>1):
-			r = np.sum(r1) / float(nsamples)
+		if(raw): return r1
 		else:
-			r = r1[0]
+			if(nsamples>1): r = np.sum(r1) / float(nsamples)
+			else: r = r1[0]
 		return r
 
 	#####################################################################
@@ -126,8 +126,8 @@ class ssa_ctrl_analog:
 		return r
 
 	#####################################################################
-	def adc_measure_temperature(self, nsamples=10):
-		return self.adc_measure('Temperature', nsamples=nsamples)
+	def adc_measure_temperature(self, nsamples=10, raw=False):
+		return self.adc_measure(testline='Temperature', nsamples=nsamples, raw=raw)
 
 	#####################################################################
 	def adc_measure_THDAC(self, nsamples=10):
