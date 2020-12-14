@@ -166,6 +166,7 @@ class main_ssa_test_3():
 		en = self.runtest.is_active('Calibrate')
 		while (en and wd < 3):
 			try:
+				self.measure.adc.mesure_vref(filename=filename, runname='', chip='ADC_VREF/Test_')
 				r1 = self.biascal.calibrate_to_nominals(measure=False)
 				self.summary.set('Calibration', int(r1), '', '',  runname)
 				break
@@ -175,7 +176,7 @@ class main_ssa_test_3():
 				wd +=1;
 				if(wd>=3): self.test_good = False
 
-	def test_routine_measure_bias(self, filename = 'default', runname = '', mode = '', nsamples=100):
+	def test_routine_measure_bias(self, filename = 'default', runname = '', mode = '', nsamples=1000):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
 		wd = 0
@@ -183,15 +184,25 @@ class main_ssa_test_3():
 		while (en and wd < 3):
 			try:
 				r1 = self.biascal.measure_bias(return_data=True)
-				r2 = self.ssa.chip.analog.adc_measure_supply(nsamples=nsamples, raw=True)
-				for i in r1:
-					self.summary.set( i[0]+'_'+mode, i[1], 'mV', '',  runname)
-				self.summary.set('adc_DVDD', r2[0], 'cnt', '',  runname)
-				self.summary.set('adc_AVDD', r2[1], 'cnt', '',  runname)
-				self.summary.set('adc_PVDD', r2[2], 'cnt', '',  runname)
-				self.summary.set('adc_GND' , r2[3], 'cnt', '',  runname)
-				self.summary.set('adc_VBG' , r2[4], 'cnt', '',  runname)
-				self.summary.set('adc_TEMP', r2[5], 'cnt', '',  runname)
+				for i in r1:self.summary.set( i[0]+'_'+mode, i[1], 'mV', '',  runname)
+				self.ssa.analog.adc_set_trimming(8)
+				r2 = self.ssa.measure.adc.measure_param('DVDD', nsamples=nsamples, directory=filename)
+				r3 = self.ssa.measure.adc.measure_param('VBG',  nsamples=nsamples, directory=filename)
+				r4 = self.ssa.measure.adc.temperature_sensor( nsamples=nsamples, directory=filename)
+				self.summary.set('adc_DVDD_mean' , r2[0], 'cnt', '',  runname)
+				self.summary.set('adc_DVDD_std'  , r2[1], 'cnt', '',  runname)
+				self.summary.set('adc_VBG_mean'  , r3[0], 'cnt', '',  runname)
+				self.summary.set('adc_VBG_std'   , r3[1], 'cnt', '',  runname)
+				self.summary.set('adc_TEMP_mean' , r4[0], 'cnt', '',  runname)
+				self.summary.set('adc_TEMP_std'  , r4[1], 'cnt', '',  runname)
+
+				#r2 = self.ssa.chip.analog.adc_measure_supply(nsamples=nsamples, raw=True)
+				#self.summary.set('adc_DVDD', r2[0], 'cnt', '',  runname)
+				#self.summary.set('adc_AVDD', r2[1], 'cnt', '',  runname)
+				#self.summary.set('adc_PVDD', r2[2], 'cnt', '',  runname)
+				#self.summary.set('adc_GND' , r2[3], 'cnt', '',  runname)
+				#self.summary.set('adc_VBG' , r2[4], 'cnt', '',  runname)
+				#self.summary.set('adc_TEMP', r2[5], 'cnt', '',  runname)
 				break
 			except(KeyboardInterrupt): break
 			except:
@@ -227,9 +238,9 @@ class main_ssa_test_3():
 			en = self.runtest.is_active('alignment')
 			while (wd < 3):
 				try:
-					self.pwr.set_dvdd(vvv); time.sleep(0.5)
-					utils.print_info('->  DVDD set to {:0.3f}'.format(vvv))
+					self.pwr.set_dvdd(vvv); time.sleep(1)
 					self.ssa.reset(); time.sleep(0.5)
+					utils.print_info('->  DVDD set to {:0.3f}'.format(vvv))
 					self.ssa.resync();
 					r1,r2,r3,r4 = self.ssa.chip.alignment_all(display = False)
 					if(en):
@@ -300,7 +311,7 @@ class main_ssa_test_3():
 			while (en and wd < 3):
 				try:
 					#self.pwr.set_dvdd(self.dvdd)
-					self.pwr.set_dvdd(vvv); time.sleep(0.5)
+					self.pwr.set_dvdd(vvv); time.sleep(1)
 					utils.print_info('->  DVDD set to {:0.3f}'.format(vvv))
 					self.ssa.reset(); time.sleep(0.5)
 					self.ssa.init(reset_chip=0, display=1); time.sleep(0.1)
@@ -327,7 +338,7 @@ class main_ssa_test_3():
 			while (en and wd < 3):
 				try:
 					#self.pwr.set_dvdd(self.dvdd)
-					self.pwr.set_dvdd(vvv); time.sleep(0.5)
+					self.pwr.set_dvdd(vvv); time.sleep(1)
 					utils.print_info('->  DVDD set to {:0.3f}'.format(vvv))
 					self.ssa.reset(); time.sleep(0.5)
 					self.ssa.init(reset_chip=0, display=1); time.sleep(0.1)
@@ -399,6 +410,9 @@ class main_ssa_test_3():
 				wd +=1;
 				if(wd>=3): self.test_good = False
 
+
+
+
 	def test_stub_l1_max_speed(self, filename = '../SSA_Results/Chip0/Chip_0', runname = '', compare_del = 74, run_time=5):
 		filename = self.summary.get_file_name(filename)
 		time_init = time.time()
@@ -464,7 +478,7 @@ class main_ssa_test_3():
 		en = self.runtest.is_active('ADC')
 		while (en and wd < 3):
 			try:
-				r_adc = self.measure.adc_measure_curve(nsamples=1, npoints=2**10, output_file=(filename), plot=False)
+				r_adc = self.measure.adc.measure_curve(nsamples=1, npoints=2**10, directory=(filename), plot=False)
 				self.summary.set('ADC_GAIN'    , r_adc[0], '', '',  runname)
 				self.summary.set('ADC_OFFS'    , r_adc[1], '', '',  runname)
 				break
@@ -473,6 +487,24 @@ class main_ssa_test_3():
 				self.print_exception("->  Bias_ADC test error. Reiterating...")
 				wd +=1;
 				if(wd>=3): self.test_good = False
+
+	def test_routine_temperature_sensor(self, filename, runname = ''):
+		filename = self.summary.get_file_name(filename)
+		time_init = time.time()
+		wd = 0
+		en = self.runtest.is_active('DACs')
+		while (en and wd < 3):
+			try:
+				self.thdac = self.measure.adc.temperature_sensor(name = 'Bias_THDAC', eval_inl_dnl = False, nbits = 8, npoints = 1000, filename = filename, plot = False, filemode = 'a', runname = runname)
+				self.summary.set('Bias_THDAC_GAIN'    , self.thdac[0], '', '',  runname)
+				self.summary.set('Bias_THDAC_OFFS'    , self.thdac[1], '', '',  runname)
+				break
+			except(KeyboardInterrupt): break
+			except:
+				self.print_exception("->  Bias_THDAC test error. Reiterating...")
+				wd +=1;
+				if(wd>=3): self.test_good = False
+		wd = 0
 
 
 	def test_routine_analog(self, filename='../SSA_Results/Chip0/', runname = ''):
@@ -540,7 +572,7 @@ class main_ssa_test_3():
 			except:
 				wd +=1;
 
-	def idle_routine(self, filename = 'default', runname = '', duration=5):
+	def idle_routine(self, filename = 'default', runname = '', duration=5, voltage=1.0):
 		# run all functional test with STUB at BX rate, L1 data at 1MHz
 		# if during X-ray irradiation, this is running all time except
 		# of when the other tests are running
@@ -549,7 +581,7 @@ class main_ssa_test_3():
 		wd=0
 		while (wd < 3):
 			try:
-				self.pwr.set_dvdd(self.dvdd); time.sleep(1)
+				self.pwr.set_dvdd(voltage); time.sleep(1)
 				self.ssa.reset(); time.sleep(1)
 				pwr = self.pwr.get_power()
 
@@ -560,9 +592,9 @@ class main_ssa_test_3():
 				print(striplist)
 
 				results = self.ssa.seuutil.Run_Test_SEU(
-					check_stub=True, check_l1=True, check_lateral=False, create_errors = False,
+					check_stub=True, check_l1=True, check_lateral=False, create_errors = False, t1edge='falling',
 					strip = striplist, centroids=centroids, hipflags = hip_hits, delay = 75, run_time = duration,
-					cal_pulse_period = 1, l1a_period = 39, latency = 501, display = 1, stop_if_fifo_full = 0, show_every=-1)
+					cal_pulse_period = 1, l1a_period = 39, latency = 501, display = 1, stop_if_fifo_full = 1, show_every=-1)
 
 				[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1, alignment] = results
 				fo = open(filename+'.csv', 'a')
