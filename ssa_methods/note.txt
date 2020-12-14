@@ -1,4 +1,73 @@
+
+
+def test_i2c_address():
+	for address in range(0,8):
+		ssaX = SSAwp(0, address)
+		tbconfig.SSA_ADR[0] = ((0b0100<<3) | (address &0b11) )
+		ssaX.reset()
+		ssaX.ctrl.try_i2c()
+
 ###############################################################################
+
+fc7.write("cnfg_dio5_en" ,1)
+fc7.write("cnfg_dio5_ch1_out_en", 1)
+fc7.write("cnfg_dio5_ch2_out_en", 1)
+fc7.write("cnfg_dio5_ch3_out_en", 1)
+fc7.write("cnfg_dio5_ch4_out_en", 1)
+fc7.write("cnfg_dio5_ch5_out_en", 1)
+
+fc7.write("cnfg_ssa_scanchain_is_test_mode",1)
+
+def restart_test(self):
+		fc7.write("cnfg_ssa_scanchain_start_test",0)
+
+	def enable_scanchain(self, val=1):
+		fc7.write("cnfg_dio5_en" ,1)
+		fc7.write("cnfg_dio5_ch1_out_en", 1)
+		fc7.write("cnfg_dio5_ch2_out_en", 1)
+		fc7.write("cnfg_dio5_ch3_out_en", 1)
+		fc7.write("cnfg_dio5_ch4_out_en", 1)
+		fc7.write("cnfg_dio5_ch5_out_en", 1)
+		#fc7.write("cnfg_ddr3_scanchain_test_enable",1)
+		#fc7.write("cnfg_ssa_scanchain_is_scanchain_test",1)
+
+	def prova2(self):
+		fc7.write("cnfg_ssa_scanchain_start_test",0)
+		fc7.write("cnfg_ssa_scanchain_start_test",1)
+
+
+
+reset()
+time.sleep(0.1)
+fc7.write("cnfg_dio5_en" ,1)
+fc7.write("cnfg_dio5_ch1_out_en", 0)
+fc7.write("cnfg_dio5_ch2_out_en", 0)
+fc7.write("cnfg_dio5_ch3_out_en", 0)
+fc7.write("cnfg_dio5_ch4_out_en", 0)
+fc7.write("cnfg_dio5_ch5_out_en", 0)
+
+reset()
+time.sleep(0.1)
+fc7.write("cnfg_dio5_en" ,1)
+fc7.write("cnfg_dio5_ch1_out_en", 1)
+fc7.write("cnfg_dio5_ch2_out_en", 1)
+fc7.write("cnfg_dio5_ch3_out_en", 1)
+fc7.write("cnfg_dio5_ch4_out_en", 1)
+fc7.write("cnfg_dio5_ch5_out_en", 1)
+
+def try_scanchain():
+    time.sleep(0.1); fc7.write("cnfg_ssa_scanchain_is_test_mode",1)
+    time.sleep(0.1); fc7.write("cnfg_ssa_scanchain_start_test",0)
+    time.sleep(0.1); fc7.write("cnfg_ssa_scanchain_is_capture_test",0)
+    time.sleep(0.1); fc7.write("cnfg_ssa_scanchain_is_reset_test",0)
+    time.sleep(0.1); fc7.write("cnfg_ssa_scanchain_is_scanchain_test",1)
+    time.sleep(0.1); fc7.write("cnfg_ssa_scanchain_start_test",1)
+    time.sleep(2); print(fc7.read("scanchain_test_done"))
+
+while 1: try_scanchain()
+
+
+##################################################################
 
 ssa.inject.digital_pulse([10])
 

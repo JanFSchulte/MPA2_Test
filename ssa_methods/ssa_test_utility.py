@@ -43,7 +43,7 @@ class SSA_test_utility():
 		if(mode == "digital"):
 			self.ssa.inject.digital_pulse(initialise = True, times = 1)
 		elif(mode == "analog"):
-			self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', cal_pulse_amplitude = 230, threshold = [100, 150])
+			self.ssa.inject.analog_pulse(initialise = True, mode = 'edge', cal_pulse_amplitude = 250, threshold = [70, 120])
 		else:
 			return False
 		time.sleep(0.01)
@@ -505,6 +505,8 @@ class SSA_test_utility():
 		dvdd_range = np.arange(dvdd_min, dvdd_max, dvdd_step)
 		for dvdd in dvdd_range:
 			self.ssa.pwr.set_dvdd(dvdd)
+			time.sleep(1)
+			self.ssa.reset()
 			time.sleep(0.5)
 			res = self.ssa.bist.ring_oscilaltor(
 				resolution_inv=127, resolution_del=127, printmode=printmode,
@@ -515,6 +517,8 @@ class SSA_test_utility():
 				fo.write("{:8s}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f}, {:7.3f},\n".format(
 					runname, dvdd, res[0], res[1], res[2], res[3], res[4], res[5], res[6], res[7]))
 		self.ssa.pwr.set_dvdd(1.0)
+		time.sleep(0.5)
+		self.ssa.reset()
 		time.sleep(0.5)
 		if(plot):
 			self.ring_oscillators_vs_dvdd_plot()
@@ -996,7 +1000,7 @@ class SSA_test_utility():
 
 	##############################################################
 #	def quick_test_cluster_cut(self, nruns = 10):
-#		
+#
 #		self.ssa.ctrl.set_cluster_cut(0)
 #		cluster_size = 2
 #		self.cluster_data(mode = "digital",  nstrips = 8, min_clsize = cluster_size-1, max_clsize = cluster_size, nruns = 100, lateral=False)

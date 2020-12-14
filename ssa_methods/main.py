@@ -11,6 +11,7 @@ from ssa_methods.ssa_readout_utility import *
 from ssa_methods.ssa_inject_utility import *
 from ssa_methods.ssa_measurements import *
 from ssa_methods.ssa_test_xray import *
+from ssa_methods.ssa_test_climatic_chamber import *
 from ssa_methods.ssa_analise_utility import *
 from ssa_methods.ssa_calibration import *
 from ssa_methods.ssa_seu_utility import *
@@ -48,6 +49,7 @@ class SSAwp:
 		self.main_test_2   = main_ssa_test_2(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
 		self.main_test_3   = main_ssa_test_3(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
 		self.xray          = SSA_test_xray(self.main_test_3, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
+		self.climatic      = SSA_test_climatic_chamber(self.main_test_3, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
 		self.scanchain     = SSA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
 		self.init          = self.chip.init
 		self.resync        = self.chip.resync
@@ -61,7 +63,7 @@ class SSAwp:
 	def disable(self): FC7.disable_chip(self.index)
 	def reset(self, display=True): self.chip.reset(display=display)
 
-ssa0 = SSAwp(0, 0b001)
+ssa0 = SSAwp(0, 0b000)
 ssa1 = SSAwp(1, 0b111)
 ssa  = ssa0
 

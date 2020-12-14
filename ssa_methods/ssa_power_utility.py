@@ -246,7 +246,7 @@ class ssa_power_utility:
 		utils.print_enable(False)
 		if (targetvoltage > 1.3): targetvoltage = 1.3
 		if (targetvoltage < 0):   targetvoltage = 0
-		diffvoltage = 1.470 - targetvoltage
+		diffvoltage = 1.500 - targetvoltage
 		setvoltage = int(round(diffvoltage / self.Vc))
 		if (setvoltage > 4095): setvoltage = 4095
 		setvoltage = setvoltage << 4

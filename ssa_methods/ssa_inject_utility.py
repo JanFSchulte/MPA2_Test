@@ -74,7 +74,7 @@ class SSA_inject():
 		if(profile): utils.print_log('->  digital_pulse time = {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 
 
-	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [50, 100], cal_pulse_amplitude = 120, initialise = True, trigger = False):
+	def analog_pulse(self, hit_list = [], mode = 'edge', threshold = [50, 100], cal_pulse_amplitude = 150, initialise = True, trigger = False):
 		if(initialise == True):
 			self.ctrl.activate_readout_normal()
 			self.ctrl.set_cal_pulse(amplitude = cal_pulse_amplitude, duration = 15, delay = 'keep')

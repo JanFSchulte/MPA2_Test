@@ -53,9 +53,10 @@ class Utilities:
 		return np.sqrt(np.mean(x**2, axis=axis))
 
 	def eval_mean_std_rms(self, x):
-		mean = np.mean(x)
-		std = np.std(x)
-		rms = self.rms(x, None)
+		data = np.array(x)
+		mean = np.mean(data)
+		std = np.std(data)
+		rms = self.rms(data, None)
 		return mean, std, rms
 
 	def set_log_files(self, logfile, errorlog):

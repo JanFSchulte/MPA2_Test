@@ -35,7 +35,7 @@ class SSA_SEU_utilities():
 			strip =[10,20,30,40], centroids=[10,20,30,40], hipflags = [10,30], cal_pulse_period = 1, l1a_period = 39,
 			latency = 101, run_time = 5, display = 1, filename = '', runname = '',
 			delay = 74, create_errors = False, stop_if_fifo_full = True,
-			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0, show_every=1, reset_fc7=True, align=True):
+			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0, show_every=1, reset_fc7=True, align=True, t1edge='rising'):
 
 		CL_ok=0; L1_ok=0; LH_ok=0; iter_counter=0;
 
@@ -47,7 +47,7 @@ class SSA_SEU_utilities():
 			results = self.run_seu_test(
 				check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral, create_errors = create_errors,
 				strip = strip, centroids=centroids, hipflags = hipflags, delay = delay, run_time = run_time,
-				cal_pulse_period = cal_pulse_period, l1a_period = l1a_period, latency = latency,
+				cal_pulse_period = cal_pulse_period, l1a_period = l1a_period, latency = latency, t1edge=t1edge,
 				display = display, stop_if_fifo_full = stop_if_fifo_full, reset_fc7=reset_fc7, align=align)
 
 			[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1, fc7_alignment_status]  = results
@@ -60,12 +60,12 @@ class SSA_SEU_utilities():
 			strip =[10,20,30,40], centroids=[10,20,30,40], hipflags = [10,30], cal_pulse_period = 1, l1a_period = 39,
 			latency = 101, run_time = 5, display = 1, filename = '', runname = '',
 			delay = 74, create_errors = False, stop_if_fifo_full = True,
-			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0, show_every=1, reset_fc7=True, align=True):
+			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0, show_every=1, reset_fc7=True, align=True, t1edge='rising'):
 
 		if(reset_fc7): self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
 		self.fc7.write("ctrl_fast", 0x10000)
-		if(align): self.ssa.init(edge = 'positive', display = True)
+		if(align): self.ssa.init(edge = t1edge, display = True)
 		self.ssa.resync()
 		fc7_alignment_status = self.fc7.get_lines_alignment_status()
 		#print(tbconfig.VERSION['SSA'])
