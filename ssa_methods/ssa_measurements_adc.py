@@ -19,6 +19,7 @@ import inspect
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import matplotlib.gridspec as gridspec
 from scipy import stats
 import re

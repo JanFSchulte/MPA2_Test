@@ -12,6 +12,7 @@ import time, sys, inspect, random, re
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 
 
 class SSA_test_climatic_chamber():
@@ -97,160 +98,132 @@ class SSA_test_climatic_chamber():
 
 
 
-	def plot_results(self, directory='../SSA_Results/climatic/', doserate = 0.512E6):
+	def plot_results(self, directory='../SSA_Results/climatic/'):
 
-		TID1, header, global_summary   = self.__read_summary_data(  directory=directory, doserate=doserate)
-		TID2, fe_gain, noise = self.__read_frontend_data( directory=directory, doserate=doserate)
-		TID3, configuration = self.__read_static_configuration_data(directory=directory, doserate=doserate)
+		Temperature1, header, global_summary   = self._read_summary_data(  directory=directory)
+		Temperature2, fe_gain, noise = self._read_frontend_data( directory=directory)
+		Temperature3, configuration = self._read_static_configuration_data(directory=directory)
 
-		self.dataset_sum  = TID1, header, global_summary
-		self.dataset_afe  = TID1, header, global_summary, TID2, fe_gain, noise
-		self.dataset_conf = TID3, configuration
-
-		self.plot_parameter_variation(
-			parameters = ['I_DVDD_calibrated', 'I_AVDD_calibrated', 'I_PVDD_calibrated'],
-			name='power_consumption',  ylabel = 'Current percent variation [%]', ylim=[90, 105],
-			newfigure=True, directory=directory, doserate=doserate, dlabel='', dataset=self.dataset_sum )
+		self.dataset_sum  = Temperature1, header, global_summary
+		self.dataset_afe  = Temperature1, header, global_summary, Temperature2, fe_gain, noise
+		self.dataset_conf = Temperature3, configuration
 
 		self.plot_parameter(
 			parameters = ['I_DVDD_calibrated', 'I_AVDD_calibrated'],
-			name='power_consumption',  ylabel = 'Current relative variation', ylim=[10, 25],
-			newfigure=True, directory=directory, doserate=doserate, dlabel='', dataset=self.dataset_sum)
+			name='power_consumption',  ylabel = 'Current relative variation', ylim=[14, 26],
+			newfigure=True, directory=directory,  dlabel='', dataset=self.dataset_sum)
 
 		self.plot_parameter(
-			parameters = ['adc_AVDD'],
-			name='adc_AVDD',  ylabel = 'ADC [count]', ylim=[2800, 3200],
-			newfigure=True, directory=directory, doserate=doserate, dlabel='', dataset=self.dataset_sum)
-
-		self.plot_parameter_variation(
 			parameters = ['Bias_D5ALLV_uncalibrated', 'Bias_D5ALLV_calibrated'],
-			name='Bias_D5ALLV',  ylabel = 'DAC output voltage percent variation  [%]', ylim=[],
-			newfigure=True, directory=directory, doserate=doserate, dlabel='', dataset=self.dataset_sum)
+			name='Bias_D5ALLV',  ylabel = 'DAC output voltage [mV]', ylim=[70, 90],
+			newfigure=True, directory=directory,  dlabel='', dataset=self.dataset_sum)
 
-		#self.plot_configuration_val(
-		#	parameters = ['Bias_D5BFEED'],
-		#	name='Bias_D5BFEED',  ylabel = 'Configuration value', ylim=[0,31],
-		#	newfigure=True, directory=directory, doserate=doserate, dlabel='', dataset=self.dataset_conf )
+		self.plot_parameter(
+			parameters = ['Bias_D5BFEED_uncalibrated', 'Bias_D5BFEED_calibrated'],
+			name='Bias_D5BFEED',  ylabel = 'DAC output voltage [mV]',  ylim=[70, 90],
+			newfigure=True, directory=directory,  dlabel='', dataset=self.dataset_sum)
 
-		#self.plot_configuration_val(
+		self.plot_parameter(
+			parameters = ['Bias_BOOSTERBASELINE_uncalibrated', 'Bias_BOOSTERBASELINE_calibrated'],
+			name='Bias_BOOSTERBASELINE',  ylabel = 'DAC output voltage [mV]',  ylim=[560, 660],
+			newfigure=True, directory=directory,  dlabel='', dataset=self.dataset_sum)
+
+		self.plot_configuration_val(
+			parameters = ['Bias_D5BFEED'],
+			name='Bias_D5BFEED',  ylabel = 'Configuration value', ylim=[10,20],
+			newfigure=True, directory=directory, dlabel='', dataset=self.dataset_conf )
+
+		self.plot_configuration_val(
+			parameters = ['Bias_D5ALLI', 'Bias_D5BFEED', 'Bias_D5PREAMP'],
+			name='Bias_Config_',  ylabel = 'Configuration value', ylim=[10,20],
+			newfigure=True, directory=directory, dlabel='', dataset=self.dataset_conf )
+
+		#self.plot_configuration_val_vref(
 		#	parameters = ['Bias_D5ALLI', 'Bias_D5BFEED', 'Bias_D5PREAMP'],
-		#	name='Bias_Config',  ylabel = 'Configuration value', ylim=[0,31],
-		#	newfigure=True, directory=directory, doserate=doserate, dlabel='', dataset=self.dataset_conf )
+		#	name='Bias_Config_VREF_',  ylabel = 'Configuration value', ylim=[12,32],
+		#	newfigure=True, directory=directory, dlabel='', dataset=self.dataset_conf )
 
-		self.plot_parameter_variation(
+		self.plot_configuration_val(
+			parameters = ['Bias_D5ALLI', 'Bias_D5BFEED', 'Bias_D5PREAMP', 'ADC_VREF'],
+			name='Bias_Config_VREF_',  ylabel = 'Configuration value', ylim=[10, 32],
+			newfigure=True, directory=directory, dlabel='', dataset=self.dataset_conf )
+
+		self.plot_configuration_val(
+			parameters = ['ADC_VREF'],
+			name='Bias_Config',  ylabel = 'Configuration value', ylim=[10,20],
+			newfigure=True, directory=directory, dlabel='', dataset=self.dataset_conf )
+
+
+		self.plot_parameter(
 			parameters = ['VBG_calibrated'],
-			name='Bias_VBG',  ylabel = 'Bandgap voltage percent variation [%]', ylim=[99.4,100.2],
-			directory=directory, doserate=doserate,dataset=self.dataset_sum )
+			name='Bias_VBG',  ylabel = 'Bandgap voltage', ylim=[250, 270],
+			directory=directory, dataset=self.dataset_sum )
 
-		self.plot_parameter_variation(
+		self.plot_parameter(
 			parameters = ['Ring_DEL_BL', 'Ring_INV_BL'],
 			name='Ring_INV_DEL_BC',  ylabel = 'Frequency percent variation [%]', ylim=[],
-			directory=directory, doserate=doserate, dataset=self.dataset_sum)
+			directory=directory,  dataset=self.dataset_sum)
 
-		#self.plot_fe_noise_evolution(    directory=directory, doserate=doserate,  dataset=self.dataset_afe)
-		self.plot_fe_noise_evolution_el( directory=directory, doserate=doserate,  dataset=self.dataset_afe)
-		self.plot_fe_noise_hist(         directory=directory, doserate=doserate,  dataset=self.dataset_afe, tid_select = [0, -1], labels = [0, 140])
+		self.plot_temperature_sensor(
+			directory=directory,  dataset=self.dataset_sum)
 
-		self.plot_fe_gain_evolution( directory=directory, doserate=doserate,  dataset=self.dataset_afe)
-		self.plot_fe_gain_hist(      directory=directory, doserate=doserate,  dataset=self.dataset_afe, tid_select = [0,-1], labels = [0,140] )
+		self.plot_fe_noise_evolution_el(
+			directory=directory,   dataset=self.dataset_afe)
 
+		self.plot_fe_noise_evolution(
+			directory=directory,   dataset=self.dataset_afe)
 
+		self.plot_parameter(
+			parameters = ['L1_data_latch_0.9', 'L1_data_latch_1.0', 'L1_data_latch_1.1'],
+			name='L1_data_latch',  ylabel = 'DAC output voltage', ylim=[],
+			newfigure=True, directory=directory,  dlabel='', dataset=self.dataset_sum)
 
-	def plot_all_results(self, directory=['../SSA_Results/climatic_LDR/', '../SSA_Results/climatic_HDR/'], doserate=[0.512E6, 5.120E6]):
-
-		self.plot_results(directory=directory[0], doserate = doserate[0])
-		self.res_ldr = [self.dataset_sum, self.dataset_afe, self.dataset_conf]
-
-		self.plot_results(directory=directory[1], doserate = doserate[1])
-		self.res_hdr = [self.dataset_sum, self.dataset_afe, self.dataset_conf]
-
-		self.plot_fe_gain_evolution_doserates(     directory=directory, doserate=doserate, dataset=[self.res_ldr[1], self.res_hdr[1]] )
-		self.plot_fe_noise_evolution_el_doserates( directory=directory, doserate=doserate, dataset=[self.res_ldr[1], self.res_hdr[1]] )
-
-		self.plot_parameter_variation_doserates(
-			parameter = ['I_DVDD_calibrated', 'I_AVDD_calibrated', 'I_PVDD_calibrated'],
-			name='power_consumption',  ylabel = 'Current percent variation [%]', ylim=[90, 105],
-			directory=directory, doserate=doserate, dataset=[self.res_ldr[0], self.res_hdr[0]] )
-
-		self.plot_parameter_doserates(
-			parameter = ['I_DVDD_calibrated', 'I_AVDD_calibrated'],
-			name='power_consumption',  ylabel = 'Current relative variation', ylim=[10, 25],
-			directory=directory, doserate=doserate, dataset=[self.res_ldr[0], self.res_hdr[0]] )
-
-		self.plot_parameter_doserates(
-			parameter = ['adc_AVDD'],
-			name='adc_AVDD',  ylabel = 'ADC [count]', ylim=[2800, 3200],
-			directory=directory, doserate=doserate, dataset=[self.res_ldr[0], self.res_hdr[0]] )
-
-		self.plot_parameter_variation_doserates(
-			parameter = ['Bias_D5ALLV_uncalibrated', 'Bias_D5ALLV_calibrated'],
-			name='Bias_D5ALLV',  ylabel = 'DAC output voltage percent variation [%]', ylim=[],
-			directory=directory, doserate=doserate, dataset=[self.res_ldr[0], self.res_hdr[0]] )
-
-		self.plot_parameter_variation_doserates(
-			parameter = ['VBG_calibrated'],
-			name='Bias_VBG',  ylabel = 'Bandgap voltage percent variation [%]', ylim=[99.4,100.2],
-			directory=directory, doserate=doserate, dataset=[self.res_ldr[0], self.res_hdr[0]] )
-
-		self.plot_parameter_variation_doserates(
-			parameter = ['Ring_INV_BC'],
-			name='Ring_INV_BC',  ylabel = 'Frequency percent variation [%]', ylim=[55,110],
-			directory=directory, doserate=doserate, dataset=[self.res_ldr[0], self.res_hdr[0]] )
-
-		self.plot_parameter_variation_doserates(
-			parameter = ['Ring_DEL_BC'],
-			name='Ring_DEL_BC',  ylabel = 'Frequency percent variation [%]', ylim=[55,110],
-			directory=directory, doserate=doserate, dataset=[self.res_ldr[0], self.res_hdr[0]] )
+		self.plot_parameter(
+			parameters = ['fe_gain_mean'],
+			name='fe_gain_mean',  ylabel = 'mV/fC', ylim=[40, 60],
+			newfigure=True, directory=directory,  dlabel='', dataset=self.dataset_sum)
 
 
 
+		#self.plot_fe_noise_hist(         directory=directory,   dataset=self.dataset_afe, Temperature_select = [0, -1], labels = [0, 140])
+#
+		#self.plot_fe_gain_evolution( directory=directory, dataset=self.dataset_afe)
+		#self.plot_fe_gain_hist(      directory=directory, dataset=self.dataset_afe, Temperature_select = [0,-1], labels = [0,140] )
 
 
-	def __read_summary_data(self, directory, doserate):
+	def _read_summary_data(self, directory):
+		#directory='../SSA_Results/climatic/'
 		dirs = os.listdir(directory)
 		dirs = np.sort([s for s in dirs if "Chip_" in s])
 		timestart = -1
-		TID=[]
+		Temperature=[]
 		rdsummary = CSV.csv_to_array(directory+'GlobalSummary.csv', noheader = True)
 		global_summary = rdsummary[1:,:]
 		header = [str(x).strip(' ') for x in rdsummary[0]]
 		for run in global_summary:
-			timetag = re.findall("Chip_(.+)-(.+)-(.+)_(.+)-(.+)_.+", run[0])[0]
-			#timesec = 60*np.int(timetag[4])+3600*np.int(timetag[3])+3600*24*np.int(timetag[2])
-			date = datetime.datetime(int(timetag[0]), int(timetag[1]), int(timetag[2]), int(timetag[3]), int(timetag[4]))
-			time_tuple = date.timetuple()
-			timesec = time.mktime(time_tuple)
-			if(timestart<0): timestart = timesec
-			TID.append( (timesec-timestart)*(doserate/3600.0) )
-			run[0] = TID[-1]
-			#print("->  TID = {:7.3f} Mrad".format(TID[-1]))
-		TID[0] = 1E5
-		return TID, header, global_summary
+			temperature_tag = np.int(re.findall("Chip_.+T(.+)C_.+", run[0])[0])
+			Temperature.append( temperature_tag )
+			#run[0] = Temperature[-1]
+			#print("->  Temperature = {:7.3f} Mrad".format(Temperature[-1]))
+		return Temperature, header, global_summary
 
 
-
-
-	def __read_frontend_data(self, directory, doserate):
+	def _read_frontend_data(self, directory):
 		fe_gain = []; dac_gain = [];
-		TID_list = []; noise={};
+		Temperature_list = []; noise={};
 		cal_list = [1.2, 2.5]
 		dirs = os.listdir(directory)
 		dirs = np.sort([s for s in dirs if "Chip_" in s])
 		for cal in cal_list: noise[cal] = [];
-		timestart = -1
 		for ddd in dirs:
 			dpath = directory+'/'+ddd+'/'
-			if(not os.path.exists(dpath+'Test_frontend_cal_values.csv')): continue
-			timetag = CSV.csv_to_array(dpath+'timetag.log', noheader = True)[0]
-			#timesec = timetag[5]+60*timetag[4]+3600*timetag[3]+3600*24*timetag[2]
-			date = datetime.datetime(int(timetag[0]), int(timetag[1]), int(timetag[2]), int(timetag[3]), int(timetag[4]))
-			time_tuple = date.timetuple()
-			timesec = time.mktime(time_tuple)
-			if(timestart<0): timestart = timesec
-			TID = (timesec-timestart) * (doserate/3600.0)
+			if(not os.path.exists(dpath+'/Test_frontend_cal_values.csv')): continue
+			temperature_tag = re.findall("Chip_.+T(.+)C_.+", dpath)
+			if(len(temperature_tag)==0): continue
+			temperature_tag = np.int(temperature_tag[0])
 			#print(timetag)
-			print("->  TID = {:7.3f} Mrad - ".format(TID*1E-6))
-			TID_list.append(TID)
+			print("->  Temperature = {:5d} C - ".format(temperature_tag))
+			Temperature_list.append(temperature_tag)
 			for f in os.listdir( directory +'/'+ ddd ):
 				rfn = re.findall(".+_frontend_Q-(.+)_noise.csv", f)
 				if(len(rfn)>0):
@@ -260,25 +233,57 @@ class SSA_test_climatic_chamber():
 						fe_gain.append( CSV.csv_to_array(dpath+'/Test_frontend_gain_mVfC.csv', noheader=False)[:,1] )
 		for cal in cal_list:
 			noise[cal] = np.array(noise[cal], dtype=float);
-		TID_list[0] = 1E5
-		return TID_list, fe_gain, noise
+		return Temperature_list, fe_gain, noise
 
-	def __read_static_configuration_data(self, directory, doserate):
-		TID_list = [];
+	def _read_ADC_VREF_data(self, directory='../SSA_Results/climatic/'):
+		Temperature_list = []; vref=[];
+		dirs = os.listdir(directory)
+		dirs = np.sort([s for s in dirs if "Chip_" in s])
+		for ddd in dirs:
+			dpath = directory+'/'+ddd+'/'
+			if(not os.path.exists(dpath+'/Test_ADC_VREF/Test___Caracteristics_ADC_VREF.csv')): continue
+			temperature_tag = re.findall("Chip_.+T(.+)C_.+", dpath)
+			if(len(temperature_tag)==0): continue
+			temperature_tag = np.int(temperature_tag[0])
+			#print(timetag)
+			#print("->  Temperature = {:5d} C - ".format(temperature_tag))
+			Temperature_list.append(temperature_tag)
+			vref.append(CSV.csv_to_array(dpath+'/Test_ADC_VREF/Test___Caracteristics_ADC_VREF.csv'))
+		return Temperature_list, vref
+
+	def _read_ADC_IREF_data(self, directory='../SSA_Results/climatic/'):
+		Temperature_list = []; vref=[];
+		dirs = os.listdir(directory)
+		dirs = np.sort([s for s in dirs if "Chip_" in s])
+		for ddd in dirs:
+			dpath = directory+'/'+ddd+'/'
+			if(not os.path.exists(dpath+'/Test_ADC_VREF/Test___Caracteristics_ADC_IREF.csv')): continue
+			temperature_tag = re.findall("Chip_.+T(.+)C_.+", dpath)
+			if(len(temperature_tag)==0): continue
+			temperature_tag = np.int(temperature_tag[0])
+			#print(timetag)
+			#print("->  Temperature = {:5d} C - ".format(temperature_tag))
+			Temperature_list.append(temperature_tag)
+			vref.append(CSV.csv_to_array(dpath+'/Test_ADC_VREF/Test___Caracteristics_ADC_IREF.csv'))
+		return Temperature_list, vref
+
+
+
+	def _read_static_configuration_data(self, directory):
+		Temperature_list = [];
 		configuration = []
 		dirs = os.listdir(directory)
 		dirs = np.sort([s for s in dirs if "Chip_" in s])
 		timestart = -1
 		for ddd in dirs:
 			dpath = directory+'/'+ddd+'/'
-			timetag = CSV.csv_to_array(dpath+'timetag.log', noheader = True)[0]
-			date = datetime.datetime(int(timetag[0]), int(timetag[1]), int(timetag[2]), int(timetag[3]), int(timetag[4]))
-			time_tuple = date.timetuple()
-			timesec = time.mktime(time_tuple)
-			if(timestart<0): timestart = timesec
-			TID = (timesec-timestart) * (doserate/3600.0)
-			print("->  TID = {:7.3f} Mrad - ".format(TID*1E-6))
-			TID_list.append(TID)
+			if(not os.path.exists(dpath+'/Test_frontend_cal_values.csv')): continue
+			temperature_tag = re.findall("Chip_.+T(.+)C_.+", dpath)
+			if(len(temperature_tag)==0): continue
+			temperature_tag = np.int(temperature_tag[0])
+			#print(timetag)
+			print("->  Temperature = {:5d} C - ".format(temperature_tag))
+			Temperature_list.append(temperature_tag)
 			for f in os.listdir( directory +'/'+ ddd ):
 				rfn = re.findall(".+configuration.csv", f)
 				if(len(rfn)>0):
@@ -287,128 +292,142 @@ class SSA_test_climatic_chamber():
 							file=directory +'/'+ ddd+'/'+f,
 							strips='all', peri=True, display=False, upload_on_chip = False, rtarray = True) )
 						#config[config[:,1] == 'Bias_D5BFEED']
-		TID_list[0] = 1E5
+		Temperature_list[0] = 1E5
 		configuration = np.array(configuration)
-		return TID_list, configuration
+		return Temperature_list, configuration
 
 
 
 
-	def plot_parameter_variation(self, parameters = [], name='',  ylabel = '', ylim=False, newfigure=True, directory='../SSA_Results/climatic/', doserate = 0.512E6, dlabel='', dataset='calculate'):
+	def plot_parameter_variation(self, parameters = [], name='',  ylabel = '', ylim=False, newfigure=True, directory='../SSA_Results/climatic/', dlabel='', dataset='calculate'):
 		try:
-			TID, header, global_summary = dataset
+			Temperature, header, global_summary = dataset
 		except:
-			TID, header, global_summary= self.__read_summary_data(directory=directory, doserate=doserate)
+			Temperature, header, global_summary= self._read_summary_data(directory=directory)
 		if(newfigure):
 			fig = plt.figure(figsize=(8,6))
 		ax = plt.subplot(111)
 		for dataset in parameters:
 			variation = np.array(global_summary[:,header.index(dataset)], dtype=float)/np.float(global_summary[:,header.index(dataset)][0])
-			plt.semilogx(TID, 100.0*variation, 'x', label=dataset+dlabel)
+			plt.plot(Temperature, 100.0*variation, 'x', label=dataset+dlabel)
 		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
 		leg.get_frame().set_linewidth(1.0)
 		ax.get_xaxis().tick_bottom();
 		ax.get_yaxis().tick_left()
-		ax.set_xlim([1E5, 1E9])
+		ax.set_xlim([-40, 60])
 		if(ylim): ax.set_ylim(ylim)
 		else: ax.set_ylim(auto=True)
 		plt.ylabel(ylabel, fontsize=16)
-		plt.xlabel('TID [rad]', fontsize=16)
+		plt.xlabel(r"Temperature ($^\circ$C)", fontsize=16)
 		plt.xticks(fontsize=12)
 		plt.yticks(fontsize=12)
 		if(newfigure):
 			plt.savefig(directory+'/climatic_'+name+'_variation.png', bbox_inches="tight");
 			plt.close()
 
-
-	def plot_parameter_variation_doserates(self, parameter, name, ylabel = '', ylim=False, directory=['../SSA_Results/climatic_LDR/', '../SSA_Results/climatic_HDR/'], doserate=[0.512E6, 5.120E6], dataset=[False, False]):
-		fig = plt.figure(figsize=(8,6))
-
-		self.plot_parameter_variation(
-			parameters = parameter, name=name, ylabel=ylabel, ylim = ylim,
-			dlabel=' [{:5.3f} Mrad/h]'.format(doserate[0]*1e-6),
-			doserate=doserate[0], directory=directory[0],
-			newfigure=0, dataset=dataset[0])
-
-		self.plot_parameter_variation(
-			parameters = parameter, name=name, ylabel=ylabel, ylim = ylim,
-			dlabel=' [{:5.3f} Mrad/h]'.format(doserate[1]*1e-6),
-			doserate=doserate[1], directory=directory[1],
-			newfigure=0, dataset=dataset[1])
-
-		plt.savefig(directory[0]+'/climatic_doserate_'+name+'_variation.png', bbox_inches="tight");
-		plt.savefig(directory[1]+'/climatic_doserate_'+name+'_variation.png', bbox_inches="tight");
-		plt.close()
-
-
-
-
-	def plot_parameter(self, parameters = [], name='',  ylabel = '', ylim=False, newfigure=True, directory='../SSA_Results/climatic/', doserate = 0.512E6, dlabel='', dataset='calculate'):
+	def plot_parameter(self, parameters = [], name='',  ylabel = '', ylim=False, newfigure=True, directory='../SSA_Results/climatic/', dlabel='', dataset='calculate'):
 		try:
-			TID, header, global_summary = dataset
+			Temperature, header, global_summary = dataset
 		except:
-			TID, header, global_summary= self.__read_summary_data(directory=directory, doserate=doserate)
+			Temperature, header, global_summary= self._read_summary_data(directory=directory)
 		if(newfigure): fig = plt.figure(figsize=(8,6))
 		color=iter(sns.color_palette('deep')*3)
 		ax = plt.subplot(111)
 		for dataset in parameters:
 			values = np.array(global_summary[:,header.index(dataset)], dtype=float)
-			plt.semilogx(TID, values, 'x', label=dataset)
+			plt.plot(Temperature, values, 'x', label=dataset)
 		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
 		leg.get_frame().set_linewidth(1.0)
 		ax.get_xaxis().tick_bottom();
 		ax.get_yaxis().tick_left()
-		ax.set_xlim([1E5, 1E9])
+		ax.set_xlim([-40, 60])
+		ax.set_xticks(list(range(-40,60, 10)))
+		ax.xaxis.set_minor_locator(MultipleLocator(5))
+		ax.grid(which='major', axis='x', linestyle='--')
+		ax.grid(which='minor', axis='x', linestyle='--')
 		if(ylim): ax.set_ylim(ylim)
 		else: ax.set_ylim(auto=True)
 		plt.ylabel(ylabel, fontsize=16)
-		plt.xlabel('TID [rad]', fontsize=16)
+		plt.xlabel(r"Temperature ($^\circ$C)", fontsize=16)
 		plt.xticks(fontsize=12)
 		#plt.yticks(np.arange(10, 30, 2), fontsize=12)
 		if(newfigure): plt.savefig(directory+'/climatic_'+name+'.png', bbox_inches="tight");
 
-
-	def plot_parameter_doserates(self, parameter, name, ylabel = '', ylim=False, directory=['../SSA_Results/climatic_LDR/', '../SSA_Results/climatic_HDR/'], doserate=[0.512E6, 5.120E6], dataset=[False, False]):
-		fig = plt.figure(figsize=(8,6))
-
-		self.plot_parameter(
-			parameters = parameter, name=name, ylabel=ylabel, ylim = ylim,
-			dlabel=' [{:5.3f} Mrad/h]'.format(doserate[0]*1e-6),
-			doserate=doserate[0], directory=directory[0],
-			newfigure=0, dataset=dataset[0])
-
-		self.plot_parameter(
-			parameters = parameter, name=name, ylabel=ylabel, ylim = ylim,
-			dlabel=' [{:5.3f} Mrad/h]'.format(doserate[1]*1e-6),
-			doserate=doserate[1], directory=directory[1],
-			newfigure=0, dataset=dataset[1])
-
-		plt.savefig(directory[0]+'/climatic_doserate_'+name+'.png', bbox_inches="tight");
-		plt.savefig(directory[1]+'/climatic_doserate_'+name+'.png', bbox_inches="tight");
-		plt.close()
-
-
-
-	def plot_configuration_val(self, parameters = [], name='',  ylabel = '', ylim=False, newfigure=True, directory='../SSA_Results/climatic/', doserate = 0.512E6, dlabel='', dataset='calculate'):
+	def plot_temperature_sensor(self, newfigure=True, directory='../SSA_Results/climatic/', dlabel='', dataset='calculate'):
 		try:
-			TID, configuration = dataset
+			Temperature, header, global_summary = dataset
 		except:
-			TID, configuration = self.__read_static_configuration_data(directory=directory, doserate=doserate)
+			Temperature, header, global_summary= self._read_summary_data(directory=directory)
+
+		color=iter(sns.color_palette('deep')*3)
+		t_mean = np.array(global_summary[:,header.index('adc_TEMP_mean')], dtype=float)
+		t_std  = np.array(global_summary[:,header.index('adc_TEMP_std')], dtype=float)
+		vref_actual = np.array(global_summary[:,header.index('ADC_VREF_calibrated')], dtype=float)
+		vref_ideal = 825
+		t_mean_mv = (vref_actual/(2**12))*t_mean
+		t_std_mv = (vref_actual/(2**12))*t_std
+
+		fig = plt.figure(figsize=(8,6))
+		ax = plt.gca()
+		ax2 = ax.twinx()
+		ax.get_yaxis().tick_left()
+
+		ax2.plot(Temperature, t_mean, 'x', label='Temperature sensor (mean raw ADC code)',color='blue')
+		ax2.errorbar(Temperature, t_mean, color='blue', yerr=3*t_std, xerr=2, linestyle='None', marker='', alpha = 0.3, lw = 2, label='measure error')
+		ax2.set_ylim([2**12/8*1.2, 2**12/8*2.5])
+		ax2.set_ylabel('ADC output code', fontsize=16)
+
+		ax.plot(Temperature, t_mean_mv, 'x', label='Temperature sensor (normalised for actual Vref)',color='red')
+		ax.errorbar(Temperature, t_mean_mv, color='red', yerr=3*t_std_mv, xerr=2, linestyle='None', marker='', alpha = 0.3, lw = 2, label='measure error')
+		ax.set_ylim([vref_ideal/8*1.2, vref_ideal/8*2.5])
+		ax.set_ylabel('mV', fontsize=16)
+
+		lines, labels = ax.get_legend_handles_labels()
+		lines2, labels2 = ax2.get_legend_handles_labels()
+		leg = ax2.legend(lines + lines2, labels + labels2, loc=0, fontsize = 10, frameon=True )
+
+		leg.get_frame().set_linewidth(1.0)
+
+		ax.get_xaxis().tick_bottom();
+		ax.set_xlim([-40, 60])
+		ax.set_xticks(list(range(-40,61, 10)))
+		ax.xaxis.set_minor_locator(MultipleLocator(2.5))
+		ax.grid(which='major', axis='x', linestyle='--')
+		ax.grid(which='minor', axis='x', linestyle='--')
+
+
+		ax.set_xlabel(r"Temperature ($^\circ$C)", fontsize=16)
+		plt.xticks(fontsize=12)
+		plt.savefig(directory+'/climatic_adc_temperature_sensor_mV.png', bbox_inches="tight");
+
+
+
+
+	def plot_configuration_val(self, parameters = [], name='',  ylabel = '', ylim=False, newfigure=True, directory='../SSA_Results/climatic/', dlabel='', dataset='calculate'):
+		try:
+			Temperature, configuration = dataset
+		except:
+			Temperature, configuration = self._read_static_configuration_data(directory=directory)
 		if(newfigure): fig = plt.figure(figsize=(8,6))
 		color=iter(sns.color_palette('deep')*3)
 		ax = plt.subplot(111)
 		for par in parameters:
 			values = configuration[ configuration[:,:,1] == par][:, 2]
-			plt.semilogx(TID, values, 'x', label=par)
+			plt.plot(Temperature, values, 'x', label=par)
 		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
 		leg.get_frame().set_linewidth(1.0)
 		ax.get_xaxis().tick_bottom();
 		ax.get_yaxis().tick_left()
-		ax.set_xlim([1E5, 1E9])
+		ax.set_xlim([-40, 60])
+		ax.set_xticks(list(range(-40,61, 10)))
+		ax.xaxis.set_minor_locator(MultipleLocator(2.5))
+		ax.grid(which='major', axis='x', linestyle='--')
+		ax.grid(which='minor', axis='x', linestyle='--')
+		ax.set_yticks(range(0,33,4))
 		if(ylim): ax.set_ylim(ylim)
 		else: ax.set_ylim(auto=True)
 		plt.ylabel(ylabel, fontsize=16)
-		plt.xlabel('TID [rad]', fontsize=16)
+		plt.xlabel(r"Temperature ($^\circ$C)", fontsize=16)
 		plt.xticks(fontsize=12)
 		#plt.yticks(np.arange(10, 30, 2), fontsize=12)
 		if(newfigure):
@@ -416,58 +435,98 @@ class SSA_test_climatic_chamber():
 			plt.close()
 
 
-	def plot_fe_noise_evolution(self, directory='../SSA_Results/climatic_LDR/', doserate = 0.512E6, dataset='calculate'):
+	def plot_configuration_val_vref(self, parameters = [], name='',  ylabel = '', ylim=False, newfigure=True, directory='../SSA_Results/climatic/', dlabel='', dataset='calculate'):
 		try:
-			TID, header, global_summary, TID_list, fe_gain, noise = dataset
+			Temperature, configuration = dataset
 		except:
-			TID, header, global_summary = self.__read_summary_data(  directory=directory, doserate=doserate)
-			TID_list, fe_gain, noise    = self.__read_frontend_data( directory=directory, doserate=doserate)
-		fig = plt.figure(figsize=(8,6))
-		ax = plt.subplot(111)
-		ax.get_xaxis().tick_bottom()
-		ax.get_yaxis().tick_left()
-		x = np.sort(TID_list)
-		plt.ylabel("Front-End Noise", fontsize=16)
-		plt.xlabel('TID [rad]', fontsize=16)
-		ser = noise[1.2][:,0,1:]
-		#return ser, x
-		noise_mean = np.array([np.mean(ser[i,:]) for i in range(len(x)) ])
-		noise_std  = np.array([ np.std(ser[i,:]) for i in range(len(x)) ])
-		xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
-		helper_y3 = scipy_interpolate.make_interp_spline(x, noise_mean)
-		noise_mean_smooth = helper_y3(xnew)
-		helper_y3 = scipy_interpolate.make_interp_spline(x, noise_std)
-		noise_std_smooth = helper_y3(xnew)
-		#noise_hat = scypy_signal.savgol_filter(x = noise_mean_smooth , window_length = 999, polyorder = 5)
-		color=iter(sns.color_palette('deep'))
-		c = next(color)
-		#plt.fill_between(xnew, noise_mean_smooth - noise_std_smooth,  noise_mean_smooth + noise_std_smooth, color=c, alpha = 0.3, lw = 0)
-		plt.semilogx(x, noise_mean, 'x', color='red', lw=1, label="noise mean")
-		plt.errorbar(x, noise_mean, color='red', yerr=noise_std, linestyle='None', marke='', alpha = 0.3, lw = 2, label='noise std')
-		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
-		leg.get_frame().set_linewidth(1.0)
+			Temperature, configuration = self._read_static_configuration_data(directory=directory)
+		if(newfigure): fig = plt.figure(figsize=(8,6))
+		color=iter(sns.color_palette('deep')*3)
+		ax = plt.gca()
+		ax2 = ax.twinx()
+		for par in parameters:
+			values = configuration[ configuration[:,:,1] == par][:, 2]
+			ax.plot(Temperature, values, 'x', label=par)
+		for par in ['ADC_VREF']:
+			values = configuration[ configuration[:,:,1] == par][:, 2]
+			ax2.plot(Temperature, values, 'x', label=par)
+
 		ax.get_xaxis().tick_bottom();
 		ax.get_yaxis().tick_left()
-		ax.set_ylim([0,2])
-		plt.ylabel('Noise [ThDAC LSB]', fontsize=16)
-		plt.xlabel('TID [rad]', fontsize=16)
-		plt.xticks(fontsize=12)
-		plt.yticks(fontsize=12)
-		plt.savefig(directory+'/climatic_noise_mean_errorbars.png', bbox_inches="tight");
-		plt.close()
+		ax.set_xlim([-40, 60])
+		ax.set_xlabel(r"Temperature ($^\circ$C)", fontsize=16)
+		ax.set_xticks(list(range(-40,61, 10)))
+		ax.xaxis.set_minor_locator(MultipleLocator(2.5))
+		ax.grid(which='major', axis='x', linestyle='--')
+		ax.grid(which='minor', axis='x', linestyle='--')
+		if(ylim): ax.set_ylim(ylim)
+		else: ax.set_ylim(auto=True)
+		ax.set_ylabel('Calibration DAC Code', fontsize=16)
+		ax2.set_ylim([0, 32])
+		ax2.set_ylabel('ADC-Vref DAC Code', fontsize=16)
+
+		lines, labels = ax.get_legend_handles_labels()
+		lines2, labels2 = ax2.get_legend_handles_labels()
+		leg = ax2.legend(lines + lines2, labels + labels2, loc=0, fontsize = 10, frameon=True )
+		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
+		leg.get_frame().set_linewidth(1.0)
+
+		#plt.yticks(np.arange(10, 30, 2), fontsize=12)
+		if(newfigure):
+			plt.savefig(directory+'/climatic_'+name+'configuration_setting.png', bbox_inches="tight");
+			plt.close()
 
 
-	def plot_fe_gain_evolution(self, directory='../SSA_Results/climatic_LDR/', doserate = 0.512E6, dataset='calculate', dlabel='', newfigure=1, color='red'):
+	def plot_fe_noise_evolution(self, directory='../SSA_Results/climatic_LDR/', dataset='calculate', dlabel='', newfigure=1, color='red'):
 		try:
-			TID, header, global_summary, TID_list, fe_gain, noise = dataset
+			Temperature, header, global_summary, Temperature_list, fe_gain, noise = dataset
 		except:
-			TID, header, global_summary = self.__read_summary_data(  directory=directory, doserate=doserate)
-			TID_list, fe_gain, noise    = self.__read_frontend_data( directory=directory, doserate=doserate)
+			Temperature, header, global_summary = self._read_summary_data(  directory=directory)
+			Temperature_list, fe_gain, noise    = self._read_frontend_data( directory=directory)
 		if(newfigure): fig = plt.figure(figsize=(8,6))
 		ax = plt.subplot(111)
 		ax.get_xaxis().tick_bottom()
 		ax.get_yaxis().tick_left()
-		x = np.sort(TID_list)
+		x = Temperature_list
+		plt.ylabel("Front-End Noise", fontsize=16)
+		plt.xlabel(r"Temperature ($^\circ$C)", fontsize=16)
+		ser = np.array(noise[1.2][:,0,1:])
+		noise_mean = np.array([np.mean(ser[i,:]) for i in range(len(x)) ])
+		noise_std  = np.array([ np.std(ser[i,:]) for i in range(len(x)) ])
+		xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
+		plt.plot(x, noise_mean, 'x', color=color, lw=1, label="Front-End mean noise - no sensor connected {:s}".format(dlabel))
+		plt.errorbar(x, noise_mean, color=color, yerr=noise_std*2, linestyle='None', marker='', alpha = 0.3, lw = 2, label=r'2$\sigma$ range {:s}'.format(dlabel))
+		plt.errorbar(x, noise_mean, color=color, xerr=2, linestyle='None', marker='', alpha = 0.3, lw = 2, label='temperature measurement error {:s}'.format(dlabel))
+		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
+		leg.get_frame().set_linewidth(1.0)
+		ax.get_xaxis().tick_bottom();
+		ax.get_yaxis().tick_left()
+		ax.set_xlim([-40, 60])
+		ax.set_ylim([1.0, 1.7])
+		ax.set_xticks(list(range(-40,61, 10)))
+		#ax.set_yticks(list(range(240,351, 10)))
+		ax.xaxis.set_minor_locator(MultipleLocator(2.5))
+		ax.grid(which='major', axis='x', linestyle='--')
+		ax.grid(which='minor', axis='x', linestyle='--')
+		plt.ylabel('Noise [e-]', fontsize=16)
+		plt.xlabel(r"Temperature ($^\circ$C)", fontsize=16)
+		plt.xticks(fontsize=12)
+		plt.yticks(fontsize=12)
+		if(newfigure): plt.savefig(directory+'/climatic_noise_mean_thdac_counts.png', bbox_inches="tight");
+
+
+
+	def plot_fe_gain_evolution(self, directory='../SSA_Results/climatic_LDR/', dataset='calculate', dlabel='', newfigure=1, color='red'):
+		try:
+			Temperature, header, global_summary, Temperature_list, fe_gain, noise = dataset
+		except:
+			Temperature, header, global_summary = self._read_summary_data(  directory=directory)
+			Temperature_list, fe_gain, noise    = self._read_frontend_data( directory=directory)
+		if(newfigure): fig = plt.figure(figsize=(8,6))
+		ax = plt.subplot(111)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		x = np.sort(Temperature_list)
 		ser = fe_gain
 		gain_mean = np.array([np.mean(ser[i]) for i in range(len(x)) ])
 		gain_std  = np.array([ np.std(ser[i]) for i in range(len(x)) ])
@@ -480,7 +539,7 @@ class SSA_test_climatic_chamber():
 		#color=iter(sns.color_palette('deep'))
 		#c = next(color)
 		#plt.fill_between(xnew, gain_mean_smooth - gain_std_smooth,  gain_mean_smooth + gain_std_smooth, color=c, alpha = 0.3, lw = 0)
-		plt.semilogx(x, gain_mean, 'x', color=color, lw=1, label="gain mean "+str(dlabel))
+		plt.plot(x, gain_mean, 'x', color=color, lw=1, label="gain mean "+str(dlabel))
 		plt.errorbar(x, gain_mean, color=color, yerr=gain_std, linestyle='None', marker='', alpha = 0.3, lw = 2, label='gain std '+str(dlabel))
 		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
 		leg.get_frame().set_linewidth(1.0)
@@ -488,38 +547,29 @@ class SSA_test_climatic_chamber():
 		ax.get_yaxis().tick_left()
 		ax.set_ylim([45,65])
 		plt.ylabel('Gain [mV/fC]', fontsize=16)
-		plt.xlabel('TID [rad]', fontsize=16)
+		plt.xlabel(r"Temperature ($^\circ$C)", fontsize=16)
 		plt.xticks(fontsize=12)
 		plt.yticks(fontsize=12)
 		if(newfigure):
 			plt.savefig(directory+'/climatic_FE-Gain_mean_errorbars.png', bbox_inches="tight");
 			plt.close()
 
-	def plot_fe_gain_evolution_doserates(self, directory=['../SSA_Results/climatic_LDR/', '../SSA_Results/climatic_HDR/'], doserate=[0.512E6, 5.120E6], dataset=[False, False]):
-		fig = plt.figure(figsize=(8,6))
-		color=iter(sns.color_palette('deep'))
-		self.plot_fe_gain_evolution( directory=directory[0], doserate=doserate[0],  dataset=dataset[0], dlabel=' [{:5.3f} Mrad/h]'.format(doserate[0]*1e-6), newfigure=0, color=next(color))
-		next(color)
-		self.plot_fe_gain_evolution( directory=directory[1], doserate=doserate[1],  dataset=dataset[1], dlabel=' [{:5.3f} Mrad/h]'.format(doserate[1]*1e-6), newfigure=0, color=next(color))
-		plt.savefig(directory[0]+'/climatic_FE-Gain_mean_errorbars.png', bbox_inches="tight");
-		plt.savefig(directory[1]+'/climatic_FE-Gain_mean_errorbars.png', bbox_inches="tight");
-		plt.close()
 
 
 
-	def plot_fe_gain_hist(self, directory='../SSA_Results/climatic_LDR/', doserate = 0.512E6, dataset='calculate', tid_select = [0, -1], labels = [0, 100]):
+	def plot_fe_gain_hist(self, directory='../SSA_Results/climatic_LDR/', dataset='calculate', Temperature_select = [0, -1], labels = [0, 100]):
 		try:
-			TID, header, global_summary, TID_list, fe_gain, noise = dataset
+			Temperature, header, global_summary, Temperature_list, fe_gain, noise = dataset
 		except:
-			TID, header, global_summary = self.__read_summary_data(  directory=directory, doserate=doserate)
-			TID_list, fe_gain, noise    = self.__read_frontend_data( directory=directory, doserate=doserate)
+			Temperature, header, global_summary = self._read_summary_data(  directory=directory)
+			Temperature_list, fe_gain, noise    = self._read_frontend_data( directory=directory)
 		fig = plt.figure(figsize=(8,6))
 		ax = plt.subplot(111)
 		plt.style.use('seaborn-deep')
 		ax = plt.subplot(111)
 		ax.get_xaxis().tick_bottom()
 		ax.get_yaxis().tick_left()
-		for i in tid_select:
+		for i in Temperature_select:
 			#plt.text(0.95,0.95, 'FE-Geain  0Mrad' + '= {:6.2f}'.format(np.mean(fe_gain[0])),  horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=16, color='darkred')
 			#plt.text(0.95,0.90, 'FE-Geain 95Mrad' + '= {:6.2f}'.format(np.mean(fe_gain[-1])), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=16, color='darkred')
 			label = 'FE-Geain {:5.1f} Mrad (mean = {:6.2f})'.format(labels[i], np.mean(fe_gain[i]) )
@@ -536,7 +586,7 @@ class SSA_test_climatic_chamber():
 		plt.xlim(47,58)
 		plt.xticks(fontsize=16)
 		plt.yticks(fontsize=16)
-		plt.xlabel('TID [rad]', fontsize=16)
+		plt.xlabel(r"Temperature ($^\circ$C)", fontsize=16)
 		plt.ylabel('Gain [mV/fC]', fontsize=16)
 		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
 		leg.get_frame().set_linewidth(1.0)
@@ -545,22 +595,23 @@ class SSA_test_climatic_chamber():
 
 
 	##########################################################################
-	def plot_fe_noise_evolution_el(self, directory='../SSA_Results/climatic_LDR/', doserate = 0.512E6, dataset='calculate', dlabel='', newfigure=1, color='red'):
+	def plot_fe_noise_evolution_el(self, directory='../SSA_Results/climatic_LDR/', dataset='calculate', dlabel='', newfigure=1, color='red'):
 		try:
-			TID, header, global_summary, TID_list, fe_gain, noise = dataset
+			Temperature, header, global_summary, Temperature_list, fe_gain, noise = dataset
 		except:
-			TID, header, global_summary = self.__read_summary_data(  directory=directory, doserate=doserate)
-			TID_list, fe_gain, noise    = self.__read_frontend_data( directory=directory, doserate=doserate)
+			Temperature, header, global_summary = self._read_summary_data(  directory=directory)
+			Temperature_list, fe_gain, noise    = self._read_frontend_data( directory=directory)
 		if(newfigure): fig = plt.figure(figsize=(8,6))
 		ax = plt.subplot(111)
 		ax.get_xaxis().tick_bottom()
 		ax.get_yaxis().tick_left()
-		x = TID_list
+		x = Temperature_list
 		plt.ylabel("Front-End Noise", fontsize=16)
-		plt.xlabel('TID [rad]', fontsize=16)
+		plt.xlabel(r"Temperature ($^\circ$C)", fontsize=16)
 		ser = []
-		#return global_summary, header, TID_list, noise, fe_gain
-		for i in range(len(TID_list)):
+
+		#return global_summary, header, Temperature_list, noise, fe_gain
+		for i in range(len(Temperature_list)):
 			ser.append(
 				self.Convert_Noise_dac_to_electrons(
 					noise = noise[1.2][i ,0,1:],
@@ -570,55 +621,72 @@ class SSA_test_climatic_chamber():
 		noise_mean = np.array([np.mean(ser[i,:]) for i in range(len(x)) ])
 		noise_std  = np.array([ np.std(ser[i,:]) for i in range(len(x)) ])
 		xnew = np.linspace(np.min(x), np.max(x), 1001, endpoint=True)
-		helper_y3 = scipy_interpolate.make_interp_spline(x, noise_mean)
-		noise_mean_smooth = helper_y3(xnew)
-		helper_y3 = scipy_interpolate.make_interp_spline(x, noise_std)
-		noise_std_smooth = helper_y3(xnew)
-		#noise_hat = scypy_signal.savgol_filter(x = noise_mean_smooth , window_length = 999, polyorder = 5)
-		#color=iter(sns.color_palette('deep'))
-		#c = next(color)
-		#plt.fill_between(xnew, noise_mean_smooth - noise_std_smooth,  noise_mean_smooth + noise_std_smooth, color=c, alpha = 0.3, lw = 0)
-		plt.semilogx(x, noise_mean, 'x', color=color, lw=1, label="noise mean {:s}".format(dlabel))
-		plt.errorbar(x, noise_mean, color=color, yerr=noise_std, linestyle='None', marker='', alpha = 0.3, lw = 2, label='noise std {:s}'.format(dlabel))
+		plt.plot(x, noise_mean, 'x', color=color, lw=1, label="Front-End mean noise - no sensor connected {:s} \n(Standard deviation of the error function fitting the S-curve.\n Strip FE Gain evaluated from the local threshold at 1fC and 2fC)".format(dlabel))
+		plt.errorbar(x, noise_mean, color=color, yerr=noise_std*2, linestyle='None', marker='', alpha = 0.3, lw = 2, label=r'2$\sigma$ range {:s}'.format(dlabel))
+		plt.errorbar(x, noise_mean, color=color, xerr=2, linestyle='None', marker='', alpha = 0.3, lw = 2, label='temperature measurement error {:s}'.format(dlabel))
 		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
 		leg.get_frame().set_linewidth(1.0)
 		ax.get_xaxis().tick_bottom();
 		ax.get_yaxis().tick_left()
-		ax.set_ylim([150,450])
-		plt.ylabel('Noise [e]', fontsize=16)
-		plt.xlabel('TID [rad]', fontsize=16)
+		ax.set_xlim([-40, 60])
+		ax.set_ylim([240, 351])
+		ax.set_xticks(list(range(-40,61, 10)))
+		ax.set_yticks(list(range(240,351, 10)))
+		ax.xaxis.set_minor_locator(MultipleLocator(2.5))
+		ax.grid(which='major', axis='x', linestyle='--')
+		ax.grid(which='minor', axis='x', linestyle='--')
+		plt.ylabel('Noise [e-]', fontsize=16)
+		plt.xlabel(r"Temperature ($^\circ$C)", fontsize=16)
 		plt.xticks(fontsize=12)
 		plt.yticks(fontsize=12)
-		if(newfigure): plt.savefig(directory+'/climatic_noise_mean_electrons.png', bbox_inches="tight");
+		if(newfigure): plt.savefig(directory+'/climatic_noise_mean_electrons_b.png', bbox_inches="tight");
 
-
-	def plot_fe_noise_evolution_el_doserates(self, directory=['../SSA_Results/climatic_LDR/', '../SSA_Results/climatic_HDR/'], doserate=[0.512E6, 5.120E6], dataset=[False, False]):
-		fig = plt.figure(figsize=(8,6))
-		color=iter(sns.color_palette('deep'))
-		self.plot_fe_noise_evolution_el( directory=directory[0], doserate=doserate[0],  dataset=dataset[0], dlabel=' [{:5.3f} Mrad/h]'.format(doserate[0]*1e-6), newfigure=0, color=next(color))
-		next(color)
-		self.plot_fe_noise_evolution_el( directory=directory[1], doserate=doserate[1],  dataset=dataset[1], dlabel=' [{:5.3f} Mrad/h]'.format(doserate[1]*1e-6), newfigure=0, color=next(color))
-		plt.savefig(directory[0]+'/climatic_doserate_noise_mean_electrons.png', bbox_inches="tight");
-		plt.savefig(directory[1]+'/climatic_doserate_noise_mean_electrons.png', bbox_inches="tight");
-		plt.close()
-
-
-
-
-
-	def plot_fe_noise_hist(self, directory='../SSA_Results/climatic_LDR/', doserate = 0.512E6, dataset='calculate', tid_select = [0, -1], labels = [0, 100]):
+	##########################################################################
+	def plot_ADC_VREF(self, directory='../SSA_Results/climatic/', dataset='calculate', newfigure=1):
 		try:
-			TID, header, global_summary, TID_list, fe_gain, noise = dataset
+			Temp, header, global_summary, Temp2, fe_gain, noise = dataset
 		except:
-			TID, header, global_summary = self.__read_summary_data(  directory=directory, doserate=doserate)
-			TID_list, fe_gain, noise    = self.__read_frontend_data( directory=directory, doserate=doserate)
+			Temp, header, global_summary = self._read_summary_data(  directory=directory)
+		Temperature_list, vref_list    = self._read_ADC_VREF_data( directory=directory)
+		Temperature_list, iref_list    = self._read_ADC_IREF_data( directory=directory)
+
+		if(newfigure): fig = plt.figure(figsize=(8,6))
+		ax = plt.subplot(111)
+		ax.get_xaxis().tick_bottom()
+		ax.get_yaxis().tick_left()
+		plt.ylabel("VREF [mV]", fontsize=16)
+		plt.xlabel(r"Configuration code", fontsize=16)
+		color=iter(sns.color_palette('deep')*5)
+		for pltcnt in range(len(Temperature_list)):
+			plt.plot(vref_list[pltcnt][:,0], vref_list[pltcnt][:,1]*1E3, 'x', color=next(color), lw=1, label="T=${:3d}^\circ$C".format(Temperature_list[pltcnt]))
+		leg = ax.legend(fontsize = 8, frameon=True, ncol=2) #loc=('lower right')
+		leg.get_frame().set_linewidth(1.0)
+		ax.get_xaxis().tick_bottom();
+		ax.get_yaxis().tick_left()
+		ax.set_xlim([0, 32])
+		ax.set_ylim([600, 900])
+		ax.set_xticks(list(range(0,33, 2)))
+		ax.set_yticks(list(range(600,901, 25)))
+		ax.xaxis.set_minor_locator(MultipleLocator(1))
+		ax.grid(which='major', axis='x', linestyle='--')
+		ax.grid(which='minor', axis='x', linestyle='--')
+		if(newfigure): plt.savefig(directory+'/climatic_ADC_VREF__caracteristics.png', bbox_inches="tight");
+
+		
+
+	def plot_fe_noise_hist(self, directory='../SSA_Results/climatic_LDR/', dataset='calculate', Temperature_select = [0, -1], labels = [0, 100]):
+		try:
+			Temperature, header, global_summary, Temperature_list, fe_gain, noise = dataset
+		except:
+			Temperature, header, global_summary = self._read_summary_data(  directory=directory)
+			Temperature_list, fe_gain, noise    = self._read_frontend_data( directory=directory)
 		fig = plt.figure(figsize=(8,6))
 		ax = plt.subplot(111)
 		plt.style.use('seaborn-deep')
 		ax = plt.subplot(111)
 		ax.get_xaxis().tick_bottom()
 		ax.get_yaxis().tick_left()
-		for i in tid_select:
+		for i in Temperature_select:
 			#plt.text(0.95,0.95, 'FE-Geain  0Mrad' + '= {:6.2f}'.format(np.mean(fe_gain[0])),  horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=16, color='darkred')
 			#plt.text(0.95,0.90, 'FE-Geain 95Mrad' + '= {:6.2f}'.format(np.mean(fe_gain[-1])), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=16, color='darkred')
 
@@ -638,51 +706,12 @@ class SSA_test_climatic_chamber():
 		plt.xlim(200,450)
 		plt.xticks(fontsize=16)
 		plt.yticks(fontsize=16)
-		plt.xlabel('TID [rad]', fontsize=16)
+		plt.xlabel(r"Temperature ($^\circ$C)", fontsize=16)
 		plt.ylabel('Noise [e-]', fontsize=16)
 		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
 		leg.get_frame().set_linewidth(1.0)
 		plt.savefig(directory+'/climatic_noise_e_hist.png', bbox_inches="tight");
 		plt.close()
-
-
-
-	def plot_results_old(self, directory='../SSA_Results/climatic/', doserate = 0.512E6):
-
-		######################################################################
-		fig = plt.figure(figsize=(8,6))
-		ax = plt.subplot(111)
-		plt.style.use('seaborn-deep')
-		ax = plt.subplot(111)
-		ax.get_xaxis().tick_bottom()
-		ax.get_yaxis().tick_left()
-		for i in [0, -1]:
-			val = ser[:,i]
-			#plt.text(0.95,0.95, 'FE-Geain  0Mrad' + '= {:6.2f}'.format(np.mean(fe_gain[0])),  horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=16, color='darkred')
-			#plt.text(0.95,0.90, 'FE-Geain 95Mrad' + '= {:6.2f}'.format(np.mean(fe_gain[-1])), horizontalalignment='right',verticalalignment='top', transform=ax.transAxes, fontsize=16, color='darkred')
-			if(i==0): label = 'FE-Noise 0 Mrad' + '(mean = {:6.2f})'.format(np.mean(val[0]))
-			else:     label = 'FE-Noise 95 Mrad' + '(mean = {:6.2f})'.format(np.mean(val[-1]))
-			bn = np.arange(min(val), max(val), 4)
-			plt.hist(val,  density=True, bins = bn, alpha = 0.7, label=label)
-			xt = plt.xticks()[0] # find minimum and maximum of xticks to know where we should compute theoretical distribution
-			xmin, xmax = min(xt), max(xt)
-			lnspc = np.linspace(xmin, xmax, len(val))
-			m, s = scipy_stats.norm.fit(val) # get mean and standard deviation
-			pdf_g = scipy_stats.norm.pdf(lnspc, m, s) # now get theoretical values in our interval
-			plt.plot(lnspc, pdf_g, 'r') # plot i
-			valmean = np.mean(val)
-
-		#plt.xlim(47,58)
-		plt.xticks(fontsize=16)
-		plt.yticks(fontsize=16)
-		plt.xlabel('Noise [e]', fontsize=16)
-		plt.ylabel('Normalised dist', fontsize=16)
-		leg = ax.legend(fontsize = 10, frameon=True ) #loc=('lower right')
-		leg.get_frame().set_linewidth(1.0)
-		plt.savefig(directory+'/climatic_Noise_hist.png', bbox_inches="tight");
-		plt.close()
-
-
 
 
 	def Convert_Noise_dac_to_electrons(self, noise, ThDAC_Gain, FE_Gain): # use [lsb - mV/lsb - mV/fC]
