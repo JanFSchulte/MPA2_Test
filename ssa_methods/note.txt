@@ -21,19 +21,19 @@ fc7.write("cnfg_ssa_scanchain_is_test_mode",1)
 def restart_test(self):
 		fc7.write("cnfg_ssa_scanchain_start_test",0)
 
-	def enable_scanchain(self, val=1):
-		fc7.write("cnfg_dio5_en" ,1)
-		fc7.write("cnfg_dio5_ch1_out_en", 1)
-		fc7.write("cnfg_dio5_ch2_out_en", 1)
-		fc7.write("cnfg_dio5_ch3_out_en", 1)
-		fc7.write("cnfg_dio5_ch4_out_en", 1)
-		fc7.write("cnfg_dio5_ch5_out_en", 1)
-		#fc7.write("cnfg_ddr3_scanchain_test_enable",1)
-		#fc7.write("cnfg_ssa_scanchain_is_scanchain_test",1)
+def enable_scanchain(self, val=1):
+	fc7.write("cnfg_dio5_en" ,1)
+	fc7.write("cnfg_dio5_ch1_out_en", 1)
+	fc7.write("cnfg_dio5_ch2_out_en", 1)
+	fc7.write("cnfg_dio5_ch3_out_en", 1)
+	fc7.write("cnfg_dio5_ch4_out_en", 1)
+	fc7.write("cnfg_dio5_ch5_out_en", 1)
+	#fc7.write("cnfg_ddr3_scanchain_test_enable",1)
+	#fc7.write("cnfg_ssa_scanchain_is_scanchain_test",1)
 
-	def prova2(self):
-		fc7.write("cnfg_ssa_scanchain_start_test",0)
-		fc7.write("cnfg_ssa_scanchain_start_test",1)
+def prova2(self):
+	fc7.write("cnfg_ssa_scanchain_start_test",0)
+	fc7.write("cnfg_ssa_scanchain_start_test",1)
 
 
 
