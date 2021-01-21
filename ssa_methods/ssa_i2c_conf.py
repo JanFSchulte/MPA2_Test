@@ -270,10 +270,13 @@ class ssa_i2c_conf:
 					return 'Null'
 				strip_id = strip-1 if (strip is not 'all') else 0x7f
 				base = self.tonumber(self.ssa_strip_reg_map[register]['adr'],0)
+				isreadonly = (self.ssa_strip_reg_map[register]['permissions'] == 'R')
+				adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111) | isreadonly<<7
+				#print(isreadonly)
 			else:
 				strip_id = strip if (strip is not 'all') else 0x00
 				base = self.tonumber(self.ssa_strip_reg_map[register],0)
-			adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
+				adr  = ((base & 0x000f) << 8 ) | (strip_id & 0b01111111)
 			repd = self.read_I2C(self.chip_adr, adr)
 			if(V>=2): strip_id+=1 # for print purposes only
 			if(repd == None):

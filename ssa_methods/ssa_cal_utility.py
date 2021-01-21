@@ -139,7 +139,7 @@ class SSA_cal_utility():
 			filename2 -> 'string'        -> Additional string to complete the filename
 			msg       -> internal use
 		'''
-		#self.fc7.reset()
+		#self.fc7.reset()f
 		#[cr_ok, cr_countershift, cr_mean] = self.align_counters_readout(threshold=100, amplitude=200, duration=1)
 		#if(not cr_ok):
 		#	utils.print_error('->  Asyncronous counters not working properly')
@@ -296,16 +296,17 @@ class SSA_cal_utility():
 					CSV.ArrayToCSV (array = scurves, filename = fo, transpose = True)
 					utils.print_log( "->  Data saved in" + fo)
 
-			if(np.sum(scurves[:,10:110] )<100):
+			if(rdmode=='fast' and np.sum(scurves[:,10:110] )<100):
 				if(evaluate_cn>4):
 					utils.print_error("-X\tError in S-Curve evaluation {:d}".format(np.sum(scurves[50:100,:])))
 					return False
 				utils.print_warning("-X\tIssue in S-Curve evaluation. Reiterating.. {:d}".format(np.sum(scurves[50:100,:])))
 				utils.print_warning("  \tTry to call: ssa_cal.align_counters_readout() to align the readout")
 			else: evaluate_sc = False
-		for i in range(120):
-			if(np.sum(scurves[:,i])==0):
-				utils.print_warning("X>\tScurve consant to 0 for strip {:d}".format(i))
+		if(rdmode=='fast'):
+			for i in range(120):
+				if(np.sum(scurves[:,i])==0):
+					utils.print_warning("X>\tScurve constant to 0 for strip {:d}".format(i))
 		#### utils.print_log("\n\n" , (time.time()-time_init))
 		if(plot == True): plt.clf()
 		plt.ylim(0,3000); plt.xlim(0,150);
