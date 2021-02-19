@@ -166,12 +166,9 @@ class Utilities:
 			sys.stdout = open(os.devnull, "w")
 
 	def activate_I2C_chip(self, fc7_if, pr = ''):
-		if(not pr == 'debug'):
-			self.print_enable(False)
-		fc7_if.activate_I2C_chip()
-		if(not pr == 'debug'):
-			self.print_enable(True)
-		if(pr == 'print'):
+		verbose = (pr == 'debug')
+		fc7_if.activate_I2C_chip(verbose=verbose)
+		if(pr == 'print' or pr == 'debug'):
 			print('->  \tEnabled I2C master for chips control')
 
 	def date_time(self, format='print'):

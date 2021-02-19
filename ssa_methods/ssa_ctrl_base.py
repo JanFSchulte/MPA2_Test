@@ -258,6 +258,7 @@ class ssa_ctrl_base:
 
 	def phase_tuning(self, method = 'new'):
 		self.activate_readout_shift()
+		print("->  Phase tuning performed with the {:s} method. ".format(method))
 		if(self.fc7.invert):
 			self.set_shift_pattern_all(0b01111111)
 		elif(method == 'old'):

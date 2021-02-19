@@ -24,6 +24,37 @@ class SSA_test_utility():
 		self.cal = cal; self.pwr = pwr; self.seuutil = seuutil;
 		self.striplist = []
 
+	def stub_and_l1_fast(self, iterations = 10, run_time=1, display=0, compare_del=73, reset_fc7=True, align=True, latency=101, l1_rate=1000):
+
+		if(l1_rate != 0):  l1a_period = np.int( (40E3/l1_rate)-1)
+		else: l1a_period = 0xffff
+
+		if(reset_fc7): self.fc7.SendCommand_CTRL("global_reset");
+		time.sleep(0.1);
+		if(align): self.ssa.init(edge = 'rising', display = True)
+		CL_ok_t, LA_ok_t, L1_ok_t, LH_ok_t, CL_er_t, LA_er_t, L1_er_t, LH_er_t = [0]*8
+
+		for iter in range(int(iterations)):
+			striplist, centroids, hip_hits, hip_flags  = self.generate_clusters(
+				nclusters=8, min_clsize=1, max_clsize=2, smin=1,
+				smax=119, HIP_flags=True)
+			results = self.seuutil.Run_Test_SEU(
+				check_stub=True, check_l1=True, check_lateral=False, create_errors = False,
+				strip = striplist, centroids=centroids, hipflags = hip_hits, delay = compare_del, run_time = run_time,
+				cal_pulse_period = 1, l1a_period = l1a_period, latency = latency, display = display, stop_if_fifo_full = 1, reset_fc7=False, align=False)
+			[CL_ok, LA_ok, L1_ok, LH_ok, CL_er, LA_er, L1_er, LH_er, test_duration, fifo_full_stub, fifo_full_L1, fc7_alignment_status]  = results
+			CL_ok_t += CL_ok; L1_ok_t += L1_ok; LH_ok_t += LH_ok;
+			CL_er_t += CL_er; L1_er_t += L1_er; LH_er_t += LH_er;
+			utils.print_info("->  Active strips     -> " + str(striplist))
+			utils.print_info("->  HIP strips        -> " + str(hip_hits))
+			utils.print_info("->  L1 Latency        -> " + str(latency))
+			utils.print_warning("->  Total Stub errors     -> {:9.6f} %   - {:8d} / {:5.3e}] ".format(100.0*CL_er_t/(CL_er_t+CL_ok_t), CL_er_t, CL_ok_t) )
+			utils.print_warning("->  Total L1 header error -> {:9.6f} %   - {:8d} / {:5.3e}] ".format(100.0*LH_er_t/(LH_er_t+LH_ok_t), LH_er_t, LH_ok_t) )
+			utils.print_warning("->  Total L1 data errors  -> {:9.6f} %   - {:8d} / {:5.3e}] ".format(100.0*L1_er_t/(L1_er_t+L1_ok_t), L1_er_t, L1_ok_t) )
+
+
+
+
 	##############################################################
 	def cluster_data(self, mode = "digital",  nstrips = 'random', min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = True, word_alignment='auto'):
 		fo = open(file + "readout_cluster-data_" + mode + ".csv", filemode)

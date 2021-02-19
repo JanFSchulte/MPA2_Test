@@ -584,13 +584,16 @@ class SSA_SEU_utilities():
 		full       = self.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
 		n_in_fifo  = self.fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo") - correction
 		n_correct  = self.fc7.read("stat_phy_l1_slvs_compare_number_good_data")
-		n_headers  = self.fc7.read("stat_phy_l1_slvs_compare_number_l1_headers_found")
 		n_triggers = self.fc7.read("stat_phy_l1_slvs_compare_number_l1_triggers") - 1
+		n_headers  = self.fc7.read("stat_phy_l1_slvs_compare_number_l1_headers_found")
+
 		if(intermediate):
 			logmode = 'log'
 			n_in_fifo -= 2
 		else:
 			logmode = 'info'
+		trig_diff = n_triggers-n_headers
+		if(trig_diff==(-1)): trig_diff=0
 		if(header and display>0):
 			utils.print("________________________________________________________________________________________", logmode)
 		if(display==2):
@@ -598,11 +601,11 @@ class SSA_SEU_utilities():
 			utils.print("->  SEU L1-Data       -> Full Flag:          %12d "           % (full), logmode)
 			utils.print("->  SEU L1-Data       -> Correct events:     %12d (%10.6f%%)" % (n_correct, 100*np.float(n_correct)/(n_triggers)), logmode)
 			utils.print("->  SEU L1-Data       -> Packets with Error: %12d (%10.6f%%)" % (n_in_fifo,  100*np.float(n_in_fifo)/(n_triggers)), logmode)
-			utils.print("->  SEU L1-Data       -> Packets Missing:    %12d (%10.6f%%)" % ((n_triggers-n_headers),  (100*np.float(n_triggers-n_headers))/n_triggers), logmode)
+			utils.print("->  SEU L1-Data       -> Packets Missing:    %12d (%10.6f%%)" % ((trig_diff),  (100*np.float(trig_diff))/n_triggers), logmode)
 		elif(display==1):
 			utils.print("->  SEU L1-Data       -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (n_correct, (100*np.float(n_correct)/(n_correct+n_in_fifo+1E-9)), n_in_fifo,  (100*np.float(n_in_fifo)/(n_correct+n_in_fifo+1E-9)) ), logmode)
-			utils.print("->  SEU L1-Headers    -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (n_headers, 100*(1-np.float(n_triggers-n_headers)/(n_triggers+1E-9)) , (n_triggers - n_headers), 100*(np.float(n_triggers - n_headers)/(n_triggers+1E-9)) ) , logmode)
-		return [n_correct, n_in_fifo, n_headers, (n_triggers-n_headers)]
+			utils.print("->  SEU L1-Headers    -> %12d (%10.6f%%)  |  %12d (%10.6f%%)" % (n_headers, 100*(1-np.float(trig_diff)/(n_triggers+1E-9)) , (n_triggers - n_headers), 100*(np.float(n_triggers - n_headers)/(n_triggers+1E-9)) ) , logmode)
+		return [n_correct, n_in_fifo, n_headers, (trig_diff)]
 
 	##############################################################
 	def Stub_printinfo(self, message = '', display = 2, header = 0, logmode='log'):

@@ -26,6 +26,7 @@ from ssa_methods.ssa_scanchain_test import *
 
 ipaddr, fc7AddrTable, fc7_if = configure_communication()
 FC7 = fc7_com(fc7_if, fc7AddrTable)
+FC7.activate_I2C_chip(verbose=0)
 
 class SSAwp:
 	def __init__(self, index = 0, address = 0):

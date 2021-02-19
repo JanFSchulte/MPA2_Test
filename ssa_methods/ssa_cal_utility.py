@@ -39,7 +39,9 @@ class SSA_cal_utility():
 		nevents = 1000,            # Number of calibration pulses
 		iterative_step = 3,        # Iterative steps to acheive lower variability
 		filename = False,
-		return_scurves = False
+		return_scurves = False,
+		rdmode = 'fast',
+		striplist = range(1,121)
 		):
 
 		if(caldac=='evaluate'):  t_caldac = self.measure.dac_linearity(name='Bias_CALDAC', eval_inl_dnl=False, nbits=8, npoints=10, plot=False, runname='')
@@ -65,7 +67,9 @@ class SSA_cal_utility():
 				nevents = nevents,
 				display = False,
 				plot = False,
-				filename = False)
+				filename = False,
+				rdmode=rdmode,
+				striplist=striplist)
 			sc.append(scv)
 			ths, pars = self.evaluate_scurve_thresholds(scv)
 			th.append( ths )

@@ -200,6 +200,28 @@ class fc7_com():
 				ar = rt
 			return ar
 
+	def blockWrite(self, p1, p2, p3 = 0):
+		cnt = 0; ex = '';
+		rt = False; ar = [];
+		while cnt < 4:
+			try:
+				rt = self.fc7.blockWrite(p1, p2, p3)
+				break
+			except:
+				ex = sys.exc_info()
+				print('=>  \tFC7 Communication error - fc7_write_block')
+				time.sleep(0.1)
+				cnt += 1
+		if(cnt>=4):
+			print(ex)
+			return
+		else:
+			if(self.invert and rt):
+				for word in rt:
+					ar.append( ~np.uint32(word) )
+			else:
+				ar = rt
+			return ar
 
 
 	def fifoRead(self, p1, p2, p3 = 0):
