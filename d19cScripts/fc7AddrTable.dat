@@ -312,7 +312,6 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
         cnfg_dio5_ch5_out_en		40016004    00000001	 1     1 *1 - Output, 0 - Input
         cnfg_dio5_ch5_term_en		40016004    00000002	 1     1 *Enable 50 Ohm termination
         cnfg_dio5_ch5_threshold		40016004    0000ff00	 1     1 *0-255 threshold
-
 *
    cnfg_tlu_handshake_mode		40017000    00000003     1     1 *TLU handhsake mode: 0 - no handshake, 1 - simple handshake, 2 - data handshake
    cnfg_tlu_enabled			40017000    00000010     1     1 *Enable TLU block
@@ -337,11 +336,11 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
 *************   cnfg_ssa_scanchain_mask_word_to_write       4001A000    ff000000     1     1 *scanchain mask which word you want to write
 
    cnfg_ssa_scanchain_vector       4001A001    ffffffff     1     1 * scanchain input vector
-   cnfg_ssa_scanchain_response       4001A002    ffffffff     1     1 * scanchain input response
-   cnfg_ssa_scanchain_mask       4001A003    ffffffff     1     1 * scanchain input mask
+   cnfg_ssa_scanchain_response       4001A0BD    ffffffff     1     1 * scanchain input response
+   cnfg_ssa_scanchain_mask       4001A179    ffffffff     1     1 * scanchain input mask
    cnfg_ssa_scanchain_vector_word_to_write       4001A004  000000ff     1     1 * scanchain vector word to write
    cnfg_ssa_scanchain_response_word_to_write       4001A004    0000ff00     1     1 * scanchain response word to write
-   cnfg_ssa_scanchain_mask_word_to_write       4001A004    00ff0000     1     1 * scanchain mask word to write 
+   cnfg_ssa_scanchain_mask_word_to_write       4001A004    00ff0000     1     1 * scanchain mask word to write
 
 * Optical Block
    cnfg_optical_general                 4001D000    ffffffff     1     1 *General configuration sel
@@ -651,6 +650,7 @@ scanchain_comparator_negedge              4003A000    000000004     1     0
 scanchain_comparator_negedge_next         4003A000    000000008     1     0
 scanchain_comparator_miscompares          4003A000    00000fff0     1     0
 
+scanchain_test_response_o_sel             4003A001    ffffffff      1     1
 
 *--------------------------------------------------------------------
 *---------------------------- MPA SSA BOARD -------------------------

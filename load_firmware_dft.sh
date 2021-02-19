@@ -66,7 +66,17 @@ else
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_CG_enabled3.bit  -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_CG_enabled3.bit
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_CG_EN_inv.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_CG_enabled_inv_rst.bit
 	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit   
-	./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_CG_EN_inv.bit 
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_CG_EN_inv.bit  #### the last good one
+	#./bin/fc7-d19c.exe  -i $IP -n ssa_scanchain_5MHz_280121.bit -f  ~/MPA-SSA_Test/bitfiles/ssa_scanchain_5MHz_280121.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa_scanchain_dio5_290121.bit -f  ~/MPA-SSA_Test/bitfiles/ssa_scanchain_5MHz_dio5onL12_290121.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa_scanchain_dio5onL12.bit -f  ~/MPA-SSA_Test/bitfiles/ssa_scanchain_5MHz_dio5onL12_290121.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa_scanchain_L12_thr00.bit -f ~/MPA-SSA_Test/bitfiles/ssa_scanchain_5MHz_dio5onL12_thr00_020221.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_ch2.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_input_ch2_110221.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_capture.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_capture_test_150221.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_miscompare.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_miscompares_160221.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_noclkfcmd.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_noclkfcmd_170221.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfg_from_sw.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_cnfg_from_sw_170221.bit
+	./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfg_from_sw.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_cnfg_from_sw_180221.bit
 	
 	
 	cd -
