@@ -76,7 +76,14 @@ else
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_miscompare.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_miscompares_160221.bit
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_noclkfcmd.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_noclkfcmd_170221.bit
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfg_from_sw.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_cnfg_from_sw_170221.bit
-	./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfg_from_sw.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_cnfg_from_sw_180221.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfg_from_sw.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_cnfg_from_sw_180221.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfgsw_20MHz.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_20MHz_190221.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfg_from_sw.bit 
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfgsw_20MHz.bit 
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_5MHz_220221.bit -f    ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_5MHz_220221.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_20MHz_220221.bit -f    ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_20MHz_220221.bit
+	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_20MHz_250221.bit -f  ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_20MHz_250221.bit
+	./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_20MHz_020320.bit  -f  ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_20MHz_020320.bit
 	
 	
 	cd -

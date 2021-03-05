@@ -319,17 +319,16 @@ ipb_daq_system_cnfg			40010000    ffffffff     1     1     *Base for the configu
 *
    cnfg_ddr3_stub_debug_enable          40018000    00000001     1     1 *enable stub debug mode
 
-   cnfg_ddr3_scanchain_test_enable          40018000    00000002     1     1 *enable scanchain test mode
-
-   cnfg_ssa_scanchain_start_test         4001A000    00000001     1     1 * scanchain test start
-   cnfg_ssa_scanchain_is_scanchain_test         4001A000    00000002     1     1 * scanchain is_scan_test
-   cnfg_ssa_scanchain_is_reset_test         4001A000    00000004     1     1 * scanchain is_reset test
-   cnfg_ssa_scanchain_is_capture_test         4001A000    00000008     1     1 * scanchain is capture test
-   cnfg_ssa_scanchain_is_5MHz_clock         4001A000    00000010     1     1 * scanchain 5 mhz clk
+   cnfg_ddr3_scanchain_test_enable           40018000    00000002     1     1 *enable scanchain test mode
+   cnfg_ssa_scanchain_start_test             4001A000    00000001     1     1 * scanchain test start
+   cnfg_ssa_scanchain_is_scanchain_test      4001A000    00000002     1     1 * scanchain is_scan_test
+   cnfg_ssa_scanchain_is_reset_test          4001A000    00000004     1     1 * scanchain is_reset test
+   cnfg_ssa_scanchain_is_capture_test        4001A000    00000008     1     1 * scanchain is capture test
+   cnfg_ssa_scanchain_is_5MHz_clock          4001A000    00000010     1     1 * scanchain 5 mhz clk
    cnfg_ssa_scanchain_is_10MHz_clock         4001A000    00000020     1     1 * scanchain 10 mhz clk
    cnfg_ssa_scanchain_is_20MHz_clock         4001A000    00000040     1     1 * scanchain 20 mhz clock
-   cnfg_ssa_scanchain_is_test_mode         4001A000    00000080     1     1 * scanchain is test mode
-   cnfg_ssa_scanchain_is_continue_reset_test         4001A000    00000100     1     1 * scanchain is continue_reset_test
+   cnfg_ssa_scanchain_is_test_mode           4001A000    00000080     1     1 * scanchain is test mode
+   cnfg_ssa_scanchain_is_continue_reset_test 4001A000    00000100     1     1 * scanchain is continue_reset_test
 
 *************   cnfg_ssa_scanchain_test_vector_word_to_write        4001A000    0000ff00     1     1 * scanchain vector which word you want to write
 *************   cnfg_ssa_scanchain_expected_response_word_to_write       4001A000    00ff0000     1     1 * scanchain exp resp which word you want to write
