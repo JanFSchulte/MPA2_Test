@@ -145,14 +145,14 @@ class SSA_scanchain_test():
 			expected_response = np.int('0b' + lines[1+shift].rstrip() ,2)
 			input_mask = np.int('0b' + lines[2+shift].rstrip() ,2)
 			debug = lines[3+shift]
-			rt = mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
+			mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
 				mode='capture', reset_fw=False, reset_chip=False,
 				input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
 			if(not test_done):
 				reset();
 				utils.activate_I2C_chip(self.fc7)
 				self.enable_dio5_scanchain(threshold=10)
-				rt = mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
+				mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
 					mode='capture', reset_fw=False, reset_chip=False,
 					input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
 			if(not test_result and test_done):
@@ -163,7 +163,7 @@ class SSA_scanchain_test():
 				#print('---------')
 				#print(bin(scan_out))
 				#print('---------')
-		return mismatches
+		return len(mismatches)
 		#return rt
 
 	def launch_reset_test_all_vectors(self, nvectors=2, filename = "ssa_methods/Configuration/vectors_for_test_reset.txt", start_from=0):
@@ -186,30 +186,43 @@ class SSA_scanchain_test():
 				input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
 		#return rt
 
-	def launch_scan_test_all_vectors(self, nvectors=1, filename = "ssa_methods/Configuration/vectors_for_test_scan.txt", start_from=0):
+	def launch_scan_test_all_vectors(self, nvectors=1, filename = "ssa_methods/Configuration/vectors_for_test_scan.txt", start_from=0, repeat=1):
 		fin = open(filename, 'rt')
 		lines = fin.readlines()
 		reset(); time.sleep(0.1);
 		utils.activate_I2C_chip(self.fc7)
 		self.enable_dio5_scanchain(threshold=10)
-		for i in range(start_from, nvectors):
-			print('___________________________________')
-			print('Starting vector {:d}'.format(i))
-			shift = i*10
-			input_vector = np.int('0b' + lines[0+shift].rstrip() ,2)
-			expected_response = np.int('0b' + lines[1+shift].rstrip() ,2)
-			input_mask = np.int('0b' + lines[2+shift].rstrip() ,2)
-			debug = lines[3+shift]
-			mismatch, scan_out, scanchain_test_done, scanchain_comparator_miscompares, test_result = self.scanchain_test(
-				mode='scan', reset_fw=False, reset_chip=False,
-				input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
-			print(bin(mismatch))
-			print('---------')
-			print(bin(expected_response))
-			print('---------')
-			print(bin(scan_out))
-			print('---------')
-		#return rt
+		mismatches = []
+		for rep in range(repeat):
+			for i in range(start_from, nvectors):
+				print('___________________________________')
+				print('Starting vector {:d}'.format(i))
+				shift = i*10
+				input_vector = np.int('0b' + lines[0+shift].rstrip() ,2)
+				expected_response = np.int('0b' + lines[1+shift].rstrip() ,2)
+				input_mask = np.int('0b' + lines[2+shift].rstrip() ,2)
+				debug = lines[3+shift]
+				mismatch, scan_out, scanchain_test_done, scanchain_comparator_miscompares, test_result = self.scanchain_test(
+					mode='scan', reset_fw=True, reset_chip=False,
+					input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
+				if(not scanchain_test_done):
+					reset();
+					utils.activate_I2C_chip(self.fc7)
+					self.enable_dio5_scanchain(threshold=10)
+					mismatch, scan_out, scanchain_test_done, scanchain_comparator_miscompares, test_result = self.scanchain_test(
+						mode='scan', reset_fw=True, reset_chip=False,
+						input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
+				if(not test_result and scanchain_test_done):
+					print(bin(mismatch))
+					print('---------')
+					mismatches.append(i)
+				#print(bin(mismatch))
+				#print('---------')
+				#print(bin(expected_response))
+				#print('---------')
+				#print(bin(scan_out))
+				#print('---------')
+		return mismatches
 
 	#############################################################################
 

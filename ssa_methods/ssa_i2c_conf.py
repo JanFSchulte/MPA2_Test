@@ -11,7 +11,7 @@ class ssa_i2c_conf:
 		self.__load_reg_map(version=tbconfig.VERSION['SSA'])
 		self.__set_parameters(debug=debug)
 		self.fc7 = fc7
-		self.chip_adr = "SSA{:0d}".format(index)
+		self.chip_adr = index
 		#self.i2c_address = address
 		self.fc7AddrTable = fc7AddrTable
 

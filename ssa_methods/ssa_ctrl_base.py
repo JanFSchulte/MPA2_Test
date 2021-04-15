@@ -659,53 +659,113 @@ class ssa_ctrl_base:
 		self.fc7.write("cnfg_phy_SSA_gen_left_lateral_data_format", left)
 
 	#####################################################################
-	def read_fuses(self, pulse = True, display = True):
-		if(pulse):
-			self.I2C.peri_write('Fuse_Mode', 0b00001111)
-			self.I2C.peri_write('Fuse_Mode', 0b00000000)
-		r0 = self.I2C.peri_read('Fuse_Value_b0')
-		r1 = self.I2C.peri_read('Fuse_Value_b1')
-		r2 = self.I2C.peri_read('Fuse_Value_b2')
-		r3 = self.I2C.peri_read('Fuse_Value_b3')
-		if display:
-			utils.print_info( "{0:02x}-{1:02x}-{2:02x}-{3:02x}".format(r3, r2, r1, r0) )
+	def read_fuses(self, pulse = True, display = True, expected=False):
+		if((tbconfig.VERSION['SSA'] >= 2)):
+			self.I2C.peri_write(register='Fuse_Mode', field='Fuse_Mode', data=0b00000000)
+			if(pulse):
+				self.I2C.peri_write(register='Fuse_Mode',field='Fuse_Mode', data=0b00001111)
+				self.I2C.peri_write(register='Fuse_Mode',field='Fuse_Mode', data=0b00000000)
+			r0 = self.I2C.peri_read(register='Fuse_Value_b0', field='Fuse_Value_b0')
+			r1 = self.I2C.peri_read(register='Fuse_Value_b1', field='Fuse_Value_b1')
+			r2 = self.I2C.peri_read(register='Fuse_Value_b2', field='Fuse_Value_b2')
+			r3 = self.I2C.peri_read(register='Fuse_Value_b3', field='Fuse_Value_b3')
 		else:
-			r = (r3<<24) | (r2<<16) | (r1<<8) | (r0<<0)
-			return r
+			if(pulse):
+				self.I2C.peri_write('Fuse_Mode', 0b00001111)
+				self.I2C.peri_write('Fuse_Mode', 0b00000000)
+			r0 = self.I2C.peri_read('Fuse_Value_b0')
+			r1 = self.I2C.peri_read('Fuse_Value_b1')
+			r2 = self.I2C.peri_read('Fuse_Value_b2')
+			r3 = self.I2C.peri_read('Fuse_Value_b3')
+		fuseint = int("0x{0:02x}{1:02x}{2:02x}{3:02x}".format(r3, r2, r1, r0), 16)
+		if(expected):
+			if(expected == fuseint):
+				utils.print_good( "Match:  {0:02x}-{1:02x}-{2:02x}-{3:02x}".format(r3, r2, r1, r0))
+			else:
+				utils.print_error("Error:  {0:02x}-{1:02x}-{2:02x}-{3:02x}".format(r3, r2, r1, r0))
+		else:
+			if display:
+				utils.print_info( "{0:02x}-{1:02x}-{2:02x}-{3:02x}".format(r3, r2, r1, r0) )
+		return fuseint
 
 	#####################################################################
 	def write_fuses(self, val = 0, pulse = True, display = False, confirm = False):
-		self.setup_readout_chip_id()
-		d0 = (val >>  0) & 0xFF
-		d1 = (val >>  8) & 0xFF
-		d2 = (val >> 16) & 0xFF
-		d3 = (val >> 24) & 0xFF
-		self.I2C.peri_write('Fuse_Prog_b0', d0)
-		self.I2C.peri_write('Fuse_Prog_b1', d1)
-		self.I2C.peri_write('Fuse_Prog_b2', d2)
-		self.I2C.peri_write('Fuse_Prog_b3', d3)
-		r0 = self.I2C.peri_read('Fuse_Prog_b0')
-		r1 = self.I2C.peri_read('Fuse_Prog_b1')
-		r2 = self.I2C.peri_read('Fuse_Prog_b2')
-		r3 = self.I2C.peri_read('Fuse_Prog_b3')
-		if (((r3<<24) | (r2<<16) | (r1<<8) | (r0<<0) ) != val):
-			utils.print_error("\n->  Error in setting the e-fuses write buffer")
-			return -1
-		if(pulse):
-			if confirm:  rp = 'Y'
-			else:  rp = raw_input("\n->  Are you sure you want to write the e-fuses? [Y|n] : ")
-			if (rp == 'Y'):
-				time.sleep(0.1); self.I2C.peri_write('Fuse_Mode', 0b11110000)
-				time.sleep(0.1); self.fc7.send_test(15)
-				time.sleep(0.1); self.I2C.peri_write('Fuse_Mode', 0b00000000)
-		r = self.read_fuses(pulse = True, display = display)
-		if(r != val):
-			utils.print_error('->  E-Fuses write error: ')
-			utils.print_error('        Written:...{0:032b}'.format(val))
-			utils.print_error('        Read:......{0:032b}'.format(r))
-			return False
+		if((tbconfig.VERSION['SSA'] >= 2)):
+			self.setup_readout_chip_id()
+			d0 = (val >>  0) & 0xFF
+			d1 = (val >>  8) & 0xFF
+			d2 = (val >> 16) & 0xFF
+			d3 = (val >> 24) & 0xFF
+			self.I2C.peri_write(register='Fuse_Prog_b0', field='Fuse_Prog_b0', data=d0)
+			self.I2C.peri_write(register='Fuse_Prog_b1', field='Fuse_Prog_b1', data=d1)
+			self.I2C.peri_write(register='Fuse_Prog_b2', field='Fuse_Prog_b2', data=d2)
+			self.I2C.peri_write(register='Fuse_Prog_b3', field='Fuse_Prog_b3', data=d3)
+			r0 = self.I2C.peri_read(register='Fuse_Prog_b0', field='Fuse_Prog_b0')
+			r1 = self.I2C.peri_read(register='Fuse_Prog_b1', field='Fuse_Prog_b1')
+			r2 = self.I2C.peri_read(register='Fuse_Prog_b2', field='Fuse_Prog_b2')
+			r3 = self.I2C.peri_read(register='Fuse_Prog_b3', field='Fuse_Prog_b3')
+			if (((r3<<24) | (r2<<16) | (r1<<8) | (r0<<0) ) != val):
+				utils.print_error("\n->  Error in setting the e-fuses write buffer")
+				return -1
+			if(pulse):
+				if confirm:  rp = 'Y'
+				else:  rp = input("\n->  Are you sure you want to write the e-fuses? [Y|n] : ")
+				if (rp == 'Y'):
+					time.sleep(0.1); self.I2C.peri_write(register='Fuse_Mode',field='Fuse_Mode', data=0b11110000)
+					# time.sleep(0.1); self.fc7.send_test(15) ## On SSA 2.0 you can only use the external pulse on CalPulse input (manually given)
+					rp = input("\n->  Press enter after you gave a pulse 1.2V on the CalPulse line")
+					time.sleep(0.1); self.I2C.peri_write(register='Fuse_Mode',field='Fuse_Mode', data=0b00000000)
+					r = self.read_fuses(pulse = True, display = display)
+					if(r != val):
+						utils.print_error('->  E-Fuses write error: ')
+						utils.print_error('        Written:...{vv:032b} [0x{vv:08x}]'.format(vv=val))
+						utils.print_error('        Read:......{vv:032b} [0x{vv:08x}]'.format(vv=r))
+						return False
+					else:
+						utils.print_good('->  E-Fuses write error: ')
+						utils.print_good('        Written:...{vv:032b} [0x{vv:08x}]'.format(vv=val))
+						utils.print_good('        Read:......{vv:032b} [0x{vv:08x}]'.format(vv=r))
+						return True
+				else:
+					return False
+		#########################################
 		else:
-			return True
+			self.setup_readout_chip_id()
+			d0 = (val >>  0) & 0xFF
+			d1 = (val >>  8) & 0xFF
+			d2 = (val >> 16) & 0xFF
+			d3 = (val >> 24) & 0xFF
+			self.I2C.peri_write('Fuse_Prog_b0', d0)
+			self.I2C.peri_write('Fuse_Prog_b1', d1)
+			self.I2C.peri_write('Fuse_Prog_b2', d2)
+			self.I2C.peri_write('Fuse_Prog_b3', d3)
+			r0 = self.I2C.peri_read('Fuse_Prog_b0')
+			r1 = self.I2C.peri_read('Fuse_Prog_b1')
+			r2 = self.I2C.peri_read('Fuse_Prog_b2')
+			r3 = self.I2C.peri_read('Fuse_Prog_b3')
+			if (((r3<<24) | (r2<<16) | (r1<<8) | (r0<<0) ) != val):
+				utils.print_error("\n->  Error in setting the e-fuses write buffer")
+				return -1
+			if(pulse):
+				if confirm:  rp = 'Y'
+				else:  rp = input("\n->  Are you sure you want to write the e-fuses? [Y|n] : ")
+				if (rp == 'Y'):
+					time.sleep(0.1); self.I2C.peri_write('Fuse_Mode', 0b11110000)
+					time.sleep(0.1); self.fc7.send_test(15)
+					time.sleep(0.1); self.I2C.peri_write('Fuse_Mode', 0b00000000)
+					r = self.read_fuses(pulse = True, display = display)
+					if(r != val):
+						utils.print_error('->  E-Fuses write error: ')
+						utils.print_error('        Written:...{0:032b}'.format(val))
+						utils.print_error('        Read:......{0:032b}'.format(r))
+						return False
+					else:
+						utils.print_good('->  E-Fuses write error: ')
+						utils.print_good('        Written:...{0:032b}'.format(val))
+						utils.print_good('        Read:......{0:032b}'.format(r))
+						return True
+				else:
+					return False
 
 	#####################################################################
 	def read_seu_counter(self, display=True, return_rate=False, return_short_array=False, printmode='info', sync=1, async=1, filename=False):

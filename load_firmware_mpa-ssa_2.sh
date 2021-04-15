@@ -50,42 +50,7 @@ else
 	printf '\n->  Testbench correctly found on %s\n' "$IP"
 	printf '\n->  Starting loading the firmware\n'
 	cd ~/FC7/sw/fc7/tests
-	#./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
-	#./bin/fc7-d19c.exe  -i $IP -n uDTC_SSA_SEU_master.bit
-	#./bin/fc7-d19c.exe  -i $IP -n d19c_2ssa_none_14082019.bit -f ~/MPA-SSA_Test/bitfiles/d19c_2ssa_none_14082019.bit
-	#./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit   # the SEU firmware
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_2.bit  -f ~/MPA-SSA_Test/bitfiles/ssa2_111120_2.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_2.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_111120_3.bit   -f ~/MPA-SSA_Test/bitfiles/ssa2_111120_3.bit
-	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit   -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa2_seu_111120.bit
-	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit  
-	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa1_seu_111120.bit -f ~/MPA-SSA_Test/bitfiles/oldFW_ssa1_seu_111120
-	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_CG_bypass.bit   -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_CG_bypass.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_CG_disabled.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_CG_disabled.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_CG_enabled3.bit  -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_CG_enabled3.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_CG_EN_inv.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_CG_enabled_inv_rst.bit
-	#./bin/fc7-d19c.exe  -i $IP -n oldFW_ssa2_seu_111120.bit   
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_CG_EN_inv.bit  #### the last good one
-	#./bin/fc7-d19c.exe  -i $IP -n ssa_scanchain_5MHz_280121.bit -f  ~/MPA-SSA_Test/bitfiles/ssa_scanchain_5MHz_280121.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa_scanchain_dio5_290121.bit -f  ~/MPA-SSA_Test/bitfiles/ssa_scanchain_5MHz_dio5onL12_290121.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa_scanchain_dio5onL12.bit -f  ~/MPA-SSA_Test/bitfiles/ssa_scanchain_5MHz_dio5onL12_290121.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa_scanchain_L12_thr00.bit -f ~/MPA-SSA_Test/bitfiles/ssa_scanchain_5MHz_dio5onL12_thr00_020221.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_ch2.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_input_ch2_110221.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_capture.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_capture_test_150221.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_miscompare.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_miscompares_160221.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_noclkfcmd.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_noclkfcmd_170221.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfg_from_sw.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_cnfg_from_sw_170221.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfg_from_sw.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_cnfg_from_sw_180221.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfgsw_20MHz.bit -f ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_20MHz_190221.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfg_from_sw.bit 
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_cnfgsw_20MHz.bit 
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_5MHz_220221.bit -f    ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_5MHz_220221.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_20MHz_220221.bit -f    ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_20MHz_220221.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_20MHz_250221.bit -f  ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_20MHz_250221.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_20MHz_020320.bit  -f  ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_20MHz_020320.bit
-	#./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_090321.bit  -f  ~/MPA-SSA_Test/bitfiles/ssa2_scanchain_090321.bit 
-	./bin/fc7-d19c.exe  -i $IP -n ssa2_scanchain_5MHz_220221.bit
+	./bin/fc7-d19c.exe  -i $IP -n  MPA_SEU_L1_9.bin  #-f /home/acaratel/D19C/MPA_Test/fw_bitfiles/MPA_SEU_L1_9.bit
 	
 	
 	cd -

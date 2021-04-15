@@ -29,6 +29,23 @@ fi
 echo ""
 echo "from main import *"    >  LaunchPy.py
 
+echo "from d19cScripts import *" >  LaunchPy.py
+echo "from myScripts import *" >> LaunchPy.py
+echo "from mpa_ssa_methods import *" >> LaunchPy.py
+#echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('ssa') "  >> LaunchPy.py
+echo "from utilities import tbconfig " >  utilities/tbsettings.py
+
+# override default values
+echo "tbconfig.VERSION['SSA'] = 2" >> utilities/tbsettings.py
+echo "tbconfig.VERSION['MPA'] = 1" >> utilities/tbsettings.py
+echo "tbconfig.BOARD_SELECT = '$BOARD_MAC'" >> utilities/tbsettings.py
+echo "tbconfig.MPA_ADR[0] = $SSA_ADR_0" >> utilities/tbsettings.py
+echo "tbconfig.SSA_ADR[0] = $SSA_ADR_0" >> utilities/tbsettings.py
+echo "tbconfig.SSA_ADR[1] = $SSA_ADR_1" >> utilities/tbsettings.py
+
+
+
+
 cp ./utilities/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib

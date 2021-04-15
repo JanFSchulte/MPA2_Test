@@ -44,7 +44,7 @@ class mpassa_power_utility:
 
 	def resync(self):
 		SendCommand_CTRL("fast_fast_reset");
-		print '->  \tSent Re-Sync command'
+		print ('->  \tSent Re-Sync command')
 		sleep(0.001)
 
 	def set_slvs(self, val=0b110):
@@ -107,24 +107,24 @@ class mpassa_power_utility:
 		self.ssastate = False
 		self.__enable_disable_chip()
 		if(display):
-			print '->  \tSSA disabled '
+			print( '->  \tSSA disabled ')
 
 	def enable_ssa(self, display=True):
 		self.ssastate = True
 		self.__enable_disable_chip()
 		if(display):
-			print '->  \tSSA enabled '
+			print ('->  \tSSA enabled ')
 
 	def disable_mpa(self, display=True):
 		self.mpastate = False
 		self.__enable_disable_chip()
-		if(display): print '->  \tMPA disabled '
+		if(display): print( '->  \tMPA disabled ')
 
 	def enable_mpa(self, display=True):
 		self.mpastate = True
 		self.__enable_disable_chip()
 		if(display):
-			print '->  \tMPA enabled '
+			print ('->  \tMPA enabled ')
 
 	def __enable_disable_chip(self):
 		val = (self.mpaid << 5) | (self.ssaid << 1) | (self.ssastate << 0) + (self.mpastate << 4)
@@ -152,7 +152,7 @@ class mpassa_power_utility:
 		if i2cact: utils.activate_I2C_chip()
 		utils.print_enable(True)
 		if(display):
-			print '->  \t%3s - P_dig: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (chip, pret, vret, iret)
+			print ('->  \t%3s - P_dig: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (chip, pret, vret, iret))
 		self.state.dvdd = pret
 		if rtv1:
 			return pret, vret, iret
@@ -175,7 +175,7 @@ class mpassa_power_utility:
 		if i2cact: utils.activate_I2C_chip()
 		utils.print_enable(True)
 		if(display):
-			print '->  \t%3s - P_ana: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (chip, pret, vret, iret)
+			print ('->  \t%3s - P_ana: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (chip, pret, vret, iret))
 		self.state.avdd = pret
 		if rtv1:
 			return pret, vret, iret
@@ -198,7 +198,7 @@ class mpassa_power_utility:
 		if i2cact: utils.activate_I2C_chip()
 		utils.print_enable(True)
 		if(display):
-			print '->  \t%3s - P_pad: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (chip, pret, vret, iret)
+			print ('->  \t%3s - P_pad: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (chip, pret, vret, iret))
 		self.state.pvdd = pret
 		if rtv1:
 			return pret, vret, iret

@@ -32,7 +32,7 @@ class SSAwp:
 	def __init__(self, index = 0, address = 0):
 		self.index   = index
 		FC7.set_chip_id(index, address)
-		self.i2c           = ssa_i2c_conf(FC7, fc7AddrTable, index=index, address=address)
+		self.i2c           = ssa_i2c_conf(FC7, fc7AddrTable, index="SSA{:0d}".format(index), address=address)
 		self.strip_reg_map = self.i2c.get_strip_reg_map()
 		self.peri_reg_map  = self.i2c.get_peri_reg_map()
 		self.ana_mux_map   = self.i2c.get_analog_mux_map()
@@ -64,9 +64,15 @@ class SSAwp:
 	def disable(self): FC7.disable_chip(self.index)
 	def reset(self, display=True): self.chip.reset(display=display)
 
+class MPAwp:
+	def __init__(self, index = "MPA", address = 0):
+		FC7.set_chip_id(index, address)
+		self.i2c = ssa_i2c_conf(FC7, fc7AddrTable, index=index, address=address)
+
 ssa0 = SSAwp(0, 0b000)
 ssa1 = SSAwp(1, 0b111)
 ssa  = ssa0
+mpa  = MPAwp(1, 0b111)
 
 t2xSSA2 = Test_2xSSA2(ssa0, ssa1, FC7)
 
