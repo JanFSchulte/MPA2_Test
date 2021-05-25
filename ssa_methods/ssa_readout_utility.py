@@ -21,6 +21,7 @@ fc7.read("stat_slvs_debug_general")
 '''
 
 class SSA_readout():
+    """ """
 
 	def __init__(self, index, I2C, FC7, ssactrl, ssastrip):
 		self.index = index
@@ -32,6 +33,11 @@ class SSA_readout():
 		self.countershift = {'state':False, 'value':0}
 
 	def status(self, display=True):
+		"""
+
+		:param display:  (Default value = True)
+
+		"""
 		status = self.fc7.read("stat_slvs_debug_general")
 		l1_data_ready   = ((status & 0x1) >> 0)
 		stub_data_ready = ((status & 0x2) >> 1)
@@ -44,6 +50,22 @@ class SSA_readout():
 
 
 	def cluster_data(self, apply_offset_correction = False, display = False, shift = 'default', initialize = True, lookaround = False, getstatus = False, display_pattern = False, send_test_pulse = True, raw = False, return_as_pattern = False, profile=False, set_chip=False):
+		"""
+
+		:param apply_offset_correction:  (Default value = False)
+		:param display:  (Default value = False)
+		:param shift:  (Default value = 'default')
+		:param initialize:  (Default value = True)
+		:param lookaround:  (Default value = False)
+		:param getstatus:  (Default value = False)
+		:param display_pattern:  (Default value = False)
+		:param send_test_pulse:  (Default value = True)
+		:param raw:  (Default value = False)
+		:param return_as_pattern:  (Default value = False)
+		:param profile:  (Default value = False)
+		:param set_chip:  (Default value = False)
+
+		"""
 		data = []; tmp = [];
 		if(shift == 'default'):
 			ishift = self.cl_shift['digital']
@@ -131,6 +153,13 @@ class SSA_readout():
 			return coordinates
 
 	def cluster_data_delay(self, shift = 'default', display = False, debug = False):
+		"""
+
+		:param shift:  (Default value = 'default')
+		:param display:  (Default value = False)
+		:param debug:  (Default value = False)
+
+		"""
 		self.ctrl.setup_readout_chip_id()
 		if(shift == 'default'): ishift = self.cl_shift
 		else: ishift = shift
@@ -144,6 +173,7 @@ class SSA_readout():
 		return delay
 
 	def cluster_data_delay_new(self):
+		""" """
 		rpdata = self.cluster_data(raw = 1)
 		locations = [[]]*8
 		for line in range(8):
@@ -152,10 +182,30 @@ class SSA_readout():
 
 
 	def send_trigger(self, duration = 0):
+		"""
+
+		:param duration:  (Default value = 0)
+
+		"""
 		self.fc7.compose_fast_command(duration, resync_en = 0, l1a_en = 1, cal_pulse_en = 0, bc0_en = 0)
 
 
 	def l1_data(self, latency = 50, shift = 0, initialise = True, mipadapterdisable = True, trigger = True, multi = True, display = False, display_raw = False, profile=False):
+		"""Configure/Initiates an L1 Trigger pulse. Parse and read out
+                L1 Data
+
+		:param latency:  (Default value = 50) To be added to delay 
+                after test pulse
+		:param shift:  (Default value = 0)
+		:param initialise:  (Default value = True)
+		:param mipadapterdisable:  (Default value = True)
+		:param trigger:  (Default value = True)
+		:param multi:  (Default value = True)
+		:param display:  (Default value = False)
+		:param display_raw:  (Default value = False)
+		:param profile:  (Default value = False)
+
+		"""
 		#disable_pixel(0,0)
 		if(initialise == True):
 			self.ctrl.setup_readout_chip_id()
@@ -267,6 +317,14 @@ class SSA_readout():
 
 
 	def lateral_data(self, display = False, shift = 0, initialize = True, raw = False):
+		"""
+
+		:param display:  (Default value = False)
+		:param shift:  (Default value = 0)
+		:param initialize:  (Default value = True)
+		:param raw:  (Default value = False)
+
+		"""
 		if(shift == 'default'):
 			ishift = self.lateral_shift['digital']
 			if('ssa_inject_utility_mode') in utils.generic_parameters:
@@ -329,6 +387,16 @@ class SSA_readout():
 
 
 	def counters_fast(self, striplist = range(1,121), raw_mode_en = 0, shift = 'auto', initialize = True, silent=0):
+		"""
+
+		:param striplist:  (Default value = range(1)
+		:param 121): 
+		:param raw_mode_en:  (Default value = 0)
+		:param shift:  (Default value = 'auto')
+		:param initialize:  (Default value = True)
+		:param silent:  (Default value = 0)
+
+		"""
 		#t = time.time()
 		if(initialize):
 			self.ctrl.setup_readout_chip_id()
@@ -380,6 +448,13 @@ class SSA_readout():
 		return failed, count
 
 	def align_counters_readout(self, threshold=50, amplitude=150, duration=1):
+		"""
+
+		:param threshold:  (Default value = 50)
+		:param amplitude:  (Default value = 150)
+		:param duration:  (Default value = 1)
+
+		"""
 		utils.print_log('->  Running counters readout alignment procedure')
 		self.fc7.SendCommand_CTRL("stop_trigger")
 		self.cluster_data(initialize=True)
@@ -408,6 +483,12 @@ class SSA_readout():
 
 
 	def counters_via_i2c(self, striplist = range(1,120)):
+		"""
+
+		:param striplist:  (Default value = range(1)
+		:param 120): 
+
+		"""
 		count = [0]*120
 		for s in striplist:
 			if(tbconfig.VERSION['SSA'] >= 2):
@@ -419,6 +500,15 @@ class SSA_readout():
 		return False, count
 
 	def all_lines_debug(self, trigger = True, configure = True, cluster = True, l1data = True, lateral = False):
+		"""
+
+		:param trigger:  (Default value = True)
+		:param configure:  (Default value = True)
+		:param cluster:  (Default value = True)
+		:param l1data:  (Default value = True)
+		:param lateral:  (Default value = False)
+
+		"""
 		if(configure):
 			self.ctrl.setup_readout_chip_id()
 			self.fc7.SendCommand_CTRL("fast_test_pulse")
