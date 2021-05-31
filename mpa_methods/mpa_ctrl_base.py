@@ -21,8 +21,8 @@ class mpa_ctrl_base:
 		self.pwr = pwr
 	def resync(self):
 		SendCommand_CTRL("fast_fast_reset");
-		print '->  \tSent Re-Sync command'
-		sleep(0.001)
+		print('->  \tSent Re-Sync command')
+		time.sleep(0.001)
 	def reset(self, display=True):
 		rp = self.pwr.reset(display=display)
 		self.set_sampling_edge("negative")
@@ -101,7 +101,7 @@ class mpa_ctrl_base:
 			self.I2C.peri_write('EdgeSelT1Raw', 0)
 			self.I2C.peri_write('EdgeSelTrig', 0)
 		else:
-			print "Error! The edge name is wrong"
+			print("Error! The edge name is wrong")
 # Output Pad mapping
 	def set_out_mapping(self, map = [1, 2, 3, 4, 5, 0]):
 		self.I2C.peri_write('OutSetting_0',map[0])
@@ -116,17 +116,17 @@ class mpa_ctrl_base:
 		timeout_max = 5
 		timeout = 0
 		while(self.fc7.read("stat_phy_phase_tuning_done") == 0):
-			sleep(0.1)
+			time.sleep(0.1)
 			if (timeout == timeout_max):
 				timeout = 0
-				if (verbose): print "Waiting for the phase tuning"
+				if (verbose): print("Waiting for the phase tuning")
 				self.fc7.write("ctrl_phy_phase_tune_again", 1)
 			else:
 				timeout += 1
 	def align_out_all(self, verbose = 1):
 		self.I2C.peri_write("ReadoutMode", 2)
 		self.I2C.peri_write("LFSR_data", 0b10100000)
-		sleep(0.1)
+		time.sleep(0.1)
 		return TuneMPA()
 		#self.I2C.peri_write("ReadoutMode", 0)
 

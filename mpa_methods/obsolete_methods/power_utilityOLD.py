@@ -18,7 +18,7 @@ from scipy.special import erfc
 from scipy.special import erf
 import matplotlib.cm as cm
 
-def power_occupancy(th = range(77,100), plot = 1, print_file =1, filename = "../cernbox/MPA_Results/PowerVsOccupancy"):
+def power_occupancy(th = list(range(77,100)), plot = 1, print_file =1, filename = "../cernbox/MPA_Results/PowerVsOccupancy"):
 	read = 1
 	write = 0
 	cbc3 = 15
@@ -57,7 +57,7 @@ def power_occupancy(th = range(77,100), plot = 1, print_file =1, filename = "../
 		sleep(1)
 		ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0)  # read V on shunt
 
-		print ret
+		print(ret)
 		data_array[i, 1] = (Vcshunt * ret)/Rshunt
 
 	if print_file:
@@ -67,7 +67,7 @@ def power_occupancy(th = range(77,100), plot = 1, print_file =1, filename = "../
 		plt.xlabel('Threshold DAC value')
 		plt.ylabel('Counter Value')
 		plt.show()
-def power_memory(row = range(1,17), plot = 1, print_file =1, filename = "../cernbox/MPA_Results/PowerVsMemory"):
+def power_memory(row = list(range(1,17)), plot = 1, print_file =1, filename = "../cernbox/MPA_Results/PowerVsMemory"):
 	read = 1
 	write = 0
 	cbc3 = 15
@@ -101,7 +101,7 @@ def power_memory(row = range(1,17), plot = 1, print_file =1, filename = "../cern
 	Send_MPA_SSA_I2C_Command(i2cmux, 0, write, 0, 0x08)  # to SC3 on PCA9646
 	sleep(1)
 	ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0)  # read V on shunt
-	print ret
+	print(ret)
 	data_array[0] = (Vcshunt * ret)/Rshunt
 	for i in row:
 		activate_I2C_chip(verbose = 0)
@@ -113,7 +113,7 @@ def power_memory(row = range(1,17), plot = 1, print_file =1, filename = "../cern
 		sleep(1)
 		ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0)  # read V on shunt
 
-		print ret
+		print(ret)
 		data_array[i] = (Vcshunt * ret)/Rshunt
 
 	if print_file:
@@ -256,15 +256,15 @@ def set_power(address, V):
 # mpavddDwrite():
 def set_DVDD(V = 1.0):
 	set_power( address = 0x30, V = V)
-	print "DVDD --> ", V	, " V"
+	print("DVDD --> ", V	, " V")
 
 def set_AVDD(V = 1.25):
 	set_power( address = 0x32, V = V)
-	print "AVDD --> ", V	, " V"
+	print("AVDD --> ", V	, " V")
 
 def set_VDDPST(V = 1.25):
 	set_power( address = 0x34, V = V)
-	print "VDDPST --> ", V	, " V"
+	print("VDDPST --> ", V	, " V")
 
 def main_power_on():
 	read = 1
@@ -415,7 +415,7 @@ def measure_current(print_file = 0, filename =  "../cernbox/MPA_Results/digital_
 	ret=Send_MPA_SSA_I2C_Command(ina226_10, 0, read, 0x01, 0, verbose = 0)  #read VR on shunt
 	I_PST = (Vcshunt * ret)/Rshunt
 	message = "VDDPST current: " + str(I_PST) + " mA"
-	print message
+	print(message)
 	if print_file: f.write(message)
 # readDVDD
 	Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
@@ -424,7 +424,7 @@ def measure_current(print_file = 0, filename =  "../cernbox/MPA_Results/digital_
 	ret=Send_MPA_SSA_I2C_Command(ina226_9, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
 	I_DVDD = (Vcshunt * ret)/Rshunt
 	message = "DVDD current: " + str(I_DVDD) + " mA"
-	print message
+	print(message)
 	if print_file: f.write(message)
 # readAVDD
 	Configure_MPA_SSA_I2C_Master(1, SLOW, verbose = 0)
@@ -433,7 +433,7 @@ def measure_current(print_file = 0, filename =  "../cernbox/MPA_Results/digital_
 	ret=Send_MPA_SSA_I2C_Command(ina226_8, 0, read, 0x01, 0, verbose = 0)  # read V on shunt
 	I_AVDD = (Vcshunt * ret)/Rshunt
 	message = "AVDD current: " + str(I_AVDD) + " mA"
-	print message
+	print(message)
 	if print_file:
 		f.write(message)
 		f.close()

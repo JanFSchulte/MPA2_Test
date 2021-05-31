@@ -31,27 +31,27 @@ class mpa_power_utility:
 
 	def set_supply(self, mode = 'on', d = 1.00, a = 1.2, p = 1.2, bg = 0.270, measure = True, display = True):
 		if(mode == 'on' or mode == 1):
-			sleep(0.0); self.mainpoweron()
-			sleep(0.1); self.set_pvdd(p);
-			sleep(0.1); self.set_dvdd(d);
-			sleep(0.1); self.set_avdd(a);
-			sleep(0.1); self.set_vbf(bg)
-			sleep(0.1); self.reset()
-			sleep(2)
+			time.sleep(0.0); self.mainpoweron()
+			time.sleep(0.1); self.set_pvdd(p);
+			time.sleep(0.1); self.set_dvdd(d);
+			time.sleep(0.1); self.set_avdd(a);
+			time.sleep(0.1); self.set_vbf(bg)
+			time.sleep(0.1); self.reset()
+			time.sleep(2)
 		elif(mode == 'off' or mode == 0):
-			sleep(0.0); self.set_vbf(0)
-			sleep(0.1); self.set_avdd(0);
-			sleep(0.1); self.set_dvdd(0);
-			sleep(0.1); self.set_pvdd(0)
-			sleep(0.1); self.mainpoweroff()
+			time.sleep(0.0); self.set_vbf(0)
+			time.sleep(0.1); self.set_avdd(0);
+			time.sleep(0.1); self.set_dvdd(0);
+			time.sleep(0.1); self.set_pvdd(0)
+			time.sleep(0.1); self.mainpoweroff()
 		if measure:  self.get_power(display = display)
 
 	def get_power(self, display = True, return_all = False):
 		Pd, Vd, Id = self.get_power_digital(display, False, True)
 		Pa, Va, Ia = self.get_power_analog(display, False, True)
 		Pp, Vp, Ip = self.get_power_pads(display, False, True)
-		print '->  \tTotal: %7.3fmW  [I=%7.3fmA]' % (Pd+Pa+Pp, Id+Ia+Ip )
-		utils.activate_I2C_chip()
+		print('->  \tTotal: %7.3fmW  [I=%7.3fmA]' % (Pd+Pa+Pp, Id+Ia+Ip ))
+		utils.activate_I2C_chip(self.fc7)
 		if not return_all:
 			return [Pd,Pa,Pp]
 		else:
@@ -70,10 +70,10 @@ class mpa_power_utility:
 		iret = float(round(iret, 3))
 		pret = iret * vret
 		pret = float(round(pret, 3))
-		if i2cact: utils.activate_I2C_chip()
+		if i2cact: utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 		if(display):
-			print '->  \tP_dig: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret)
+			print('->  \tP_dig: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret))
 		self.state.dvdd = pret
 		if rtv1:
 			return pret, vret, iret
@@ -93,10 +93,10 @@ class mpa_power_utility:
 		iret = float(round(iret, 3))
 		pret = iret * vret
 		pret = float(round(pret, 3))
-		if i2cact: utils.activate_I2C_chip()
+		if i2cact: utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 		if(display):
-			print '->  \tP_ana: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret)
+			print('->  \tP_ana: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret))
 		self.state.avdd = pret
 		if rtv1:
 			return pret, vret, iret
@@ -116,10 +116,10 @@ class mpa_power_utility:
 		iret = float(round(iret, 3))
 		pret = iret * vret
 		pret = float(round(pret, 3))
-		if i2cact: utils.activate_I2C_chip()
+		if i2cact: utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 		if(display):
-			print '->  \tP_pad: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret)
+			print('->  \tP_pad: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (pret, vret, iret))
 		self.state.pvdd = pret
 		if rtv1:
 			return pret, vret, iret
@@ -137,7 +137,7 @@ class mpa_power_utility:
 		Configure_MPA_SSA_I2C_Master(1, 2, verbose = 0)
 		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01, verbose = 0)  # to SCO on PCA9646
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x30, setvoltage, verbose = 0)  # tx to DAC C
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 		self.state.dvdd = targetvoltage
 
@@ -152,7 +152,7 @@ class mpa_power_utility:
 		Configure_MPA_SSA_I2C_Master(1, 2, verbose = 0)
 		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01, verbose = 0)  # to SCO on PCA9646
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x32, setvoltage, verbose = 0)  # tx to DAC C
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 		self.state.avdd = targetvoltage
 
@@ -167,7 +167,7 @@ class mpa_power_utility:
 		Configure_MPA_SSA_I2C_Master(1, 2, verbose = 0)
 		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01, verbose = 0)  # to SCO on PCA9646
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x34, setvoltage, verbose = 0)  # tx to DAC C
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 		self.state.pvdd = targetvoltage
 
@@ -182,7 +182,7 @@ class mpa_power_utility:
 		Configure_MPA_SSA_I2C_Master(1, 2, verbose = 0)
 		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01, verbose = 0)  # to SCO on PCA9646
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x36, setvoltage, verbose = 0)  # tx to DAC C
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
 
 	def mainpoweron(self):
@@ -202,40 +202,40 @@ class mpa_power_utility:
 
 	def resync(self):
 		SendCommand_CTRL("fast_fast_reset");
-		print '->  \tSent Re-Sync command'
-		sleep(0.001)
+		print('->  \tSent Re-Sync command')
+		time.sleep(0.001)
 
 
 	def reset(self, display=True):
 		utils.print_enable(False)
-		sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2, verbose = 0);
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02, verbose = 0); # route to 2nd PCF8574
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0, verbose = 0);  # drop reset bit
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 16, verbose = 0);  # set reset bit
-		sleep(0.01);
-		utils.activate_I2C_chip()
+		time.sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2, verbose = 0);
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02, verbose = 0); # route to 2nd PCF8574
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0, verbose = 0);  # drop reset bit
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 16, verbose = 0);  # set reset bit
+		time.sleep(0.01);
+		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
-		if(display): print '->  \tSent Hard-Reset pulse '
+		if(display): print('->  \tSent Hard-Reset pulse ')
 
 	def _disable(self, display=True):
 		utils.print_enable(False)
-		sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2, verbose = 0);
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02, verbose = 0); # route to 2nd PCF8574
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0, verbose = 0);  # drop reset bit
-		sleep(0.01);
-		utils.activate_I2C_chip()
+		time.sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2, verbose = 0);
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02, verbose = 0); # route to 2nd PCF8574
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0, verbose = 0);  # drop reset bit
+		time.sleep(0.01);
+		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
-		if(display): print '->  \tMPA disabled '
+		if(display): print('->  \tMPA disabled ')
 
 	def _enable(self, display=True):
 		utils.print_enable(False)
-		sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2, verbose = 0);
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02, verbose = 0); # route to 2nd PCF8574
-		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 16, verbose = 0);  # set reset bit
-		sleep(0.01);
-		utils.activate_I2C_chip()
+		time.sleep(0.01); Configure_MPA_SSA_I2C_Master(1, 2, verbose = 0);
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02, verbose = 0); # route to 2nd PCF8574
+		time.sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 16, verbose = 0);  # set reset bit
+		time.sleep(0.01);
+		utils.activate_I2C_chip(self.fc7)
 		utils.print_enable(True)
-		if(display): print '->  \tMPA enabled '
+		if(display): print('->  \tMPA enabled ')
 
 	def __initialise_constants(self):
 		self.pcbwrite = 0;

@@ -7,6 +7,9 @@ from mpa_methods.mpa_i2c_conf import *
 from mpa_methods.mpa_ctrl_base import *
 from mpa_methods.mpa_ctrl_pix import *
 from mpa_methods.mpa_inject_utility import *
+
+import time
+
 class MPA_ASIC:
 	def __init__(self, I2C, FC7, pwr, mpa_peri_reg_map, mpa_row_reg_map, mpa_pixel_reg_map):
 		self.i2c     	= I2C
@@ -40,29 +43,29 @@ class MPA_ASIC:
 			self.fc7.write("ctrl_command_global_reset", 1)
 		if(reset_chip):
 			self.ctrl_base.reset(display=False)
-		utils.activate_I2C_chip()
-		if(display): sleep(0.2)
-		else: sleep(0.1)
+		utils.activate_I2C_chip(self.fc7)
+		if(display): time.sleep(0.2)
+		else: time.sleep(0.1)
 		if(display):
 			sys.stdout.write("->  \tTuning sampling phases..\r")
 			sys.stdout.flush()
-		self.ctrl_base.set_sampling_edge(edge); sleep(0.2)
-		self.ctrl_base.init_slvs(slvs_current); sleep(0.2)
+		self.ctrl_base.set_sampling_edge(edge); time.sleep(0.2)
+		self.ctrl_base.init_slvs(slvs_current); time.sleep(0.2)
 		rt = self.ctrl_base.align_out_all()
-		if(display): sleep(0.2)
-		else: sleep(0.1)
+		if(display): time.sleep(0.2)
+		else: time.sleep(0.1)
 		self.ctrl_base.activate_sync()
 		if(display):
 			sys.stdout.write("->  \tReady!                  \r")
 			sys.stdout.flush()
-			sleep(0.2)
+			time.sleep(0.2)
 			sys.stdout.write("                              \r")
 			sys.stdout.flush()
-			if(reset_board): print "->  \tReset FC7 Firmware"
-			if(reset_chip):  print "->  \tReset SSA Chip"
-			print "->  \tInitialised SLVS pads and sampling edges"
-			print "->  \tSampling phases tuned"
-			print "->  \tActivated normal readout mode"
+			if(reset_board): print("->  \tReset FC7 Firmware")
+			if(reset_chip):  print("->  \tReset SSA Chip")
+			print("->  \tInitialised SLVS pads and sampling edges")
+			print("->  \tSampling phases tuned")
+			print("->  \tActivated normal readout mode")
 			if(read_current):
 				self.pwr.get_power(display = True)
 		return rt
@@ -74,17 +77,17 @@ class MPA_ASIC:
 		sys.stdout.flush()
 		if(reset_chip):
 			self.ctrl_base.reset(display=False)
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.fc7)
 		sys.stdout.write("->  \tTuning sampling phases..\r")
 		sys.stdout.flush()
 		self.ctrl_base.set_sampling_edge(edge);
 		self.ctrl_base.init_slvs(slvs_current);
 		rt = self.ctrl_base.align_out_all()
 		if (not rt):
-			print "->  \tRepeating alignment..."
+			print("->  \tRepeating alignment...")
 			rt = self.ctrl_base.align_out_all()
 		self.ctrl_base.activate_sync()
-		print "->  \tInitialised SLVS pads and sampling edges"
-		print "->  \tSampling phases tuned"
-		print "->  \tActivated normal readout mode"
+		print("->  \tInitialised SLVS pads and sampling edges")
+		print("->  \tSampling phases tuned")
+		print("->  \tActivated normal readout mode")
 		return rt

@@ -76,7 +76,7 @@ class mpassa_power_utility:
 		mPd, mVd, mId = self.get_pwr_dvdd('MPA', display, False, True)
 		mPa, mVa, mIa = self.get_pwr_avdd('MPA', display, False, True)
 		mPp, mVp, mIp = self.get_pwr_pvdd('MPA', display, False, True)
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.FC7)
 		return [mPd,mPa,mPp,sPd,sPa,sPp]
 
 	def get_power_repeat(self, duration = 5):
@@ -133,7 +133,7 @@ class mpassa_power_utility:
 		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
 		sleep(0.01); Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, val);  # set reset bit
 		sleep(0.01);
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.FC7)
 		utils.print_enable(True)
 
 	def get_pwr_dvdd(self, chip = 'SSA', display = True, i2cact = True, rtv1 = False):
@@ -149,7 +149,7 @@ class mpassa_power_utility:
 		iret = float(round(iret, 3))
 		pret = iret * vret
 		pret = float(round(pret, 3))
-		if i2cact: utils.activate_I2C_chip()
+		if i2cact: utils.activate_I2C_chip(self.FC7)
 		utils.print_enable(True)
 		if(display):
 			print ('->  \t%3s - P_dig: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (chip, pret, vret, iret))
@@ -172,7 +172,7 @@ class mpassa_power_utility:
 		iret = float(round(iret, 3))
 		pret = iret * vret
 		pret = float(round(pret, 3))
-		if i2cact: utils.activate_I2C_chip()
+		if i2cact: utils.activate_I2C_chip(self.FC7)
 		utils.print_enable(True)
 		if(display):
 			print ('->  \t%3s - P_ana: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (chip, pret, vret, iret))
@@ -195,7 +195,7 @@ class mpassa_power_utility:
 		iret = float(round(iret, 3))
 		pret = iret * vret
 		pret = float(round(pret, 3))
-		if i2cact: utils.activate_I2C_chip()
+		if i2cact: utils.activate_I2C_chip(self.FC7)
 		utils.print_enable(True)
 		if(display):
 			print ('->  \t%3s - P_pad: %7.3fmW  [V=%7.3fV - I=%7.3fmA]' % (chip, pret, vret, iret))
@@ -217,7 +217,7 @@ class mpassa_power_utility:
 		Configure_MPA_SSA_I2C_Master(1, 2)
 		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, val, setvoltage)  # tx to DAC C
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.FC7)
 		utils.print_enable(True)
 		self.state.dvdd = targetvoltage
 
@@ -233,7 +233,7 @@ class mpassa_power_utility:
 		Configure_MPA_SSA_I2C_Master(1, 2)
 		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, val, setvoltage)  # tx to DAC C
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.FC7)
 		utils.print_enable(True)
 		self.state.avdd = targetvoltage
 
@@ -249,7 +249,7 @@ class mpassa_power_utility:
 		Configure_MPA_SSA_I2C_Master(1, 2)
 		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, val, setvoltage)  # tx to DAC C
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.FC7)
 		utils.print_enable(True)
 		self.state.pvdd = targetvoltage
 
@@ -265,7 +265,7 @@ class mpassa_power_utility:
 		Configure_MPA_SSA_I2C_Master(1, 2)
 		Send_MPA_SSA_I2C_Command(self.i2cmux,  0, self.pcbwrite, 0, 0x01)  # to SCO on PCA9646
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, val, setvoltage)  # tx to DAC C
-		utils.activate_I2C_chip()
+		utils.activate_I2C_chip(self.FC7)
 		utils.print_enable(True)
 
 	def __initialise_constants(self):

@@ -1,6 +1,6 @@
-from .utilities.tbsettings import *
-from .utilities.configure_communication import *
-from .utilities.fc7_com import *
+from utilities.tbsettings import *
+from utilities.configure_communication import *
+from utilities.fc7_com import *
 
 #from d19cScripts import *
 from myScripts import *

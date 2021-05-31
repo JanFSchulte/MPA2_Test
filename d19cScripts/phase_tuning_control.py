@@ -50,7 +50,7 @@ def GetPhaseTuningStatus(printStatus = True):
         pa_fsm_state = (data & 0x0000000F) >> 0
         if printStatus:
             print("Line Status: ")
-            print("\tTuning done/applied: "+ done)
+            print("\tTuning done/applied: "+ str(done))
             print("\tLine ID: "+str(line_id)+ ",\tIdelay: " +str(delay)+ ",\tBitslip: " +str(bitslip)+ ",\tWA FSM State: " +str(wa_fsm_state)+ ",\tPA FSM State: "+str( pa_fsm_state))
         return done
 
@@ -182,7 +182,6 @@ def SetLinePattern(hybrid_id, chip_id, line_id, pattern, pattern_period):
     len_raw = (0xFF & pattern_period) << 0
     command_final = hybrid_raw + chip_raw + line_raw + command_raw + len_raw
     SendPhaseTuningCommand(command_final)
-
     # setting the pattern itself
     command_type = 4
     command_raw = (command_type & 0xF) << 16
@@ -217,12 +216,16 @@ def TuneMPA():
     #I2C.peri_write("ReadoutMode", 2)
     #I2C.peri_write("LFSR_data", 0b10100000)
 
-    # tune our lines
+    # tune all lines
+    state = True
+
     for line in range(0,6):
-        TuneLine(line, np.array([0b10100000]),1,True,False)
+        TuneLine(line, np.array(0b10100000), 1, True, False)
         if CheckLineDone(0,0,line) != 1:
-            print( "Failed tuning line " + str(line) )
-        return False
+            print(f"Failed tuning line {line}")
+            state = False
+
+    return state;
     # l1a
     #SetLineMode(0,0, line_id = 0, mode = 1, master_line_id = 1)
     #if CheckLineDone(0,0,0) == 1:

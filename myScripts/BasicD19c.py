@@ -476,7 +476,7 @@ def read_I2C (chip, address, timeout = 0.001):
 	elif (chip == 'SSA1'):
 		SendCommand_I2C(command_type, 0, SSA1, 0, read, address, data, readback)
 		#print('r i2c on ssa1 adr ' + str(bin(i2c_slave_map[SSA1].i2c_address)) )
-	sleep(timeout)
+	time.sleep(timeout)
 	read_data = ReadChipDataNEW()
 	#print("I2C Read")
 	return read_data
