@@ -483,3 +483,4 @@ class mpa_cal_utility():
         t1 = time.time()
         print("Trimming Elapsed Time: " + str(t1 - t0))
         return scurve, th, noise, trim, count
+
