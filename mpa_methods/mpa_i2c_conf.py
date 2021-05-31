@@ -4,7 +4,7 @@ import numpy as np
 import time
 import sys
 import math
-execfile('mpa_methods/mpa_reg_map.py')
+exec(compile(open('mpa_methods/mpa_reg_map.py', "rb").read(), 'mpa_methods/mpa_reg_map.py', 'exec'))
 
 class mpa_i2c_conf:
 
@@ -23,8 +23,8 @@ class mpa_i2c_conf:
 
 	def peri_write(self, register, data):
 
-		if register not in self.mpa_peri_reg_map.keys():
-			print "Register name not found"
+		if register not in list(self.mpa_peri_reg_map.keys()):
+			print("Register name not found")
 			rep = False
 
 		else:
@@ -37,8 +37,8 @@ class mpa_i2c_conf:
 
 	def peri_read(self, register, timeout = 0.001):
 
-		if register not in self.mpa_peri_reg_map.keys():
-			print "Register name not found"
+		if register not in list(self.mpa_peri_reg_map.keys()):
+			print("Register name not found")
 			rep = False
 
 		else:
@@ -52,8 +52,8 @@ class mpa_i2c_conf:
 
 	def row_write(self, register, row, data):
 
-		if register not in self.mpa_row_reg_map.keys():
-			print "Register name not found"
+		if register not in list(self.mpa_row_reg_map.keys()):
+			print("Register name not found")
 			rep = False
 
 		else:
@@ -65,8 +65,8 @@ class mpa_i2c_conf:
 
 	def row_read(self, register, row, timeout = 0.001):
 
-		if register not in self.mpa_row_reg_map.keys():
-			print "Register name not found"
+		if register not in list(self.mpa_row_reg_map.keys()):
+			print("Register name not found")
 			rep = False
 
 		else:
@@ -79,8 +79,8 @@ class mpa_i2c_conf:
 
 	def pixel_write(self, register, row, pixel, data):
 
-		if register not in self.mpa_pixel_reg_map.keys():
-			print "Register name not found"
+		if register not in list(self.mpa_pixel_reg_map.keys()):
+			print("Register name not found")
 			rep = False
 
 		else:
@@ -94,8 +94,8 @@ class mpa_i2c_conf:
 
 	def pixel_read(self, register, row, pixel, timeout = 0.001):
 
-		if register not in self.mpa_pixel_reg_map.keys():
-			print "Register name not found"
+		if register not in list(self.mpa_pixel_reg_map.keys()):
+			print("Register name not found")
 			rep = False
 
 		else:
@@ -105,9 +105,9 @@ class mpa_i2c_conf:
 			#print bin(adr)
 			rep  = read_I2C('MPA', adr, timeout)
 			if rep == None:
-				sleep(1)
+				time.sleep(1)
 				activate_I2C_chip()
-				sleep(1)
+				time.sleep(1)
 				rep  = read_I2C('MPA', adr, timeout)
 
 		return rep
@@ -117,25 +117,25 @@ class mpa_i2c_conf:
 		activate_I2C_chip()
 		read_reg = ['SEUcntPeri', 'ErrorL1', 'OFcnt', 'EfuseValue0', 'EfuseValue1','EfuseValue2','EfuseValue3', 'test']
 		cnt = 0
-		for reg in self.mpa_peri_reg_map.keys():
+		for reg in list(self.mpa_peri_reg_map.keys()):
 			if all(reg_check != reg for reg_check in read_reg ):
 				value = self.peri_read(reg)
 				self.peri_write(reg, 255)
 				max_value = self.peri_read(reg)
 				if (max_value == 0):
-					print "Error in register: ", reg, " --> Max Value = 0"
+					print("Error in register: ", reg, " --> Max Value = 0")
 				else:
 					for i in range(0,max_value+1):
 						self.peri_write(reg, i)
 						check = self.peri_read(reg)
 						if (check != i):
-							print "Error in register: ", reg, " for value: ", i, " obtained: ", check
+							print("Error in register: ", reg, " for value: ", i, " obtained: ", check)
 							cnt += 1
 				self.peri_write(reg, value)
-		print "Error Counter: ", cnt
+		print("Error Counter: ", cnt)
 		t1 = time.time()
-		print "END"
-		print "Trimming Elapsed Time: " + str(t1 - t0)
+		print("END")
+		print("Trimming Elapsed Time: " + str(t1 - t0))
 
 	def row_test(self):
 		t0 = time.time()
@@ -143,28 +143,28 @@ class mpa_i2c_conf:
 		read_reg = ['SEUcntRow', 'test']
 		cnt = 0
 		for row in range(1,17):
-			print "Testing Row: ", row
-			for reg in self.mpa_row_reg_map.keys():
+			print("Testing Row: ", row)
+			for reg in list(self.mpa_row_reg_map.keys()):
 				if all(reg_check != reg for reg_check in read_reg ):
 					value = self.row_read(reg, row)
 					self.row_write(reg, row, 255)
 					max_value = self.row_read(reg, row)
 					if (max_value == 0):
-						print "Error in register: ", reg, " --> Max Value = 0"
+						print("Error in register: ", reg, " --> Max Value = 0")
 					else:
 						for i in range(0,max_value+1):
 							self.row_write(reg, row,  i)
 							check = self.row_read(reg, row)
 							if (check != i):
-								print "Error in register: ", reg, " for value: ", i, " obtained: ", check
+								print("Error in register: ", reg, " for value: ", i, " obtained: ", check)
 								cnt += 1
 						self.row_write(reg, row, value)
 
 						#print "Test finished: ", reg, " for row: ", row
-		print "Error Counter: ", cnt
+		print("Error Counter: ", cnt)
 		t1 = time.time()
-		print "END"
-		print "Trimming Elapsed Time: " + str(t1 - t0)
+		print("END")
+		print("Trimming Elapsed Time: " + str(t1 - t0))
 
 	def pixel_test(self):
 		t0 = time.time()
@@ -172,37 +172,37 @@ class mpa_i2c_conf:
 		read_reg = ['ReadCounter_LSB', 'ReadCounter_MSB', 'test']
 		cnt = 0
 		for row in range(1,17):
-			print "Testing Row: ", row
+			print("Testing Row: ", row)
 			for pixel in range(1,121):
-				for reg in self.mpa_pixel_reg_map.keys():
+				for reg in list(self.mpa_pixel_reg_map.keys()):
 					if all(reg_check != reg for reg_check in read_reg ):
 						value = self.pixel_read(reg, row, pixel)
 						self.pixel_write(reg, row, pixel, 255)
 						max_value = self.pixel_read(reg, row, pixel)
 						if (max_value == 0):
-							print "Error in register: ", reg, " --> Max Value = 0"
+							print("Error in register: ", reg, " --> Max Value = 0")
 						else:
 							for i in range(0,max_value+1):
 								self.pixel_write(reg, row, pixel,  i)
 								check = self.pixel_read(reg, row, pixel)
 								if (check != i):
-									print "Error in register: ", reg, " for value: ", i, " obtained: ", check
+									print("Error in register: ", reg, " for value: ", i, " obtained: ", check)
 									cnt += 1
 						self.pixel_write(reg, row, pixel, value)
 
 							#print "Test finished: ", reg, " for row: ", row, " for pixel: ", pixel
-		print "Error Counter: ", cnt
+		print("Error Counter: ", cnt)
 		t1 = time.time()
-		print "END"
-		print "Trimming Elapsed Time: " + str(t1 - t0)
+		print("END")
+		print("Trimming Elapsed Time: " + str(t1 - t0))
 
 	def chip_test():
-		print "This test will take around 35 minutes"
-		print "Periphery test starting..."
+		print("This test will take around 35 minutes")
+		print("Periphery test starting...")
 		peri_test()
-		print "Rows test starting..."
+		print("Rows test starting...")
 		row_test()
-		print "Pixels test starting..."
+		print("Pixels test starting...")
 		pixel_test()
 
 

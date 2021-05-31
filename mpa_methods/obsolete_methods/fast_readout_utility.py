@@ -28,7 +28,7 @@ def align_MPA():
 	send_test()
 	test = read_regs(0)
 	if ((test[0] == 2147516416) or (test[0] == 8388736)):
-		print "Output already aligned"
+		print("Output already aligned")
 	else:
 		align_out()
 		send_test()
@@ -48,7 +48,7 @@ def test_pp_digital(row, pixel):
 	sleep(0.001)
 	return read_stubs()
 
-def digital_pixel_test(row = range(1,17), pixel = range(1,121), print_log = 1, filename =  "../cernbox/MPA_Results/digital_pixel_test.log"):
+def digital_pixel_test(row = list(range(1,17)), pixel = list(range(1,121)), print_log = 1, filename =  "../cernbox/MPA_Results/digital_pixel_test.log"):
 	# I am adding something, I'm really sorry. - Marc
 	OutputBadPix = []
 	t0 = time.time()
@@ -87,15 +87,15 @@ def digital_pixel_test(row = range(1,17), pixel = range(1,121), print_log = 1, f
 			if ((check_pix != 1) or (check_row != 1) or (err != 0)):
 				error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(check_pix) + " " +  str(check_row) + " " + str(err) + "\n"
 				OutputBadPix.append([p,r])
-				print error_message
+				print(error_message)
 				if print_log:
 					f.write(error_message)
 	if print_log:
 		f.write("Test Completed")
 		f.close()
 	t1 = time.time()
-	print "END"
-	print "Elapsed Time: " + str(t1 - t0)
+	print("END")
+	print("Elapsed Time: " + str(t1 - t0))
 	return OutputBadPix
 # Analog Calibration test #
 def test_pp_analog(row, pixel):
@@ -105,7 +105,7 @@ def test_pp_analog(row, pixel):
 	#sleep(0.001)
 	return read_stubs()
 
-def analog_pixel_test(row = range(1,17), pixel = range(2,120), print_log = 1, filename =  "../cernbox/MPA_Results/analog_pixel_test.log"):
+def analog_pixel_test(row = list(range(1,17)), pixel = list(range(2,120)), print_log = 1, filename =  "../cernbox/MPA_Results/analog_pixel_test.log"):
 	t0 = time.time()
 	# I am adding something, I'm really sorry. - Marc
 	OutputBadPix = []
@@ -141,15 +141,15 @@ def analog_pixel_test(row = range(1,17), pixel = range(2,120), print_log = 1, fi
 			if ((check_pix != 1) or (check_row != 1) or (err != 0)):
 				error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(check_pix) + " " +  str(check_row) + " " + str(err) + "\n"
 				OutputBadPix.append([p,r])
-				print error_message
+				print(error_message)
 				if print_log:
 					f.write(error_message)
 	if print_log:
 		f.write("Test Completed")
 		f.close()
 	t1 = time.time()
-	print "END"
-	print "Elapsed Time: " + str(t1 - t0)
+	print("END")
+	print("Elapsed Time: " + str(t1 - t0))
 	return OutputBadPix
 
 ###############################
@@ -171,10 +171,10 @@ def check_calpulse(row, pixel, pattern = 0b00000001, n_pulse = 1000):
 		pos_now = read_stubs()
 		if (np.array_equal(pos_init, pos_now)):
 			count += 1
-	print "Efficiency:" + str(count) + "/" + str(n_pulse)
+	print("Efficiency:" + str(count) + "/" + str(n_pulse))
 	return pos_init
 
-def reset_strip_in( line = range(0,8), strip = [0, 0, 0, 0, 0, 0, 0, 0]):
+def reset_strip_in( line = list(range(0,8)), strip = [0, 0, 0, 0, 0, 0, 0, 0]):
 	value = strip[0] << 24 | strip[1] << 16 | strip[2] << 8 | strip[3]
 	for l in line:
 		reg = "cnfg_phy_SSA_gen_stub_data_format_" +str(l) + "_0"
@@ -191,7 +191,7 @@ def strip_in_def( line ,strip = 8*[128]):
 	reg = "cnfg_phy_SSA_gen_stub_data_format_" +str(line) + "_1"
 	fc7.write(reg, value)
 
-def strip_in_test(n_pulse = 10, line = range(0,8),  value = [128, 64, 32, 16, 8, 4, 2, 1], latency = 0b00111011, edge = 0):
+def strip_in_test(n_pulse = 10, line = list(range(0,8)),  value = [128, 64, 32, 16, 8, 4, 2, 1], latency = 0b00111011, edge = 0):
 	#t0 = time.time()
 
 	I2C.peri_write('EdgeSelTrig',edge) # 1 = rising
@@ -246,7 +246,7 @@ def strip_in_scan(n_pulse = 10, probe = 0, print_file = 1, filename =  "../cernb
 	for i in range(0,8):
 		latency = (i  << 3)
 		edge = 255
-		print "Testing Latency ", i
+		print("Testing Latency ", i)
 		temp = strip_in_test(n_pulse = n_pulse, latency = latency , edge = edge)
 		for line in range(0,8):
 			data_array[i*2, line ] = np.average(temp[line])/(n_pulse*8)
@@ -258,8 +258,8 @@ def strip_in_scan(n_pulse = 10, probe = 0, print_file = 1, filename =  "../cernb
 	if print_file:
 		CSV.ArrayToCSV (data_array, str(filename) + "_npulse_" + str(n_pulse) + ".csv")
 	t1 = time.time()
-	print "END"
-	print "Elapsed Time: " + str(t1 - t0)
+	print("END")
+	print("Elapsed Time: " + str(t1 - t0))
 	return data_array
 
 #def strip_in_l1():
@@ -277,14 +277,14 @@ def test_L1_fast_command(npulse):
 		send_trigger()
 		sleep(0.001)
 		L1_ID = read_L1()
-		if (L1_ID!=1): print "ERROR 1"
+		if (L1_ID!=1): print("ERROR 1")
 		sleep(0.001)
 		send_resync()
 		sleep(0.001)
 		send_trigger()
 		sleep(0.001)
 		L1_ID = read_L1()
-		if (L1_ID!=0): print "ERROR 2"
+		if (L1_ID!=0): print("ERROR 2")
 		sleep(0.001)
 
 def memory_test(latency, row, pixel, diff, dig_inj = 1, verbose = 1): # Diff = 2
@@ -300,10 +300,10 @@ def memory_test(latency, row, pixel, diff, dig_inj = 1, verbose = 1): # Diff = 2
 	sleep(0.001)
 	return read_L1(verbose)
 
-def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121), diff = 2, print_log = 1, filename =  "../cernbox/MPA_Results/digital_mem_test.log", dig_inj =1, gate = 0, verbose = 1):
+def mem_test(latency = 255, delay = [10], row = list(range(1,17)), pixel = list(range(1,121)), diff = 2, print_log = 1, filename =  "../cernbox/MPA_Results/digital_mem_test.log", dig_inj =1, gate = 0, verbose = 1):
 	t0 = time.time()
 	bad_pix = []
-	print "Running Test:"
+	print("Running Test:")
 	if print_log:
 		f = open(filename, 'w')
 		f.write("Starting Test:\n")
@@ -328,7 +328,7 @@ def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121
 		try:
 			strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = memory_test(latency = latency, row = 10, pixel = 5, diff = diff, dig_inj = dig_inj, verbose = 0)
 		except TypeError:
-			print "Header not Found! Changing sampling phase of T1"
+			print("Header not Found! Changing sampling phase of T1")
 			#I2C.peri_write('EdgeSelT1Raw', 0)
 		sleep(1)
 		for r in row:
@@ -347,19 +347,19 @@ def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121
 						bad_pix.append([p,r])
 						error += 1
 						error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(d) + " " + str(pixel_counter) + " " +  str(pos_pixel) + " " + str(Z) + "\n"
-						if verbose: print error_message
+						if verbose: print(error_message)
 						if print_log: f.write(error_message)
 				except TypeError:
 					missing += 1
 					error_message = "Header not Found in Pixel: " + str(p) + " of Row: " + str(r) + "\n"
-					if verbose: print error_message
+					if verbose: print(error_message)
 					if print_log: f.write(error_message)
-	print "-------------------------------------"
-	print "-------------------------------------"
-	print " Number of error: ", error
-	print " Number of stucks: ", stuck
-	print " Number of I2C issues: ", i2c_issue
-	print " Number of missing: ", missing
+	print("-------------------------------------")
+	print("-------------------------------------")
+	print(" Number of error: ", error)
+	print(" Number of stucks: ", stuck)
+	print(" Number of I2C issues: ", i2c_issue)
+	print(" Number of missing: ", missing)
 	if print_log:
 		f.write("Test Completed:\n")
 		f.write("-------------------------------------\n")
@@ -376,9 +376,9 @@ def mem_test(latency = 255, delay = [10], row = range(1,17), pixel = range(1,121
 		f.write("-------------------------------------\n")
 		f.close()
 	t1 = time.time()
-	print " Elapsed Time: " + str(t1 - t0)
-	print "-------------------------------------"
-	print "-------------------------------------"
+	print(" Elapsed Time: " + str(t1 - t0))
+	print("-------------------------------------")
+	print("-------------------------------------")
 	I2C.peri_write('EdgeSelT1Raw', 3)
 	return bad_pix, error, stuck, i2c_issue, missing
 
@@ -396,7 +396,7 @@ def mem_test_probing(edge = 0, verbose = 1, print_log = 0, filename =  "../cernb
 	bad_pix, error, stuck, i2c_issue, missing = mem_test(print_log = print_log, filename = filename, gate = 0, verbose = verbose)
 	return bad_pix, error, stuck, i2c_issue, missing
 
-def mem_test_REN (latency = 255, delay = [10], delay_pulse_cal = 200,  delay_pulse_next = 200, row = range(1,17), pixel = range(1,121), diff = 2, print_log = 1, filename =  "../cernbox/MPA_Results/digital_mem_test.log", gate = 0):
+def mem_test_REN (latency = 255, delay = [10], delay_pulse_cal = 200,  delay_pulse_next = 200, row = list(range(1,17)), pixel = list(range(1,121)), diff = 2, print_log = 1, filename =  "../cernbox/MPA_Results/digital_mem_test.log", gate = 0):
 	t0 = time.time()
 	if print_log:
 		f = open(filename, 'w')
@@ -418,12 +418,12 @@ def mem_test_REN (latency = 255, delay = [10], delay_pulse_cal = 200,  delay_pul
 					strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = memory_test(latency, r, p, diff, 0)
 					if ((pixel_counter != 1) or (pos_pixel[0] != p) or (Z[0] != r)):
 						error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(d) + " " + str(pixel_counter) + " " +  str(pos_pixel) + " " + str(Z) + "\n"
-						print error_message
+						print(error_message)
 						if print_log:
 							f.write(error_message)
 				except TypeError:
 					error_message = "Header not Found in Pixel: " + str(p) + " of Row: " + str(r) + "\n"
-					print error_message
+					print(error_message)
 					if print_log:
 						f.write(error_message)
 
@@ -431,5 +431,5 @@ def mem_test_REN (latency = 255, delay = [10], delay_pulse_cal = 200,  delay_pul
 		f.write("Test Completed")
 		f.close()
 	t1 = time.time()
-	print "END"
-	print "Elapsed Time: " + str(t1 - t0)
+	print("END")
+	print("Elapsed Time: " + str(t1 - t0))

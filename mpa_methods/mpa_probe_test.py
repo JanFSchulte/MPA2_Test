@@ -17,12 +17,12 @@ class mpa_probe_test:
 		version = 0
 		while not exists:
 			if not os.path.exists(self.DIR+"_v"+str(version)):
-				print self.DIR
+				print(self.DIR)
 				self.DIR = self.DIR+"_v"+str(version)
 				os.makedirs(self.DIR)
 				exists = True
 			version += 1
-		print self.DIR + "<<< USING THIS"
+		print(self.DIR + "<<< USING THIS")
 		self.mpa = mpa;
 		self.I2C = I2C;
 		self.fc7 = fc7;
@@ -132,7 +132,7 @@ class mpa_probe_test:
 		return self.Flag
 	def colprint(self, text):
 		sys.stdout.write("\033[1;34m")
-		print(str(text))
+		print((str(text)))
 		sys.stdout.write("\033[0;0m")
 		self.LogFile.write(str(text)+"\n")
 	def colprint_general(self, text):
@@ -169,7 +169,7 @@ class mpa_probe_test:
 		try:
 			self.mpa.ctrl_base.disable_test()
 			data_array,cal_A, noise_A, trim, pix_out = self.cal.trimming_probe(ref = th_H, low = cal_H - self.high_cl_ofs, req = cal_H, high = cal_H + self.high_cl_ofs, nominal_ref = th_T, nominal_req = cal_T, trim_ampl = self.trim_amplitude, rbr = 0, plot = plot)
-			scurve, cal_B, noise_B  = self.cal.s_curve( n_pulse = 1000, s_type = "CAL", rbr = 0, ref_val = th_L, row = range(1,17), step = 1, start = 0, stop = 100, pulse_delay = 500, extract_val = cal_L, extract = 1, plot = plot, print_file = 1, filename = self.DIR+ "/Scurve15")
+			scurve, cal_B, noise_B  = self.cal.s_curve( n_pulse = 1000, s_type = "CAL", rbr = 0, ref_val = th_L, row = list(range(1,17)), step = 1, start = 0, stop = 100, pulse_delay = 500, extract_val = cal_L, extract = 1, plot = plot, print_file = 1, filename = self.DIR+ "/Scurve15")
 			gain = (th_T-th_L)/(np.mean(cal_A[1:1920]) - np.mean(cal_B[1:1920])) * thLSB / calLSB # Average
 			self.colprint("The average gain is: " + str(round(gain,1))); self.GlobalSummary[10] = round(gain,1)
 			self.colprint("The thLSB is: " + str(round(thLSB,3))); self.GlobalSummary[11] = round(thLSB,3)
@@ -181,7 +181,7 @@ class mpa_probe_test:
 				CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
 				AnalogValues = [thLSB, calLSB, np.mean(noise_B), np.std(cal_B), gain]
 				CVwriter.writerow(AnalogValues)
-			print "Analog measurement Elapsed Time: " + str(time.time() - start_time)
+			print("Analog measurement Elapsed Time: " + str(time.time() - start_time))
 			return 1
 		except TypeError:
 			self.colprint("SCURVE EXTRACTION FAILED")

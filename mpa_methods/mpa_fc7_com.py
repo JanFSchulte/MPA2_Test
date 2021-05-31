@@ -53,7 +53,7 @@ class mpa_fc7_com():
 				return self.fc7.write(p1, p2, p3)
 				break
 			except:
-				print '=>  \tTB Communication error - fc7_write'
+				print('=>  \tTB Communication error - fc7_write')
 				time.sleep(0.001)
 				cnt += 1
 	def read(self, p1, p2 = 0):
@@ -63,7 +63,7 @@ class mpa_fc7_com():
 				return self.fc7.read(p1, p2)
 				break
 			except:
-				print '=>  \tTB Communication error - fc7_read'
+				print('=>  \tTB Communication error - fc7_read')
 				time.sleep(0.001)
 				cnt += 1
 	def blockRead(self, p1, p2, p3 = 0):
@@ -73,7 +73,7 @@ class mpa_fc7_com():
 				return self.fc7.blockRead(p1, p2, p3)
 				break
 			except:
-				print '=>  \tTB Communication error - fc7_read_block'
+				print('=>  \tTB Communication error - fc7_read_block')
 				time.sleep(0.001)
 				cnt += 1
 	def fifoRead(self, p1, p2, p3 = 0):
@@ -83,7 +83,7 @@ class mpa_fc7_com():
 				return self.fc7.fifoRead(p1, p2, p3)
 				break
 			except:
-				print '=>  \tTB Communication error - fc7_read_fifo'
+				print('=>  \tTB Communication error - fc7_read_fifo')
 				time.sleep(0.001)
 				cnt += 1
 	def SendCommand_CTRL(self, p1):
@@ -93,6 +93,6 @@ class mpa_fc7_com():
 				return SendCommand_CTRL(p1)
 				break
 			except:
-				print '=>  \tTB Communication error - SendCommand_CTRL'
+				print('=>  \tTB Communication error - SendCommand_CTRL')
 				time.sleep(0.001)
 				cnt += 1

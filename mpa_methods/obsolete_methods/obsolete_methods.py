@@ -30,11 +30,11 @@ def alignment_slvs(align_word = 128, step = 10):
 			fc7.write("ctrl_phy_fast_cmd_phase",phase)
 		count += 1
 	if (not aligned):
-		print "Try with finer step"
+		print("Try with finer step")
 	else:
-		print "All stubs line aligned!"
+		print("All stubs line aligned!")
 	t1 = time.time()
-	print "Elapsed Time: " + str(t1 - t0)
+	print("Elapsed Time: " + str(t1 - t0))
 
 
 ## Test method. Problem solved in Firmware
@@ -46,13 +46,13 @@ def check_clear_counters(change = 1, points = 168, iterations = 10, duration = 8
 			sleep(0.001)
 			value = read_pixel_counter(1,7)
 			if (value != 10):
-				print str(i) + " " + str(j) + " " + str(value)
+				print(str(i) + " " + str(j) + " " + str(value))
 				count += 1
 			clear_counters(duration)
 			sleep(0.001)
 			value = read_pixel_counter(1,7)
 			if (value != 0):
-				print str(i) + " " + str(j) + " " + str(value)
+				print(str(i) + " " + str(j) + " " + str(value))
 				count += 1
 		if change: fc7.write("ctrl_phy_fast_cmd_phase",1)
 	return count
@@ -64,10 +64,10 @@ def analyze_chip(wafer_name = "Wafer_N6T903-05C7"):
 	bad_array = ['Bad Pixels']
 	for n in range(1,89):
 		try:
-			thsd[n], noise_avg[n], bad_pixels = sensor_extract(row = range(1,17), pixel = range(1,120), s_type = "CAL", n_pulse = 200, data_start = 0, extract_start = 0, stop = 50, nominal_DAC = 25, filename = "../cernbox/AutoProbeResults/"+wafer_name+"/ChipN_"+str(n)+"_v0/Scurve15_CAL.csv")
+			thsd[n], noise_avg[n], bad_pixels = sensor_extract(row = list(range(1,17)), pixel = list(range(1,120)), s_type = "CAL", n_pulse = 200, data_start = 0, extract_start = 0, stop = 50, nominal_DAC = 25, filename = "../cernbox/AutoProbeResults/"+wafer_name+"/ChipN_"+str(n)+"_v0/Scurve15_CAL.csv")
 			bad_array.append(bad_pixels)
 		except IOError:
-			print "Chip", n, "had an accident"
+			print("Chip", n, "had an accident")
 			bad_array.append([['Chip Failure'], [n]])
 	thsd = [a for a in thsd if a != 0]
 	noise_avg = [b for b in noise_avg if b != 0]
@@ -80,12 +80,12 @@ def analyze_chip(wafer_name = "Wafer_N6T903-05C7"):
 	plt.show()
 	return bad_array
 
-def trim_DAC_noise(row = range(1,17), pixel = range(1,120)):
+def trim_DAC_noise(row = list(range(1,17)), pixel = list(range(1,120))):
 	par_array = np.zeros(shape=(2040, 3))
 	data_array = np.zeros(shape = (2040, 251), dtype = np.int)
 	n = 0
 	for r in row:
-		print "\nStarting row ", r, "\n"
+		print("\nStarting row ", r, "\n")
 		for p in pixel:
 			I2C.pixel_write("TrimDAC", 0, 0, 0)
 			sleep(0.1)
@@ -94,11 +94,11 @@ def trim_DAC_noise(row = range(1,17), pixel = range(1,120)):
 			data = s_curve_pbp_all(n_pulse = 200, s_type = "THR", ref_val = 0, row = [r], pixel = [p], step = 1, start = 0, stop = 250, pulse_delay = 200,  extract_val = 200, plot = 0, print_file = 0)
 			sleep(0.1)
 			try:
-				par, cov = curve_fit(gauss, range(0, 200), data[(r-1)*120 + p, 1: 201], p0= [np.max(data[(r-1)*120 + p]), np.argmax(data[(r-1)*120 + p]), 2])
+				par, cov = curve_fit(gauss, list(range(0, 200)), data[(r-1)*120 + p, 1: 201], p0= [np.max(data[(r-1)*120 + p]), np.argmax(data[(r-1)*120 + p]), 2])
 				par_array[n] = par
 				data_array[n] = data[(r-1)*120 + p]
 			except RuntimeError or TypeError:
-				print "Fitting failed on pixel ", p , " row: " ,r
+				print("Fitting failed on pixel ", p , " row: " ,r)
 				par_array[n] = [0,0,0]
 			n += 1
 	CSV.ArrayToCSV(par_array, filename = "NoisePeak_Par.csv")
@@ -116,11 +116,11 @@ def analyze_scurve(start = 0, stop = 50, plot = 1, filename = "Am-241_tin_long_c
 		#plt.figure(2)
 		for r in range(1,17):
 			for p in range(1,120):
-				plt.plot(range(0,50),data_array[(r-1)*120+p,start + 1:stop + 1],'-')
+				plt.plot(list(range(0,50)),data_array[(r-1)*120+p,start + 1:stop + 1],'-')
 		plt.show()
 	#return sum_array
 
-def sensor_extract(row = range(1,17), pixel = range(1,120), filter = 1, s_type = "CAL", n_pulse = 200, data_start = 0, extract_start = 0, stop = 50, nominal_DAC = 25, filename = "../cernbox/AutoProbeResults/Wafer_N6T903-05C7/ChipN_2_v0/Scurve15_CAL.csv", bad_file = "../cernbox/AutoProbeResults/Wafer_N6T903-05C7/ChipN_2_v0/Trim15_pix_out.csv"):
+def sensor_extract(row = list(range(1,17)), pixel = list(range(1,120)), filter = 1, s_type = "CAL", n_pulse = 200, data_start = 0, extract_start = 0, stop = 50, nominal_DAC = 25, filename = "../cernbox/AutoProbeResults/Wafer_N6T903-05C7/ChipN_2_v0/Scurve15_CAL.csv", bad_file = "../cernbox/AutoProbeResults/Wafer_N6T903-05C7/ChipN_2_v0/Trim15_pix_out.csv"):
 	th_array = np.zeros(2160, dtype = np.int)
 	noise_array = np.zeros(2160, dtype = np.float)
 	badpix = np.zeros(shape=(0,2))
@@ -141,27 +141,27 @@ def sensor_extract(row = range(1,17), pixel = range(1,120), filter = 1, s_type =
 				#if flag != 1:
 			try:
 				if s_type == "THR":
-					par, cov = curve_fit(errorfc, range(extract_start - data_start, stop - data_start), data[(r-1)*120+p, (extract_start - data_start) + 1 :(stop - data_start) + 1], p0= [n_pulse, (nominal_DAC - data_start), 2])
+					par, cov = curve_fit(errorfc, list(range(extract_start - data_start, stop - data_start)), data[(r-1)*120+p, (extract_start - data_start) + 1 :(stop - data_start) + 1], p0= [n_pulse, (nominal_DAC - data_start), 2])
 				elif s_type == "CAL":
-					par, cov = curve_fit(errorf, range(extract_start - data_start, stop - data_start), data[(r-1)*120+p, (extract_start - data_start) + 1 :(stop - data_start) + 1], p0= [n_pulse, (nominal_DAC - data_start), 2])
+					par, cov = curve_fit(errorf, list(range(extract_start - data_start, stop - data_start)), data[(r-1)*120+p, (extract_start - data_start) + 1 :(stop - data_start) + 1], p0= [n_pulse, (nominal_DAC - data_start), 2])
 			except RuntimeError or TypeError:
 				badpix = np.append(badpix, [[r, p]], axis = 0)
 				flag = 1
 			try:
 				plt.figure(1)
-				plt.plot(range(0,50),data[(r-1)*120+p,data_start + 1:stop + 1],'-')
+				plt.plot(list(range(0,50)),data[(r-1)*120+p,data_start + 1:stop + 1],'-')
 				if cov[0,2] > 1.0 or cov[0,2] < 0 or np.max(data[(r-1)*120+p, 1 : stop]) > n_pulse:
 					badpix = np.append(badpix, [[r, p]], axis = 0)
 				elif flag != 1:
 					th_array[(r-1)*120+p] = int(round(par[1])) + data_start
 					noise_array[(r-1)*120+p] = par[2]
 					plt.figure(1)
-					plt.plot(range(0,50),data[(r-1)*120+p,data_start + 1:stop + 1],'-')
+					plt.plot(list(range(0,50)),data[(r-1)*120+p,data_start + 1:stop + 1],'-')
 			except TypeError:
 				if np.isinf(cov):
 					badpix = np.append(badpix, [[r, p]], axis = 0)
 				else:
-					print "Check pixel ", p, "in row ", r, ". Something bad happened. Error: TypeError"
+					print("Check pixel ", p, "in row ", r, ". Something bad happened. Error: TypeError")
 				#if r == 10 and p == 50:
 					#print data[(r-1)*120+p]
 				#	plt.figure(3)

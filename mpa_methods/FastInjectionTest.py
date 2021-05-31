@@ -52,23 +52,23 @@ class FastInjectionMeasurement:
     	plt.xlim(0, n)
     	plt.ion()
     	for i in range(0,n):
-    		print
-    		print "-------------------------------- ITERATION ", str(i), " ---------------------------------------------"
-    		row_1 = random.sample(range(1,9), 4)
-    		row_2 = random.sample(range(9,17), 4)
+    		print()
+    		print("-------------------------------- ITERATION ", str(i), " ---------------------------------------------")
+    		row_1 = random.sample(list(range(1,9)), 4)
+    		row_2 = random.sample(list(range(9,17)), 4)
     		row = np.sort(np.append(row_1, row_2 ))
     		llim = 1
     		col = np.zeros(8, dtype = np.int )
     		for j in range(0,8):
-    			temp = random.sample(range(llim,15*(j+1)), 1)
+    			temp = random.sample(list(range(llim,15*(j+1))), 1)
     			col[j] = temp[0]
     			llim = col[j] + 9
     		corr = 0
     		if (i%2 == 0): corr = 1
     		#col = np.array(random.sample(range(1+corr,120,2), 8))
     		width = 8*[1]
-    		strip_64 = np.sort(random.sample(range(1+corr,60,2), 4))
-    		strip_128 = np.array(random.sample(range(61-corr,120,2), 4))
+    		strip_64 = np.sort(random.sample(list(range(1+corr,60,2)), 4))
+    		strip_128 = np.array(random.sample(list(range(61-corr,120,2)), 4))
     		strip_128 = -np.sort(-strip_128)
     		strip = [strip_64[0], strip_128[0], strip_64[1], strip_128[1], strip_64[2], strip_128[2], strip_64[3], strip_128[3]]
 
@@ -91,12 +91,12 @@ class FastInjectionMeasurement:
     		wrong_tot_L1[i] = wrong_L1
     		good_tot[i] = good
     		good_tot_L1[i] = good_L1
-    		plt.plot(range(0,i+1), wrong_tot[0:i+1], "r*")
-    		plt.plot(range(0,i+1), wrong_tot_L1[0:i+1], "bo")
+    		plt.plot(list(range(0,i+1)), wrong_tot[0:i+1], "r*")
+    		plt.plot(list(range(0,i+1)), wrong_tot_L1[0:i+1], "bo")
     		plt.draw()
     		plt.pause(0.1)
     		t1 = time.time()
-    		print "Elapsed Time: " + str(t1 - t0)
+    		print("Elapsed Time: " + str(t1 - t0))
     	f.close()
         self.end = time.time()
     	self.colprint("TOTAL TIME:")
@@ -107,7 +107,7 @@ class FastInjectionMeasurement:
 
     def colprint(self, text):
     	sys.stdout.write("\033[1;31m")
-    	print(str(text))
+    	print((str(text)))
     	sys.stdout.write("\033[0;0m")
         self.LogFile.write(str(text)+"\n")
 
@@ -118,18 +118,18 @@ class FastInjectionMeasurement:
         set_DVDD(1.2)
         #I2C configuration
     	activate_I2C_chip(frequency = 4, verbose = 0)
-    	sleep(0.01)
+    	time.sleep(0.01)
     	disable_pixel(0,0)
-    	sleep(0.01)
+    	time.sleep(0.01)
     	I2C.row_write('L1Offset_1', 0,  latency)
-    	sleep(0.01)
+    	time.sleep(0.01)
     	if (latency > 255):
     		I2C.row_write('L1Offset_2', 0, 1)
-    	sleep(0.01)
+    	time.sleep(0.01)
     	I2C.peri_write('EdgeSelT1Raw', 0)
-    	sleep(0.01)
+    	time.sleep(0.01)
     	I2C.peri_write('EdgeSelTrig', 0) # 1 = rising
-    	sleep(0.01)
+    	time.sleep(0.01)
     	#I2C.peri_write('ECM',  0)
     	alignStub = 4
     	alignL1 = 3
@@ -140,18 +140,18 @@ class FastInjectionMeasurement:
     	#I2C.peri_write('LatencyRx320', 0b00011111) # Setup Test Chip #20
     	#I2C.peri_write('LatencyRx320', 0b00011111) # Setup Test Chip #20
     	# Stub Strip Input
-    	sleep(0.01)
+    	time.sleep(0.01)
     	fc7.write("cnfg_phy_SSA_enable_gen_l1_data", 1)
-    	sleep(0.01)
+    	time.sleep(0.01)
     	fc7.write("cnfg_phy_SSA_gen_delay_trig_data",7)
-    	sleep(0.01)
+    	time.sleep(0.01)
     	fc7.write("cnfg_phy_SSA_gen_offset_SSA_BX_cnt_format", 0)
-    	sleep(0.01)
+    	time.sleep(0.01)
     	#fc7.write("ctrl_phy_ssa_gen_trig_phase",42)
-    	sleep(0.01)
+    	time.sleep(0.01)
     	#I2C.peri_write("SSAOffset_1", offset)
     	I2C.peri_write("ConfSLVS", 0b00111111)
-    	sleep(0.01)
+    	time.sleep(0.01)
 
     	if (analog_injection):
     		set_calibration(100)
@@ -160,7 +160,7 @@ class FastInjectionMeasurement:
     		I2C.pixel_write('DigPattern', 0, 0,  0b00000001)
     		#set_calibration(100)
     		#set_threshold(200)
-    	sleep(0.01)
+    	time.sleep(0.01)
     	#activate_pp()
 
     def parse_to_bin32(self, input):
@@ -228,7 +228,7 @@ class FastInjectionMeasurement:
     			elif ((strip[i] <= 120)):
     				strip_0 = strip_0 | ( 1 << (strip[i]- 96 - 1))
     			else:
-    				print "WARNING: Strip coordinate out of range!"
+    				print("WARNING: Strip coordinate out of range!")
     			scluster = scluster + bin(strip[i]).lstrip('-0b').zfill(7) + bin(0).lstrip('-0b').zfill(4)
     		fc7.write("cnfg_phy_SSA_gen_l1_data_format_3", strip_3)
     		fc7.write("cnfg_phy_SSA_gen_l1_data_format_2", strip_2)
@@ -240,10 +240,10 @@ class FastInjectionMeasurement:
     	# BX0
     	#count = 0
     	if verbose:
-    		print " Injected pixels: ", pixel
-    		print " Injected row: ", row
-    		print " Injected count: ",count
-    		print " Injected strip: ", strip
+    		print(" Injected pixels: ", pixel)
+    		print(" Injected row: ", row)
+    		print(" Injected count: ",count)
+    		print(" Injected strip: ", strip)
     	#print strip_3
     	#print strip_2
     	#print strip_1
@@ -279,16 +279,16 @@ class FastInjectionMeasurement:
     	l9 = (word8 & 0b00001) << 7 | (word9 & 0b00001) << 6 | (word10 & 0b00001) << 5 | (word11 & 0b00001) << 4 |  (word12 & 0b00001) << 3 | (word13 & 0b00001) << 2 | (word14 & 0b00001) << 1 | (word15 & 0b00001) << 0
 
     	if (verbose):
-    		print self.parse_to_bin8(l4)
-    		print self.parse_to_bin8(l3)
-    		print self.parse_to_bin8(l2)
-    		print self.parse_to_bin8(l1)
-    		print self.parse_to_bin8(l0)
-    		print self.parse_to_bin8(l9)
-    		print self.parse_to_bin8(l8)
-    		print self.parse_to_bin8(l7)
-    		print self.parse_to_bin8(l6)
-    		print self.parse_to_bin8(l5)
+    		print(self.parse_to_bin8(l4))
+    		print(self.parse_to_bin8(l3))
+    		print(self.parse_to_bin8(l2))
+    		print(self.parse_to_bin8(l1))
+    		print(self.parse_to_bin8(l0))
+    		print(self.parse_to_bin8(l9))
+    		print(self.parse_to_bin8(l8))
+    		print(self.parse_to_bin8(l7))
+    		print(self.parse_to_bin8(l6))
+    		print(self.parse_to_bin8(l5))
     	if print_file:
     		f.write("Stub pattern check")
     		message = self.parse_to_bin8(l4) + "\n"; f.write(message);
@@ -320,7 +320,7 @@ class FastInjectionMeasurement:
     	pattern3 = 0
     	pattern2 = 0
     	pattern1 = 0
-    	if (verbose): print payload
+    	if (verbose): print(payload)
     	try:
     		pattern7 = int(payload[0:   32], 2)
     		pattern6 = int(payload[32:  64], 2)
@@ -330,7 +330,7 @@ class FastInjectionMeasurement:
     		pattern2 = int(payload[160: 192], 2)
     		pattern1 = int(payload[192: 224], 2)
     	except ValueError:
-    		if (verbose): print "Empty Pattern"
+    		if (verbose): print("Empty Pattern")
     	self.loadCheckPatternOnFC7L1(pattern1, pattern2, pattern3, pattern4, pattern5, pattern6, pattern7)
     	if print_file:	f.close()
 
@@ -338,11 +338,11 @@ class FastInjectionMeasurement:
     	fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns1",pattern1)
     	fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns2",pattern2)
     	fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns3",pattern3)
-    	#sleep(0.5)
+    	#time.sleep(0.5)
     	if (verbose):
-    		print "Content of the patterns1 cnfg register: ",fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns1")
-    		print "Content of the patterns2 cnfg register: ",fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns2")
-    		print "Content of the patterns3 cnfg register: ",fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns3")
+    		print("Content of the patterns1 cnfg register: ",fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns1"))
+    		print("Content of the patterns2 cnfg register: ",fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns2"))
+    		print("Content of the patterns3 cnfg register: ",fc7.read("cnfg_phy_MPA_SSA_SEU_check_patterns3"))
 
     def loadCheckPatternOnFC7L1(self, pattern1, pattern2, pattern3, pattern4, pattern5, pattern6, pattern7, verbose = 0):
 
@@ -353,53 +353,53 @@ class FastInjectionMeasurement:
     	fc7.write("cnfg_phy_l1_MPA_SSA_SEU_check_patterns5",pattern5)
     	fc7.write("cnfg_phy_l1_MPA_SSA_SEU_check_patterns6",pattern6)
     	fc7.write("cnfg_phy_l1_MPA_SSA_SEU_check_patterns7",pattern7)
-    	#sleep(0.5)
+    	#time.sleep(0.5)
     	if (verbose):
-    		print "Content of the patterns1 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns1"))
-    		print "Content of the patterns2 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns2"))
-    		print "Content of the patterns3 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns3"))
-    		print "Content of the patterns4 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns4"))
-    		print "Content of the patterns5 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns5"))
-    		print "Content of the patterns6 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns6"))
-    		print "Content of the patterns7 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns7"))
+    		print("Content of the patterns1 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns1")))
+    		print("Content of the patterns2 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns2")))
+    		print("Content of the patterns3 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns3")))
+    		print("Content of the patterns4 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns4")))
+    		print("Content of the patterns5 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns5")))
+    		print("Content of the patterns6 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns6")))
+    		print("Content of the patterns7 cnfg register: ",self.parse_to_bin32(fc7.read("cnfg_phy_l1_MPA_SSA_SEU_check_patterns7")))
 
     def delayDataTaking(self):
     	#below register can be used to check in which BX the centroid data is coming (even or odd) and can be used later in "fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns3",0 or 1)" to configure if the state machine has to wait 1 clk cycle
-    	print "BX indicator for SSA centroid data:", fc7.read("stat_phy_slvs_compare_fifo_bx_indicator")
+    	print("BX indicator for SSA centroid data:", fc7.read("stat_phy_slvs_compare_fifo_bx_indicator"))
     	#fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns3",0 or 1)
-    	sleep(1)
+    	time.sleep(1)
 
     def printInfo(self, message):
-    	print
-    	print message
-    	print "*** STUB ***"
-    	print "State of FSM: " , fc7.read("stat_phy_slvs_compare_state_machine")
-    	print "FIFO almost full: " , fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-    	print "number of events written to FIFO", fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo")
-    	print "Number of good 2xBX STUBS: ", fc7.read("stat_phy_slvs_compare_number_good_data")
-    	print
-    	print "*** L1 ***"
-    	print "State of FSM: " , fc7.read("stat_phy_l1_slvs_compare_state_machine")
-    	print "Fifo almost full: ", fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
-    	print "Header # ", fc7.read("stat_phy_l1_slvs_compare_number_l1_headers_found")
-    	print "Trigger # ", fc7.read("stat_phy_l1_slvs_compare_number_l1_triggers")
-    	print "number of events written to FIFO", fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo")
-    	print "number of matched events:", fc7.read("stat_phy_l1_slvs_compare_number_good_data")
-    	print "*************************"
+    	print()
+    	print(message)
+    	print("*** STUB ***")
+    	print("State of FSM: " , fc7.read("stat_phy_slvs_compare_state_machine"))
+    	print("FIFO almost full: " , fc7.read("stat_phy_slvs_compare_fifo_almost_full"))
+    	print("number of events written to FIFO", fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo"))
+    	print("Number of good 2xBX STUBS: ", fc7.read("stat_phy_slvs_compare_number_good_data"))
+    	print()
+    	print("*** L1 ***")
+    	print("State of FSM: " , fc7.read("stat_phy_l1_slvs_compare_state_machine"))
+    	print("Fifo almost full: ", fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full"))
+    	print("Header # ", fc7.read("stat_phy_l1_slvs_compare_number_l1_headers_found"))
+    	print("Trigger # ", fc7.read("stat_phy_l1_slvs_compare_number_l1_triggers"))
+    	print("number of events written to FIFO", fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo"))
+    	print("number of matched events:", fc7.read("stat_phy_l1_slvs_compare_number_good_data"))
+    	print("*************************")
 
     def RunStateMachine(self, runname, iteration, print_file, timer_data_taking, latency):
     	fc7.write("ctrl_phy_l1_SLVS_compare_start",1)
     	SendCommand_CTRL("start_trigger")
-    	sleep(0.01)
+    	time.sleep(0.01)
     	FSM = fc7.read("stat_phy_slvs_compare_state_machine")
     	if (FSM == 4):
-    		print "-----------------------------"
-    		print "-----------------------------"
-    		print "-----------------------------"
-    		print "Error in FSM"
-    		print "-----------------------------"
-    		print "-----------------------------"
-    		print "-----------------------------"
+    		print("-----------------------------")
+    		print("-----------------------------")
+    		print("-----------------------------")
+    		print("Error in FSM")
+    		print("-----------------------------")
+    		print("-----------------------------")
+    		print("-----------------------------")
     		return
     	fc7.write("ctrl_phy_SLVS_compare_start",1)
 
@@ -407,7 +407,7 @@ class FastInjectionMeasurement:
     	FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
     	FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
     	timer = 0
-    	sleep(1)
+    	time.sleep(1)
     	activate_I2C_chip(verbose = 0)
     	while(FIFO_almost_full != 1 and FIFO_almost_full_L1 != 1 and timer < timer_data_taking):
     		FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
@@ -415,9 +415,9 @@ class FastInjectionMeasurement:
     		timer = timer + 5
     		message = "TIMER at: ", timer, "/", timer_data_taking
     		self.printInfo(message)
-    		sleep(5)
+    		time.sleep(5)
     	fc7.write("ctrl_phy_SLVS_compare_stop",1)
-    	sleep(0.01)
+    	time.sleep(0.01)
     	SendCommand_CTRL("stop_trigger")
     	FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
     	FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
@@ -460,9 +460,9 @@ class FastInjectionMeasurement:
     	f.close
 
     def ReadFIFOs(self, chip, n = 16386):
-    	print "!!!!!!!!!!!!!!!!!!!START READING FIFO NOW!!!!!!!!!!!!!!!!!!!!!!"
-    	print "State of FSM before reading FIFOs: " , fc7.read("stat_phy_slvs_compare_state_machine")
-    	print "Now printing the data in the FIFO:"
+    	print("!!!!!!!!!!!!!!!!!!!START READING FIFO NOW!!!!!!!!!!!!!!!!!!!!!!")
+    	print("State of FSM before reading FIFOs: " , fc7.read("stat_phy_slvs_compare_state_machine"))
+    	print("Now printing the data in the FIFO:")
     	stat_phy_slvs_compare_data_ready = fc7.read("stat_phy_slvs_compare_data_ready")
     	i = 0
 
@@ -476,44 +476,44 @@ class FastInjectionMeasurement:
 
     	for i in range (0,n):
     			print("--------------------------")
-    			print("Entry number: ", i ," in the FIFO:")
+    			print(("Entry number: ", i ," in the FIFO:"))
     			fifo1_word = fc7.read("ctrl_phy_SLVS_compare_read_data1_fifo")
     			fifo2_word = fc7.read("ctrl_phy_SLVS_compare_read_data2_fifo")
     			fifo3_word = fc7.read("ctrl_phy_SLVS_compare_read_data3_fifo")
     			fifo4_word = fc7.read("ctrl_phy_SLVS_compare_read_data4_fifo")
-    			print "MPA: BX counter, 0x0000, BX0 data (l4, l3, l2, l1, l0) and  BX1 data (l4, l3, l2, l1, l0)"
-    			print "SSA: 0x0000, BX counter, 0x0000 and centroid data (l7, l6, l5, l4, l3, l2, l1, l0)"
-    			print(self.parse_to_bin32(fifo4_word),self.parse_to_bin32(fifo3_word),self.parse_to_bin32(fifo2_word),self.parse_to_bin32(fifo1_word))
-    			print(fifo4_word,fifo3_word,fifo2_word,fifo1_word)
+    			print("MPA: BX counter, 0x0000, BX0 data (l4, l3, l2, l1, l0) and  BX1 data (l4, l3, l2, l1, l0)")
+    			print("SSA: 0x0000, BX counter, 0x0000 and centroid data (l7, l6, l5, l4, l3, l2, l1, l0)")
+    			print((self.parse_to_bin32(fifo4_word),self.parse_to_bin32(fifo3_word),self.parse_to_bin32(fifo2_word),self.parse_to_bin32(fifo1_word)))
+    			print((fifo4_word,fifo3_word,fifo2_word,fifo1_word))
 
-    			print "BX counter:", fifo4_word
+    			print("BX counter:", fifo4_word)
     			if(chip == "MPA"):
-    				print "MPA stub BX0 l4: ", self.parse_to_bin8((fifo3_word & 0x0000ff00)>>8)
-    				print "MPA stub BX0 l3: ", self.parse_to_bin8(fifo3_word & 0x000000ff)
-    				print "MPA stub BX0 l2: ", self.parse_to_bin8((fifo2_word & 0xff000000)>>24)
-    				print "MPA stub BX0 l1: ", self.parse_to_bin8((fifo2_word & 0x00ff0000)>>16)
-    				print "MPA stub BX0 l0: ", self.parse_to_bin8((fifo2_word & 0x0000ff00)>>8)
+    				print("MPA stub BX0 l4: ", self.parse_to_bin8((fifo3_word & 0x0000ff00)>>8))
+    				print("MPA stub BX0 l3: ", self.parse_to_bin8(fifo3_word & 0x000000ff))
+    				print("MPA stub BX0 l2: ", self.parse_to_bin8((fifo2_word & 0xff000000)>>24))
+    				print("MPA stub BX0 l1: ", self.parse_to_bin8((fifo2_word & 0x00ff0000)>>16))
+    				print("MPA stub BX0 l0: ", self.parse_to_bin8((fifo2_word & 0x0000ff00)>>8))
 
-    				print "MPA stub BX1 l4: ", self.parse_to_bin8(fifo2_word & 0x000000ff)
-    				print "MPA stub BX1 l3: ", self.parse_to_bin8((fifo1_word & 0xff000000)>>24)
-    				print "MPA stub BX1 l2: ", self.parse_to_bin8((fifo1_word & 0x00ff0000)>>16)
-    				print "MPA stub BX1 l1: ", self.parse_to_bin8((fifo1_word & 0x0000ff00)>>8)
-    				print "MPA stub BX1 l0: ", self.parse_to_bin8(fifo1_word & 0x000000ff)
+    				print("MPA stub BX1 l4: ", self.parse_to_bin8(fifo2_word & 0x000000ff))
+    				print("MPA stub BX1 l3: ", self.parse_to_bin8((fifo1_word & 0xff000000)>>24))
+    				print("MPA stub BX1 l2: ", self.parse_to_bin8((fifo1_word & 0x00ff0000)>>16))
+    				print("MPA stub BX1 l1: ", self.parse_to_bin8((fifo1_word & 0x0000ff00)>>8))
+    				print("MPA stub BX1 l0: ", self.parse_to_bin8(fifo1_word & 0x000000ff))
     			elif(chip == "SSA"):
-    				print "SSA centroid l7: ", self.parse_to_bin8((fifo2_word & 0xff000000)>>24)
-    				print "SSA centroid l6: ", self.parse_to_bin8((fifo2_word & 0x00ff0000)>>16)
-    				print "SSA centroid l5: ", self.parse_to_bin8((fifo2_word & 0x0000ff00)>>8)
-    				print "SSA centroid l4: ", self.parse_to_bin8(fifo2_word & 0x000000ff)
+    				print("SSA centroid l7: ", self.parse_to_bin8((fifo2_word & 0xff000000)>>24))
+    				print("SSA centroid l6: ", self.parse_to_bin8((fifo2_word & 0x00ff0000)>>16))
+    				print("SSA centroid l5: ", self.parse_to_bin8((fifo2_word & 0x0000ff00)>>8))
+    				print("SSA centroid l4: ", self.parse_to_bin8(fifo2_word & 0x000000ff))
 
-    				print "SSA centroid l3: ", self.parse_to_bin8((fifo1_word & 0xff000000)>>24)
-    				print "SSA centroid l2: ", self.parse_to_bin8((fifo1_word & 0x00ff0000)>>16)
-    				print "SSA centroid l1: ", self.parse_to_bin8((fifo1_word & 0x0000ff00)>>8)
-    				print "SSA centroid l0: ", self.parse_to_bin8(fifo1_word & 0x000000ff)
+    				print("SSA centroid l3: ", self.parse_to_bin8((fifo1_word & 0xff000000)>>24))
+    				print("SSA centroid l2: ", self.parse_to_bin8((fifo1_word & 0x00ff0000)>>16))
+    				print("SSA centroid l1: ", self.parse_to_bin8((fifo1_word & 0x0000ff00)>>8))
+    				print("SSA centroid l0: ", self.parse_to_bin8(fifo1_word & 0x000000ff))
     			else:
-    				print "CHIPTYPE UNKNOWN"
+    				print("CHIPTYPE UNKNOWN")
 
-    	print "State of FSM after reading FIFOs: " , fc7.read("stat_phy_slvs_compare_state_machine")
-    	print "Fifo almost full: ", fc7.read("stat_phy_slvs_compare_fifo_almost_full")
+    	print("State of FSM after reading FIFOs: " , fc7.read("stat_phy_slvs_compare_state_machine"))
+    	print("Fifo almost full: ", fc7.read("stat_phy_slvs_compare_fifo_almost_full"))
 
     def ReadFIFOsL1(self, n = 16386, verbose = 1):
     	#print "!!!!!!!!!!!!!!!!!!!START READING FIFO NOW!!!!!!!!!!!!!!!!!!!!!!"
@@ -533,16 +533,16 @@ class FastInjectionMeasurement:
     			fifo9_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data9_fifo")
     			if (verbose):
     				print("--------------------------")
-    				print("Entry number: ", i ," in the FIFO:")
-    				print "Full l1 data package without the header (MSB downto LSB): "
-    				print(self.parse_to_bin32(fifo7_word),self.parse_to_bin32(fifo6_word),self.parse_to_bin32(fifo5_word),self.parse_to_bin32(fifo4_word),self.parse_to_bin32(fifo3_word),self.parse_to_bin32(fifo2_word),self.parse_to_bin32(fifo1_word))
-    				print "l1 counter: ", self.parse_to_bin9((fifo7_word & 0x3FE00000)>>21)
-    				print "l1 counter: ", (fifo7_word & 0x3FE00000)>>21
-    				print "FC7 l1 mirror counter: ", (fifo9_word & 0x000001FF)
-    				print "BX counter: ", fifo8_word
+    				print(("Entry number: ", i ," in the FIFO:"))
+    				print("Full l1 data package without the header (MSB downto LSB): ")
+    				print((self.parse_to_bin32(fifo7_word),self.parse_to_bin32(fifo6_word),self.parse_to_bin32(fifo5_word),self.parse_to_bin32(fifo4_word),self.parse_to_bin32(fifo3_word),self.parse_to_bin32(fifo2_word),self.parse_to_bin32(fifo1_word)))
+    				print("l1 counter: ", self.parse_to_bin9((fifo7_word & 0x3FE00000)>>21))
+    				print("l1 counter: ", (fifo7_word & 0x3FE00000)>>21)
+    				print("FC7 l1 mirror counter: ", (fifo9_word & 0x000001FF))
+    				print("BX counter: ", fifo8_word)
     	t1 = time.time()
-    	print "END"
-    	print "Elapsed Time: " + str(t1 - t0)
+    	print("END")
+    	print("Elapsed Time: " + str(t1 - t0))
     	#printInfo("AFTER READING FIFO:")
 
     def writeFIFO_L1(self, n = 16386, filename = "test_L1.csv"):
@@ -564,13 +564,13 @@ class FastInjectionMeasurement:
 
     def Run(self, col, row, width, strip, timer_data_taking = 5, offset = 5, cal_pulse_period = 10, l1a_period = 101, latency = 100, diff = 2, skip = 1, verbose = 0, print_file = 0, runname =  "../cernbox/SEU_results/", iteration = 0):
         mpa_reset()
-        sleep(0.1)
+        time.sleep(0.1)
         reset()
-        sleep(0.1)
+        time.sleep(0.1)
         SendCommand_CTRL("fast_fast_reset")
-        sleep(0.1)
+        time.sleep(0.1)
         self.configureChip( latency = latency - diff,  offset = offset, analog_injection = 0)
-        sleep(0.1)
+        time.sleep(0.1)
         align_out(0)
         if (skip == 0):
     		Configure_TestPulse_MPA(delay_after_fast_reset = 512, delay_after_test_pulse = latency, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_L1 = 1, enable_rst = 0, enable_init_rst = 1)

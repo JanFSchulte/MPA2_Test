@@ -18,11 +18,11 @@ class mpa_inject():
 
 	def send_pulses(self, n_pulse):
 		self.fc7.open_shutter(8)
-		sleep(0.01)
+		time.sleep(0.01)
 		for i in range(0, n_pulse):
 			self.fc7.send_test()
-			sleep(0.1)
-		sleep(0.001)
+			time.sleep(0.1)
+		time.sleep(0.001)
 		self.fc7.close_shutter()
 	def send_pulses_fast(self, n_pulse, row, pixel, cal):
 		self.ctrl_pix.disable_pixel(0, 0)
@@ -31,7 +31,7 @@ class mpa_inject():
 		try:
 			self.fc7.open_shutter(8)
 		except ChipsException:
-			print "Error ChipsException, repeat command"
+			print("Error ChipsException, repeat command")
 			sleep (0.001)
 			self.fc7.open_shutter(8)
 		if (cal != 0):
@@ -41,13 +41,13 @@ class mpa_inject():
 			test = 1
 			while (test):
 				test = self.fc7.read("stat_fast_fsm_state")
-				sleep(0.001)
+				time.sleep(0.001)
 		else:
-			sleep(0.000001*n_pulse)
+			time.sleep(0.000001*n_pulse)
 		try:
 			self.fc7.close_shutter(8)
 		except ChipsException:
-			print "Error ChipsException, repeat ccommand"
+			print("Error ChipsException, repeat ccommand")
 			sleep (0.001)
 			self.fc7.close_shutter(8)
 	def send_pulses_fast_all(self, n_pulse, row, pixel, cal):
@@ -56,11 +56,11 @@ class mpa_inject():
 			for p in pixel:
 				self.ctrl_pix.enable_pix_disable_ancal(r, p)
 				#enable_pix_counter(r,p)
-		sleep(0.0025)
+		time.sleep(0.0025)
 		try:
 			self.fc7.open_shutter(8)
 		except ChipsException:
-			print "Error ChipsException, repeat ccommand"
+			print("Error ChipsException, repeat ccommand")
 			sleep (0.001)
 			self.fc7.open_shutter(8)
 		if (cal != 0):
@@ -68,39 +68,39 @@ class mpa_inject():
 			test = 1
 			while (test):
 				test = self.fc7.read("stat_fast_fsm_state")
-				sleep(0.001)
+				time.sleep(0.001)
 		else:
-			sleep(1*n_pulse)
+			time.sleep(1*n_pulse)
 		try:
 			self.fc7.close_shutter(8)
 		except ChipsException:
-			print "Error ChipsException, repeat ccommand"
+			print("Error ChipsException, repeat ccommand")
 			sleep (0.001)
 			self.fc7.close_shutter(8)
 	def inject(self):
-		sleep(0.005)
+		time.sleep(0.005)
 		self.fc7.open_shutter(8)
 		if (cal != 0):
-			sleep(0.005)
+			time.sleep(0.005)
 			self.fc7.SendCommand_CTRL("start_trigger")
 			test = 1
 			while (test):
 				test = self.fc7.read("stat_fast_fsm_state")
-				sleep(0.001)
+				time.sleep(0.001)
 		else:
-			sleep(0.000001*n_pulse)
+			time.sleep(0.000001*n_pulse)
 			self.fc7.close_shutter(8)
 
 	def send_pulses_fast_only(self, n_pulse, row, pixel, cal):
 		self.ctrl_pix.disable_pixel(0, 0)
 		self.ctrl_pix.enable_pix_counter(row, pixel)
 		#self.ctrl_pix.enable_pix_disable_ancal(row, pixel)
-		sleep(0.0025)
+		time.sleep(0.0025)
 		if (cal != 0):
 			self.fc7.SendCommand_CTRL("start_trigger")
 			test = 1
 			while (test):
 				test = self.fc7.read("stat_fast_fsm_state")
-				sleep(0.001)
+				time.sleep(0.001)
 		else:
-			sleep(0.000001*n_pulse)
+			time.sleep(0.000001*n_pulse)

@@ -11,7 +11,7 @@ export LC_ALL=C; unset LANGUAGE
 #   	printf 'IP=%s\n' "$line"
 #   done <"$file"
 
-IP="192.168.0.79"
+IP="192.168.1.79"
 eth=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
 
 printf '______________________________________________________\n'
@@ -49,9 +49,9 @@ else
 	printf '\n->  Testbench correctly found on %s\n' "$IP"
 	printf '\n->  Starting loading the firmware\n'
 	cd ~/FC7/sw/fc7/tests
-	./bin/fc7-d19c.exe  -i $IP -n  MPA_SEU_L1_9.bin  #-f /home/acaratel/D19C/MPA_Test/fw_bitfiles/MPA_SEU_L1_9.bit
+	./bin/fc7-d19c.exe  -i $IP -n  d19c_mpa_none_28042019.bin  #-f /home/acaratel/D19C/MPA_Test/fw_bitfiles/MPA_SEU_L1_9.bit
 	cd -
 fi
 
 
-./bin/fc7-d19c.exe  -i $IP -n  MPA_SEU_L1_9.bin #-f /home/acaratel/D19C/MPA_Test/fw_bitfiles/MPA_SEU_L1_9.bit
+./bin/fc7-d19c.exe  -i $IP -n  d19c_mpa_none_28042019.bin #-f /home/acaratel/D19C/MPA_Test/fw_bitfiles/MPA_SEU_L1_9.bit

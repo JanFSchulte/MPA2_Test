@@ -5,7 +5,7 @@ import sys
 import os
 import random
 import time
-import ProbeCardTest
+from . import ProbeCardTest
 
 
 class ChipMeasurement:
@@ -18,12 +18,12 @@ class ChipMeasurement:
         version = 0
         while not exists:
             if not os.path.exists(self.DIR+"_v"+str(version)):
-                print self.DIR
+                print(self.DIR)
                 self.DIR = self.DIR+"_v"+str(version)
                 os.makedirs(self.DIR)
                 exists = True
             version += 1
-        print self.DIR + "<<< USING THIS"
+        print(self.DIR + "<<< USING THIS")
         self.TEST = ProbeCardTest2.ProbeMeasurement(self.DIR)
     def RUN(self, chipinfo):
         return self.TEST.Run(chipinfo)
@@ -38,7 +38,7 @@ class AUTOPROBER:
         self.ConnToPS()
     def colprint(self, text):
         sys.stdout.write("\033[1;34m")
-    	print(str(text))
+    	print((str(text)))
     	sys.stdout.write("\033[0;0m")
     def ConnToPS(self):
         self.colprint("\n\n===== PROBE STATION INITIALIZED: =====")
@@ -61,13 +61,13 @@ class AUTOPROBER:
         # first pass at all chips
         while self.KeepOnStepping:
             ChipStatus = self.NEXT(N)
-            print ChipStatus
+            print(ChipStatus)
             if ChipStatus == 0:
                 badR = self.DieR
                 badC = self.DieC
                 self.BadChips.append([badR, badC]) # bad chips will be scanned again
-        print self.BadChips
-        print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+        print(self.BadChips)
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
         # set overtravel a little higher for second pass
         self.ProbeStation.write("SetChuckHeight O V Y 0")
         self.colprint("Increasing overtravel: " + self.ProbeStation.read(100))
@@ -75,7 +75,7 @@ class AUTOPROBER:
         # go over bad chips
         for C in self.BadChips:
             ChipStatus = self.PROBESPECIFIC(C[0],C[1])
-            print ChipStatus
+            print(ChipStatus)
         self.ProbeStation.write("SetChuckHeight O V Y 0")
         self.colprint("Resetting overtravel: " + self.ProbeStation.read(100))
         time.sleep(0.25)

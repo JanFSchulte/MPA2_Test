@@ -48,7 +48,7 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
     ratio = trimDAC_amplitude(20)
     trimming_chip(s_type = "CAL", ref_val = 150, nominal_DAC = 45, nstep = 1, n_pulse = 200, iteration = 1, extract = 1, plot = 0, stop = 100, ratio = ratio, print_file = 0)
 # Reset Krummenacher and Pre Amp DAC values
-    print "Resetting DAC"
+    print("Resetting DAC")
     while block < 7:
         set_DAC(block, 0, 15)
         set_DAC(block, 1, 15)
@@ -63,14 +63,14 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
 ###############################################################################
 
     if krum == 1:
-        print "\nCalculating Krummenacher Threshold Voltages"
+        print("\nCalculating Krummenacher Threshold Voltages")
         while k < 31 :
             block = 0
             while block < 7 :
                 set_DAC(block, 0, k)
                 block += 1
-            print "Starting s-curve", k
-            data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 20, row = range(1, 17), step = 1, start = 0, stop = 250,
+            print("Starting s-curve", k)
+            data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 20, row = list(range(1, 17)), step = 1, start = 0, stop = 250,
             pulse_delay = 500, extract_val = 110, extract = 1, plot = 0, print_file =0)
             th_array = [a for a in th_array if a != 0]
             krum_th_avg[n] = np.mean(th_array[1:1920])
@@ -80,12 +80,12 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
             krum_current[n] = measure_current(print_file = 0)
             if k == 15:
                 measured_voltage = krum_voltage[n]
-            print "S curve ",k, "finished."
-            print "Average Threshold: ",krum_th_avg[n]
+            print("S curve ",k, "finished.")
+            print("Average Threshold: ",krum_th_avg[n])
             #print "Minimum Threshold: ", min(th_array)
-            print "Threshold Spread: ", krum_spread[n]
-            print "Average Noise: ",krum_noise_avg[n]
-            print "Voltage: ", krum_voltage[n], "mV"
+            print("Threshold Spread: ", krum_spread[n])
+            print("Average Noise: ",krum_noise_avg[n])
+            print("Voltage: ", krum_voltage[n], "mV")
             x[n] = k
             k += step
             n += 1
@@ -95,7 +95,7 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
 ###############################################################################
 
     if gain_diff == 1:
-        print "\nCalculating Krummenacher Gain Difference"
+        print("\nCalculating Krummenacher Gain Difference")
         block = 0
         while block < 7 :
             set_DAC(block, 0, 6)
@@ -107,8 +107,8 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         calLSB = np.mean((calDAC[:,160] - calDAC[:,0])/160)*0.035/1.768*1000 #LSB Calibration DAC in fC
 
 
-        print "Finding average threshold when k=6 for ref=15"
-        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 15, row = range(1, 17), step = 1, start = 0, stop = 175,
+        print("Finding average threshold when k=6 for ref=15")
+        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 15, row = list(range(1, 17)), step = 1, start = 0, stop = 175,
         pulse_delay = 500, extract_val = 110, extract = 1, plot = 0, print_file =0)
         th_array = [a for a in th_array if a != 0]
         ref15k6 = np.mean(th_array[1:1920])
@@ -116,11 +116,11 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         while p < (len(th_array)):
             th_array1[p] = th_array[p] #* thLSB
             p += 1
-        print "Average Threshold:", ref15k6
-        print "Threshold Spread: ", np.std(th_array)
+        print("Average Threshold:", ref15k6)
+        print("Threshold Spread: ", np.std(th_array))
 
-        print "\nFinding average threshold when k=6 for ref=30"
-        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 30, row = range(1, 17), step = 1, start = 0, stop = 250,
+        print("\nFinding average threshold when k=6 for ref=30")
+        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 30, row = list(range(1, 17)), step = 1, start = 0, stop = 250,
         pulse_delay = 500, extract_val = 130, extract = 1, plot = 0, print_file =0)
         th_array = [a for a in th_array if a != 0]
         ref30k6 = np.mean(th_array[1:1920])
@@ -128,16 +128,16 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         while p < (len(th_array)):
             th_array2[p] = th_array[p] #* thLSB
             p += 1
-        print "Average Threshold:", ref30k6
-        print "Threshold Spread: ", np.std(th_array)
+        print("Average Threshold:", ref30k6)
+        print("Threshold Spread: ", np.std(th_array))
 
         block = 0
         while block < 7 :
             set_DAC(block, 0, 24)
             block += 1
 
-        print "\nFinding average when k=24 for ref=15"
-        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 15, row = range(1, 17), step = 1, start = 0, stop = 175,
+        print("\nFinding average when k=24 for ref=15")
+        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 15, row = list(range(1, 17)), step = 1, start = 0, stop = 175,
         pulse_delay = 500, extract_val = 110, extract = 1, plot = 0, print_file =0)
         #th_array = [a for a in th_array if a != 0]
         ref15k24 = np.mean(th_array[1:1920])
@@ -145,11 +145,11 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         while p < (len(th_array)):
             th_array3[p] = th_array[p] #* thLSB
             p += 1
-        print "Average Threshold:", ref15k24
-        print "Threshold Spread: ", np.std(th_array)
+        print("Average Threshold:", ref15k24)
+        print("Threshold Spread: ", np.std(th_array))
 
-        print "\nFinding average when k=24 for ref=30"
-        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 30, row = range(1, 17), step = 1, start = 0, stop = 250,
+        print("\nFinding average when k=24 for ref=30")
+        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 30, row = list(range(1, 17)), step = 1, start = 0, stop = 250,
         pulse_delay = 500, extract_val = 130, extract = 1, plot = 0, print_file =0)
         #th_array = [a for a in th_array if a != 0]
         ref30k24 = np.mean(th_array[1:1920])
@@ -157,8 +157,8 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         while p < (len(th_array)):
             th_array4[p] = th_array[p] #* thLSB
             p += 1
-        print "Average Threshold:", ref30k24
-        print "Threshold Spread: ", np.std(th_array)
+        print("Average Threshold:", ref30k24)
+        print("Threshold Spread: ", np.std(th_array))
 
         Q1 = calLSB * 15
         Q2 = calLSB * 30
@@ -179,11 +179,11 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         #print "Gain for k=24:", gain2, "[mV/fC]"
         #print "Gain Difference:", gain1 - gain2, "[mV/fC]"
         #print "Other Gain Calculation:"
-        print "thLSB:", thLSB
-        print "calLSB", calLSB
-        print "\nGain for k=6:", gain3, "[mV/fC]"
-        print "Gain for k=24:", gain4, "[mV/fC]"
-        print "Gain Difference:", gain4 - gain3, "[mV/fC]"
+        print("thLSB:", thLSB)
+        print("calLSB", calLSB)
+        print("\nGain for k=6:", gain3, "[mV/fC]")
+        print("Gain for k=24:", gain4, "[mV/fC]")
+        print("Gain Difference:", gain4 - gain3, "[mV/fC]")
 
 
 ###############################################################################
@@ -191,7 +191,7 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
 ###############################################################################
 
     if pre_amp == 1:
-        print "\nStarting Pre-Amp Noise, Current, and Voltage Measurement\n",
+        print("\nStarting Pre-Amp Noise, Current, and Voltage Measurement\n", end=' ')
         block = 0
         k = 0
         n = 0
@@ -203,17 +203,17 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
             while block < 7 :
                 set_DAC(block, 1, k)
                 block += 1
-            print "Starting s-curve", k
-            data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 20, row = range(1, 17), step = 1, start = 0, stop = 175,
+            print("Starting s-curve", k)
+            data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 20, row = list(range(1, 17)), step = 1, start = 0, stop = 175,
             pulse_delay = 500, extract_val = 110, extract = 1, plot = 0, print_file =0)
             th_array = [a for a in th_array if a != 0]
             amp_noise_avg[n] = np.mean(noise_array[1:1920])
             pa_spread[n] = np.std(th_array)
             pa_current[n] = measure_current(print_file = 0)
             pa_voltage[n] = multimeter.measure(multi) * 1000
-            print "\nAverage Noise: ", amp_noise_avg[n]
-            print "Current Draw: ", pa_current[n], "mA"
-            print "Voltage: ", pa_voltage[n], "mV\n"
+            print("\nAverage Noise: ", amp_noise_avg[n])
+            print("Current Draw: ", pa_current[n], "mA")
+            print("Voltage: ", pa_voltage[n], "mV\n")
 
             x[n] = k
             n += 1
@@ -225,7 +225,7 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
 ###############################################################################
 
     if pa_gain_diff == 1:
-        print "\nCalculating Pre-Amp Gain Difference"
+        print("\nCalculating Pre-Amp Gain Difference")
         block = 0
         while block < 7 :
             set_DAC(block, 1, 6)
@@ -238,8 +238,8 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         calLSB = np.mean((calDAC[:,160] - calDAC[:,0])/160)*0.035/1.768*1000 #LSB Calibration DAC in fC
 
 
-        print "Finding average threshold when k=6 for ref=15"
-        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 15, row = range(1, 17), step = 1, start = 0, stop = 175,
+        print("Finding average threshold when k=6 for ref=15")
+        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 15, row = list(range(1, 17)), step = 1, start = 0, stop = 175,
         pulse_delay = 500, extract_val = 110, extract = 1, plot = 0, print_file =0)
         #th_array = [a for a in th_array if a != 0]
         ref15k6 = np.mean(th_array[1:1920])
@@ -247,11 +247,11 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         while p < (len(th_array)):
             th_array1[p] = th_array[p] #* thLSB
             p += 1
-        print "Average Threshold:", ref15k6
-        print "Threshold Spread: ", np.std(th_array)
+        print("Average Threshold:", ref15k6)
+        print("Threshold Spread: ", np.std(th_array))
 
-        print "\nFinding average threshold when k = 6 and ref = 30"
-        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 30, row = range(1, 17), step = 1, start = 0, stop = 250,
+        print("\nFinding average threshold when k = 6 and ref = 30")
+        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 30, row = list(range(1, 17)), step = 1, start = 0, stop = 250,
         pulse_delay = 500, extract_val = 130, extract = 1, plot = 0, print_file =0)
         #th_array = [a for a in th_array if a != 0]
         ref30k6 = np.mean(th_array[1:1920])
@@ -259,16 +259,16 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         while p < (len(th_array)):
             th_array2[p] = th_array[p] #* thLSB
             p += 1
-        print "Average Threshold:", ref30k6
-        print "Threshold Spread: ", np.std(th_array)
+        print("Average Threshold:", ref30k6)
+        print("Threshold Spread: ", np.std(th_array))
 
 
         block = 0
         while block < 7 :
             set_DAC(block, 1, 24)
             block += 1
-        print "\nFinding average threshold when k=24 for ref=15"
-        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 15, row = range(1, 17), step = 1, start = 0, stop = 175,
+        print("\nFinding average threshold when k=24 for ref=15")
+        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 15, row = list(range(1, 17)), step = 1, start = 0, stop = 175,
         pulse_delay = 500, extract_val = 110, extract = 1, plot = 0, print_file =0)
         th_array = [a for a in th_array if a != 0]
         ref15k24 = np.mean(th_array[1:1920])
@@ -276,11 +276,11 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         while p < (len(th_array)):
             th_array3[p] = th_array[p] #* thLSB
             p += 1
-        print "Average Threshold:", ref15k24
-        print "Threshold Spread: ", np.std(th_array)
+        print("Average Threshold:", ref15k24)
+        print("Threshold Spread: ", np.std(th_array))
 
-        print "\nFinding average threshold when k = 24 and ref = 30"
-        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 30, row = range(1, 17), step = 1, start = 0, stop = 250,
+        print("\nFinding average threshold when k = 24 and ref = 30")
+        data_array, th_array, noise_array = s_curve_rbr_fr(n_pulse = 100, s_type = "THR", ref_val = 30, row = list(range(1, 17)), step = 1, start = 0, stop = 250,
         pulse_delay = 500, extract_val = 130, extract = 1, plot = 0, print_file =0)
         th_array = [a for a in th_array if a != 0]
         ref30k24 = np.mean(th_array[1:1920])
@@ -288,8 +288,8 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         while p < (len(th_array)):
             th_array4[p] = th_array[p] #* thLSB
             p += 1
-        print "Average Threshold:", ref30k24
-        print "Threshold Spread: ", np.std(th_array)
+        print("Average Threshold:", ref30k24)
+        print("Threshold Spread: ", np.std(th_array))
 
         Q1 = calLSB * 15
         Q2 = calLSB * 30
@@ -307,9 +307,9 @@ def krummenacher_measure(krum = 1, gain_diff = 1, pre_amp = 1, pa_gain_diff = 1,
         gain5 = (np.mean(gain_array1) * thLSB)
         gain6 = (np.mean(gain_array2) * thLSB)
 
-        print "\nGain for k=6:", gain5, "[mV/fC]"
-        print "Gain for k=24:", gain6, "[mV/fC]"
-        print "Gain Difference:", gain6 - gain5, "[mV/fC]"
+        print("\nGain for k=6:", gain5, "[mV/fC]")
+        print("Gain for k=24:", gain6, "[mV/fC]")
+        print("Gain Difference:", gain6 - gain5, "[mV/fC]")
 
 
 ###############################################################################

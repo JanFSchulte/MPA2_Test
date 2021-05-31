@@ -81,7 +81,7 @@ class ProbeMeasurement:
 
     def colprint(self, text):
     	sys.stdout.write("\033[1;31m")
-    	print(str(text))
+    	print((str(text)))
     	sys.stdout.write("\033[0;0m")
         self.LogFile.write(str(text)+"\n")
 
@@ -130,7 +130,7 @@ class ProbeMeasurement:
         sleep(5)
         try:
             data_array,th_A, noise_A, pix_out = trimming_chip(s_type = "CAL", ref_val = th_H, nominal_DAC = cal_H, nstep = 1, n_pulse = 200, iteration = 1, extract = 1, plot = 0, stop = 100, ratio = 2.36, print_file = 1, filename = self.DIR+ "/Trim15")
-            scurve, th_B, noise_B = s_curve_rbr_fr(n_pulse = 200,  s_type = "CAL", ref_val = th_L, row = range(1,17), step = 1, start = 0, stop = 50, pulse_delay = 200, extract = 1, extract_val = cal_L, plot = 0, print_file = 1, filename = self.DIR+ "/Scurve15")
+            scurve, th_B, noise_B = s_curve_rbr_fr(n_pulse = 200,  s_type = "CAL", ref_val = th_L, row = list(range(1,17)), step = 1, start = 0, stop = 50, pulse_delay = 200, extract = 1, extract_val = cal_L, plot = 0, print_file = 1, filename = self.DIR+ "/Scurve15")
             gain = (th_H-th_L)/(np.mean(th_A[1:1920]) - np.mean(th_B[1:1920])) * thLSB / calLSB # Average
             self.colprint("The average gain is: " + str(gain))
             self.colprint("The thLSB is: " + str(thLSB))
@@ -282,7 +282,7 @@ class ProbeMeasurement:
             CVwriter.writerow(DigitalFlags)
 
     def GetActualBadPixels(self, BPA):
-        print BPA
+        print(BPA)
         badpix = BPA[0]
         goodpix = []
         for i in range(1, len(BPA)):
@@ -322,7 +322,7 @@ class ProbeMeasurement:
         self.ground = measure_gnd()
         self.colprint("GROUND IS " + str(self.ground))
         self.CV = calibrate_chip(self.ground, filename = self.DIR+"/Bias_DAC")
-        print self.CV
+        print(self.CV)
 
         #self.bg = measure_bg()
         #self.BandGapFile = open(self.DIR+"/BandGap.txt", "a")

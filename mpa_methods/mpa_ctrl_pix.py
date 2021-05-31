@@ -36,7 +36,7 @@ class mpa_ctrl_pix:
 		elif (polarity == "fall"):
 			self.I2C.pixel_write('ENFLAGS', r, p, 0x55) # with pixel counter for debugging
 		else:
-			print "Polarity not recognized"
+			print("Polarity not recognized")
 			return
 	def enable_pix_LevelBRcal(self, r,p, polarity = "rise"):
 		self.I2C.pixel_write('ModeSel', r, p, 0b01)
@@ -45,7 +45,7 @@ class mpa_ctrl_pix:
 		elif (polarity == "fall"):
 			self.I2C.pixel_write('ENFLAGS', r, p, 0x59) # with pixel counter for debugging
 		else:
-			print "Polarity not recognized"
+			print("Polarity not recognized")
 			return
 	def enable_dig_cal(self, r,p, pattern = 0b00000001):
 		self.I2C.pixel_write('ENFLAGS', r, p, 0x20)
@@ -58,7 +58,7 @@ class mpa_ctrl_pix:
 				if trim_val > -1 and trim_val < 32: self.I2C.pixel_write("TrimDAC",r+1,p+2, trim_val)
 				elif trim_val < 0: self.I2C.pixel_write("TrimDAC",r+1,p+2, 0); count += 1#print "Low Trim Row", r, "Pixel", p, "Value", trim_val
 				elif trim_val > 31: self.I2C.pixel_write("TrimDAC",r+1,p+2, 31); count += 1#print "High Trim Row", r, "Pixel", p, "Value", trim_val - 31
-				else: print r, p
+				else: print(r, p)
 		return count
 
 	def reset_trim(self, value = 15):
@@ -70,13 +70,13 @@ class mpa_ctrl_pix:
 			data1 = self.I2C.pixel_read('ReadCounter_LSB',row, pixel, 0.01) # Repeat with higher timeout time
 			data2 = self.I2C.pixel_read('ReadCounter_MSB',row, pixel, 0.01) # Repeat with higher timeout time
 		if ((data1 == None) or (data2 == None)):
-			sleep(1)
+			time.sleep(1)
 			activate_I2C_chip(verbose = 0)
-			sleep(1)
+			time.sleep(1)
 			data1 = self.I2C.pixel_read('ReadCounter_LSB',row, pixel, 0.01) # Repeat with higher timeout time
 			data2 = self.I2C.pixel_read('ReadCounter_MSB',row, pixel, 0.01) # Repeat with higher timeout time
 		if ((data1 == None) or (data2 == None)):
-			print "Error Reading I2C"
+			print("Error Reading I2C")
 			data = 0
 		else:
 			data = ((data2 & 0x0ffffff) << 8) | (data1 & 0x0fffffff)
