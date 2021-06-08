@@ -3,6 +3,7 @@
 from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
 import sys, os
+import numpy as np
 
 #####################
 # START HERE
@@ -62,16 +63,21 @@ def read_regs( verbose =  1 ):
         print("---> MPA Counters Ready: " +str((status & 0x00000004) >> 2))
 
         print("\n--> L1 Data: ")
+        print("--->")
         for word in mpa_l1_data:
             #print("--->", '%10s' % bin(to_number(reverse_mask(word),32,24)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),24,16)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),16,8)).lstrip('-0b').zfill(8), '%10s' % bin(to_number(reverse_mask(word),8,0)).lstrip('-0b').zfill(8))
-            print("--->" +
+            print(
                 '{:10s}'.format( bin(to_number(reverse_mask(word), 8, 0)).lstrip('-0b').zfill(8) ) +
                 '{:10s}'.format( bin(to_number(reverse_mask(word),16, 8)).lstrip('-0b').zfill(8) ) +
                 '{:10s}'.format( bin(to_number(reverse_mask(word),24,16)).lstrip('-0b').zfill(8) ) +
                 '{:10s}'.format( bin(to_number(reverse_mask(word),32,24)).lstrip('-0b').zfill(8) ) )
         print("\n--> Stub Data: ")
-        for word in mpa_stub_data:
-            print("--->" +
+        for i, word in enumerate(mpa_stub_data):
+
+            if not i % 10:
+                print(f'\nLine {np.floor(i/10)+1:.0f}:')
+
+            print(
                 '{:10s}'.format( bin(to_number(reverse_mask(word), 8, 0)).lstrip('-0b').zfill(8) ) +
                 '{:10s}'.format( bin(to_number(reverse_mask(word),16, 8)).lstrip('-0b').zfill(8) ) +
                 '{:10s}'.format( bin(to_number(reverse_mask(word),24,16)).lstrip('-0b').zfill(8) ) +

@@ -6,6 +6,10 @@ source ./FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export LC_ALL=C; unset LANGUAGE
 
+<<<<<<< HEAD
+=======
+# BOARD_MAC="08:00:30:00:22:f0"
+>>>>>>> mpa i2c class working
 BOARD_MAC="08:00:30:00:22:5d"
 MPA_ADR_0="0b1000000"
 SSA_ADR_0="0b0100000"
@@ -37,7 +41,7 @@ echo "from utilities import tbconfig " >  utilities/tbsettings.py
 echo "tbconfig.VERSION['SSA'] = 2" >> utilities/tbsettings.py
 echo "tbconfig.VERSION['MPA'] = 1" >> utilities/tbsettings.py
 echo "tbconfig.BOARD_SELECT = '$BOARD_MAC'" >> utilities/tbsettings.py
-echo "tbconfig.MPA_ADR[0] = $SSA_ADR_0" >> utilities/tbsettings.py
+echo "tbconfig.MPA_ADR[0] = $MPA_ADR_0" >> utilities/tbsettings.py
 echo "tbconfig.SSA_ADR[0] = $SSA_ADR_0" >> utilities/tbsettings.py
 echo "tbconfig.SSA_ADR[1] = $SSA_ADR_1" >> utilities/tbsettings.py
 
@@ -50,7 +54,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 ping -c 1 -W 1 $IP; rep=$?
 
 if ! (( $rep == 0 )); then
-	printf '\n=>  SSA Testbench unrichable\n    '
+	printf '\n=>  SSA Testbench unreachable\n    '
 	if (! ifconfig | grep ${eth}:'1'); then
 		read -r -p "    Do you want to configure the communication? [y/N] " response
 		if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
