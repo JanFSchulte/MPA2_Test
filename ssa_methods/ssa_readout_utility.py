@@ -21,7 +21,7 @@ fc7.read("stat_slvs_debug_general")
 '''
 
 class SSA_readout():
-    """ """
+
 
 	def __init__(self, index, I2C, FC7, ssactrl, ssastrip):
 		self.index = index
@@ -194,7 +194,7 @@ class SSA_readout():
 		"""Configure/Initiates an L1 Trigger pulse. Parse and read out
                 L1 Data
 
-		:param latency:  (Default value = 50) To be added to delay 
+		:param latency:  (Default value = 50) To be added to delay
                 after test pulse
 		:param shift:  (Default value = 0)
 		:param initialise:  (Default value = True)
@@ -390,7 +390,7 @@ class SSA_readout():
 		"""
 
 		:param striplist:  (Default value = range(1)
-		:param 121): 
+		:param 121):
 		:param raw_mode_en:  (Default value = 0)
 		:param shift:  (Default value = 'auto')
 		:param initialize:  (Default value = True)
@@ -486,7 +486,7 @@ class SSA_readout():
 		"""
 
 		:param striplist:  (Default value = range(1)
-		:param 120): 
+		:param 120):
 
 		"""
 		count = [0]*120

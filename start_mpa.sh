@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-if ! ifconfig | grep 'enp0s31f6:1'; then
+if ! ifconfig | grep 'enp0s31f6'; then
 	sudo /usr/sbin/rarpd -a
 	sudo ifconfig enp0s31f6:1 192.168.1.82
 fi

@@ -4,7 +4,7 @@ try:
 except:
     pass
 
-ssa  = ssa0
+# ssa  = ssa0
 
 try:
     ssa_main_measure = main_ssa_test_2()
