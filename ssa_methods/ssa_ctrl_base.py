@@ -47,7 +47,7 @@ class ssa_ctrl_base:
 	#####################################################################
 	def reset_and_set_sampling_edge(self, display=True):
 		rp = self.pwr.reset(display=display)
-		self.set_t1_sampling_edge("negative")
+		self.set_t1_sampling_edge("falling")
 		return rp
 
 	#####################################################################

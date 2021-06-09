@@ -63,7 +63,7 @@ class SSA_ASIC:
 		utils.activate_I2C_chip(self.fc7)
 		time.sleep(0.2)
 
-	def init(self, reset_board=False, reset_chip=False, resync=True, slvs_current=0b111, edge="rising", display=True, read_current=False, set_deskewing=False):
+	def init(self, reset_board=False, reset_chip=False, resync=True, slvs_current=0b111, edge="falling", display=True, read_current=False, set_deskewing=False):
 		for iteration in range(5):
 			self.generic_parameters['cl_word_alignment'] = False
 			if(display):

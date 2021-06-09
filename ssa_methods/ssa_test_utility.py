@@ -31,7 +31,7 @@ class SSA_test_utility():
 
 		if(reset_fc7): self.fc7.SendCommand_CTRL("global_reset");
 		time.sleep(0.1);
-		if(align): self.ssa.init(edge = 'rising', display = True)
+		if(align): self.ssa.init(edge = 'falling', display = True)
 		CL_ok_t, LA_ok_t, L1_ok_t, LH_ok_t, CL_er_t, LA_er_t, L1_er_t, LH_er_t = [0]*8
 
 		for iter in range(int(iterations)):

@@ -35,7 +35,7 @@ class SSA_SEU_utilities():
 			strip =[10,20,30,40], centroids=[10,20,30,40], hipflags = [10,30], cal_pulse_period = 1, l1a_period = 39,
 			latency = 101, run_time = 5, display = 1, filename = '', runname = '',
 			delay = 74, create_errors = False, stop_if_fifo_full = True,
-			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0, show_every=1, reset_fc7=True, align=True, t1edge='rising'):
+			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0, show_every=1, reset_fc7=True, align=True, t1edge='falling'):
 
 		CL_ok=0; L1_ok=0; LH_ok=0; iter_counter=0;
 
@@ -60,7 +60,7 @@ class SSA_SEU_utilities():
 			strip =[10,20,30,40], centroids=[10,20,30,40], hipflags = [10,30], cal_pulse_period = 1, l1a_period = 39,
 			latency = 101, run_time = 5, display = 1, filename = '', runname = '',
 			delay = 74, create_errors = False, stop_if_fifo_full = True,
-			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0, show_every=1, reset_fc7=True, align=True, t1edge='rising'):
+			read_seu_counter=True, delay_after_fast_reset=50, pattern3=0, show_every=1, reset_fc7=True, align=True, t1edge='falling'):
 
 		if(reset_fc7): self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
