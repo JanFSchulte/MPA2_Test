@@ -204,6 +204,3 @@ class mpa_i2c_conf:
 		row_test()
 		print("Pixels test starting...")
 		pixel_test()
-
-
-I2C=mpa_i2c_conf()

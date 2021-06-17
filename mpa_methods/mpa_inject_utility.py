@@ -50,6 +50,7 @@ class mpa_inject():
 			print("Error ChipsException, repeat ccommand")
 			sleep (0.001)
 			self.fc7.close_shutter(8)
+
 	def send_pulses_fast_all(self, n_pulse, row, pixel, cal):
 		self.ctrl_pix.disable_pixel(0, 0)
 		for r in row:

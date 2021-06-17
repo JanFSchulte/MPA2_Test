@@ -1,6 +1,6 @@
 import json
 import time
-from myScripts.BasicD19c import *
+#from myScripts.BasicD19c import *
 from myScripts.Utilities import *
 from utilities.tbsettings import *
 from ssa_methods.Configuration.ssa1_reg_map import *
@@ -48,6 +48,12 @@ class ssa_i2c_conf:
 
     def get_strip_reg_map(self):
         return self.ssa_strip_reg_map
+
+    def get_pixel_reg_map(self):
+        return self.mpa_pixel_reg_map
+
+    def get_row_reg_map(self):
+        return self.mpa_pixel_reg_map
 
     def get_peri_reg_map(self):
         return self.peri_reg_map
@@ -193,18 +199,68 @@ class ssa_i2c_conf:
                 st = 'Null'
         return rep
 
-    def peri_read_mpa(self, register, timeout = 0.001):
+    def row_write(self, register, row, data):
 
-        if register not in list(self.peri_reg_map.keys()):
+        if register not in list(self.mpa_row_reg_map.keys()):
             print("Register name not found")
             rep = False
 
         else:
-            base = self.peri_reg_map[register]
-            #adr  = (base & 0xfff) | 0b0001000000000000
-            adr   = base
-            rep  = self.read_I2C('MPA', adr)
+            pixel_id = 0b1111001
+            base = mpa_row_reg_map[register]
+            adr  = ((row & 0x0001f) << 11 ) | ((base & 0x000f) << 7 ) | pixel_id
+            #print bin(adr)
+            rep  = self.write_I2C('MPA', adr, data, self.freq)
+
+    def row_read(self, register, row, timeout = 0.001):
+
+        if register not in list(self.mpa_row_reg_map.keys()):
+            print("Register name not found")
+            rep = False
+
+        else:
+            pixel_id = 0b1111001
+            base = mpa_row_reg_map[register]
+            adr  = ((row & 0x0001f) << 11 ) | ((base & 0x000f) << 7 ) | pixel_id
+            #print bin(adr)
+            rep  = self.read_I2C('MPA', adr, timeout)
         return rep
+
+    def pixel_write(self, register, row, pixel, data):
+
+        if register not in list(self.mpa_pixel_reg_map.keys()):
+            print("Register name not found")
+            rep = False
+
+        else:
+            pixel_id = pixel if (pixel is not 'all') else 0b00000000
+            base = mpa_pixel_reg_map[register]
+            adr  = ((row & 0x0001f) << 11 ) | ((base & 0x000f) << 7 ) | (pixel_id & 0xfffffff)
+            #print bin(adr)
+            rep  = self.write_I2C('MPA', adr, data, self.freq)
+
+        #return rep
+
+    def pixel_read(self, register, row, pixel, timeout = 0.001):
+
+        if register not in list(self.mpa_pixel_reg_map.keys()):
+            print("Register name not found")
+            rep = False
+
+        else:
+            pixel_id = pixel if (pixel is not 'all') else 0b00000000
+            base = mpa_pixel_reg_map[register]
+            adr  = ((row & 0x0001f) << 11 ) | ((base & 0x000f) << 7 ) | (pixel_id & 0xfffffff)
+            #print bin(adr)
+            rep  = self.read_I2C('MPA', adr, timeout)
+            if rep == None:
+                time.sleep(1)
+                activate_I2C_chip()
+                time.sleep(1)
+                rep  = self.read_I2C('MPA', adr, timeout)
+
+        return rep
+
 
 
     def strip_write(self, register, strip, data, field=False, use_onchip_mask = True):

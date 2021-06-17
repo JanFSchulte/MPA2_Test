@@ -3,7 +3,15 @@
 from utilities.tbsettings import *
 from utilities.configure_communication import *
 from utilities.fc7_com import *
-from ssa_methods.ssa import *
+from myScripts.BasicADC import *
+
+
+from myScripts.Instruments_Keithley_Multimeter_2000_GPIB import *
+from myScripts.Instruments_Keithley_Multimeter_7510_LAN import *
+from myScripts.Instruments_Keithley_Sourcemeter_2410_GPIB import *
+
+#from ssa_methods.ssa import *
+from ssa_methods.ssa_i2c_conf import *
 from ssa_methods.ssa_power_utility import *
 from ssa_methods.ssa_cal_utility import *
 from ssa_methods.ssa_test_utility import *
@@ -16,7 +24,6 @@ from ssa_methods.ssa_analise_utility import *
 from ssa_methods.ssa_calibration import *
 from ssa_methods.ssa_seu_utility import *
 from ssa_methods.ssa_test_seu import *
-from myScripts.BasicADC import *
 from ssa_methods.ssa_wp_analyze import *
 from ssa_methods.main_ssa_test_1 import *
 from ssa_methods.main_ssa_test_2 import *
@@ -24,9 +31,20 @@ from ssa_methods.main_ssa_test_3 import *
 from ssa_methods.ssa_test_2xSSA2 import *
 from ssa_methods.ssa_scanchain_test import *
 
+#from mpa_methods.mpa import *
+from mpa_methods.mpa import *
+from mpa_methods.mpa_power_utility import *
+from mpa_methods.mpa_cal_utility import *
+from mpa_methods.mpa_test_utility import *
+from mpa_methods.mpa_bias_utility import *
+from mpa_methods.mpa_probe_test import *
+
+
+
+
 ipaddr, fc7AddrTable, fc7_if = configure_communication()
 FC7 = fc7_com(fc7_if, fc7AddrTable)
-FC7.activate_I2C_chip(verbose=0)
+#FC7.activate_I2C_chip(verbose=0)
 
 class SSAwp:
     def __init__(self, index = 0, address = 0):
@@ -64,27 +82,57 @@ class SSAwp:
     def disable(self): FC7.disable_chip(self.index)
     def reset(self, display=True): self.chip.reset(display=display)
 
+
+
 class MPAwp:
     def __init__(self, index = "MPA", address = 0):
         ##FC7.set_chip_id(index, address)
         self.index         = index
         self.i2c           = ssa_i2c_conf(FC7, fc7AddrTable, index=index, address=address)
-        self.pwr           = ssa_power_utility(self.i2c, FC7)
 
-#        self.strip_reg_map = self.i2c.get_strip_reg_map()
-#        self.peri_reg_map  = self.i2c.get_peri_reg_map()
-#        self.ana_mux_map   = self.i2c.get_analog_mux_map()
-#        self.pwr           = ssa_power_utility(self.i2c, FC7)
-#        self.chip          = SSA_ASIC(index, self.i2c, FC7, self.pwr, self.peri_reg_map, self.strip_reg_map, self.ana_mux_map)
-#        self.cal           = SSA_cal_utility(self.chip, self.i2c, FC7)
-#
-#        self.init          = self.chip.init
-#        self.resync        = self.chip.resync
-#        self.debug         = self.chip.debug
-#        self.inject        = self.chip.inject
-#        self.readout       = self.chip.readout
-#        self.ctrl          = self.chip.ctrl
-#        self.analog        = self.chip.analog
+        self.peri_reg_map  = self.i2c.get_peri_reg_map()
+        self.row_reg_map   = self.i2c.get_row_reg_map()
+        self.pixel_reg_map = self.i2c.get_pixel_reg_map()
+
+        self.pwr           = ssa_power_utility(self.i2c, FC7)
+        self.chip          = MPA_ASIC(self.i2c, FC7, self.pwr, self.peri_reg_map, self.row_reg_map, self.pixel_reg_map)
+        self.cal           = mpa_cal_utility(self.chip, self.i2c, FC7)
+        self.test          = mpa_test_utility(self.chip, self.i2c, FC7)
+
+        self.init          = self.chip.init
+        self.inject        = self.chip.inject
+
+        try:
+            multimeter = keithley_multimeter()
+            self.bias = mpa_bias_utility(self.chip, self.i2c, FC7, multimeter, self.peri_reg_map, self.row_reg_map, self.pixel_reg_map)
+        except ImportError:
+            self.bias = False
+            print("- Impossible to access GPIB instruments")
+
+        self.probe         = mpa_probe_test("../MPA_Results/TEST", self.chip, self.i2c, FC7, self.cal, self.test, self.bias)
+
+    def on():
+        utils.activate_I2C_chip(FC7)
+        time.sleep(0.1);  pwr.set_supply('on', display=False)
+        time.sleep(0.1);  pwr.set_clock_source('internal')
+        time.sleep(0.1);  ssa.init(reset_board = True, reset_chip = True, display = True)
+
+    def off():
+        utils.activate_I2C_chip(FC7)
+        self.pwr.set_supply('off')
+
+    def init():
+        return self.chip.init(reset_board = True, reset_chip = False, display = True)
+
+    def reset_fc7():
+        FC7.write("ctrl_command_global_reset", 1);
+
+    def reset_mpa():
+        self.chip.reset()
+
+    def set_clock(val = 'internal'):
+        self.pwr.set_clock_source(val)
+        time.sleep(0.1);  ssa.init(reset_board = False, reset_chip = False, display = True)
 
 #ssa0 = SSAwp(0, 0b000)
 #ssa1 = SSAwp(1, 0b111)
