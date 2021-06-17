@@ -3,7 +3,7 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
-from mpa_methods.mpa_i2c_conf import *
+#from mpa_methods.mpa_i2c_conf import *
 from mpa_methods.mpa_ctrl_base import *
 from mpa_methods.mpa_ctrl_pix import *
 from mpa_methods.mpa_inject_utility import *

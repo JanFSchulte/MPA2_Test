@@ -30,7 +30,7 @@ echo ""
 
 echo "from d19cScripts import *" >  LaunchPy.py
 echo "from myScripts import *" >> LaunchPy.py
-echo "from ssa_methods import *" >> LaunchPy.py
+echo "from ssa_methods.main import *" >> LaunchPy.py
 #echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('ssa') "  >> LaunchPy.py
 echo "from utilities import tbconfig " >  utilities/tbsettings.py
 
@@ -44,7 +44,7 @@ echo "tbconfig.SSA_ADR[1] = $SSA_ADR_1" >> utilities/tbsettings.py
 
 
 
-cp ./utilities/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
+cp $file d19cScripts/ipaddr.dat
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 

@@ -6,11 +6,11 @@ import time
 import sys
 from d19cScripts import *
 from myScripts import *
-from mpa_methods.mpa_main import *
+#from mpa_methods.mpa_main import *
 import time
 
 class mpa_probe_test:
-	def __init__(self, DIR):
+	def __init__(self, DIR, mpa, I2C, fc7, cal, test, bias):
 		# Classes
 		self.DIR = DIR
 		exists = False

@@ -31,7 +31,7 @@ echo "tbconfig.VERSION['SSA'] = 2" >> utilities/tbsettings.py
 echo "tbconfig.VERSION['MPA'] = 1" >> utilities/tbsettings.py
 echo "tbconfig.BOARD_SELECT = '$BOARD_MAC'" >> utilities/tbsettings.py
 
-cp ./utilities/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
+cp $file d19cScripts/ipaddr.dat
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 

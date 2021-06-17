@@ -19,7 +19,7 @@ from myScripts.Instruments_Keithley_Sourcemeter_2410_GPIB import *
 
 ipaddr, fc7AddrTable, fc7_if = configure_communication()
 FC7 = fc7_com(fc7_if, fc7AddrTable)
-# FC7.activate_I2C_chip(verbose=0)
+#FC7.activate_I2C_chip(verbose=0)
 
 I2C   = mpa_i2c_conf()
 pwr   = mpa_power_utility(I2C, FC7)
