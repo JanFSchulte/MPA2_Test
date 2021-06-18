@@ -1,8 +1,7 @@
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
+
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
+
 import seaborn as sns
 import time
 import sys
@@ -31,9 +30,9 @@ class mpa_test_utility():
         if verbose: print("Writing:", str(bin(checkI2C)))
         self.mpa.ctrl_base.activate_shift()
         time.sleep(0.1)
-        send_test()
+        self.fc7.send_test()
         time.sleep(0.1)
-        send_trigger()
+        self.fc7.send_trigger()
         time.sleep(0.1)
         check = read_regs(verbose = verbose)
         OK = True
@@ -281,7 +280,7 @@ class mpa_test_utility():
         :param row:
         :param pixel:
         :param diff:
-        :param dig_inj:  (Default value = 1)
+        :param dig_inj: 'True' for digital pulse, 'False' for analog (Default value = 1)
         :param verbose:  (Default value = 1)
 
         """
@@ -294,6 +293,21 @@ class mpa_test_utility():
         self.fc7.SendCommand_CTRL("start_trigger")
         #time.sleep(0.001)
         return read_L1(verbose)
+
+
+    def rnd_pixel(self, row = [1,17], pixel = [1,121], dig_inj = 1, verbose = 0):
+        """ Selects random pixel coordinate in given range and passes it to memory_test
+
+        :param row:
+        :param pixel:
+        :param diff:
+        :param dig_inj: 'True' for digital pulse, 'False' for analog (Default value = 1)
+        :param verbose:  (Default value = 1)
+
+        """
+        r_rnd = random.randint(min(row), max(row))
+        p_rnd = random.randint(min(pixel), max(pixel))
+        return self.memory_test(latency = 0, row = r_rnd, pixel = p_rnd, diff = 0, dig_inj = dig_inj, verbose = verbose)
 
     def mem_test(self, latency = 255, delay = [10], row = list(range(1,17)), pixel = list(range(1,121)), diff = 2, print_log = 0, filename =  "../cernbox/MPA_Results/digital_mem_test.log", dig_inj =1, gate = 0, verbose = 1):
         """
