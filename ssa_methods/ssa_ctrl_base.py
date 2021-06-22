@@ -264,7 +264,8 @@ class ssa_ctrl_base:
 		elif(method == 'old'):
 			self.set_shift_pattern_all(0b10000000)
 		else:
-			self.set_shift_pattern_all(0b10100000) #0b10100000
+			self.set_shift_pattern_all(0xa0) #0b10100000
+            #self.set_shift_pattern( ST = [0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7], L1 = 0xaa, Left = 0xaa, Right = 0xaa)
 
 		time.sleep(0.01)
 		self.set_lateral_lines_alignament()
@@ -272,12 +273,36 @@ class ssa_ctrl_base:
 		if(method == 'old' or self.fc7.invert):
 			rt = self.align_out()
 		else:
-			rt = self.TuneSSA(0b10100000) #0b10100000
+			rt = self.TuneSSA(pattern_phase=0xa0, pattern_line=0xa0) #0b10100000
 		if(tbconfig.VERSION['SSA']==1):
 			self.I2C.peri_write('OutPattern7/FIFOconfig', 7)
 		self.reset_pattern_injection()
 		self.activate_readout_normal()
 		return rt
+
+	def phase_tuning_new(self, pattern_phase=0b10100000, pattern_line=0b10100000):
+		self.activate_readout_shift()
+		self.setup_readout_chip_id()
+		state = True
+
+		self.set_shift_pattern_all(pattern_phase)
+		time.sleep(0.01)
+		for line in range(0,9):
+			self.fc7.TuneLine_phase(line, np.array(pattern_phase),8,True)
+			self.fc7.GetLineStatus(0,0,line)
+			print( "\n")
+
+		self.set_shift_pattern_all(pattern_line)
+		time.sleep(0.01)
+		for line in range(0,9):
+			self.fc7.TuneLine_line( line, np.array(pattern_line), 1,True)
+
+		for line in range(0,9):
+			if self.fc7.CheckLineDone(0,0,line) != 1:
+				utils.print_warning("Failed tuning line {:d}".format(line))
+				state = False
+
+		self.activate_readout_normal()
 
 	#####################################################################
 	def align_out(self):
@@ -343,11 +368,13 @@ class ssa_ctrl_base:
 		#		self.set_line_mode(pMode=cMode, pDelay=cDelay, pBitSlip=cBitslip, pMasterLine=0)
 
 	#####################################################################
-	def TuneSSA(self, pattern=0b10100011):
+	def TuneSSA(self, pattern_phase=0b10100011, pattern_line=0b10100011):
 		self.setup_readout_chip_id()
 		state = True
 		for line in range(0,9):
-			self.fc7.TuneLine(line, np.array(pattern),1,True,False)
+			#self.fc7.TuneLine(line, np.array(pattern),1,True,True)
+			self.fc7.TuneLine_phase(line, np.array(pattern_phase),8,True)
+			self.fc7.TuneLine_line( line, np.array(pattern_line), 8,True)
 			if self.fc7.CheckLineDone(0,0,line) != 1:
 				utils.print_warning("Failed tuning line {:d}".format(line))
 				state = False

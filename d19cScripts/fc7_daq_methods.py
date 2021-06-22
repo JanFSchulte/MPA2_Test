@@ -102,6 +102,8 @@ def SendCommand_CTRL(name = "none", profile=0):
         fc7.write("ctrl_fast_signal_i2c_refresh", 1)
     elif name == "load_dio5_config":
         fc7.write("ctrl_dio5_load_config", 1)
+    elif name == "reset_readout":
+        fc7.write("ctrl_readout_reset", 1)
     else:
         print("Unknown Command" + str(name))
     if(profile): print('->  FC7 SendCommand_CTRL -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))

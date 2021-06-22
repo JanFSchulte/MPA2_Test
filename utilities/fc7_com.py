@@ -528,6 +528,28 @@ class fc7_com():
 			print( "\n")
 		return self.CheckLineDone(0,0,line_id)
 
+	def TuneLine_phase(self, line_id, pattern, pattern_period, changePattern = True):
+		# in that case all set specified pattern (same for all lines)
+		if changePattern:
+			self.SetLineMode(0,0,line_id,mode = 0)
+			self.SetLinePattern(0,0,line_id,pattern, pattern_period)
+			time.sleep(0.01)
+		# do phase alignment
+		self.SendControl(0,0,line_id,"do_phase")
+		time.sleep(0.01)
+
+
+	def TuneLine_line(self, line_id, pattern, pattern_period, changePattern = True):
+		# in that case all set specified pattern (same for all lines)
+		if changePattern:
+			self.SetLineMode(0,0,line_id,mode = 0)
+			self.SetLinePattern(0,0,line_id,pattern, pattern_period)
+			time.sleep(0.01)
+		# do word alignment
+		self.SendControl(0,0,line_id,"do_word")
+		time.sleep(0.01)
+		return self.CheckLineDone(0,0,line_id)
+
 	def SetLinePattern(self, hybrid_id, chip_id, line_id, pattern, pattern_period):
 		# shifting
 		hybrid_raw = (hybrid_id & 0xF) << 28

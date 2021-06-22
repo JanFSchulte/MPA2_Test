@@ -312,11 +312,11 @@ class ssa_power_utility:
 		utils.print_enable(True)
 
 	def mainpoweron(self):
-		#utils.print_enable(False)
+		utils.print_enable(False)
 		self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
 		self.fc7.Send_MPA_SSA_I2C_Command(self.i2cmux, 0, self.pcbwrite, 0, 0x02, note='i2cmux')  # route to 2nd PCF8574
 		self.fc7.Send_MPA_SSA_I2C_Command(self.powerenable, 0, self.pcbwrite, 0, 0b010, note='powerenable')  # send on bit
-		#utils.print_enable(True)
+		utils.print_enable(True)
 		self.state.main = 1
 
 
