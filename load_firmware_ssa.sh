@@ -31,7 +31,7 @@ if ! (( $rep == 0 )); then
 		read -r -p "    Do you want to configure the communication? [y/N] " response
 		if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 			sudo /usr/sbin/rarpd -a
-			sudo ifconfig ${eth}:1 192.168.0.100
+			sudo ifconfig ${eth}:1 192.168.1.79
 			ping -c 1 -W 1 $IP; rep=$?
 			if ! (( $rep == 0 )); then
 				printf '\n->  Testbench unrichable\n'
@@ -51,6 +51,7 @@ else
 	printf '\n->  Starting loading the firmware\n'
 	cd ~/FC7/sw/fc7/tests
 	#./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
+<<<<<<< HEAD
 	#./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit   # the SEU firmware
 	#./bin/fc7-d19c.exe  -i $IP -n l12_1xSSA2.bit -f ~/MPA_Test/fw_bitfiles/l12_1xSSA2_old_mpa_ssa_board_l8_dio5_170621.bit
 	./bin/fc7-d19c.exe  -i $IP -n l12_1xSSA2.bit
@@ -58,6 +59,11 @@ else
 
 
 	#./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit -f ~/MPA-SSA_Test/bitfiles/SSAx1_SEU_oldFW_newPhT_14092020.bit
+=======
+	./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit   # the SEU firmware
+	#./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit -f ~/MPA-SSA_Test/bitfiles/SSAx1_SEU_oldFW_newPhT_14092020.bit
+
+>>>>>>> minor commit, mpa and ssa both setup from pcmpatest
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_231120.bit                 -f ~/MPA-SSA_Test/bitfiles/november/ssa2_seu_231120.bit
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_clk_inverted.bit           -f ~/MPA-SSA_Test/bitfiles/november/ssa2_seu_clk_inverted_231120.bit
 	#./bin/fc7-d19c.exe  -i $IP -n ssa2_seu_t1_inverted.bit            -f ~/MPA-SSA_Test/bitfiles/november/ssa2_seu_t1_inverted_241120.bit

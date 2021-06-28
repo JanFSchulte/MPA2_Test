@@ -3,6 +3,7 @@ from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 
 import seaborn as sns
+import pickle
 import time
 import sys
 import inspect
@@ -295,19 +296,116 @@ class mpa_test_utility():
         return read_L1(verbose)
 
 
-    def rnd_pixel(self, row = [1,17], pixel = [1,121], dig_inj = 1, verbose = 0):
-        """ Selects random pixel coordinate in given range and passes it to memory_test
+    def rnd_pixel(self, row = [1,16], pixel = [1,120], dig_inj = 1, verbose = 1):
+        """ Returns one random pixel coordinate in given range and passes it to memory_test
 
         :param row:
         :param pixel:
-        :param diff:
-        :param dig_inj: 'True' for digital pulse, 'False' for analog (Default value = 1)
-        :param verbose:  (Default value = 1)
 
         """
         r_rnd = random.randint(min(row), max(row))
         p_rnd = random.randint(min(pixel), max(pixel))
-        return self.memory_test(latency = 0, row = r_rnd, pixel = p_rnd, diff = 0, dig_inj = dig_inj, verbose = verbose)
+
+        if verbose : utils.print_info(f"Pixel: {p_rnd} of Row: {r_rnd}")
+
+        self.mpa.ctrl_pix.disable_pixel(0,0)
+        if dig_inj:
+            self.I2C.pixel_write('ENFLAGS', r_rnd, p_rnd, 0x20)
+        else:
+            self.mpa.ctrl_pix.enable_pix_LevelBRcal(r_rnd ,p_rnd, polarity = "rise")
+        #time.sleep(0.001)
+        self.fc7.SendCommand_CTRL("start_trigger")
+
+        return p_rnd, r_rnd
+
+    def rnd_test(self, n_tests = 1000, latency = 255, delay = [10], diff = 2, print_log = 0, filename =  "../cernbox_anvesh/MPA_Results/rnd_test.log", dig_inj = 1, gate = 0, verbose = 1):
+        """
+
+        :param n_tests: Number of random pixel tests  (Default value = 1000)
+        :param latency:  (Default value = 255)
+        :param delay:  (Default value = [10])
+        :param row:  (Default value = list(range(1)
+        :param pixel:  (Default value = list(range(1)
+        :param diff:  (Default value = 2)
+        :param print_log:  (Default value = 0)
+        :param filename:  (Default value = "../cernbox/MPA_Results/digital_mem_test.log")
+        :param dig_inj:  (Default value = 1)
+        :param gate:  (Default value = 0)
+        :param verbose:  (Default value = 1)
+
+        """
+
+        t0 = time.time()
+        bad_pix = []
+        print("Running Random Pixel Test:")
+
+        if print_log:
+            f = open(filename, 'w')
+            f.write("Starting Test:\n")
+
+        self.mpa.ctrl_base.activate_sync()
+        self.mpa.ctrl_base.activate_pp()
+        self.I2C.row_write('L1Offset_1', 0,  latency - diff)
+        self.I2C.row_write('L1Offset_2', 0,  0)
+        self.I2C.row_write('MemGatEn', 0,  gate)
+        self.I2C.pixel_write('DigPattern', 0, 0,  0b00000001)
+        self.fc7.write("cnfg_fast_backpressure_enable", 0)
+        self.mpa.ctrl_pix.disable_pixel(0,0)
+
+        stuck = 0; i2c_issue = 0; error = 0
+
+        Configure_TestPulse_MPA(delay_after_fast_reset = delay[0] + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 200, number_of_test_pulses = 1, enable_L1 = 1, enable_rst = 1, enable_init_rst = 1)
+
+        for n in range(0, n_tests):
+            #time.sleep(0.1)
+
+            # trigger test pulse for random pixel and get injection coordinate
+            p, r = self.rnd_pixel(dig_inj = 1)
+
+            strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = read_L1(verbose)
+            found = 0
+
+            for i in range(0, int(pixel_counter)):
+                if (pos_pixel[i] == p) and (Z[i] == r):
+                    found = 1
+                elif (pos_pixel[i] == p-1) and (Z[i] == r):
+                    found = 1
+                    i2c_issue += 1
+
+            if (pixel_counter > 1): stuck += 1
+
+            if (not found):
+                bad_pix.append([p,r])
+                error += 1
+                error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error Delay " + str(delay[0]) + " " + str(pixel_counter) + " " +  str(pos_pixel) + " " + str(Z) + "\n"
+                if verbose: print(error_message)
+                if print_log: f.write(error_message)
+
+        print("-------------------------------------")
+        print("-------------------------------------")
+        print(" Number of tests: ", n_tests)
+        print(" Number of error: ", error)
+        print(" Number of stucks: ", stuck)
+        print(" Number of I2C issues: ", i2c_issue)
+
+        if print_log:
+            f.write("Test Completed:\n")
+            f.write("-------------------------------------\n")
+            f.write("-------------------------------------\n")
+            line = " Number of tests: " + str(n_tests) + "\n"; f.write(line)
+            line = " Number of error: " + str(error) + "\n"; f.write(line)
+            line = " Number of stucks: " + str(stuck) + "\n"; f.write(line)
+            line = " Number of I2C issues: " + str(i2c_issue) + "\n"; f.write(line)
+            f.write("-------------------------------------\n")
+            f.write("-------------------------------------\n")
+            f.close()
+
+        t1 = time.time()
+        print(" Elapsed Time: " + str(t1 - t0))
+        print("-------------------------------------")
+        print("-------------------------------------")
+
+        return bad_pix, error, stuck, i2c_issue
 
     def mem_test(self, latency = 255, delay = [10], row = list(range(1,17)), pixel = list(range(1,121)), diff = 2, print_log = 0, filename =  "../cernbox/MPA_Results/digital_mem_test.log", dig_inj =1, gate = 0, verbose = 1):
         """
@@ -393,4 +491,43 @@ class mpa_test_utility():
         print(" Elapsed Time: " + str(t1 - t0))
         print("-------------------------------------")
         print("-------------------------------------")
+
         return bad_pix, error, stuck, i2c_issue, missing
+
+    def plot_chip_errors(self, bad_pix = []):
+        """ Plots a 2D histogramm count of pixel error on a heatmap
+
+        :bad_pix: List of bad pixels
+
+        """
+        chip_map = np.zeros((122,18))
+        np.add.at(chip_map, tuple(zip(*bad_pix)), 1)
+        np.rot90(chip_map)
+
+        # generate 2 2d grids for the x & y bounds
+        x,y = np.meshgrid(np.linspace(1, 121, 121), np.linspace(1, 17, 17))
+        # x and y are bounds, so z should be the value *inside* those bounds.
+        z = chip_map.transpose()
+
+        # reduce matrix size to correct pixel indices
+        z = np.delete(z, 0, 1) # delete 0 column
+        z = np.delete(z, 0, 0) # delete 0 row
+
+        # Therefore, remove the last value from the z array.
+        #z = z[:-1, :-1]
+        z_min, z_max = np.abs(z).min(), np.abs(z).max()
+        fig, ax = plt.subplots()
+
+        c = ax.pcolormesh(x, y, z, cmap='YlOrRd', vmin=z_min, vmax=z_max, shading = 'auto')
+        ax.set_title('MPA Pixel Error Map')
+
+        # set the limits of the plot to the limits of the data
+        ax.axis([x.min(), x.max(), y.min(), y.max()])
+        ax.set_yticks(np.linspace(1, 17, 17))
+        ax.set_xticks([1,20,40,60,80,100,121])
+
+        fig.colorbar(c, ax=ax)
+        fig.set_figheight(8)
+        fig.set_figwidth(5)
+
+        plt.show()

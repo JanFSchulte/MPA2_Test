@@ -101,6 +101,7 @@ class MPAwp:
 
         self.init          = self.chip.init
         self.inject        = self.chip.inject
+        self.data_dir = "../cernbox_anvesh/MPA_test_data/"
 
         try:
             multimeter = keithley_multimeter()
