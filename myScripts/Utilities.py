@@ -5,6 +5,9 @@ import os
 import datetime
 import threading
 
+import pickle
+test_data_path = "../cernbox_anvesh/MPA_test_data/"
+
 if(sys.version_info[0] < 3):
 	print('\n\n\x1b[1;37;41m The MPA-SSA Test bench requires python > 3.5. Compatibility with python 2.8 is not anymore guaranteed. \x1b[0m \n\n')
 
@@ -345,6 +348,8 @@ def f_weibull_cumulative(x, *p):
 def f_weibull_cumulative1(x, s0, s, E0, W):
 	return np.double(s0)*(1-np.exp( (-1)*(((np.double(x)-np.double(E0))/np.double(W))**np.double(s)) ))
 
+def save_data(data , title):
+    pickle.dump(data, open(f"{test_data_path}{title}.pickle","wb"))
 
 def try_fc7_com(fc7_if):
 	for i in range(4):

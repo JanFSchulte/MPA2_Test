@@ -149,6 +149,7 @@ def read_stubs(raw = 0, fast = 0):
         return nst,  pos, row, cur
 
 def read_L1(verbose = 1):
+
     status = fc7.read("stat_slvs_debug_general")
     mpa_l1_data = fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
     l1 = np.zeros((200,), dtype = np.uint8)
@@ -158,6 +159,7 @@ def read_L1(verbose = 1):
             l1[cycle] = to_number(reverse_mask(word),(i+1)*8,i*8)
             cycle += 1
     found = 0
+
     for i in range(1,200):
         if ((l1[i] == 255)&(l1[i-1] == 255)&(~found)):
             header = l1[i-1] << 11 | l1[i-1] << 3 | ((l1[i+1] & 0b11100000) >> 5)
@@ -172,6 +174,7 @@ def read_L1(verbose = 1):
             for j in range(5,50):
                 payload = payload + bin(l1[i+j]).lstrip('-0b').zfill(8)
             found = 1
+
     if found:
         strip_data = payload[0:strip_counter*11]
         pixel_data = payload[strip_counter*11: strip_counter*11 + pixel_counter*14]

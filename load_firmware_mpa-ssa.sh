@@ -11,14 +11,14 @@ export LC_ALL=C; unset LANGUAGE
 #   	printf 'IP=%s\n' "$line"
 #   done <"$file"
 
-IP="192.168.1.79"
+IP="192.168.1.81"
 eth=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
 
 printf '______________________________________________________\n'
 printf '           Starting SSA-MPA Test System               \n'
 printf '                                                      \n'
 
-cp ./myScripts/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
+cp ./myScripts/ipaddr_mpa.dat  d19cScripts/ipaddr.dat
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
