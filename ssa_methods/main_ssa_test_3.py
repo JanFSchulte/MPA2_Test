@@ -3,7 +3,7 @@ from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
-from ssa_methods.ssa_logs_utility import *
+from utilities.logs_utility import *
 from collections import OrderedDict
 from ssa_methods.main import *
 import traceback

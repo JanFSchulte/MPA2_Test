@@ -38,6 +38,7 @@ from mpa_methods.mpa_cal_utility import *
 from mpa_methods.mpa_test_utility import *
 from mpa_methods.mpa_bias_utility import *
 from mpa_methods.mpa_probe_test import *
+from mpa_methods.main_mpa_test import *
 
 
 
@@ -99,6 +100,7 @@ class MPAwp:
         self.cal           = mpa_cal_utility(self.chip, self.i2c, FC7)
         self.test          = mpa_test_utility(self.chip, self.i2c, FC7)
 
+
         self.init          = self.chip.init
         self.inject        = self.chip.inject
         self.data_dir = "../cernbox_anvesh/MPA_test_data/"
@@ -111,6 +113,10 @@ class MPAwp:
             print("- Impossible to access GPIB instruments")
 
         self.probe         = mpa_probe_test("../MPA_Results/TEST", self.chip, self.i2c, FC7, self.cal, self.test, self.bias)
+
+        # Higher level test routines
+        self.main_test   = main_mpa_test(self.chip, self.i2c, FC7, self.cal, 0, self.pwr, self.test, 0)
+
 
     def on():
         utils.activate_I2C_chip(FC7)
