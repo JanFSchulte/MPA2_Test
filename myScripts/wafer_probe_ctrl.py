@@ -105,7 +105,8 @@ class AUTOPROBER:
             PCM = mpa_probe_test('../MPA_Results/Wafer_' + str(self.wafer) + '/' +  self.name + "_" + self.DieNumber)
             return PCM.RUN(inf, self.DieNumber)
         elif(self.chip == 'SSA'):
-            PCM = SSA_Measurements(
+            # WIP
+            # PCM = SSA_Measurements(
             tag = (self.name+"_"+str(self.DieNumber)),
             runtest = 'default',
             directory = '../SSA_Results/Wafer_' + str(self.wafer) )

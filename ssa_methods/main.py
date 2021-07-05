@@ -5,12 +5,11 @@ from utilities.configure_communication import *
 from utilities.fc7_com import *
 from myScripts.BasicADC import *
 
-
 from myScripts.Instruments_Keithley_Multimeter_2000_GPIB import *
 from myScripts.Instruments_Keithley_Multimeter_7510_LAN import *
 from myScripts.Instruments_Keithley_Sourcemeter_2410_GPIB import *
 
-#from ssa_methods.ssa import *
+from ssa_methods.ssa import *
 from ssa_methods.ssa_i2c_conf import *
 from ssa_methods.ssa_power_utility import *
 from ssa_methods.ssa_cal_utility import *
@@ -38,9 +37,7 @@ from mpa_methods.mpa_cal_utility import *
 from mpa_methods.mpa_test_utility import *
 from mpa_methods.mpa_bias_utility import *
 from mpa_methods.mpa_probe_test import *
-from mpa_methods.main_mpa_test import *
-
-
+#from mpa_methods.main_mpa_test import *
 
 
 ipaddr, fc7AddrTable, fc7_if = configure_communication()
@@ -50,27 +47,40 @@ FC7 = fc7_com(fc7_if, fc7AddrTable)
 class SSAwp:
     def __init__(self, index = 0, address = 0):
         self.index   = index
+
+        # init comms to testbench components (FC7, I2C register access)
         FC7.set_chip_id(index, address)
         self.i2c           = ssa_i2c_conf(FC7, fc7AddrTable, index="SSA{:0d}".format(index), address=address)
         self.strip_reg_map = self.i2c.get_strip_reg_map()
         self.peri_reg_map  = self.i2c.get_peri_reg_map()
         self.ana_mux_map   = self.i2c.get_analog_mux_map()
+
+        # init base chip config, utilities and s_curve measuring
         self.pwr           = ssa_power_utility(self.i2c, FC7)
         self.chip          = SSA_ASIC(index, self.i2c, FC7, self.pwr, self.peri_reg_map, self.strip_reg_map, self.ana_mux_map)
         self.cal           = SSA_cal_utility(self.chip, self.i2c, FC7)
         self.pcbadc        = onboard_adc()
+
+        # init test injection methods
         self.biascal       = ssa_calibration(self.chip, self.i2c, FC7, self.pcbadc, self.peri_reg_map, self.strip_reg_map, self.ana_mux_map)
         self.seuutil       = SSA_SEU_utilities(self.chip, self.i2c, FC7, self.pwr)
-        self.measure       = SSA_measurements(self.chip, self.i2c, FC7, self.cal, self.ana_mux_map, self.pwr, self.seuutil, self.biascal)
         self.test          = SSA_test_utility(self.chip, self.i2c, FC7, self.cal, self.pwr, self.seuutil)
+
+        # measure inits ssa_measurements_adc/fe/pwr
+        self.measure       = SSA_measurements(self.chip, self.i2c, FC7, self.cal, self.ana_mux_map, self.pwr, self.seuutil, self.biascal)
+        
+        # init top level test suites
         self.main_test_1   = main_ssa_test_1(self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure.fe)
-        self.anl           = SSA_Analise_Test_results(self.main_test_1, self.test, self.measure.fe, self.biascal)  ## TOP FUNCTION TO CARACTERISE THE SSA
         self.seu           = SSA_SEU(self.chip, self.seuutil, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
         self.main_test_2   = main_ssa_test_2(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
         self.main_test_3   = main_ssa_test_3(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
         self.xray          = SSA_test_xray(self.main_test_3, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
         self.climatic      = SSA_test_climatic_chamber(self.main_test_3, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
         self.scanchain     = SSA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
+
+        # init top function to characterise SSA
+        self.anl           = SSA_Analise_Test_results(self.main_test_1, self.test, self.measure.fe, self.biascal)
+
         self.init          = self.chip.init
         self.resync        = self.chip.resync
         self.debug         = self.chip.debug
@@ -115,8 +125,7 @@ class MPAwp:
         self.probe         = mpa_probe_test("../MPA_Results/TEST", self.chip, self.i2c, FC7, self.cal, self.test, self.bias)
 
         # Higher level test routines
-        self.main_test   = main_mpa_test(self.chip, self.i2c, FC7, self.cal, 0, self.pwr, self.test, 0)
-
+        # self.main_test   = main_mpa_test(self.chip, self.i2c, FC7, self.cal, 0, self.pwr, self.test, 0)
 
     def on():
         utils.activate_I2C_chip(FC7)
