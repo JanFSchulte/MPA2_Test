@@ -6,3 +6,4 @@ vivado*
 fw_bitfiles/
 *.swp
 *ssa_utils_adc.py
+utilities/ipaddr_mpa.dat
