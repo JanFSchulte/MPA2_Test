@@ -16,7 +16,7 @@ SSA_ADR_0="0b0100000"
 SSA_ADR_1="0b0100111"
 
 
-file="./utilities/ipaddr_mpa.dat"
+file="./utilities/ipaddr_ssa.dat"
 while IFS= read -r line
 do
 	IP=$line

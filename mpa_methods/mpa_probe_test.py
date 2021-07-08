@@ -71,16 +71,17 @@ class mpa_probe_test:
 		PowerFlag2 = 1
 
 		try:
-			self.mpa.pwr.set_supply(mode = 'on', d = 1.00, a = 1.2, p = 1.2, bg = 0.270, measure = False, display = False)
-			self.mpa.pwr._disable()
+			self.mpa.pwr.set_supply(mode = 'on', d = 1.00, a = 1.2, p = 1.2, bg = 0.270, display = False)
+			self.mpa.pwr.disable_mpa()
 			PowerStatus, PowerFlag1 = self.power_on_check(leakage = 1)
 			self.colprint(PowerStatus)
 			self.colprint_general(PowerStatus)
 
-			if PowerFlag1:
+			PowerFlag1 = 1 # workaround, since power_on_check(chip disable/enable) not working
+			if PowerFlag1: 
 				PST1 = self.PVALS[0]; self.GlobalSummary[1] = PST1; DP1  = self.PVALS[1]; self.GlobalSummary[2] = DP1; AN1  = self.PVALS[2]; self.GlobalSummary[3] = AN1
 				self.colprint("Enabling MPA")
-				self.mpa.pwr._enable()
+				self.mpa.pwr.enable_mpa()
 				PowerStatus, PowerFlag2 = self.power_on_check(leakage = 0)
 				self.colprint(PowerStatus)
 				self.colprint_general(PowerStatus)
@@ -88,9 +89,10 @@ class mpa_probe_test:
 				if PowerFlag2:
 					PST2 = self.PVALS[0]; self.GlobalSummary[4] = PST2; DP2  = self.PVALS[1]; self.GlobalSummary[5] = DP2; AN2  = self.PVALS[2]; self.GlobalSummary[6] = AN2
 					self.mpa.init_probe()
-					with open(self.DIR+'/PowerMeasurement.csv', 'wb') as csvfile:
+					with open(self.DIR+'/PowerMeasurement.csv', 'w') as csvfile:
 						CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
 						DigP = [DP1, DP2, AN1, AN2, PST1, PST2]
+						#import pdb; pdb.set_trace();
 						CVwriter.writerow(DigP)
 
 					if self.test.shift(verbose = 0):
@@ -100,20 +102,23 @@ class mpa_probe_test:
 						self.colprint("Shift Test Failed")
 						self.GlobalSummary[7] = 0
 
-					self.analog_measurement()
+					#self.analog_measurement()
 
 					self.digital_test()
 					
 					self.colprint("DONE!")
 
-		except:
+		except Exception as e:
+			exc_type, exc_obj, exc_tb = sys.exc_info()
+			fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+			print(exc_type, fname, exc_tb.tb_lineno)
 			self.colprint("WE MESSED UP!!!")
 			sys.stdout.write("\033[1;31m")
-			print("WE MESSED UP!!!")
+			print("WE MESSED UP!!!}")
 			sys.stdout.write("\033[0;0m")
 			self.Flag = 0
 
-		self.mpa.pwr.set_supply(mode = 'off', measure = False)
+		self.mpa.pwr.set_supply(mode = 'off', display = False)
 
 		if (PowerFlag1 == 0) or (PowerFlag2 == 0):
 			self.colprint("Power Error")
@@ -207,7 +212,7 @@ class mpa_probe_test:
 			
 			self.colprint_general("successfull!")
 			
-			with open(self.DIR+'/AnalogMeasurement.csv', 'wb') as csvfile:
+			with open(self.DIR+'/AnalogMeasurement.csv', 'w') as csvfile:
 				CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
 				AnalogValues = [thLSB, calLSB, np.mean(noise_B), np.std(cal_B), gain]
 				CVwriter.writerow(AnalogValues)
@@ -239,7 +244,7 @@ class mpa_probe_test:
 
 		if (BadPixA == []): Analog = 0
 
-		with open(self.DIR+'/BadPixelsA.csv', 'wb') as csvfile:
+		with open(self.DIR+'/BadPixelsA.csv', 'w') as csvfile:
 			CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			for i in BadPixA: CVwriter.writerow(i)
 
@@ -291,7 +296,7 @@ class mpa_probe_test:
 		self.GlobalSummary[17] = Mem12
 		self.GlobalSummary[18] = Mem10
 
-		with open(self.DIR+'/DigitalSummary.csv', 'wb') as csvfile:
+		with open(self.DIR+'/DigitalSummary.csv', 'w') as csvfile:
 			CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			DigitalFlags = [Analog, StripIn, Mem12, Mem10]
 			CVwriter.writerow(DigitalFlags)
@@ -313,11 +318,11 @@ class mpa_probe_test:
 		self.colprint_general(str(len(BadPixM)) + " << Bad Pixels (Mem)")
 		# Write Failing Pixel
 
-		with open(self.DIR+"/BadPixelsM_" + str(voltage) + ".csv", 'wb') as csvfile:
+		with open(self.DIR+"/BadPixelsM_" + str(voltage) + ".csv", 'w') as csvfile:
 			CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			for i in BadPixM: CVwriter.writerow(i)
 		# Save Statistics
-		with open(self.DIR+"/Mem" + str(voltage) + "_Summary.csv", 'wb') as csvfile:
+		with open(self.DIR+"/Mem" + str(voltage) + "_Summary.csv", 'w') as csvfile:
 			CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			Memory12Flags = [len(BadPixM), stuck, i2c_issue, missing]
 			CVwriter.writerow(Memory12Flags)
@@ -344,9 +349,9 @@ class mpa_probe_test:
 		self.colprint("Checking Power-On...")
 		PowerMessage = ""
 		flag = 1
-		self.PVALS[0] = self.mpa.pwr.get_power_pads()
-		self.PVALS[1] = self.mpa.pwr.get_power_digital()
-		self.PVALS[2] = self.mpa.pwr.get_power_analog()
+		self.PVALS[0] = self.mpa.pwr.get_power_pads(chip='MPA')
+		self.PVALS[1] = self.mpa.pwr.get_power_digital(chip='MPA')
+		self.PVALS[2] = self.mpa.pwr.get_power_analog(chip='MPA')
 
 		if (self.PVALS[0] > self.current_limit_pads_high): PowerMessage += "Pad power too high! ("+str(self.PVALS[0])+")"; flag = 0
 		elif (self.PVALS[0] < self.current_limit_pads_low): PowerMessage += "Pad power too low! ("+str(self.PVALS[0])+")"; flag = 0
