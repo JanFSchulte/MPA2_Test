@@ -1,8 +1,8 @@
-
 #from utilities.tbconfig import *
 from utilities.tbsettings import *
 from utilities.configure_communication import *
 from utilities.fc7_com import *
+from utilities.power_utility import *
 from myScripts.BasicADC import *
 
 from myScripts.Instruments_Keithley_Multimeter_2000_GPIB import *
@@ -11,7 +11,6 @@ from myScripts.Instruments_Keithley_Sourcemeter_2410_GPIB import *
 
 from ssa_methods.ssa import *
 from ssa_methods.ssa_i2c_conf import *
-from ssa_methods.ssa_power_utility import *
 from ssa_methods.ssa_cal_utility import *
 from ssa_methods.ssa_test_utility import *
 from ssa_methods.ssa_readout_utility import *
@@ -32,7 +31,6 @@ from ssa_methods.ssa_scanchain_test import *
 
 #from mpa_methods.mpa import *
 from mpa_methods.mpa import *
-from mpa_methods.mpa_power_utility import *
 from mpa_methods.mpa_cal_utility import *
 from mpa_methods.mpa_test_utility import *
 from mpa_methods.mpa_bias_utility import *
@@ -56,7 +54,7 @@ class SSAwp:
         self.ana_mux_map   = self.i2c.get_analog_mux_map()
 
         # init base chip config, utilities and s_curve measuring
-        self.pwr           = ssa_power_utility(self.i2c, FC7)
+        self.pwr           = PowerUtility(self.i2c, FC7, "SSA")
         self.chip          = SSA_ASIC(index, self.i2c, FC7, self.pwr, self.peri_reg_map, self.strip_reg_map, self.ana_mux_map)
         self.cal           = SSA_cal_utility(self.chip, self.i2c, FC7)
         self.pcbadc        = onboard_adc()
@@ -105,11 +103,10 @@ class MPAwp:
         self.row_reg_map   = self.i2c.get_row_reg_map()
         self.pixel_reg_map = self.i2c.get_pixel_reg_map()
 
-        self.pwr           = ssa_power_utility(self.i2c, FC7)
+        self.pwr           = PowerUtility(self.i2c, FC7, "MPA")
         self.chip          = MPA_ASIC(self.i2c, FC7, self.pwr, self.peri_reg_map, self.row_reg_map, self.pixel_reg_map)
         self.cal           = mpa_cal_utility(self.chip, self.i2c, FC7)
         self.test          = mpa_test_utility(self.chip, self.i2c, FC7)
-
 
         self.init          = self.chip.init
         self.inject        = self.chip.inject

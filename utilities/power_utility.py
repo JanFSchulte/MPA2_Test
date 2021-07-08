@@ -8,11 +8,12 @@ import sys
 import inspect
 
 
-class ssa_power_utility:
+class PowerUtility:
 
-    def __init__(self, I2C, FC7):
+    def __init__(self, I2C, FC7, chip_name):
         self.I2C = I2C;
         self.fc7 = FC7;
+        self.chip = chip_name
         self.__initialise_constants()
         self.state = curstate(main = 0, dvdd = 0, avdd = 0, pvdd = 0)
 
@@ -38,24 +39,20 @@ class ssa_power_utility:
         utils.activate_I2C_chip(self.fc7)
         if(mode == 'on' or mode == 1):
             time.sleep(0.00); self.mainpoweron()
-            time.sleep(0.01);  self.set_pvdd(p, chip='MPA');
-            time.sleep(0.20);  self.set_dvdd(d, chip='MPA');
-            time.sleep(0.00);  self.set_avdd(a, chip='MPA');
-            time.sleep(0.10);  self.set_vbf(bg, chip='MPA');
-            #time.sleep(0.01); self.set_pvdd(p, chip='SSA'); self.set_pvdd(p, chip='MPA');
-            #time.sleep(0.20); self.set_dvdd(d, chip='SSA'); self.set_dvdd(d, chip='MPA');
-            #time.sleep(0.00); self.set_avdd(a, chip='SSA'); self.set_avdd(a, chip='MPA');
-            #time.sleep(0.10); self.set_vbf(bg); self.set_vbf(bg, chip='MPA')
+            time.sleep(0.01); self.set_pvdd(p, chip='SSA'); self.set_pvdd(p, chip='MPA')
+            time.sleep(0.20); self.set_dvdd(d, chip='SSA'); self.set_dvdd(d, chip='MPA')
+            time.sleep(0.00); self.set_avdd(a, chip='SSA'); self.set_avdd(a, chip='MPA')
+            time.sleep(0.10); self.set_vbf(bg); self.set_vbf(bg, chip='MPA')
             time.sleep(0.50); self.reset_m(display=display)
             time.sleep(0.10)
             if(display):
                 #time.sleep(0.4); self.get_power(display = True, chip='SSA')
                 time.sleep(0.1); self.get_power(display = True, chip='MPA')
         elif(mode == 'off' or mode == 0):
-            time.sleep(0.00); self.set_vbf(0, chip='MPA')
-            time.sleep(0.10); self.set_avdd(0, chip='MPA');
-            time.sleep(0.00); self.set_dvdd(0, chip='MPA');
-            time.sleep(0.10); self.set_pvdd(0, chip='MPA')
+            time.sleep(0.00); self.set_vbf(0, chip='MPA'); self.set_vbf(0, chip='SSA');
+            time.sleep(0.10); self.set_avdd(0, chip='MPA'); self.set_avdd(0, chip='SSA')
+            time.sleep(0.00); self.set_dvdd(0, chip='MPA'); self.set_dvdd(0, chip='SSA')
+            time.sleep(0.10); self.set_pvdd(0, chip='MPA'); self.set_pvdd(0, chip='SSA')
             time.sleep(0.10); self.mainpoweroff()
             if(display):
                 #time.sleep(0.10); self.get_power(display = True, chip='SSA')
@@ -123,10 +120,11 @@ class ssa_power_utility:
         return [good, Id, Ia, Ip]
 
 
-    def get_power(self, display = True, return_all = False, chip='SSA'):
-        Pd, Vd, Id = self.get_power_digital(display, False, True, chip=chip)
-        Pa, Va, Ia = self.get_power_analog(display, False, True, chip=chip)
-        Pp, Vp, Ip = self.get_power_pads(display, False, True, chip=chip)
+    def get_power(self, display = True, return_all = False, chip = False):
+        chip = self.chip if not chip else chip 
+        Pd, Vd, Id = self.get_power_digital(display, False, True, chip = chip)
+        Pa, Va, Ia = self.get_power_analog(display, False, True, chip = chip)
+        Pp, Vp, Ip = self.get_power_pads(display, False, True, chip = chip)
         if(display):
             utils.print_log('->  Total: %7.3fmW  [             I=%7.3fmA]' % (Pd+Pa+Pp, Id+Ia+Ip ))
         utils.activate_I2C_chip(self.fc7)
@@ -143,7 +141,8 @@ class ssa_power_utility:
             self.get_power(display = True)
             t1 = time.time()
 
-    def get_power_digital(self, display = True, i2cact = True, rtv1 = False, chip = 'SSA'):
+    def get_power_digital(self, display = True, i2cact = True, rtv1 = False, chip = False):
+        chip = self.chip if not chip else chip 
         device = self.ina226_6 if (chip == 'SSA') else self.ina226_9
         utils.print_enable(False)
         self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
@@ -200,7 +199,8 @@ class ssa_power_utility:
         return pret
 
 
-    def get_power_analog(self, display = True, i2cact = True, rtv1 = False, chip = 'SSA'):
+    def get_power_analog(self, display = True, i2cact = True, rtv1 = False, chip = False):
+        chip = self.chip if not chip else chip 
         device = self.ina226_5 if (chip == 'SSA') else self.ina226_8
         utils.print_enable(False)
         self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
@@ -228,7 +228,8 @@ class ssa_power_utility:
             return pret
 
 
-    def get_power_pads(self, display = True, i2cact = True, rtv1 = False, chip = 'SSA'):
+    def get_power_pads(self, display = True, i2cact = True, rtv1 = False, chip = False):
+        chip = self.chip if not chip else chip 
         device = self.ina226_7 if (chip == 'SSA') else self.ina226_10
         utils.print_enable(False)
         self.fc7.Configure_MPA_SSA_I2C_Master(1, 2)
@@ -256,7 +257,8 @@ class ssa_power_utility:
             return pret
 
 
-    def set_dvdd(self, targetvoltage, chip = 'SSA'):
+    def set_dvdd(self, targetvoltage, chip = False):
+        chip = self.chip if not chip else chip 
         val = 0x31 if (chip == 'SSA') else 0x30
         utils.print_enable(False)
         if (targetvoltage > 1.3): targetvoltage = 1.3
@@ -278,7 +280,8 @@ class ssa_power_utility:
         self.state.dvdd = targetvoltage
 
 
-    def set_avdd(self, targetvoltage, chip = 'SSA'):
+    def set_avdd(self, targetvoltage, chip = False):
+        chip = self.chip if not chip else chip 
         val = 0x35 if (chip == 'SSA') else 0x32
         utils.print_enable(False)
         if (targetvoltage > 1.3): targetvoltage = 1.3
@@ -295,7 +298,8 @@ class ssa_power_utility:
         self.state.avdd = targetvoltage
 
 
-    def set_pvdd(self, targetvoltage, chip = 'SSA'):
+    def set_pvdd(self, targetvoltage, chip = False):
+        chip = self.chip if not chip else chip 
         val = 0x33 if (chip == 'SSA') else 0x34
         utils.print_enable(False)
         if (targetvoltage > 1.3): targetvoltage = 1.3
@@ -312,8 +316,9 @@ class ssa_power_utility:
         self.state.pvdd = targetvoltage
 
 
-    def set_vbf(self, targetvoltage = 0.270, chip = 'SSA'):
-        val = 0x37 if (chip == 'SSA') else 0x36
+    def set_vbf(self, targetvoltage = 0.270, chip = False):
+        chip = self.chip if not chip else chip 
+        val = 0x37 if (self.chip== 'SSA') else 0x36
         utils.print_enable(False)
         if (targetvoltage > 0.5):
             targetvoltage = 0.5
@@ -411,7 +416,15 @@ class ssa_power_utility:
 #			if(mode == 'auto'): utils.print_log( '->  Sent Hard-Reset pulse ')
 #			else: utils.print_log( '->  SSA Enabled ' if mode == 1 else '->  SSA Disabled ')
 
-
+    def _disable(self, display=True):
+        utils.print_enable(False)
+        time.sleep(0.01); self.fc7.Configure_MPA_SSA_I2C_Master(1, 2, verbose = 0);
+        time.sleep(0.01); self.fc7.Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02, verbose = 0); # route to 2nd PCF8574
+        time.sleep(0.01); self.fc7.Send_MPA_SSA_I2C_Command(self.pcf8574,   0, self.pcbwrite, 0, 0, verbose = 0);  # drop reset bit
+        time.sleep(0.01);
+        utils.activate_I2C_chip(self.fc7)
+        utils.print_enable(True)
+        if(display): print('->  \tMPA disabled ')
 
 #	def _disable_ssa(self, display=True):
 #		utils.print_enable(False)
@@ -433,8 +446,8 @@ class ssa_power_utility:
 #		utils.print_enable(True)
 #		if(display): utils.print_log( '->  SSA enabled ')
 
-    def set_vbg(self, chip = 'SSA', targetvoltage = 0.280):
-        val = 0x37 if (chip == 'SSA') else 0x36
+    def set_vbg(self, targetvoltage = 0.280):
+        val = 0x37 if (self.chip == 'SSA') else 0x36
         utils.print_enable(False)
         if (targetvoltage > 0.5):
             targetvoltage = 0.5
