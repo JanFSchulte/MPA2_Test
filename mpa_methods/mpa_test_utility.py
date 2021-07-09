@@ -15,9 +15,9 @@ import matplotlib.pyplot as plt
 class mpa_test_utility():
     """ """
     def __init__(self, mpa, I2C, fc7):
-        self.mpa = mpa;
-        self.I2C = I2C;
-        self.fc7 = fc7;
+        self.mpa = mpa
+        self.I2C = I2C
+        self.fc7 = fc7
 
     def shift(self, verbose = 0):
         """
@@ -47,10 +47,8 @@ class mpa_test_utility():
 
     def test_pp_digital(self, row, pixel):
         """
-
         :param row:
         :param pixel:
-
         """
         self.I2C.pixel_write('ENFLAGS', row, pixel, 0x20)
         self.fc7.send_test(8)

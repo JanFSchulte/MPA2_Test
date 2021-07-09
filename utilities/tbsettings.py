@@ -5,4 +5,3 @@ tbconfig.BOARD_SELECT = '08:00:30:00:22:5d'
 tbconfig.MPA_ADR[0] = 0b1000000
 tbconfig.SSA_ADR[0] = 0b0100000
 tbconfig.SSA_ADR[1] = 0b0100111
-tbconfig.CHIP_SELECT = 'MPA'

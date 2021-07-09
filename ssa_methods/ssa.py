@@ -4,7 +4,6 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 
-from ssa_methods.ssa_i2c_conf import *
 from ssa_methods.ssa_ctrl_base import *
 from ssa_methods.ssa_ctrl_strip import *
 from ssa_methods.ssa_ctrl_analog import *
@@ -59,7 +58,7 @@ class SSA_ASIC:
 	def on(self):
 		self.ctrl.reset(display=True)
 		utils.print_info("->  Reset SSA Chip")
-		time.sleep(0.3);
+		time.sleep(0.3)
 		utils.activate_I2C_chip(self.fc7)
 		time.sleep(0.2)
 

@@ -9,7 +9,7 @@ from myScripts import *
 #from mpa_methods.mpa_main import *
 import time
 
-class mpa_probe_test:
+class MPAProbeTest:
 	def __init__(self, DIR, mpa, I2C, fc7, cal, test, bias):
 		# Classes
 		self.DIR = DIR
@@ -23,12 +23,12 @@ class mpa_probe_test:
 				exists = True
 			version += 1
 		print(self.DIR + "<<< USING THIS")
-		self.mpa = mpa;
-		self.I2C = I2C;
-		self.fc7 = fc7;
-		self.cal = cal;
-		self.test = test;
-		self.bias = bias;
+		self.mpa = mpa
+		self.I2C = I2C
+		self.fc7 = fc7
+		self.cal = cal
+		self.test = test
+		self.bias = bias
 		# Variables
 		self.GlobalSummary = []
 		self.LogFile = open(self.DIR+"/LogFile.txt", "w")
