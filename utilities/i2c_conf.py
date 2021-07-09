@@ -6,24 +6,23 @@ from utilities.tbsettings import *
 from ssa_methods.Configuration.ssa1_reg_map import *
 from ssa_methods.Configuration.mpa_reg_map import *
 
-class ssa_i2c_conf:
+class I2CConf:
 
     def __init__(self, fc7, fc7AddrTable, debug=False, index=0, address=0):
-        self.__load_reg_map(version=tbconfig.VERSION['SSA'])
-        self.__set_parameters(debug=debug)
         self.fc7 = fc7
         self.chip_adr = index
+        self.__load_reg_map(version=tbconfig.VERSION['SSA'])
+        self.__set_parameters(debug=debug)
         #self.i2c_address = address
         self.fc7AddrTable = fc7AddrTable
 
     def __load_reg_map(self, version):
-
-        if(tbconfig.CHIP_SELECT == "MPA"):
+        if(self.chip_adr == "MPA"):
             self.peri_reg_map = mpa_peri_reg_map
             self.mpa_pixel_reg_map = mpa_pixel_reg_map
             self.mpa_row_reg_map = mpa_row_reg_map
             print('->  Loaded configuration for MPA')
-        elif (version >= 2) and not (tbconfig.CHIP_SELECT == "MPA"):
+        elif (version >= 2) and not (self.chip_adr == "MPA"):
             #from ssa_methods.Configuration.ssa2_reg_map import *
             ssa_reg_map = json.load(open('./ssa_methods/Configuration/ssa2_reg_map.json', 'r'))
             ssa_cal_map = json.load(open('./ssa_methods/Configuration/ssa2_cal_map.json', 'r'))
@@ -94,11 +93,11 @@ class ssa_i2c_conf:
                     utils.print_error("'X>  I2C Periphery register name not found: key: {:s} ".format(register))
                     rep = 'Null'
                 else:
-                    if (tbconfig.VERSION['SSA'] >= 2) and not (tbconfig.CHIP_SELECT == 'MPA'):
+                    if (tbconfig.VERSION['SSA'] >= 2) and not (self.chip_adr == 'MPA'):
                         reg_adr = self.tonumber(self.peri_reg_map[register]['adr'],0)
                         mask_name = self.peri_reg_map[register]['mask_reg']
                         mask_adr  = self.tonumber(self.peri_reg_map[mask_name]['adr'], 0)
-                    elif(tbconfig.CHIP_SELECT == 'MPA'):
+                    elif(self.chip_adr == 'MPA'):
                         base = self.peri_reg_map[register]
                         #adr  = (base & 0x0fff) | 0b0001000000000000
                         reg_adr   = base
@@ -126,12 +125,12 @@ class ssa_i2c_conf:
                                 rep  = self.write_I2C(self.chip_adr, reg_adr, wdata, self.freq)
                             else:
                                 utils.print_error('X>  I2C Periphery read  - Adr=[0x{:4x}], Value=[{:s}] - ERROR'.format(reg_adr, 'NOVALUE'))
-                                st = 'Null';
+                                st = 'Null'
                         ####################################
                         if(self.debug):
                             utils.print_log('->  I2C Periphery write - Adr=[0x{:4x}], Value=[{:d}]'.format(reg_adr, tdata))
                     else:
-                        if not (tbconfig.CHIP_SELECT == 'MPA'):
+                        if not (self.chip_adr == 'MPA'):
                             if(self.mask_active[mask_name] and (tbconfig.VERSION['SSA']>=2)):
                                 rep  = self.write_I2C(self.chip_adr, mask_adr, 0xff, self.freq)
                                 self.mask_active[mask_name] = False
@@ -164,9 +163,9 @@ class ssa_i2c_conf:
                     utils.print_error("'X>  I2C Periphery register name not found: key: {:s} ".format(register))
                     rep = 'Null'
                 else:
-                    if(tbconfig.VERSION['SSA'] == 2) and not (tbconfig.CHIP_SELECT == 'MPA'):
+                    if(tbconfig.VERSION['SSA'] == 2) and not (self.chip_adr == 'MPA'):
                         adr = self.tonumber(self.peri_reg_map[register]['adr'], 0)
-                    elif(tbconfig.CHIP_SELECT == 'MPA'):
+                    elif(self.chip_adr == 'MPA'):
                         base = self.peri_reg_map[register]
                         #adr  = (base & 0x0fff) | 0b0001000000000000
                         adr = base

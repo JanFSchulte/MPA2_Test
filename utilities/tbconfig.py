@@ -5,7 +5,7 @@ MPA_ADR = {}
 
 #############################################################################
 # Dafault values. This section is overwritten by "start_ssa_*.sh"
-VERSION['SSA'] = 1
+VERSION['SSA'] = 2
 VERSION['MPA'] = 1
 VERSION['INT_PCB'] = 2
 BOARD_SELECT = "08:00:30:00:22:5d"
@@ -13,7 +13,7 @@ VERSION['uDTC'] = "08.2019"
 MPA_ADR[0] = 0b1000000
 SSA_ADR[0] = 0b0100011
 SSA_ADR[1] = 0b0100111
-CHIP_SELECT = "MPA"
+
 
 #############################################################################
 

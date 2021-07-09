@@ -2,6 +2,7 @@
 from utilities.tbsettings import *
 from utilities.configure_communication import *
 from utilities.fc7_com import *
+from utilities.i2c_conf import *
 from utilities.power_utility import *
 from myScripts.BasicADC import *
 
@@ -10,7 +11,6 @@ from myScripts.Instruments_Keithley_Multimeter_7510_LAN import *
 from myScripts.Instruments_Keithley_Sourcemeter_2410_GPIB import *
 
 from ssa_methods.ssa import *
-from ssa_methods.ssa_i2c_conf import *
 from ssa_methods.ssa_cal_utility import *
 from ssa_methods.ssa_test_utility import *
 from ssa_methods.ssa_readout_utility import *
@@ -48,7 +48,7 @@ class SSAwp:
 
         # init comms to testbench components (FC7, I2C register access)
         FC7.set_chip_id(index, address)
-        self.i2c           = ssa_i2c_conf(FC7, fc7AddrTable, index="SSA{:0d}".format(index), address=address)
+        self.i2c           = I2CConf(FC7, fc7AddrTable, index="SSA{:0d}".format(index), address=address)
         self.strip_reg_map = self.i2c.get_strip_reg_map()
         self.peri_reg_map  = self.i2c.get_peri_reg_map()
         self.ana_mux_map   = self.i2c.get_analog_mux_map()
@@ -97,13 +97,13 @@ class MPAwp:
     def __init__(self, index = "MPA", address = 0):
         ##FC7.set_chip_id(index, address)
         self.index         = index
-        self.i2c           = ssa_i2c_conf(FC7, fc7AddrTable, index=index, address=address)
+        self.i2c           = I2CConf(FC7, fc7AddrTable, index=index, address=address)
 
         self.peri_reg_map  = self.i2c.get_peri_reg_map()
         self.row_reg_map   = self.i2c.get_row_reg_map()
         self.pixel_reg_map = self.i2c.get_pixel_reg_map()
 
-        self.pwr           = PowerUtility(self.i2c, FC7, "MPA")
+        self.pwr           = PowerUtility(self.i2c, FC7, index)
         self.chip          = MPA_ASIC(self.i2c, FC7, self.pwr, self.peri_reg_map, self.row_reg_map, self.pixel_reg_map)
         self.cal           = mpa_cal_utility(self.chip, self.i2c, FC7)
         self.test          = mpa_test_utility(self.chip, self.i2c, FC7)
@@ -119,7 +119,7 @@ class MPAwp:
             self.bias = False
             print("- Impossible to access GPIB instruments")
 
-        self.probe         = mpa_probe_test("../MPA_Results/TEST", self.chip, self.i2c, FC7, self.cal, self.test, self.bias)
+        self.probe         = MPAProbeTest("../MPA_Results/TEST", self.chip, self.i2c, FC7, self.cal, self.test, self.bias)
 
         # Higher level test routines
         # self.main_test   = main_mpa_test(self.chip, self.i2c, FC7, self.cal, 0, self.pwr, self.test, 0)
@@ -147,9 +147,9 @@ class MPAwp:
         self.pwr.set_clock_source(val)
         time.sleep(0.1);  ssa.init(reset_board = False, reset_chip = False, display = True)
 
-#ssa0 = SSAwp(0, 0b000)
+ssa0 = SSAwp(0, 0b000)
 #ssa1 = SSAwp(1, 0b111)
-#ssa  = ssa0
+ssa  = ssa0
 mpa  = MPAwp(address = 0b000)
 
 #t2xSSA2 = Test_2xSSA2(ssa0, ssa1, FC7)
@@ -161,9 +161,3 @@ def set_clock(val = 'internal'):
     ssa0.pwr.set_clock_source(val)
     #sleep(0.1);
     #ssa0.chip.init(reset_board = False, reset_chip = False, display = True)
-
-def ssa_on():
-    utils.activate_I2C_chip(FC7)
-    sleep(0.1);  ssa_pwr.set_supply('on', display=False)
-    sleep(0.1);  ssa_pwr.set_clock_source('internal')
-    sleep(0.1);  ssa.init(reset_board = True, reset_chip = True, display = True)
