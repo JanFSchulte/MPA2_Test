@@ -10,30 +10,36 @@ from myScripts.Instruments_Keithley_Multimeter_2000_GPIB import *
 from myScripts.Instruments_Keithley_Multimeter_7510_LAN import *
 from myScripts.Instruments_Keithley_Sourcemeter_2410_GPIB import *
 
+# SSA Utilities
 from ssa_methods.ssa import *
 from ssa_methods.ssa_cal_utility import *
 from ssa_methods.ssa_test_utility import *
 from ssa_methods.ssa_readout_utility import *
 from ssa_methods.ssa_inject_utility import *
 from ssa_methods.ssa_measurements import *
-from ssa_methods.ssa_test_xray import *
-from ssa_methods.ssa_test_climatic_chamber import *
 from ssa_methods.ssa_analise_utility import *
 from ssa_methods.ssa_calibration import *
 from ssa_methods.ssa_seu_utility import *
-from ssa_methods.ssa_test_seu import *
-from ssa_methods.ssa_wp_analyze import *
+
+# SSA Test procedures
+from ssa_methods.ssa_test_climatic_chamber import *
 from ssa_methods.main_ssa_test_1 import *
 from ssa_methods.main_ssa_test_2 import *
 from ssa_methods.main_ssa_test_3 import *
 from ssa_methods.ssa_test_2xSSA2 import *
 from ssa_methods.ssa_scanchain_test import *
+from ssa_methods.ssa_test_xray import *
+from ssa_methods.ssa_wp_analyze import *
+from ssa_methods.ssa_test_seu import *
 
+# MPA Utilities
 #from mpa_methods.mpa import *
 from mpa_methods.mpa import *
 from mpa_methods.mpa_cal_utility import *
 from mpa_methods.mpa_test_utility import *
 from mpa_methods.mpa_bias_utility import *
+
+# MPA Test procedures
 from mpa_methods.mpa_probe_test import *
 #from mpa_methods.main_mpa_test import *
 
@@ -71,7 +77,7 @@ class SSAwp:
         self.main_test_1   = main_ssa_test_1(self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure.fe)
         self.seu           = SSA_SEU(self.chip, self.seuutil, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
         self.main_test_2   = main_ssa_test_2(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
-        self.main_test_3   = main_ssa_test_3(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
+        self.main_test_3   = MainTests(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
         self.xray          = SSA_test_xray(self.main_test_3, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
         self.climatic      = SSA_test_climatic_chamber(self.main_test_3, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
         self.scanchain     = SSA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)

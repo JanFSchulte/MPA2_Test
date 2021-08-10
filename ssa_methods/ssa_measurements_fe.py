@@ -35,17 +35,48 @@ class SSA_measurements_fe():
 
 	###########################################################
 	def scurve_trim_gain_noise(self,
-		charge_fc_trim = 2.0,             # Input charge in fC
-		charge_fc_test = 1.0,             # Input charge in fC
-		threshold_mv_trim = 'mean',  # Threshold in mV
-		iterative_step_trim = 1,        # Iterative steps to acheive lower variability
-		caldac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
-		thrdac = 'default',             # 'default' | 'evaluate' | value [gain, offset]
-		nevents = 1000,                 # Number of calibration pulses
-		plot = False,                    # Fast plot of the results
+		charge_fc_trim = 2.0,
+		charge_fc_test = 1.0,
+		threshold_mv_trim = 'mean',
+		iterative_step_trim = 1,
+		caldac = 'default',
+		thrdac = 'default',
+		nevents = 1000,
+		plot = False,
 		filename = '../SSA_Results/TestLogs/Chip_0_',
 		display = False
 		):
+		"""Generate scurve data. 
+
+		Parameters
+		----------
+		charge_fc_trim : float, optional
+			Input charge in fC, by default 2.0
+		charge_fc_test : float, optional
+			Input charge in fC, by default 1.0
+		threshold_mv_trim : str, optional
+			Threshold in mV, by default 'mean'
+		iterative_step_trim : int, optional
+			Iterative steps to acheive lower variability, by default 1
+		caldac : str, optional
+			'default' | 'evaluate' | value [gain, offset], by default 'default'
+		thrdac : str, optional
+			'default' | 'evaluate' | value [gain, offset], by default 'default'
+		nevents : int, optional
+			Number of calibration pulses, by default 1000
+		plot : bool, optional
+			Fast plot of the results, by default False
+		filename : str, optional
+			by default '../SSA_Results/TestLogs/Chip_0_'
+		display : bool, optional
+			by default False
+
+		Returns
+		-------
+		[type]
+			[description]
+		"""		
+
 		charge_fc_trim= np.float(charge_fc_trim)
 		charge_fc_test= np.float(charge_fc_test)
 		scurves = {}; fo = [];

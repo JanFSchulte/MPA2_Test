@@ -9,12 +9,14 @@ from myScripts import *
 #from mpa_methods.mpa_main import *
 import time
 
-class MPAProbeTest:
+class MPAProbeTest:	
 	def __init__(self, DIR, mpa, I2C, fc7, cal, test, bias):
 		# Classes
 		self.DIR = DIR
 		exists = False
 		version = 0
+
+		# Select Directory
 		while not exists:
 			if not os.path.exists(self.DIR+"_v"+str(version)):
 				print(self.DIR)
@@ -23,12 +25,14 @@ class MPAProbeTest:
 				exists = True
 			version += 1
 		print(self.DIR + "<<< USING THIS")
+
 		self.mpa = mpa
 		self.I2C = I2C
 		self.fc7 = fc7
 		self.cal = cal
 		self.test = test
 		self.bias = bias
+
 		# Variables
 		self.GlobalSummary = []
 		self.LogFile = open(self.DIR+"/LogFile.txt", "w")
@@ -37,6 +41,7 @@ class MPAProbeTest:
 		self.GeneralLogFile = open(self.DIR+"/../LogFile.txt", "a")
 		self.colprint("Creating new chip measurement: "+self.DIR)
 		self.Flag = 1
+
 		# Current Limits
 		self.current_limit_pads_high = 25
 		self.current_limit_pads_low = 5
@@ -46,6 +51,7 @@ class MPAProbeTest:
 		self.current_limit_digital_low_leakage = 5
 		self.current_limit_analog_high = 100
 		self.current_limit_analog_low = 50
+
 		# Analog Paramters
 		self.ideal_th_LSB = 1.456
 		self.ideal_cl_LSB = 0.035
@@ -57,6 +63,7 @@ class MPAProbeTest:
 		self.low_cl_DAC = 15
 		self.high_cl_ofs = 30
 		self.trim_amplitude = 20
+		
 		# Digital Paramters
 		self.signal_integrity_limit = 0.99
 
@@ -77,7 +84,7 @@ class MPAProbeTest:
 			self.colprint(PowerStatus)
 			self.colprint_general(PowerStatus)
 
-			PowerFlag1 = 1 # workaround, since power_on_check(chip disable/enable) not working
+			# PowerFlag1 = 1 # workaround, since power_on_check(chip disable/enable) not working
 			if PowerFlag1: 
 				PST1 = self.PVALS[0]; self.GlobalSummary[1] = PST1; DP1  = self.PVALS[1]; self.GlobalSummary[2] = DP1; AN1  = self.PVALS[2]; self.GlobalSummary[3] = AN1
 				self.colprint("Enabling MPA")
@@ -102,7 +109,7 @@ class MPAProbeTest:
 						self.colprint("Shift Test Failed")
 						self.GlobalSummary[7] = 0
 
-					#self.analog_measurement()
+					self.analog_measurement()
 
 					self.digital_test()
 					
@@ -159,6 +166,7 @@ class MPAProbeTest:
 		self.GeneralLogFile.write(str(text)+"\n")
 
 	def analog_measurement(self, calibrate = 1, plot = 0):
+		
 		start_time = time.time()
 		self.colprint("Doing Analog Measurement:")
 
@@ -181,6 +189,7 @@ class MPAProbeTest:
 			self.colprint_general(message)
 
 		self.bias.trimDAC_amplitude(self.trim_amplitude)
+
 		thDAC = self.bias.measure_DAC_testblocks(point = 5, bit = 8, step = 127, plot = plot, print_file = 1, filename = self.DIR+"/Th_DAC", verbose = 0)
 		calDAC = self.bias.measure_DAC_testblocks(point = 6, bit = 8, step = 127, plot = plot, print_file = 1, filename = self.DIR+"/Cal_DAC", verbose = 0)
 		thLSB = np.mean((thDAC[:,127] - thDAC[:,0])/127)*1000 #LSB Threshold DAC in mV
@@ -248,13 +257,13 @@ class MPAProbeTest:
 			CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			for i in BadPixA: CVwriter.writerow(i)
 
-		# Input Strip Test:
-		strip_in = self.test.strip_in_scan(print_file = 1, filename = self.DIR + "/striptest", probe=1, verbose = 0)
+		# Input Strip Test, probe = 1 for wafer prober, = 2 for test bench
+		strip_in = self.test.strip_in_scan(print_file = 1, filename = self.DIR + "/striptest", probe=0, verbose = 0)
 		good_si = 0
 
 		for i in range(0,8):
 			if (strip_in[i,:].all() > self.signal_integrity_limit): good_si = 1
-
+			
 		if good_si:
 			self.colprint("Strip Input scan passed");
 			self.colprint_general("Strip Input scan passed")

@@ -199,12 +199,23 @@ class mpa_test_utility():
     def strip_in_test(self, n_pulse = 10, line = list(range(0,8)),  value = [128, 64, 32, 16, 8, 4, 2, 1], latency = 0b00111011, edge = 0):
         """
 
-        :param n_pulse:  (Default value = 10)
-        :param line:  (Default value = list(range(0)
-        :param value:  (Default value = [128)
-        :param latency:  (Default value = 0b00111011)
-        :param edge:  (Default value = 0)
+        Parameters
+        ----------
+        n_pulse : int, optional
+            [description], by default 10
+        line : [type], optional
+            [description], by default list(range(0,8))
+        value : list, optional
+            [description], by default [128, 64, 32, 16, 8, 4, 2, 1]
+        latency : [int], optional
+            [description], by default 0b00111011
+        edge : int, optional
+            [description], by default 0
 
+        Returns
+        -------
+        line_check : line x value array
+            Each field cointains count of correct matches for respective line and test value
         """
         self.I2C.peri_write('EdgeSelTrig',edge) # 1 = rising
         self.I2C.peri_write('LatencyRx320', latency) # Trigger line aligned with FC7
@@ -214,6 +225,7 @@ class mpa_test_utility():
         nvalue = int(value.shape[0])
         line_check = np.zeros((nline,nvalue), dtype = np.int)
         count_line = 0
+
         for l in line:
             count_val = 0
             for val in value:
@@ -230,18 +242,32 @@ class mpa_test_utility():
                 line_check[count_line, count_val ] = check
                 count_val += 1
             count_line += 1
+
         return line_check
 
     def strip_in_scan(self, n_pulse = 1, edge = "falling", probe = 0, print_file = 0, filename =  "../cernbox/MPA_Results/strip_in_scan", verbose = 1):
-        """
+        """During strip test strip centroids are used as stub seeds and compared to output.
+        Test is done for all lines, different latencies, patterns.
 
-        :param n_pulse:  (Default value = 1)
-        :param edge:  (Default value = "falling")
-        :param probe:  (Default value = 0)
-        :param print_file:  (Default value = 0)
-        :param filename:  (Default value = "../cernbox/MPA_Results/strip_in_scan")
-        :param verbose:  (Default value = 1)
+        Parameters
+        ----------
+        n_pulse : int, optional
+            [description], by default 1
+        edge : str, optional
+            [description], by default "falling"
+        probe : int, optional
+            1 if using wafer prober, by default 0 (carrier board)
+        print_file : int, optional
+            [description], by default 0
+        filename : str, optional
+            [description], by default "../cernbox/MPA_Results/strip_in_scan"
+        verbose : int, optional
+            [description], by default 1
 
+        Returns
+        -------
+        data_array: 8x8 np.array
+            [description]
         """
         t0 = time.time()
         self.mpa.ctrl_base.activate_ss()
@@ -257,6 +283,7 @@ class mpa_test_utility():
             self.I2C.peri_write("InSetting_7",7)
             self.I2C.peri_write("InSetting_8",8)
         time.sleep(0.1)
+        
         for i in range(0,8):
             latency = (i  << 3)
             if verbose: print("Testing Latency ", i)

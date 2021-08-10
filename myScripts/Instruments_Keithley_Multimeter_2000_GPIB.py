@@ -25,7 +25,7 @@ class Instruments_Keithley_Multimeter_2000_GPIB():
 
 	def measure(self):
 		self.inst.write("READ?")
-		str_value = self.inst.read()
+		str_value = self.inst.read(100)
 		value = float(str_value)
 		#self.inst.write(":DISP:WIND2:TEXT:DATA \"  %8.3f mV\";STAT ON;" % (value*1E3))
 		return value

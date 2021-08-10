@@ -499,7 +499,7 @@ class SSA_readout():
 				count[s-1] = (self.I2C.strip_read("ReadCounter_MSB", s) << 8) | self.I2C.strip_read("ReadCounter_LSB", s)
 		return False, count
 
-	def all_lines_debug(self, trigger = True, configure = True, cluster = True, l1data = True, lateral = False):
+	def all_lines_debug(self, trigger = True, configure = True, cluster = True, l1data = True, lateral = False, configuration=[199, 50, 400, 1]):
 		"""
 
 		:param trigger:  (Default value = True)
@@ -516,7 +516,7 @@ class SSA_readout():
 			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
 			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
 			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
-			Configure_TestPulse(199, 50, 400, 1)
+			Configure_TestPulse(configuration[0],configuration[1],configuration[2], configuration[3])
 
 			#Configure_TestPulse_SSA(    number_of_test_pulses = 1, delay_before_next_pulse = 500, delay_after_test_pulse = 0, delay_after_fast_reset = 0, enable_rst_L1 = 0)
 

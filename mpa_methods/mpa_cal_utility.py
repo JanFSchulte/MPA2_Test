@@ -24,7 +24,7 @@ class mpa_cal_utility():
         self.utils = utils
         # Local variables
 
-# Math functions
+    # Math functions
     def errorf(self, x, *p):
         """
 
@@ -34,6 +34,7 @@ class mpa_cal_utility():
         """
         a, mu, sigma = p
         return 0.5*a*(1.0+erf((x-mu)/sigma))
+
     def line(self, x, *p):
         """
 
@@ -43,6 +44,7 @@ class mpa_cal_utility():
         """
         g, offset = p
         return  np.array(x) *g + offset
+
     def gauss(self, x, *p):
         """
 
@@ -52,6 +54,7 @@ class mpa_cal_utility():
         """
         A, mu, sigma = p
         return A*np.exp(-(x-mu)**2/(2.*sigma**2))
+
     def errorfc(self, x, *p):
         """
 
@@ -61,6 +64,7 @@ class mpa_cal_utility():
         """
         a, mu, sigma = p
         return a*0.5*erfc((x-mu)/sigma)
+
     def plot_extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, start, stop, extract, plot):
         """takes scurve data and extracts threshold and noise data. If
         plot = 1, it also plots scurves and histograms
@@ -120,7 +124,8 @@ class mpa_cal_utility():
                 print("Noise Average: ", np.mean(noise_array), " Spread SD: ", np.std(noise_array))
         if extract:
             return  th_array, noise_array
-# Readout Counters current method
+    
+    # Readout Counters current method
     def ReadoutCounters(self, raw_mode_en = 0):
         """
 
@@ -170,29 +175,50 @@ class mpa_cal_utility():
         mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
         failed = False
         return failed, count
-# Test S-curve (~10 secs):
-# a = cal.s_curve( n_pulse = 1000, s_type = "CAL", rbr = 0, ref_val = 150, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = 0, extract = 0, plot = 1, print_file =0 )
-# NB: product n_pulse*pulse_delay > 500e3 to avoid communication problem (IP bus related?)
+    
+    # Test S-curve (~10 secs):
+    # a = cal.s_curve( n_pulse = 1000, s_type = "CAL", rbr = 0, ref_val = 150, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = 0, extract = 0, plot = 1, print_file =0 )
+    # NB: product n_pulse*pulse_delay > 500e3 to avoid communication problem (IP bus related?)
     def s_curve(self, n_pulse = 1000, s_type = "THR", rbr = 0, ref_val = 50, row = list(range(1,17)), step = 1, start = 0, stop = 256, pulse_delay = 200, extract_val = 0, extract = 1, plot = 1, print_file =1, filename = "../cernbox/MPA_Results/scurve_fr_"):
+        """[summary]
+
+        Parameters
+        ----------
+        n_pulse : int, optional
+            [description], by default 1000
+        s_type : str, optional
+            [description], by default "THR"
+        rbr : int, optional
+            [description], by default 0
+        ref_val : int, optional
+            [description], by default 50
+        row : [type], optional
+            [description], by default list(range(1,17))
+        step : int, optional
+            [description], by default 1
+        start : int, optional
+            [description], by default 0
+        stop : int, optional
+            [description], by default 256
+        pulse_delay : int, optional
+            [description], by default 200
+        extract_val : int, optional
+            [description], by default 0
+        extract : int, optional
+            [description], by default 1
+        plot : int, optional
+            [description], by default 1
+        print_file : int, optional
+            [description], by default 1
+        filename : str, optional
+            [description], by default "../cernbox/MPA_Results/scurve_fr_"
+
+        Returns
+        -------
+        [type]
+            [description]
         """
 
-        :param n_pulse:  (Default value = 1000)
-        :param s_type:  (Default value = "THR")
-        :param rbr:  (Default value = 0)
-        :param ref_val:  (Default value = 50)
-        :param row:  (Default value = range(1)
-        :param 17):
-        :param step:  (Default value = 1)
-        :param start:  (Default value = 0)
-        :param stop:  (Default value = 256)
-        :param pulse_delay:  (Default value = 200)
-        :param extract_val:  (Default value = 0)
-        :param extract:  (Default value = 1)
-        :param plot:  (Default value = 1)
-        :param print_file:  (Default value = 1)
-        :param filename:  (Default value = "../cernbox/MPA_Results/scurve_fr_")
-
-        """
         t0 = time.time()
         self.fc7.clear_counters(8)
         row = np.array(row)
@@ -248,7 +274,8 @@ class mpa_cal_utility():
             print("Elapsed Time: " + str(t1 - t0))
         if extract: return data_array, th_array, noise_array
         else: return data_array
-### Trimming routine
+
+    ### Trimming routine
     def trimming_step(self, pix_out = [["Row", "Pixel", "DAC"]], n_pulse = 1000, s_type = "THR", ref_val = 10, iteration = 1, nominal_DAC = 110, data_array = np.zeros(2040, dtype = np.int ), plot = 1,  stop = 150, ratio = 3.90, row = list(range(1,17)), pixel = list(range(1,120))):
         """
 
