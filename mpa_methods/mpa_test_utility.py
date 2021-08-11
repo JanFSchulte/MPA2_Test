@@ -225,7 +225,6 @@ class mpa_test_utility():
         nvalue = int(value.shape[0])
         line_check = np.zeros((nline,nvalue), dtype = np.int)
         count_line = 0
-
         for l in line:
             count_val = 0
             for val in value:

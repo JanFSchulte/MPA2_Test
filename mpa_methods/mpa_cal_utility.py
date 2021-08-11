@@ -34,7 +34,6 @@ class mpa_cal_utility():
         """
         a, mu, sigma = p
         return 0.5*a*(1.0+erf((x-mu)/sigma))
-
     def line(self, x, *p):
         """
 
@@ -44,7 +43,6 @@ class mpa_cal_utility():
         """
         g, offset = p
         return  np.array(x) *g + offset
-
     def gauss(self, x, *p):
         """
 
@@ -54,7 +52,6 @@ class mpa_cal_utility():
         """
         A, mu, sigma = p
         return A*np.exp(-(x-mu)**2/(2.*sigma**2))
-
     def errorfc(self, x, *p):
         """
 
@@ -64,7 +61,6 @@ class mpa_cal_utility():
         """
         a, mu, sigma = p
         return a*0.5*erfc((x-mu)/sigma)
-
     def plot_extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, start, stop, extract, plot):
         """takes scurve data and extracts threshold and noise data. If
         plot = 1, it also plots scurves and histograms

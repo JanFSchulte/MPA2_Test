@@ -25,14 +25,12 @@ class MPAProbeTest:
 				exists = True
 			version += 1
 		print(self.DIR + "<<< USING THIS")
-
 		self.mpa = mpa
 		self.I2C = I2C
 		self.fc7 = fc7
 		self.cal = cal
 		self.test = test
 		self.bias = bias
-
 		# Variables
 		self.GlobalSummary = []
 		self.LogFile = open(self.DIR+"/LogFile.txt", "w")

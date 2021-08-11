@@ -105,7 +105,6 @@ class mpa_bias_utility():
         act_val = self.multimeter.measure()
         LSB = (act_val - off_val) / DAC_val
         DAC_new_val = DAC_val- int(round((act_val - exp_val - gnd_corr)/LSB))
-
         if DAC_new_val < 0:
             DAC_new_val = 0
         elif DAC_new_val > 31:

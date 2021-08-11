@@ -44,6 +44,15 @@ from mpa_methods.mpa_probe_test import *
 #from mpa_methods.main_mpa_test import *
 
 
+#from mpa_methods.mpa import *
+from mpa_methods.mpa import *
+from mpa_methods.mpa_cal_utility import *
+from mpa_methods.mpa_test_utility import *
+from mpa_methods.mpa_bias_utility import *
+from mpa_methods.mpa_probe_test import *
+#from mpa_methods.main_mpa_test import *
+
+
 ipaddr, fc7AddrTable, fc7_if = configure_communication()
 FC7 = fc7_com(fc7_if, fc7AddrTable)
 #FC7.activate_I2C_chip(verbose=0)

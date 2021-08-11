@@ -6,17 +6,14 @@ source ./FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export LC_ALL=C; unset LANGUAGE
 
-<<<<<<< HEAD
-=======
 # BOARD_MAC="08:00:30:00:22:f0"
->>>>>>> mpa i2c class working
 BOARD_MAC="08:00:30:00:22:5d"
 MPA_ADR_0="0b1000000"
 SSA_ADR_0="0b0100000"
 SSA_ADR_1="0b0100111"
 
 
-file="./utilities/ipaddr_ssa.dat"
+file="./utilities/ipaddr_mpa.dat"
 while IFS= read -r line
 do
 	IP=$line
@@ -33,7 +30,7 @@ echo ""
 
 echo "from d19cScripts import *" >  LaunchPy.py
 echo "from myScripts import *" >> LaunchPy.py
-echo "from ssa_methods.main import *" >> LaunchPy.py
+echo "from ssa_methods import *" >> LaunchPy.py
 #echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('ssa') "  >> LaunchPy.py
 echo "from utilities import tbconfig " >  utilities/tbsettings.py
 
@@ -47,7 +44,7 @@ echo "tbconfig.SSA_ADR[1] = $SSA_ADR_1" >> utilities/tbsettings.py
 
 
 
-cp $file d19cScripts/ipaddr.dat
+cp ./utilities/ipaddr_ssa.dat  d19cScripts/ipaddr.dat
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
