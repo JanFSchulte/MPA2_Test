@@ -6,10 +6,17 @@ May 2010
 
 
 # Project imports
+from pdb import set_trace
 from AddressTableItem import AddressTableItem
 from CommonTools import uInt32Compatible
 from ChipsException import ChipsException
 
+
+
+from FC7.sw.pychips.src.AddressTableItem import AddressTableItem
+import xml.etree.ElementTree as ET
+import numpy as np
+from functools import reduce
 
 class AddressTable(object):
     '''Address table class to hold address table items and read in address tables from file
@@ -37,6 +44,8 @@ class AddressTable(object):
         self.items = {}
         self.fileName = addressTableFile
         self._readAddrTable(addressTableFile)
+        self.mytree = ET.parse('./d19cScripts/uDTC_OT_address_table_v2.xml')
+        self.myroot = self.mytree.getroot()
 
 
     def getItem(self, registerName):
@@ -98,3 +107,65 @@ class AddressTable(object):
                     self.items[regName] = item
             line = file.readline()  # Get the next line and start again.
             lineNum += 1
+
+    def get_Node(self, path = False):
+        path_list = path.split(".")
+        xpath = "./"
+        for node_id in path_list:
+            xpath = f"{xpath}/node[@id='{node_id}']"
+        self.find
+        return xpath
+
+    def read_addr_table_xml(self, root, reg_name= [], reg_addr = [], reg_mask = [], reg_rw = []):
+
+        for child in root.getchildren():
+
+            reg_name.append(child.attrib["id"])
+            if "address" in child.attrib:   
+                reg_addr.append(int(child.attrib["address"],16))
+            else: 
+                reg_addr.append(0)
+            if "mask" in child.attrib: 
+                reg_mask.append(int(child.attrib["mask"],16))
+            else: 
+                reg_mask.append(0x0)
+            if "permission" in child.attrib:
+                reg_rw = child.attrib["permission"]
+            #import pdb; pdb.set_trace()
+
+            # recursive depth first traversal of xml Elemntree
+            if child.getchildren(): 
+                # if further children available
+                self.read_addr_table_xml(root=child, reg_name = reg_name, reg_addr = reg_addr, reg_mask = reg_mask, reg_rw = reg_rw)
+            else: 
+                # reached a terminus of the tree
+                reg_read = 0; reg_write = 0
+                if reg_rw == "rw":
+                    reg_read = 1
+                    reg_write = 1
+                elif reg_rw == "r":
+                    reg_read = 1
+                    reg_write = 0
+                elif reg_rw == "w":
+                    reg_read = 0
+                    reg_write = 1
+
+                s = '.'
+                reg_name_full = s.join(reg_name)
+
+                
+                reg_addr_full = reduce(lambda x, y: x | y, reg_addr)
+                reg_mask_full = reduce(lambda x, y: x | y, reg_mask)
+
+                # prevent AddressTableItem infinite loop when calculating mask bit shift
+                #if not reg_mask_full: reg_mask_full = 0x1
+
+                print (f"{reg_name_full} {hex(reg_addr_full)} {hex(reg_mask_full)} {reg_rw}")
+
+                item = AddressTableItem(reg_name_full, reg_addr_full, reg_mask_full, reg_read, reg_write)
+                self.items[reg_name_full] = item
+
+            # remove last entry when going back up the Elementree
+            if reg_name: reg_name.pop()
+            if reg_mask: reg_mask.pop()
+            if reg_addr: reg_addr.pop()
