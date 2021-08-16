@@ -64,7 +64,7 @@ class SSA_SEU_utilities():
 
 		if(reset_fc7): self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
-		self.fc7.write("ctrl_fast", 0x10000)
+		self.fc7.write("fc7_daq_ctrl.fast_command_block", 0x10000)
 		if(align): self.ssa.init(edge = t1edge, display = True)
 		self.ssa.resync()
 		fc7_alignment_status = self.fc7.get_lines_alignment_status()
@@ -82,18 +82,18 @@ class SSA_SEU_utilities():
 		self.L1_loadCheckPatternOnFC7(p1, p2, p3, p4, p5, p6, p7, display = display)
 		 # Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0, initial_reset = 1)
 		 # Configure_SEU(1, 39,0,1)
-		time.sleep(0.01); self.fc7.write("cnfg_fast_initial_fast_reset_enable", 1) #1
-		time.sleep(0.01); self.fc7.write("cnfg_fast_delay_before_next_pulse", cal_pulse_period)
+		time.sleep(0.01); self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", 1) #1
+		time.sleep(0.01); self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", cal_pulse_period)
 		time.sleep(0.01); self.fc7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
-		time.sleep(0.01); self.fc7.write("cnfg_fast_triggers_to_accept", 0)
-		time.sleep(0.01); self.fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
-		time.sleep(0.01); self.fc7.write("cnfg_fast_source", 9)
+		time.sleep(0.01); self.fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", 0)
+		time.sleep(0.01); self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset", delay_after_fast_reset)
+		time.sleep(0.01); self.fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 9)
 		time.sleep(0.01); self.fc7.write('cnfg_fast_timeout_enable', 0)
 		time.sleep(0.1);  self.fc7.SendCommand_CTRL("load_trigger_config")
 		time.sleep(0.1)
 		time.sleep(0.01); self.fc7.write('cnfg_fast_timeout_enable', 0)
 
-		self.fc7.write("cnfg_fast_backpressure_enable", 0)
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
 		self.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", delay)
 
 		test_duration, fifo_full_stub, fifo_full_L1 = self.RunStateMachine_L1_and_Stubs(
@@ -550,7 +550,7 @@ class SSA_SEU_utilities():
 		time.sleep(0.1)
 		self.fc7.write("ctrl_phy_phase_tune_again", 1)
 		count_waiting = 0
-		while(self.fc7.read("stat_phy_phase_tuning_done") == 0):
+		while(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done") == 0):
 			time.sleep(0.5)
 			print("Phase tuning in state: "  + str( self.fc7.read("stat_phy_phase_fsm_state_chip0") ))
 			print("Waiting for the phase tuning")
@@ -664,7 +664,7 @@ class SSA_SEU_utilities():
 			self.L1_printInfo("AFTER START STATE MACHINE:")
 		#start the triggering
 		#Configure_Fast(0, 1000, 3, 0, 0)
-		#self.fc7.write("cnfg_fast_backpressure_enable",0)
+		#self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable",0)
 		#time.sleep(0.5)
 		self.fc7.SendCommand_CTRL("start_trigger")
 		if(display > 1):
@@ -723,17 +723,17 @@ class SSA_SEU_utilities():
 		time.sleep(0.1)
 		for i in range(cnt_shift):
 			send_trigger()
-		self.fc7.write("cnfg_fast_backpressure_enable", 0)
-		self.fc7.write("cnfg_fast_initial_fast_reset_enable", 0 )
-		self.fc7.write("cnfg_fast_delay_after_fast_reset",  delay_after_fast_reset )
-		self.fc7.write("cnfg_fast_delay_after_test_pulse",   latency+3+shift )
-		self.fc7.write("cnfg_fast_delay_before_next_pulse",  cal_pulse_period)
-		self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en",  0 )
-		self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en",  1)
-		self.fc7.write("cnfg_fast_tp_fsm_l1a_en",  1 )
-		self.fc7.write("cnfg_fast_triggers_to_accept",  0 )
-		self.fc7.write("cnfg_fast_source", 6)
-		self.fc7.write("cnfg_fast_initial_fast_reset_enable",  0 )
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", 0 )
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset",  delay_after_fast_reset )
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_test_pulse",   latency+3+shift )
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse",  cal_pulse_period)
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset",  0 )
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse",  1)
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a",  1 )
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept",  0 )
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 6)
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable",  0 )
 		time.sleep(0.1)
 		self.fc7.SendCommand_CTRL("load_trigger_config")
 		time.sleep(0.1)

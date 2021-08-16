@@ -40,7 +40,7 @@ class SSA_measurements_pwr():
 
 		self.fc7.SendCommand_CTRL("global_reset");    time.sleep(0.1);
 		self.fc7.SendCommand_CTRL("fast_fast_reset"); time.sleep(0.1);
-		self.fc7.write("ctrl_fast", 0x10000)
+		self.fc7.write("fc7_daq_ctrl.fast_command_block", 0x10000)
 		self.ssa.init(edge = 'negative', display = False)
 		results = {}
 		for lr in l1rates:
@@ -59,7 +59,7 @@ class SSA_measurements_pwr():
 					l1a_period=l1a_period,
 					number_of_cal_pulses=0,
 					initial_reset = 1)
-				self.fc7.write("cnfg_fast_backpressure_enable", 0)
+				self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
 				self.fc7.SendCommand_CTRL("start_trigger")
 				pret, vret, iret = self.pwr.get_power_digital_average(nsamples=nsamples)
 				res[nclusters] = [pret, vret, iret]

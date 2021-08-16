@@ -27,9 +27,9 @@ class readout_utility():
 	def L1(self, raw=0, init=1, latency = 500, shift = 0, verbose = 0):
 		#### remember to call: FC7.send_resync()
 		if(init): ## to speedup set to False after first usage
-			self.FC7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
-			self.FC7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-			self.FC7.write("cnfg_fast_tp_fsm_l1a_en", 1)
+			self.FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", 0)
+			self.FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 1)
+			self.FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", 1)
 			Configure_TestPulse(
 				delay_after_fast_reset = 0,
 				delay_after_test_pulse = (latency+3+shift),

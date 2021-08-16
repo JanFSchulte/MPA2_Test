@@ -4,9 +4,9 @@ from d19cScripts.fc7_daq_methods import *
 ##----- begin methods definition 
 
 def StartCountersRead():
-    encode_fast_reset = fc7AddrTable.getItem("ctrl_fast_signal_fast_reset").shiftDataToMask(1)
-    encode_orbit_reset = fc7AddrTable.getItem("ctrl_fast_signal_orbit_reset").shiftDataToMask(1)
-    fc7.write("ctrl_fast", encode_fast_reset + encode_orbit_reset)
+    encode_fast_reset = fc7AddrTable.getItem("fc7_daq_ctrl.fast_command_block.control.fast_reset").shiftDataToMask(1)
+    encode_orbit_reset = fc7AddrTable.getItem("fc7_daq_ctrl.fast_command_block.control.fast_orbit_reset").shiftDataToMask(1)
+    fc7.write("fc7_daq_ctrl.fast_command_block", encode_fast_reset + encode_orbit_reset)
 
 ##----- begin main
 

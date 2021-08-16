@@ -243,12 +243,12 @@ class ssa_ctrl_base:
 	def __do_phase_tuning(self):
 		self.setup_readout_chip_id()
 		cnt = 0; done = True
-		#print(self.fc7.read("stat_phy_phase_tuning_done"))
+		#print(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done"))
 		self.fc7.write("ctrl_phy_phase_tune_again", 1)
-		#print(self.fc7.read("stat_phy_phase_tuning_done"))
+		#print(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done"))
 		send_test(15)
-		#print(self.fc7.read("stat_phy_phase_tuning_done"))
-		while(self.fc7.read("stat_phy_phase_tuning_done") == 0 and cnt < 5):
+		#print(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done"))
+		while(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done") == 0 and cnt < 5):
 			time.sleep(0.1)
 			utils.print_log("Waiting for the phase tuning")
 			cnt += 1
@@ -310,7 +310,7 @@ class ssa_ctrl_base:
 		timeout_max = 3
 		timeout = 0
 		time.sleep(0.1)
-		while(self.fc7.read("stat_phy_phase_tuning_done") == 0):
+		while(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done") == 0):
 			time.sleep(0.1)
 			utils.print_warning("->  Waiting for the phase tuning")
 			#self.fc7.write("ctrl_phy_phase_tune_again", 1)

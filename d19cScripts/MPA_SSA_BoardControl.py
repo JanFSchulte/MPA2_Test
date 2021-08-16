@@ -26,12 +26,12 @@ class I2C_SlaveMapItem:
 def EncodeSlaveMapItem(slave_item):
 
         # this peace of code just shifts the data, also checks if it fits the field
-        shifted_i2c_address = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
-        shifted_register_address_nbytes = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
-        shifted_data_wr_nbytes = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes)
-        shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
-        shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
-        shifted_nack_en = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
+        shifted_i2c_address = fc7AddrTable.getItem("fc7_daq_cnfg.mpa_ssa_board_block.slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
+        shifted_register_address_nbytes = fc7AddrTable.getItem("fc7_daq_cnfg.mpa_ssa_board_block.slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
+        shifted_data_wr_nbytes = fc7AddrTable.getItem("fc7_daq_cnfg.mpa_ssa_board_block.slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes)
+        shifted_data_rd_nbytes = fc7AddrTable.getItem("fc7_daq_cnfg.mpa_ssa_board_block.slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
+        shifted_stop_for_rd_en = fc7AddrTable.getItem("fc7_daq_cnfg.mpa_ssa_board_block.slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
+        shifted_nack_en = fc7AddrTable.getItem("fc7_daq_cnfg.mpa_ssa_board_block.slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
 
         final_command = shifted_i2c_address + shifted_register_address_nbytes + shifted_data_wr_nbytes + shifted_data_rd_nbytes + shifted_stop_for_rd_en + shifted_nack_en
 
@@ -62,8 +62,8 @@ def EncodeSlaveMapItem(slave_item):
 #        # updating the slave id table
 #        if verbose: print("---> Updating the Slave ID Map")
 #        for slave_id in range(16):
-#                fc7.write("cnfg_mpa_ssa_board_slave_" + str(slave_id) + "_config", EncodeSlaveMapItem(i2c_slave_map[slave_id]))
-#                if verbose: print("Writing","cnfg_mpa_ssa_board_slave_" + str(slave_id) + "_config", hex(EncodeSlaveMapItem(i2c_slave_map[slave_id])))
+#                fc7.write("fc7_daq_cnfg.mpa_ssa_board_block.slave_" + str(slave_id) + "_config", EncodeSlaveMapItem(i2c_slave_map[slave_id]))
+#                if verbose: print("Writing","fc7_daq_cnfg.mpa_ssa_board_block.slave_" + str(slave_id) + "_config", hex(EncodeSlaveMapItem(i2c_slave_map[slave_id])))
 
 # i2c masters configuration
 def Configure_MPA_SSA_I2C_Master(enabled, frequency=4, verbose = 1):
@@ -76,35 +76,35 @@ def Configure_MPA_SSA_I2C_Master(enabled, frequency=4, verbose = 1):
                 if verbose: print("---> Disabling the MPA SSA Board I2C master")
 
         # sets the main CBC, MPA, SSA i2c master
-        fc7.write("cnfg_phy_i2c_master_en", int(not enabled))
+        fc7.write("fc7_daq_cnfg.physical_interface_block.i2c.master_en", int(not enabled))
         # sets the MPA SSA board I2C master
-        fc7.write("cnfg_mpa_ssa_board_i2c_master_en", enabled)
+        fc7.write("fc7_daq_cnfg.mpa_ssa_board_block.i2c_master_en", enabled)
 
         # sets the frequency
-        fc7.write("cnfg_mpa_ssa_board_i2c_freq", frequency)
+        fc7.write("fc7_daq_cnfg.mpa_ssa_board_block.i2c_freq", frequency)
 
         # wait a bit
         time.sleep(0.1)
 
         # now reset all the I2C related stuff
-        fc7.write("ctrl_command_i2c_reset", 1)
-        fc7.write("ctrl_command_i2c_reset_fifos", 1)
-        fc7.write("ctrl_mpa_ssa_board_reset", 1)
+        fc7.write("fc7_daq_ctrl.command_processor_block.i2c.control.reset", 1)
+        fc7.write("fc7_daq_ctrl.command_processor_block.i2c.control.reset_fifos", 1)
+        fc7.write("fc7_daq_ctrl.mpa_ssa_board_block.reset", 1)
         time.sleep(0.1)
 
 def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data, verbose = 1):
 
         # this peace of code just shifts the data, also checks if it fits the field
         # general
-        shifted_command_type = fc7AddrTable.getItem("mpa_ssa_i2c_request_command_type").shiftDataToMask(8)
-        shifted_word_id_0 = fc7AddrTable.getItem("mpa_ssa_i2c_request_word_id").shiftDataToMask(0)
-        shifted_word_id_1 = fc7AddrTable.getItem("mpa_ssa_i2c_request_word_id").shiftDataToMask(1)
+        shifted_command_type = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.command_type").shiftDataToMask(8)
+        shifted_word_id_0 = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word_id").shiftDataToMask(0)
+        shifted_word_id_1 = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word_id").shiftDataToMask(1)
         # command specific
-        shifted_slave_id = fc7AddrTable.getItem("mpa_ssa_i2c_request_word0_slave_id").shiftDataToMask(slave_id)
-        shifted_board_id = fc7AddrTable.getItem("mpa_ssa_i2c_request_word0_board_id").shiftDataToMask(board_id)
-        shifted_read = fc7AddrTable.getItem("mpa_ssa_i2c_request_word0_read").shiftDataToMask(read)
-        shifted_register_address = fc7AddrTable.getItem("mpa_ssa_i2c_request_word0_register").shiftDataToMask(register_address)
-        shifted_data = fc7AddrTable.getItem("mpa_ssa_i2c_request_word1_data").shiftDataToMask(data)
+        shifted_slave_id = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_slave_id").shiftDataToMask(slave_id)
+        shifted_board_id = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_board_id").shiftDataToMask(board_id)
+        shifted_read = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_read").shiftDataToMask(read)
+        shifted_register_address = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_register").shiftDataToMask(register_address)
+        shifted_data = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word1_data").shiftDataToMask(data)
 
         # composing the word
         word_0 = shifted_command_type + shifted_word_id_0 + shifted_slave_id + shifted_board_id + shifted_read + shifted_register_address
@@ -113,27 +113,27 @@ def Send_MPA_SSA_I2C_Command(slave_id, board_id, read, register_address, data, v
         #print(bin(shifted_word_id_0))
         #print(bin(shifted_slave_id))
         if verbose:
-                print("ctrl_command_i2c_command_fifo")
+                print("fc7_daq_ctrl.command_processor_block.i2c.command_fifo")
                 print(hex(word_0))
                 print(hex(word_1))
 
         # writing the command
-        fc7.write("ctrl_command_i2c_command_fifo", word_0)
-        fc7.write("ctrl_command_i2c_command_fifo", word_1)
+        fc7.write("fc7_daq_ctrl.command_processor_block.i2c.command_fifo", word_0)
+        fc7.write("fc7_daq_ctrl.command_processor_block.i2c.command_fifo", word_1)
 
         # wait for the reply to come back
-        while fc7.read("stat_command_i2c_fifo_replies_empty") > 0:
+        while fc7.read("fc7_daq_stat.command_processor_block.i2c.reply_fifo.empty") > 0:
                 if verbose:
                         ReadStatus()
                         time.sleep(0.1)
 
         # get the reply
-        reply = fc7.read("ctrl_command_i2c_reply_fifo")
+        reply = fc7.read("fc7_daq_ctrl.command_processor_block.i2c.reply_fifo")
 
-        reply_slave_id = DataFromMask(reply, "mpa_ssa_i2c_reply_slave_id")
-        reply_board_id = DataFromMask(reply, "mpa_ssa_i2c_reply_board_id")
-        reply_err = DataFromMask(reply, "mpa_ssa_i2c_reply_err")
-        reply_data = DataFromMask(reply, "mpa_ssa_i2c_reply_data")
+        reply_slave_id = DataFromMask(reply, "fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_reply.slave_id")
+        reply_board_id = DataFromMask(reply, "fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_reply.board_id")
+        reply_err = DataFromMask(reply, "fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_reply.err")
+        reply_data = DataFromMask(reply, "fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_reply.data")
 
         # print(full word)
         #print("Full Reply Word: ", hex(reply))

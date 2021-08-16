@@ -1,7 +1,7 @@
 from d19cScriptsfc7_daq_methods import *
 
 ## readout is still connected, and the counters (BX, L1, TDC, ..) will fill up the FIFO's quickly, if we don't disable the backpressure
-fc7.write("cnfg_fast_backpressure_enable", 0)
+fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
 
 ## now we can set the desired parameters for the test pulse
 # in 40MHz clock cycles

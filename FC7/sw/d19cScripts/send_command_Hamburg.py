@@ -75,8 +75,8 @@ def ReadoutTesterCBC2():
 # configure test pulse fsm	
 def ReadoutTesterMPA():
 	## stub trigger
-	fc7.write("cnfg_fast_source", 2)
-	fc7.write("cnfg_fast_triggers_to_accept", 0)
+	fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 2)
+	fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", 0)
 	sleep(0.01)
   	SendCommand_CTRL("load_trigger_config")
 	# it will run continously and be triggered everytime you send the test pulse
@@ -89,9 +89,9 @@ def ReadoutTesterMPA():
 		print "Stub Delay Value: ", i
 		fc7.write("cnfg_readout_common_stubdata_delay", i)
 		sleep(0.1)
-		fc7.write("ctrl_readout_reset",1)
+		fc7.write("fc7_daq_ctrl.readout_block.control.readout_reset",1)
 		sleep(0.1)
-		fc7.write("ctrl_readout_reset",0)
+		fc7.write("fc7_daq_ctrl.readout_block.control.readout_reset",0)
 		sleep(0.5)
 		#SendCommand_CTRL("start_trigger")
 		SendCommand_CTRL("fast_test_pulse")

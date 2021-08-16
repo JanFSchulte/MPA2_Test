@@ -226,7 +226,7 @@ class mpa_cal_utility():
         elif s_type == "CAL":   self.mpa.ctrl_base.set_threshold(ref_val)
         else: return "S-Curve type not recognized"
         count = 0
-        self.fc7.write("cnfg_fast_backpressure_enable", 0)
+        self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
         Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
         count = 0
         cur_val = start

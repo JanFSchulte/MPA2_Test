@@ -131,39 +131,35 @@ class AddressTable(object):
                 reg_mask.append(0x0)
             if "permission" in child.attrib:
                 reg_rw = child.attrib["permission"]
-            #import pdb; pdb.set_trace()
 
-            # recursive depth first traversal of xml Elemntree
+            # recursive depth first traversal of xml Elementree
             if child.getchildren(): 
                 # if further children available
                 self.read_addr_table_xml(root=child, reg_name = reg_name, reg_addr = reg_addr, reg_mask = reg_mask, reg_rw = reg_rw)
-            else: 
-                # reached a terminus of the tree
-                reg_read = 0; reg_write = 0
-                if reg_rw == "rw":
-                    reg_read = 1
-                    reg_write = 1
-                elif reg_rw == "r":
-                    reg_read = 1
-                    reg_write = 0
-                elif reg_rw == "w":
-                    reg_read = 0
-                    reg_write = 1
 
-                s = '.'
-                reg_name_full = s.join(reg_name)
+            reg_read = 0; reg_write = 0
+            if reg_rw == "rw":
+                reg_read = 1
+                reg_write = 1
+            elif reg_rw == "r":
+                reg_read = 1
+                reg_write = 0
+            elif reg_rw == "w":
+                reg_read = 0
+                reg_write = 1
 
-                
-                reg_addr_full = reduce(lambda x, y: x | y, reg_addr)
-                reg_mask_full = reduce(lambda x, y: x | y, reg_mask)
+            # consolidate lists of accumaleted info of the register
+            s = '.'
+            reg_name_full = s.join(reg_name)
+            reg_addr_full = reduce(lambda x, y: x | y, reg_addr)
+            reg_mask_full = reduce(lambda x, y: x | y, reg_mask)
 
-                # prevent AddressTableItem infinite loop when calculating mask bit shift
-                #if not reg_mask_full: reg_mask_full = 0x1
+            if not reg_mask_full: reg_mask_full = 0xffffffff
 
-                print (f"{reg_name_full} {hex(reg_addr_full)} {hex(reg_mask_full)} {reg_rw}")
+            print (f"{reg_name_full} {hex(reg_addr_full)} {hex(reg_mask_full)} {reg_rw}")
 
-                item = AddressTableItem(reg_name_full, reg_addr_full, reg_mask_full, reg_read, reg_write)
-                self.items[reg_name_full] = item
+            item = AddressTableItem(reg_name_full, reg_addr_full, reg_mask_full, reg_read, reg_write)
+            self.items[reg_name_full] = item
 
             # remove last entry when going back up the Elementree
             if reg_name: reg_name.pop()

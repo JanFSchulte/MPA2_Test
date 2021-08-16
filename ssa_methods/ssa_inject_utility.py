@@ -103,7 +103,7 @@ class SSA_inject():
 					self.I2C.strip_write("ENFLAGS", cl, 0b10001)
 				time.sleep(0.001)
 		if(trigger == True):
-			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", 1)
 			self.fc7.SendCommand_CTRL("start_trigger")
 			time.sleep(0.01)
 		time.sleep(0.001)

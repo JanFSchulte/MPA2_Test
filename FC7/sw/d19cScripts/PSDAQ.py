@@ -61,11 +61,11 @@ class PSDAQ:
 
         # set fast commands
         # trigger to accept 0
-        fc7.write("cnfg_fast_triggers_to_accept", 0)
+        fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", 0)
         # user frequency set to 1000 just in case we want to use
         fc7.write("cnfg_fast_user_frequency", 100)
         # trigger source
-        fc7.write("cnfg_fast_source", trigger_source)
+        fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", trigger_source)
         # stubs mask - from chip 0
         fc7.write("cnfg_fast_stub_mask", 1)
         # stub trigger delay
@@ -75,12 +75,12 @@ class PSDAQ:
         # external trigger delay
         fc7.write("cnfg_fast_ext_trigger_delay_value", ext_trigger_delay)
         # backpressure enable
-        fc7.write("cnfg_fast_backpressure_enable", backpressure_en)
+        fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", backpressure_en)
         # initial fast reset
-        fc7.write("cnfg_fast_initial_fast_reset_enable", 1)
+        fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", 1)
         # load config
         sleep(0.01)
-        fc7.write("ctrl_fast_load_config", 1)
+        fc7.write("fc7_daq_ctrl.fast_command_block.control.load_config", 1)
 
         # readout block
         # number of events in package
@@ -115,9 +115,9 @@ class PSDAQ:
 
     # reset readout
     def ReadoutReset(self):
-        fc7.write("ctrl_readout_reset",1)
+        fc7.write("fc7_daq_ctrl.readout_block.control.readout_reset",1)
         sleep(0.1)
-        fc7.write("ctrl_readout_reset",0)
+        fc7.write("fc7_daq_ctrl.readout_block.control.readout_reset",0)
         sleep(0.5)
 
         self.DDR3Offset = 0

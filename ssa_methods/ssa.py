@@ -69,7 +69,7 @@ class SSA_ASIC:
 				sys.stdout.write("->  Initialising..\r")
 				sys.stdout.flush()
 			if(reset_board):
-				self.fc7.write("ctrl_command_global_reset", 1)
+				self.fc7.write("fc7_daq_ctrl.command_processor_block.global.reset", 1)
 				time.sleep(0.3);
 				if(display): utils.print_info("->  Reset FC7 Firmware")
 			if(reset_chip):

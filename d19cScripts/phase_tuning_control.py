@@ -4,18 +4,18 @@ import time
 
 def ConfigureL1ATuning():
     # fast commands within the test pulse fsm
-    fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 1)
-    fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 0)
-    fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
+    fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", 1)
+    fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 0)
+    fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", 1)
     # disable the l1 backpressure
-    fc7.write("cnfg_fast_backpressure_enable", 0)
+    fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
     # basic settings
-    fc7.write("cnfg_fast_initial_fast_reset_enable", 1)
-    fc7.write("cnfg_fast_delay_after_fast_reset", 50)
-    fc7.write("cnfg_fast_delay_after_test_pulse", 50)
-    fc7.write("cnfg_fast_delay_before_next_pulse", 50) # actually the only one important
-    fc7.write("cnfg_fast_triggers_to_accept", 0)
-    fc7.write("cnfg_fast_source", 6)
+    fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", 1)
+    fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset", 50)
+    fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_test_pulse", 50)
+    fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", 50) # actually the only one important
+    fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", 0)
+    fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 6)
     time.sleep(0.01)
     SendCommand_CTRL("load_trigger_config")
     time.sleep(0.01)
@@ -25,7 +25,7 @@ def SendPhaseTuningCommand(value):
 
 def GetPhaseTuningStatus(printStatus = True):
     # get data word
-    data = fc7.read("stat_phy_phase_tuning")
+    data = fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl")
 
     # parse commands
     line_id = (data & 0xF0000000) >> 28
@@ -288,7 +288,7 @@ def GetDistribution(line_id, npoints = 100):
         while (pa_fsm_state != 14):
             SendPhaseTuningCommand(command_final)
             time.sleep(0.01)
-            data = fc7.read("stat_phy_phase_tuning")
+            data = fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl")
             delay = (data & 0x00F80000) >> 19
             bitslip = (data & 0x00070000) >> 16
             done = (data & 0x00008000) >> 15

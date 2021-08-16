@@ -40,7 +40,7 @@ class MPA_ASIC:
 			sys.stdout.write("->  \tInitialising..\r")
 			sys.stdout.flush()
 		if(reset_board):
-			self.fc7.write("ctrl_command_global_reset", 1)
+			self.fc7.write("fc7_daq_ctrl.command_processor_block.global.reset", 1)
 		if(reset_chip):
 			self.ctrl_base.reset(display=False)
 		utils.activate_I2C_chip(self.fc7)

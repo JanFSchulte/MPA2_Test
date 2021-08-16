@@ -59,8 +59,7 @@ class AddressTableItem(object):
     def _maskedDataBitShift(self):
         shiftingMask = self._mask
         bitShiftRequired = 0
-        if shiftingMask: 
-            while (shiftingMask & 0x1) == 0:
-                shiftingMask >>= 1
-                bitShiftRequired += 1
+        while (shiftingMask & 0x1) == 0:
+            shiftingMask >>= 1
+            bitShiftRequired += 1
         return bitShiftRequired        

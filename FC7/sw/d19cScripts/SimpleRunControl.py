@@ -16,15 +16,15 @@ def ConvertLatencyTDC(latency, tdc):
 def FindLatency(npoints = 5000, latency_type = "hit"):
 
 	# overwrite the number of triggers
-	fc7.write("cnfg_fast_triggers_to_accept", npoints)
+	fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", npoints)
 	# also disable resync
-	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
+	fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", 0)
 	# some delays
-	fc7.write("cnfg_fast_delay_after_fast_reset", 50)
-  	fc7.write("cnfg_fast_delay_after_test_pulse", 60)
-  	fc7.write("cnfg_fast_delay_before_next_pulse", 200)
+	fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset", 50)
+  	fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_test_pulse", 60)
+  	fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", 200)
 	sleep(0.01)
-        fc7.write("ctrl_fast_load_config", 1)
+        fc7.write("fc7_daq_ctrl.fast_command_block.control.load_config", 1)
 
 	if latency_type == "stub":
 		SCANTYPE = 0

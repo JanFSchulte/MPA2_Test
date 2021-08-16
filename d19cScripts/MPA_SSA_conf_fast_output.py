@@ -53,7 +53,7 @@ i = 0
 while True:
 	#SSA like stub data sending is 
 	SendCommand_CTRL("fast_trigger")
-	SendCommand_CTRL("fast_test_pulse")
+	SendCommand_CTRL("fc7_daq_ctrl.fast_command_block.control.fast_test_pulse")
 	fc7.write("cnfg_phy_SSA_gen_stub_data_format_0_0", 176) # d176 = b10110000
 	#fc7.write("ctrl_phy_ssa_gen_stub_phase",1)
 	#if(i%1000  == 0 and i != 0):

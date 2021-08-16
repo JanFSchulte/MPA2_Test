@@ -350,7 +350,7 @@ def s_curve_rbr_fr(n_pulse = 1000, s_type = "THR", ref_val = 50, row = list(rang
 	elif s_type == "CAL":	set_threshold(ref_val)
 	else: return "S-Curve type not recognized"
 	count = 0
-	fc7.write("cnfg_fast_backpressure_enable", 0)
+	fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
 	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
 	count = 0
 	cur_val = start
@@ -420,7 +420,7 @@ def s_curve_pbp_fr(n_pulse = 1000, s_type = "THR", ref_val = 100, row = list(ran
 	elif s_type == "CAL":	set_threshold(ref_val)
 	else: return "S-Curve type not recognized"
 	sleep(1)
-	fc7.write("cnfg_fast_backpressure_enable", 0)
+	fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
 	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
 	count = 0
 	cur_val = start
@@ -471,7 +471,7 @@ def s_curve_pbp_all(n_pulse = 1000, s_type = "CAL", ref_val = 100, row = list(ra
 	elif s_type == "CAL":	set_threshold(ref_val)
 	else: return "S-Curve type not recognized"
 	sleep(1)
-	fc7.write("cnfg_fast_backpressure_enable", 0)
+	fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
 	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
 	count = 0
 	cur_val = start
@@ -541,7 +541,7 @@ def s_curve_pbp_test(n_pulse = 1000, s_type = "CAL", ref_val = 100, primary_row 
 	elif s_type == "CAL":	set_threshold(ref_val)
 	else: return "S-Curve type not recognized"
 	sleep(1)
-	fc7.write("cnfg_fast_backpressure_enable", 0)
+	fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
 	Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
 
 	# Find Gain
@@ -888,15 +888,15 @@ def trimDAC_linearity_pbp(row, pixel, plot = 1,  print_file = 0, filename = "../
 		plt.show()
 
 def Configure_TestPulse_DLL_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses):
-	fc7.write("cnfg_fast_initial_fast_reset_enable", 0)
-	fc7.write("cnfg_fast_delay_after_fast_reset", delay_after_fast_reset)
-	fc7.write("cnfg_fast_delay_after_test_pulse", delay_after_test_pulse)
-	fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
-	fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 1)
-	fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-	fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
-	fc7.write("cnfg_fast_triggers_to_accept", number_of_test_pulses)
-	fc7.write("cnfg_fast_source", 6)
+	fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", 0)
+	fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset", delay_after_fast_reset)
+	fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_test_pulse", delay_after_test_pulse)
+	fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", delay_before_next_pulse)
+	fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", 1)
+	fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 1)
+	fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", 0)
+	fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_test_pulses)
+	fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 6)
 	sleep(0.1)
 	SendCommand_CTRL("load_trigger_config")
 	sleep(0.1)

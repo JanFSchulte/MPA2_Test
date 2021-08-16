@@ -52,7 +52,7 @@ class SSA_scanchain_test():
 		self.fc7.write("cnfg_dio5_ch3_threshold", threshold)
 		self.fc7.write("cnfg_dio5_ch4_threshold", threshold)
 		self.fc7.write("cnfg_dio5_ch5_threshold", threshold)
-		self.fc7.write("ctrl_dio5_load_config" , 1)
+		self.fc7.write("fc7_daq_ctrl.dio5_block.control.load_config" , 1)
 
 	def read_scan_out_vector(self, lenght=188):
 		data = self.fc7.blockRead("scanchain_test_response_o_sel", lenght, 0)

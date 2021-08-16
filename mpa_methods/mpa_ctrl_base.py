@@ -115,7 +115,7 @@ class mpa_ctrl_base:
 		self.fc7.write("ctrl_phy_phase_tune_again", 1)
 		timeout_max = 5
 		timeout = 0
-		while(self.fc7.read("stat_phy_phase_tuning_done") == 0):
+		while(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done") == 0):
 			time.sleep(0.1)
 			if (timeout == timeout_max):
 				timeout = 0

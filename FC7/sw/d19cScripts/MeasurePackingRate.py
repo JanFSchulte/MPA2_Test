@@ -3,21 +3,21 @@ from fc7_daq_methods import *
 def LoadConfig():
 	# set fast commands
 	# trigger to accept 0
-        fc7.write("cnfg_fast_triggers_to_accept", 100000)
+        fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", 100000)
 	# user frequency set to 1000 just in case we want to use
         fc7.write("cnfg_fast_user_frequency", 1000)
 	# trigger source
-        fc7.write("cnfg_fast_source", 3)
+        fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 3)
         # consecutive
         fc7.write("cnfg_fast_delay_between_consecutive_trigeers", 30)
-        fc7.write("cnfg_fast_delay_before_next_pulse", 39)
+        fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", 39)
 	# backpressure enable
-	fc7.write("cnfg_fast_backpressure_enable", 1)
+	fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 1)
 	# initial fast reset
-	fc7.write("cnfg_fast_initial_fast_reset_enable", 1)
+	fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", 1)
 	# load config
 	sleep(0.01)
-	fc7.write("ctrl_fast_load_config", 1)
+	fc7.write("fc7_daq_ctrl.fast_command_block.control.load_config", 1)
 
 	# readout block
 	# number of events in package
@@ -43,9 +43,9 @@ def ResetReadout():
         while(not fc7.read("stat_ddr3_initial_calibration_done")):
                 sleep(0.01)
         print "--> ddr3 init done"
-	fc7.write("ctrl_readout_reset",1)
+	fc7.write("fc7_daq_ctrl.readout_block.control.readout_reset",1)
         sleep(0.1)
-        fc7.write("ctrl_readout_reset",0)
+        fc7.write("fc7_daq_ctrl.readout_block.control.readout_reset",0)
         sleep(0.5)
 
 

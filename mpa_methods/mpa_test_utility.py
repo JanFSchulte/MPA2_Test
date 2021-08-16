@@ -373,7 +373,7 @@ class mpa_test_utility():
         self.I2C.row_write('L1Offset_2', 0,  0)
         self.I2C.row_write('MemGatEn', 0,  gate)
         self.I2C.pixel_write('DigPattern', 0, 0,  0b00000001)
-        self.fc7.write("cnfg_fast_backpressure_enable", 0)
+        self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
         self.mpa.ctrl_pix.disable_pixel(0,0)
 
         stuck = 0; i2c_issue = 0; error = 0
@@ -458,7 +458,7 @@ class mpa_test_utility():
         self.I2C.row_write('L1Offset_2', 0,  0)
         self.I2C.row_write('MemGatEn', 0,  gate)
         self.I2C.pixel_write('DigPattern', 0, 0,  0b00000001)
-        self.fc7.write("cnfg_fast_backpressure_enable", 0)
+        self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
         self.mpa.ctrl_pix.disable_pixel(0,0)
         stuck = 0; i2c_issue = 0; error = 0; missing = 0
         for d in delay:

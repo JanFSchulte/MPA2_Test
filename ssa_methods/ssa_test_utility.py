@@ -501,7 +501,7 @@ class SSA_test_utility():
 		sleep(0.01); self.seuutil.Configure_Injection(strip_list = striplist, hipflag_list = hiplist, analog_injection = 0, latency = 501, create_errors = False)
 		sleep(0.01); self.seuutil.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = 0)
 		sleep(0.01); Configure_SEU(1, int(40000.0/L1_rate-1), number_of_cal_pulses = 0, initial_reset = 1)
-		sleep(0.01); fc7.write("cnfg_fast_backpressure_enable", 0)
+		sleep(0.01); fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
 		sleep(0.01); self.seuutil.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", 73)
 		sleep(0.01); SendCommand_CTRL("start_trigger")
 		sleep(0.50); pw = self.pwr.get_power(display = False, return_all = True)
@@ -740,9 +740,9 @@ class SSA_test_utility():
 		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
 		self.ssa.readout.l1_data(initialise = True, shift = shift, latency = latency, multi = False)
 		self.ssa.inject.digital_pulse(initialise = True)
-		self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 1)
-		self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-		self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", 1)
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 1)
+		self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", 1)
 		errlist = []; efflist = [];
 		for HIP in HIPrun:
 			cnt = [0, 0, 0]
@@ -850,18 +850,18 @@ class SSA_test_utility():
 				self.I2C.strip_write(register="StripControl1", field='ENFLAGS', strip='all', data=0b01001)
 			else:
 				self.I2C.strip_write("ENFLAGS", 0, 0b01001)
-			self.fc7.write("cnfg_fast_source", 6)
-			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
-			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", fc_test)
-			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", fc_l1)
-			self.fc7.write("cnfg_fast_initial_fast_reset_enable", fc_resync) # initial fast reset which is sent once after start_trigger command
-			self.fc7.write("cnfg_fast_delay_after_fast_reset", delay)
-			self.fc7.write("cnfg_fast_delay_after_test_pulse", (latency+3+shift))
-			self.fc7.write("cnfg_fast_delay_before_next_pulse", delay_before_next_pulse)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 6)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", 0)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", fc_test)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", fc_l1)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", fc_resync) # initial fast reset which is sent once after start_trigger command
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset", delay)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_test_pulse", (latency+3+shift))
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", delay_before_next_pulse)
 			self.fc7.write("cnfg_fast_delay_between_consecutive_trigeers", delay_between_consecutive_trigeers)
-			self.fc7.write("cnfg_fast_triggers_to_accept", npulses)
-			#self.fc7.write("ctrl_fast_signal_duration", l1_duration) ### doesn't work
-			#sleep(0.1); self.fc7.write("ctrl_fast", fc7AddrTable.getItem("ctrl_fast_signal_duration").shiftDataToMask(l1_duration) ); sleep(0.1);
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", npulses)
+			#self.fc7.write("fc7_daq_ctrl.fast_command_block.control.fast_duration", l1_duration) ### doesn't work
+			#sleep(0.1); self.fc7.write("fc7_daq_ctrl.fast_command_block", fc7AddrTable.getItem("fc7_daq_ctrl.fast_command_block.control.fast_duration").shiftDataToMask(l1_duration) ); sleep(0.1);
 			sleep(0.1);	SendCommand_CTRL("load_trigger_config"); sleep(0.1);
 		self.ssa.inject.digital_pulse(hit_list = patternL, hip_list = patternH, initialise = False, sequence = sequence)
 		sleep(0.001)
@@ -908,9 +908,9 @@ class SSA_test_utility():
 #		self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True, multi = False)
 #		self.ssa.readout.l1_data(initialise = True, shift = shift, latency = latency)
 #		self.ssa.inject.digital_pulse(initialise = True, times = 15)
-#		self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 1)
-#		self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-#		self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
+#		self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", 1)
+#		self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 1)
+#		self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", 1)
 #		Configure_TestPulse(
 #			delay_after_fast_reset = 512 + delay,
 #			delay_after_test_pulse = (latency+3+shift),

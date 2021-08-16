@@ -56,7 +56,7 @@ def init():
 	return mpa.init(reset_board = True, reset_chip = False, display = True)
 
 def reset_fc7():
-	FC7.write("ctrl_command_global_reset", 1);
+	FC7.write("fc7_daq_ctrl.command_processor_block.global.reset", 1);
 
 def reset_mpa():
 	mpa.reset()

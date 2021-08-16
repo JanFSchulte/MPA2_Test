@@ -102,9 +102,9 @@ write = 0
 #	SendCommand_I2C(0, 0, 1, 0, 1, write, i, 0x00, 0)
 #sleep(1)
 ## readout reset ##
-fc7.write("ctrl_readout_reset", 1)
+fc7.write("fc7_daq_ctrl.readout_block.control.readout_reset", 1)
 sleep(0.001)
-fc7.write("ctrl_readout_reset", 0)
+fc7.write("fc7_daq_ctrl.readout_block.control.readout_reset", 0)
 sleep(0.001)
 ###################
 
@@ -114,9 +114,9 @@ for i in range (0,8):
 	SetParameterI2C("select_channel_group", i)
 	sleep(1)
 
-        fc7.write("ctrl_readout_reset", 1)
+        fc7.write("fc7_daq_ctrl.readout_block.control.readout_reset", 1)
 	sleep(0.001)
-        fc7.write("ctrl_readout_reset", 0)
+        fc7.write("fc7_daq_ctrl.readout_block.control.readout_reset", 0)
 	sleep(0.001)
 
 	SendCommand_CTRL("start_trigger")

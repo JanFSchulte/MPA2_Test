@@ -153,7 +153,7 @@ class MPAwp:
         return self.chip.init(reset_board = True, reset_chip = False, display = True)
 
     def reset_fc7():
-        FC7.write("ctrl_command_global_reset", 1);
+        FC7.write("fc7_daq_ctrl.command_processor_block.global.reset", 1);
 
     def reset_mpa():
         self.chip.reset()
@@ -170,7 +170,7 @@ mpa  = MPAwp(address = 0b000)
 #t2xSSA2 = Test_2xSSA2(ssa0, ssa1, FC7)
 
 def reset_fc7():
-    FC7.write("ctrl_command_global_reset", 1);
+    FC7.write("fc7_daq_ctrl.command_processor_block.global.reset", 1);
 
 def set_clock(val = 'internal'):
     ssa0.pwr.set_clock_source(val)

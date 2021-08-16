@@ -209,9 +209,9 @@ class SSA_readout():
 		#disable_pixel(0,0)
 		if(initialise == True):
 			self.ctrl.setup_readout_chip_id()
-			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
-			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 1)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", 0)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 1)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", 1)
 			Configure_TestPulse_SSA(
 				delay_after_fast_reset = 0, delay_after_test_pulse = (latency+2+shift),
 				delay_before_next_pulse = 0, number_of_test_pulses = 1, enable_rst_L1 = 0,
@@ -513,9 +513,9 @@ class SSA_readout():
 			self.ctrl.setup_readout_chip_id()
 			self.fc7.SendCommand_CTRL("fast_test_pulse")
 			self.fc7.SendCommand_CTRL("fast_trigger")
-			self.fc7.write("cnfg_fast_tp_fsm_fast_reset_en", 0)
-			self.fc7.write("cnfg_fast_tp_fsm_test_pulse_en", 1)
-			self.fc7.write("cnfg_fast_tp_fsm_l1a_en", 0)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", 0)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 1)
+			self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", 0)
 			Configure_TestPulse(configuration[0],configuration[1],configuration[2], configuration[3])
 
 			#Configure_TestPulse_SSA(    number_of_test_pulses = 1, delay_before_next_pulse = 500, delay_after_test_pulse = 0, delay_after_fast_reset = 0, enable_rst_L1 = 0)

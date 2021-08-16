@@ -353,9 +353,9 @@ def save_data(data , title):
 
 def try_fc7_com(fc7_if):
 	for i in range(4):
-		fc7_if.write("cnfg_mpa_ssa_board_i2c_freq", i)
+		fc7_if.write("fc7_daq_cnfg.mpa_ssa_board_block.i2c_freq", i)
 		time.sleep(0.001)
-		r = fc7_if.read("cnfg_mpa_ssa_board_i2c_freq")
+		r = fc7_if.read("fc7_daq_cnfg.mpa_ssa_board_block.i2c_freq")
 		time.sleep(0.001)
 		if(r == i): st = 'Pass'
 		else: st = 'Fail'
