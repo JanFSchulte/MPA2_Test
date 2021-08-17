@@ -26,13 +26,13 @@ class I2C_SlaveMapItem:
 def EncodeSlaveMapItem(slave_item):
 
         # this peace of code just shifts the data, also checks if it fits the field
-        shifted_i2c_address = fc7AddrTable.getItem("fc7_daq_cnfg.mpa_ssa_board_block.slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
-        shifted_register_address_nbytes = fc7AddrTable.getItem("fc7_daq_cnfg.mpa_ssa_board_block.slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
-        shifted_data_wr_nbytes = fc7AddrTable.getItem("fc7_daq_cnfg.mpa_ssa_board_block.slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes)
-        shifted_data_rd_nbytes = fc7AddrTable.getItem("fc7_daq_cnfg.mpa_ssa_board_block.slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
-        shifted_stop_for_rd_en = fc7AddrTable.getItem("fc7_daq_cnfg.mpa_ssa_board_block.slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
-        shifted_nack_en = fc7AddrTable.getItem("fc7_daq_cnfg.mpa_ssa_board_block.slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
-
+        shifted_i2c_address = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
+        shifted_register_address_nbytes = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
+        shifted_data_wr_nbytes = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes)
+        shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
+        shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
+        shifted_nack_en = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
+        
         final_command = shifted_i2c_address + shifted_register_address_nbytes + shifted_data_wr_nbytes + shifted_data_rd_nbytes + shifted_stop_for_rd_en + shifted_nack_en
 
         return final_command

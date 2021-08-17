@@ -385,18 +385,18 @@ class fc7_com():
 	def ReadStatus(self, name = "Current Status"):
 		print("============================")
 		print(name + ":")
-		error_counter = self.fc7.read("stat_error_counter")
+		error_counter = self.fc7.read("fc7_daq_stat.general.global_error.counter")
 		print("   -> Error Counter: " + str(error_counter))
 		if error_counter > 0:
 			for i in range (0,error_counter):
-				error_full = self.fc7.read("stat_error_full")
+				error_full = self.fc7.read("fc7_daq_stat.general.global_error.full_error")
 				error_block_id = self.DataFromMask(error_full,"stat_error_block_id");
 				error_code = self.DataFromMask(error_full,"stat_error_code");
 				print("   -> ")
 				fc7ErrorHandler.getErrorDescription(error_block_id,error_code)
 		else:
 			print("   -> No Errors")
-		temp_source = self.fc7.read("stat_fast_fsm_source")
+		temp_source = self.fc7.read("fc7_daq_stat.fast_command_block.general.source")
 		temp_source_name = "Unknown"
 		if temp_source == 1:
 			temp_source_name = "L1-Trigger"
@@ -413,7 +413,7 @@ class fc7_com():
 		elif temp_source == 7:
 			temp_source_name = "Antenna Trigger"
 		print("   -> trigger source:" + str(temp_source_name))
-		temp_state = self.fc7.read("stat_fast_fsm_state")
+		temp_state = self.fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
 		temp_state_name = "Unknown"
 		if temp_state == 0:
 			temp_state_name = "Idle"
@@ -434,7 +434,7 @@ class fc7_com():
 		print("============================")
 
 	def SendPhaseTuningCommand(self, value):
-		self.fc7.write("ctrl_phy_phase_tuning", value)
+		self.fc7.write("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl", value)
 
 	def get_lines_alignment_status(self, display=False):
 		status = []

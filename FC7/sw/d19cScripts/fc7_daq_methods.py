@@ -314,18 +314,18 @@ def ReadStatus(name = "Current Status"):
   print "============================"
   print name,":"
 
-  error_counter = fc7.read("stat_error_counter")
+  error_counter = fc7.read("fc7_daq_stat.general.global_error.counter")
   print "   -> Error Counter: ", error_counter
   if error_counter > 0:
   	  for i in range (0,error_counter):
-		  error_full = fc7.read("stat_error_full")
+		  error_full = fc7.read("fc7_daq_stat.general.global_error.full_error")
 		  error_block_id = DataFromMask(error_full,"stat_error_block_id");
 		  error_code = DataFromMask(error_full,"stat_error_code");	  
 		  print "   -> ", 
 		  fc7ErrorHandler.getErrorDescription(error_block_id,error_code)
   else:
 	print "   -> No Errors"
-  temp_source = fc7.read("stat_fast_fsm_source")
+  temp_source = fc7.read("fc7_daq_stat.fast_command_block.general.source")
   temp_source_name = "Unknown"
   if temp_source == 1:
     temp_source_name = "L1-Trigger"
@@ -342,7 +342,7 @@ def ReadStatus(name = "Current Status"):
   elif temp_source == 7:
     temp_source_name = "Antenna Trigger"
   print "   -> trigger source:", temp_source_name
-  temp_state = fc7.read("stat_fast_fsm_state")
+  temp_state = fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
   temp_state_name = "Unknown"
   if temp_state == 0:
     temp_state_name = "Idle"

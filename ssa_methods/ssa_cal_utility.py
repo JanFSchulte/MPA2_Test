@@ -216,12 +216,12 @@ class SSA_cal_utility():
 							timeout-=1
 							if(timeout<=0):
 								test=0; break
-							test = (self.fc7.read("stat_fast_fsm_state"))
+							test = (self.fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state"))
 							time.sleep(0.001)
 							#utils.print_log(test,)
 							if((not test) and (((time.time()-t)*1E3)<2) ): # D19C firmware issue
 								time.sleep(0.005)
-								test = self.fc7.read("stat_fast_fsm_state")
+								test = self.fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
 								if(not test):
 									self.fc7.SendCommand_CTRL("start_trigger")
 									t = time.time()
@@ -235,7 +235,7 @@ class SSA_cal_utility():
 							time.sleep(0.01);
 							self.fc7.open_shutter(2); time.sleep(0.01);
 							self.fc7.SendCommand_CTRL("start_trigger"); time.sleep(0.01); # send sequence of NEVENTS pulses
-							while(self.fc7.read("stat_fast_fsm_state") != 0):
+							while(self.fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state") != 0):
 								time.sleep(0.01)
 							self.fc7.close_shutter(2); time.sleep(0.01);
 

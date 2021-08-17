@@ -286,10 +286,10 @@ ipb_daq_system_ctrl			40020000    ffffffff     1     1     *Base for the control
 *------------------------------------------------------------------------------------------
 ipb_daq_system_stat			40030000    ffffffff     1     0     *Base for the status registers
 * I2C Error FIFO
-   stat_error_full			40030001    00000fff     1     0     *i2c error block FIFO
+   fc7_daq_stat.general.global_error.full_error			40030001    00000fff     1     0     *i2c error block FIFO
    stat_error_block_id			40030001    0000000f     1     0     *block id
    stat_error_code			40030001    00000ff0     1     0     *error code
-   stat_error_counter			40030002    000001ff	 1     0     *number of errors in the FIFO
+   fc7_daq_stat.general.global_error.counter			40030002    000001ff	 1     0     *number of errors in the FIFO
 * Firmware Info Sel
    stat_firmware_implementation		40030003    0000000f     1     0     *implementation type: 0 - optical, 1 - electrical, 2 - emulation
    stat_firmware_chip_type		40030003    000000f0     1     0     *chip type: 0 - CBC2, 1 - CBC3, 2 - MPA, 3 - SSA
@@ -313,8 +313,8 @@ ipb_daq_system_stat			40030000    ffffffff     1     0     *Base for the status 
    stat_command_i2c_nreplies_present    40031004    ffffffff     1     0     *Number of I2C replies available
 * Fast Command Block
    stat_fast_fsm_configured 		40032000    00000040     1     0     *1 when fast command block is configured
-   stat_fast_fsm_state			40032000    00000030     1     0     *status of the triggering FSM
-   stat_fast_fsm_source     		40032000    0000000f     1     0     *trigger source
+   fc7_daq_stat.fast_command_block.general.fsm_state			40032000    00000030     1     0     *status of the triggering FSM
+   fc7_daq_stat.fast_command_block.general.source     		40032000    0000000f     1     0     *trigger source
    stat_fast_trigger_in_counter		40032001    ffffffff     1     0     *trigger in counter - not considering backpressure, so may be bigger than real amounts of triggers sent
 * Physical Interface Abstraction Layer
    stat_phy_phase_tuning_done  		40033002    00010000   	 1     0     *phase tuning done signal (for all chips)

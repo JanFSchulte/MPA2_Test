@@ -28,7 +28,7 @@ class fc7_interface:
 		return reg.value() 
 
 	# simple write
-	def write(self, reg_name, value):
+	def write(self, reg_name, value, p3 = 0):
 		# write the value
 		self.hw.getNode(reg_name).write(value)
 		# transaction

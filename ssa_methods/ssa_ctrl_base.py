@@ -347,7 +347,7 @@ class ssa_ctrl_base:
 
 		command_final = fHybrid + fChip + fLine + fCommand + mode_raw + l1a_en_raw + master_line_id_raw + delay_raw + bitslip_raw
 		utils.print_info(  "Line " + str(line) + " setting line mode to " + str(command_final) )
-		self.fc7.write("ctrl_phy_phase_tuning", command_final)
+		self.fc7.write("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl", command_final)
 
 	#####################################################################
 	def set_line_shift_stubs(self, value, line='all'):

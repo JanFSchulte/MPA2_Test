@@ -21,7 +21,7 @@ def ConfigureL1ATuning():
     time.sleep(0.01)
 
 def SendPhaseTuningCommand(value):
-    fc7.write("ctrl_phy_phase_tuning", value)
+    fc7.write("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl", value)
 
 def GetPhaseTuningStatus(printStatus = True):
     # get data word

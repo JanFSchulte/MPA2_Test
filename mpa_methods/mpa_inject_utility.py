@@ -36,11 +36,11 @@ class mpa_inject():
 			self.fc7.open_shutter(8)
 		if (cal != 0):
 			self.fc7.SendCommand_CTRL("start_trigger")
-			test = self.fc7.read("stat_fast_fsm_state")
+			test = self.fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
 			if not test: self.fc7.SendCommand_CTRL("start_trigger")
 			test = 1
 			while (test):
-				test = self.fc7.read("stat_fast_fsm_state")
+				test = self.fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
 				time.sleep(0.001)
 		else:
 			time.sleep(0.000001*n_pulse)
@@ -68,7 +68,7 @@ class mpa_inject():
 			self.fc7.SendCommand_CTRL("start_trigger")
 			test = 1
 			while (test):
-				test = self.fc7.read("stat_fast_fsm_state")
+				test = self.fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
 				time.sleep(0.001)
 		else:
 			time.sleep(1*n_pulse)
@@ -86,7 +86,7 @@ class mpa_inject():
 			self.fc7.SendCommand_CTRL("start_trigger")
 			test = 1
 			while (test):
-				test = self.fc7.read("stat_fast_fsm_state")
+				test = self.fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
 				time.sleep(0.001)
 		else:
 			time.sleep(0.000001*n_pulse)
@@ -101,7 +101,7 @@ class mpa_inject():
 			self.fc7.SendCommand_CTRL("start_trigger")
 			test = 1
 			while (test):
-				test = self.fc7.read("stat_fast_fsm_state")
+				test = self.fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
 				time.sleep(0.001)
 		else:
 			time.sleep(0.000001*n_pulse)

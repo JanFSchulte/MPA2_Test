@@ -15,7 +15,10 @@ def configure_communication():
 	ipaddr = ipaddr.replace('\t', '')
 	ipaddr = ipaddr.replace(' ' , '')
 	#fc7 = ChipsBusUdp(fc7AddrTable, ipaddr, 50001)
-	fc7_interface("fc7", "chtcp-2.0://localhost:10203?target="+ipaddr+":50001", "file://d19cScripts/uDTC_OT_address_table_v2.xml")
+	#fc7 = fc7_interface("fc7", "chtcp-2.0://localhost:10203?target="+ipaddr+":50001", "file://d19cScripts/uDTC_OT_address_table_v2.xml")
+	fc7 = fc7_interface("fc7", "ipbusudp-2.0://"+ipaddr+":50001", "file://d19cScripts/uDTC_OT_address_table_v2.xml")
+
+
 	print('->  Board Selected MAC > {:s} IP > {:s}'.format(tbconfig.BOARD_SELECT, ipaddr))
 	
 	return ipaddr, fc7AddrTable, fc7

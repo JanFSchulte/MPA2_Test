@@ -256,12 +256,12 @@ def start_counters_read(duration = 0):
     compose_fast_command(duration, resync_en = 1, l1a_en = 0, cal_pulse_en = 0, bc0_en = 1)
 
 def compose_fast_command(duration = 0, resync_en = 0, l1a_en = 0, cal_pulse_en = 0, bc0_en = 0):
-    encode_resync = fc7AddrTable.getItem("fc7_daq_ctrl.fast_command_block.control.fast_reset").shiftDataToMask(resync_en)
-    encode_l1a = fc7AddrTable.getItem("fc7_daq_ctrl.fast_command_block.control.fast_trigger").shiftDataToMask(l1a_en)
-    encode_cal_pulse = fc7AddrTable.getItem("fc7_daq_ctrl.fast_command_block.control.fast_test_pulse").shiftDataToMask(cal_pulse_en)
-    encode_bc0 = fc7AddrTable.getItem("fc7_daq_ctrl.fast_command_block.control.fast_orbit_reset").shiftDataToMask(bc0_en)
-    encode_duration = fc7AddrTable.getItem("fc7_daq_ctrl.fast_command_block.control.fast_duration").shiftDataToMask(duration)
-    fc7.write("fc7_daq_ctrl.fast_command_block", encode_resync + encode_l1a + encode_cal_pulse + encode_bc0 + encode_duration)
+    encode_resync = fc7AddrTable.getItem("ctrl_fast_signal_fast_reset").shiftDataToMask(resync_en)
+    encode_l1a = fc7AddrTable.getItem("ctrl_fast_signal_trigger").shiftDataToMask(l1a_en)
+    encode_cal_pulse = fc7AddrTable.getItem("ctrl_fast_signal_test_pulse").shiftDataToMask(cal_pulse_en)
+    encode_bc0 = fc7AddrTable.getItem("ctrl_fast_signal_orbit_reset").shiftDataToMask(bc0_en)
+    encode_duration = fc7AddrTable.getItem("ctrl_fast_signal_duration").shiftDataToMask(duration)
+    fc7.write("ctrl_fast", encode_resync + encode_l1a + encode_cal_pulse + encode_bc0 + encode_duration)
 
 class I2C_MainSlaveMapItem:
     def __init__(self):
@@ -292,7 +292,7 @@ def SetNumberOfDataBytes(slave_id, data_wr_nbytes, data_rd_nbytes):
     i2c_slave_map[slave_id].data_rd_nbytes = data_rd_nbytes
 
     # update the map
-    fc7.write("fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
+    fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 
 # set the default data sizes
 def SetDefaultNumberOfDataBytes(slave_id):
@@ -305,26 +305,26 @@ def SetDefaultNumberOfDataBytes(slave_id):
         print("Wrong chip type")
 
     # update the map
-    fc7.write("fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
+    fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 
 # Combine and Send sequential I2C write Command
 def SendCommand_I2C_SeqWrite(command, hybrid_id, chip_id, register_address, data):
 
-    raw_command = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.command_type").shiftDataToMask(command)
-    raw_word0 = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word_id").shiftDataToMask(0)
-    raw_word1 = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word_id").shiftDataToMask(1)
-    raw_hybrid_id = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_board_id").shiftDataToMask(hybrid_id)
-    raw_chip_id = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_slave_id").shiftDataToMask(chip_id)
-    raw_readback = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_readback").shiftDataToMask(0)
-    raw_read = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_read").shiftDataToMask(0)
-    raw_register = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_register").shiftDataToMask(register_address)
+    raw_command = fc7AddrTable.getItem("ctrl_command_i2c_command_type").shiftDataToMask(command)
+    raw_word0 = fc7AddrTable.getItem("ctrl_command_i2c_command_word_id").shiftDataToMask(0)
+    raw_word1 = fc7AddrTable.getItem("ctrl_command_i2c_command_word_id").shiftDataToMask(1)
+    raw_hybrid_id = fc7AddrTable.getItem("ctrl_command_i2c_command_hybrid_id").shiftDataToMask(hybrid_id)
+    raw_chip_id = fc7AddrTable.getItem("ctrl_command_i2c_command_chip_id").shiftDataToMask(chip_id)
+    raw_readback = fc7AddrTable.getItem("ctrl_command_i2c_command_readback").shiftDataToMask(0)
+    raw_read = fc7AddrTable.getItem("ctrl_command_i2c_command_read").shiftDataToMask(0)
+    raw_register = fc7AddrTable.getItem("ctrl_command_i2c_command_register").shiftDataToMask(register_address)
 
     cmd0 = raw_command + raw_word0 + raw_hybrid_id + raw_chip_id + raw_readback + raw_read + raw_register;
 
     description = "Sequential Write Command: type = " + str(command) + ", hybrid = " + str(hybrid_id) + ", chip = " + str(chip_id)
 
     # first word
-    fc7.write("fc7_daq_ctrl.command_processor_block.i2c.command_fifo", cmd0)
+    fc7.write("ctrl_command_i2c_command_fifo", cmd0)
     time.sleep(0.01)
 
     # nbytes
@@ -334,7 +334,7 @@ def SendCommand_I2C_SeqWrite(command, hybrid_id, chip_id, register_address, data
     byte_counter = 0
     word_counter = 1
     while (byte_counter<nbytes):
-        raw_word_id = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word_id").shiftDataToMask(word_counter % 2)
+        raw_word_id = fc7AddrTable.getItem("ctrl_command_i2c_command_word_id").shiftDataToMask(word_counter % 2)
         raw_data = 0
         i = 0
         while(i < 3 and byte_counter < nbytes):
@@ -343,7 +343,7 @@ def SendCommand_I2C_SeqWrite(command, hybrid_id, chip_id, register_address, data
             byte_counter = byte_counter + 1
 
         cmd = raw_command + raw_word_id + raw_data
-        fc7.write("fc7_daq_ctrl.command_processor_block.i2c.command_fifo", cmd)
+        fc7.write("ctrl_command_i2c_command_fifo", cmd)
         word_counter = word_counter + 1
         time.sleep(0.01)
 
@@ -359,10 +359,10 @@ def ReadChipDataNEW(nbytes = 1, verbose = 0):
         print("   | Hybrid ID             || Chip ID             || Register(LSB)          || DATA         |")
         print("   ==========================================================================================")
 
-    while fc7.read("fc7_daq_stat.command_processor_block.i2c.reply_fifo.empty") == 0:
+    while fc7.read("stat_command_i2c_fifo_replies_empty") == 0:
         byte_counter = 0
 
-        reply = fc7.read("fc7_daq_ctrl.command_processor_block.i2c.reply_fifo")
+        reply = fc7.read("ctrl_command_i2c_reply_fifo")
         hybrid_id = DataFromMask(reply, "ctrl_command_i2c_reply_hybrid_id")
         chip_id = DataFromMask(reply, "ctrl_command_i2c_reply_chip_id")
         register = DataFromMask(reply, "ctrl_command_i2c_reply_register")
@@ -376,10 +376,10 @@ def ReadChipDataNEW(nbytes = 1, verbose = 0):
 # now iterate next words
         while(byte_counter < nbytes):
             # just in case wait next word
-            while(fc7.read("fc7_daq_stat.command_processor_block.i2c.reply_fifo.empty") == 1):
+            while(fc7.read("stat_command_i2c_fifo_replies_empty") == 1):
                 print("debug: waiting next word, should not happen")
                 time.sleep(1)
-            reply = fc7.read("fc7_daq_ctrl.command_processor_block.i2c.reply_fifo")
+            reply = fc7.read("ctrl_command_i2c_reply_fifo")
             data1 = (reply & 0x000000FF) >> 0
             data2 = (reply & 0x0000FF00) >> 8
             data3 = (reply & 0x00FF0000) >> 16
@@ -412,12 +412,12 @@ def ReadChipDataNEW(nbytes = 1, verbose = 0):
 def EncodeMainSlaveMapItem(slave_item):
 
     # this peace of code just shifts the data, also checks if it fits the field
-    shifted_i2c_address = fc7AddrTable.getItem("fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
-    shifted_register_address_nbytes = fc7AddrTable.getItem("fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
-    shifted_data_wr_nbytes = fc7AddrTable.getItem("fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes)
-    shifted_data_rd_nbytes = fc7AddrTable.getItem("fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
-    shifted_stop_for_rd_en = fc7AddrTable.getItem("fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
-    shifted_nack_en = fc7AddrTable.getItem("fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
+    shifted_i2c_address = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
+    shifted_register_address_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
+    shifted_data_wr_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes)
+    shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
+    shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
+    shifted_nack_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
 
     final_command = shifted_i2c_address + shifted_register_address_nbytes + shifted_data_wr_nbytes + shifted_data_rd_nbytes + shifted_stop_for_rd_en + shifted_nack_en
 
@@ -437,9 +437,9 @@ i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
 #	# updating the slave id table
 #	if verbose: print("---> Updating the Slave ID Map")
 #	for slave_id in range(3):
-#		fc7.write("fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
+#		fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 #		if verbose:
-#			print("Writing","fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_" + str(slave_id) + "_config", hex(EncodeMainSlaveMapItem(i2c_slave_map[slave_id])))
+#			print("Writing","cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", hex(EncodeMainSlaveMapItem(i2c_slave_map[slave_id])))
 #
 #def activate_I2C_chip(frequency = 0, verbose = 1):
 #    i2cmux = 0
@@ -494,7 +494,7 @@ def read_I2C (chip, address, timeout = 0.001):
 #    fc7.write("ctrl_phy_phase_tune_again", 1)
 #    timeout_max = 5
 #    timeout = 0
-#    while(fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done") == 0):
+#    while(fc7.read("stat_phy_phase_tuning_done") == 0):
 #        time.sleep(0.1)
 #        if (timeout == timeout_max):
 #            timeout = 0
