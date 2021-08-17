@@ -272,6 +272,7 @@ class fc7_com():
 	def Send_MPA_SSA_I2C_Command(self, slave_id, board_id, read, register_address, data, verbose = 1, note = ''):
 		# this peace of code just shifts the data, also checks if it fits the field
 		# general
+		"""new addresstable
 		shifted_command_type = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.command_type").shiftDataToMask(8)
 		shifted_word_id_0 = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word_id").shiftDataToMask(0)
 		shifted_word_id_1 = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word_id").shiftDataToMask(1)
@@ -281,6 +282,16 @@ class fc7_com():
 		shifted_read = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_read").shiftDataToMask(read)
 		shifted_register_address = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_register").shiftDataToMask(register_address)
 		shifted_data = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word1_data").shiftDataToMask(data)
+		"""
+		shifted_command_type = fc7AddrTable.getItem("mpa_ssa_i2c_request_command_type").shiftDataToMask(8)
+		shifted_word_id_0 = fc7AddrTable.getItem("mpa_ssa_i2c_request_word_id").shiftDataToMask(0)
+		shifted_word_id_1 = fc7AddrTable.getItem("mpa_ssa_i2c_request_word_id").shiftDataToMask(1)
+		# command specific
+		shifted_slave_id = fc7AddrTable.getItem("mpa_ssa_i2c_request_word0_slave_id").shiftDataToMask(slave_id)
+		shifted_board_id = fc7AddrTable.getItem("mpa_ssa_i2c_request_word0_board_id").shiftDataToMask(board_id)
+		shifted_read = fc7AddrTable.getItem("mpa_ssa_i2c_request_word0_read").shiftDataToMask(read)
+		shifted_register_address = fc7AddrTable.getItem("mpa_ssa_i2c_request_word0_register").shiftDataToMask(register_address)
+		shifted_data = fc7AddrTable.getItem("mpa_ssa_i2c_request_word1_data").shiftDataToMask(data)
 
 		# composing the word
 		word_0 = shifted_command_type + shifted_word_id_0 + shifted_slave_id + shifted_board_id + shifted_read + shifted_register_address
@@ -309,10 +320,18 @@ class fc7_com():
 		time.sleep(0.001);
 		reply = self.fc7.read("fc7_daq_ctrl.command_processor_block.i2c.reply_fifo")
 		time.sleep(0.001);
+
+		reply_slave_id = self.DataFromMask(reply, "mpa_ssa_i2c_reply_slave_id")
+		reply_board_id = self.DataFromMask(reply, "mpa_ssa_i2c_reply_board_id")
+		reply_err = self.DataFromMask(reply, "mpa_ssa_i2c_reply_err")
+		reply_data = self.DataFromMask(reply, "mpa_ssa_i2c_reply_data")
+
+		'''new addresstable
 		reply_slave_id = self.DataFromMask(reply, "fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_reply.slave_id")
 		reply_board_id = self.DataFromMask(reply, "fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_reply.board_id")
 		reply_err = self.DataFromMask(reply, "fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_reply.err")
 		reply_data = self.DataFromMask(reply, "fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_reply.data")
+		'''
 		# print(full word)
 		#print("Full Reply Word: ", hex(reply))
 		# check the data
