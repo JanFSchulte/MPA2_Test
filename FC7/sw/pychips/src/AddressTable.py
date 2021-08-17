@@ -46,6 +46,7 @@ class AddressTable(object):
         self._readAddrTable(addressTableFile)
         self.mytree = ET.parse('./d19cScripts/uDTC_OT_address_table_v2.xml')
         self.myroot = self.mytree.getroot()
+        self.read_addr_table_xml(self.myroot)
 
 
     def getItem(self, registerName):
