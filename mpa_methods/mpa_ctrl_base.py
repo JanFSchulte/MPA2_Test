@@ -125,6 +125,7 @@ class mpa_ctrl_base:
 				timeout += 1
 	def align_out_all(self, verbose = 1):
 		self.I2C.peri_write("ReadoutMode", 2)
+		# set pattern
 		self.I2C.peri_write("LFSR_data", 0b10100000)
 		time.sleep(0.1)
 		return TuneMPA()

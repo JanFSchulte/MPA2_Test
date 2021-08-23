@@ -53,7 +53,7 @@ def SendCommand_I2C(command, hybrid_id, chip_id, page, read, register_address, d
     raw_read = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_read").shiftDataToMask(read)
     raw_register = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_register").shiftDataToMask(register_address)
     raw_data = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word1_data").shiftDataToMask(data)
-
+    
     raw_readback = 0
     raw_page = 0
 

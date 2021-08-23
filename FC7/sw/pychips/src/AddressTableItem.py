@@ -30,6 +30,7 @@ class AddressTableItem(object):
     def getMask(self): return self._mask
     def getReadFlag(self): return self._read
     def getWriteFlag(self): return self._write
+    def getBitShift(self): return self._bitShiftForMaskedData
 
     def setName(self, name): self._name = name
     def setAddress(self, address): self._address = 0xffffffff & address

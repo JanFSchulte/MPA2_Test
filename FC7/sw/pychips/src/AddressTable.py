@@ -44,7 +44,7 @@ class AddressTable(object):
         self.items = {}
         self.fileName = addressTableFile
         self._readAddrTable(addressTableFile)
-        self.mytree = ET.parse('./d19cScripts/uDTC_OT_address_table_v2.xml')
+        self.mytree = ET.parse('./utilities/uDTC_OT_address_table_v2.xml') # change this, so path is passed with configure_communication!()
         self.myroot = self.mytree.getroot()
         self.read_addr_table_xml(self.myroot)
 

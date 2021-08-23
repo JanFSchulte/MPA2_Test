@@ -411,6 +411,14 @@ def ReadChipDataNEW(nbytes = 1, verbose = 0):
 
 def EncodeMainSlaveMapItem(slave_item):
 
+    """ doesnt work
+    shifted_i2c_address            = slave_item.i2c_address<<25
+    shifted_register_address_nbytes= slave_item.register_address_nbytes<<6
+    shifted_data_wr_nbytes         = slave_item.data_wr_nbytes<<4
+    shifted_data_rd_nbytes         = slave_item.data_rd_nbytes<<2
+    shifted_stop_for_rd_en         = slave_item.stop_for_rd_en<<1
+    shifted_nack_en                = slave_item.nack_en<<0
+    """
     # this peace of code just shifts the data, also checks if it fits the field
     shifted_i2c_address = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
     shifted_register_address_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
@@ -418,7 +426,7 @@ def EncodeMainSlaveMapItem(slave_item):
     shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
     shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
     shifted_nack_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
-
+    
     final_command = shifted_i2c_address + shifted_register_address_nbytes + shifted_data_wr_nbytes + shifted_data_rd_nbytes + shifted_stop_for_rd_en + shifted_nack_en
 
     return final_command

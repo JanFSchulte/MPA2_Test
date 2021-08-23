@@ -43,16 +43,6 @@ from mpa_methods.mpa_bias_utility import *
 from mpa_methods.mpa_probe_test import *
 #from mpa_methods.main_mpa_test import *
 
-
-#from mpa_methods.mpa import *
-from mpa_methods.mpa import *
-from mpa_methods.mpa_cal_utility import *
-from mpa_methods.mpa_test_utility import *
-from mpa_methods.mpa_bias_utility import *
-from mpa_methods.mpa_probe_test import *
-#from mpa_methods.main_mpa_test import *
-
-
 ipaddr, fc7AddrTable, fc7_if = configure_communication()
 FC7 = fc7_com(fc7_if, fc7AddrTable)
 #FC7.activate_I2C_chip(verbose=0)
@@ -81,7 +71,7 @@ class SSAwp:
 
         # measure inits ssa_measurements_adc/fe/pwr
         self.measure       = SSA_measurements(self.chip, self.i2c, FC7, self.cal, self.ana_mux_map, self.pwr, self.seuutil, self.biascal)
-        
+
         # init top level test suites
         self.main_test_1   = main_ssa_test_1(self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure.fe)
         self.seu           = SSA_SEU(self.chip, self.seuutil, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
