@@ -411,7 +411,7 @@ def ReadChipDataNEW(nbytes = 1, verbose = 0):
 
 def EncodeMainSlaveMapItem(slave_item):
 
-    """ doesnt work
+    """ #doesnt work
     shifted_i2c_address            = slave_item.i2c_address<<25
     shifted_register_address_nbytes= slave_item.register_address_nbytes<<6
     shifted_data_wr_nbytes         = slave_item.data_wr_nbytes<<4
@@ -421,11 +421,11 @@ def EncodeMainSlaveMapItem(slave_item):
     """
     # this peace of code just shifts the data, also checks if it fits the field
     shifted_i2c_address = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
-    shifted_register_address_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
-    shifted_data_wr_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes)
-    shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
-    shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
-    shifted_nack_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
+    shifted_register_address_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes) #shift 10
+    shifted_data_wr_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes) #shift 5
+    shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes) #shift 0
+    shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en) #shift 24
+    shifted_nack_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en) #shift 23
     
     final_command = shifted_i2c_address + shifted_register_address_nbytes + shifted_data_wr_nbytes + shifted_data_rd_nbytes + shifted_stop_for_rd_en + shifted_nack_en
 
@@ -499,14 +499,14 @@ def read_I2C (chip, address, timeout = 0.001):
 	return read_data
 
 #def align_out(verbose = 1):
-#    fc7.write("ctrl_phy_phase_tune_again", 1)
+#    fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 #    timeout_max = 5
 #    timeout = 0
-#    while(fc7.read("stat_phy_phase_tuning_done") == 0):
+#    while(fc7.read("fc7_daq_stat.physical_interface_block.hardware_ready") == 0):
 #        time.sleep(0.1)
 #        if (timeout == timeout_max):
 #            timeout = 0
 #            if (verbose): print("Waiting for the phase tuning")
-#            fc7.write("ctrl_phy_phase_tune_again", 1)
+#            fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 #        else:
 #            timeout += 1

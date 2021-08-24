@@ -25,7 +25,7 @@ def SendPhaseTuningCommand(value):
 
 def GetPhaseTuningStatus(printStatus = True):
     # get data word
-    data = fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl")
+    data = fc7.read("fc7_daq_stat.physical_interface_block.phase_tuning_reply")
 
     # parse commands
     line_id = (data & 0xF0000000) >> 28

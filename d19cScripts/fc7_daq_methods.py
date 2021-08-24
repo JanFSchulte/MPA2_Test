@@ -218,7 +218,7 @@ def SetLineDelayManual(hybrid_id, chip_id, line_id, delay, bitslip):
     fc7.write("cnfg_phy_manual_delays", word)
     time.sleep(0.01)
     # do tuning
-    fc7.write("ctrl_phy_phase_tune_again", 1)
+    fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
     # time.sleep
     time.sleep(0.1)
 
@@ -568,6 +568,6 @@ def SetLineDelayManual(hybrid_id, chip_id, line_id, delay, bitslip):
     fc7.write("cnfg_phy_manual_delays", word)
     time.sleep(0.01)
     # do tuning
-    fc7.write("ctrl_phy_phase_tune_again", 1)
+    fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
     # time.sleep
     time.sleep(0.1)

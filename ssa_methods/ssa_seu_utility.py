@@ -548,13 +548,13 @@ class SSA_SEU_utilities():
 	#####################################################################################################################
 	def L1_phase_tuning_MPA_emulator(self):
 		time.sleep(0.1)
-		self.fc7.write("ctrl_phy_phase_tune_again", 1)
+		self.fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 		count_waiting = 0
 		while(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done") == 0):
 			time.sleep(0.5)
 			print("Phase tuning in state: "  + str( self.fc7.read("stat_phy_phase_fsm_state_chip0") ))
 			print("Waiting for the phase tuning")
-			self.fc7.write("ctrl_phy_phase_tune_again", 1)
+			self.fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 			print("resend phase tuning signal")
 
 

@@ -244,11 +244,11 @@ class ssa_ctrl_base:
 		self.setup_readout_chip_id()
 		cnt = 0; done = True
 		#print(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done"))
-		self.fc7.write("ctrl_phy_phase_tune_again", 1)
+		self.fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 		#print(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done"))
 		send_test(15)
 		#print(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done"))
-		while(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done") == 0 and cnt < 5):
+		while(self.fc7.read("fc7_daq_stat.physical_interface_block.phase_tuning_reply") == 0 and cnt < 5):
 			time.sleep(0.1)
 			utils.print_log("Waiting for the phase tuning")
 			cnt += 1
@@ -268,7 +268,7 @@ class ssa_ctrl_base:
             #self.set_shift_pattern( ST = [0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7], L1 = 0xaa, Left = 0xaa, Right = 0xaa)
 
 		time.sleep(0.01)
-		self.set_lateral_lines_alignament()
+		#self.set_lateral_lines_alignament()
 		time.sleep(0.01)
 		if(method == 'old' or self.fc7.invert):
 			rt = self.align_out()
@@ -306,18 +306,18 @@ class ssa_ctrl_base:
 
 	#####################################################################
 	def align_out(self):
-		self.fc7.write("ctrl_phy_phase_tune_again", 1)
+		self.fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 		timeout_max = 3
 		timeout = 0
 		time.sleep(0.1)
-		while(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done") == 0):
+		while(self.fc7.read("fc7_daq_stat.physical_interface_block.phase_tuning_reply") == 0):
 			time.sleep(0.1)
 			utils.print_warning("->  Waiting for the phase tuning")
-			#self.fc7.write("ctrl_phy_phase_tune_again", 1)
+			#self.fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 			timeout+=1
 			if (timeout == timeout_max):
 				return False
-		#self.fc7.write("ctrl_phy_phase_tune_again", 1)
+		#self.fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 		return True
 
 	#####################################################################
@@ -676,6 +676,7 @@ class ssa_ctrl_base:
 	#####################################################################
 	def set_lateral_data_phase(self, left, right):
 		self.setup_readout_chip_id()
+		
 		self.fc7.write("ctrl_phy_ssa_gen_lateral_phase_1", right)
 		self.fc7.write("ctrl_phy_ssa_gen_lateral_phase_2", left)
 

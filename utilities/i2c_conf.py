@@ -427,7 +427,9 @@ class I2CConf:
         raw_register  = self.fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_register").shiftDataToMask(register_address)
         raw_data      = self.fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word1_data").shiftDataToMask(data)
         """
-        """
+
+        
+        #old bit mapping
         raw_command   = self.fc7AddrTable.getItem("ctrl_command_i2c_command_type").shiftDataToMask(command)
         raw_word0     = self.fc7AddrTable.getItem("ctrl_command_i2c_command_word_id").shiftDataToMask(0)
         raw_word1     = self.fc7AddrTable.getItem("ctrl_command_i2c_command_word_id").shiftDataToMask(1)
@@ -438,8 +440,8 @@ class I2CConf:
         raw_read      = self.fc7AddrTable.getItem("ctrl_command_i2c_command_read").shiftDataToMask(read)
         raw_register  = self.fc7AddrTable.getItem("ctrl_command_i2c_command_register").shiftDataToMask(register_address)
         raw_data      = self.fc7AddrTable.getItem("ctrl_command_i2c_command_data").shiftDataToMask(data)
+        
         """
-
         #d19-software manual shifting
         raw_readback  = 0
         raw_page      = 0
@@ -452,7 +454,7 @@ class I2CConf:
 
         raw_word1  = 1<<27
         raw_data       = data
-
+        """
         cmd0          = raw_command + raw_word0 + raw_hybrid_id + raw_chip_id + raw_readback + raw_read + raw_page + raw_register;
         cmd1          = raw_command + raw_word1 + raw_data
         description   = "Command: type = " + str(command) + ", hybrid = " + str(hybrid_id) + ", chip = " + str(chip_id)

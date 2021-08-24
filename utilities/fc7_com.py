@@ -489,7 +489,7 @@ class fc7_com():
 
 	def GetPhaseTuningStatus(self, printStatus = True, return_full_status=False):
 		# get data word
-		data = self.fc7_if.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl")
+		data = self.fc7_if.read("fc7_daq_stat.physical_interface_block.phase_tuning_reply")
 		# parse commands
 		line_id = (data & 0xF0000000) >> 28
 		output_type = (data & 0x0F000000) >> 24

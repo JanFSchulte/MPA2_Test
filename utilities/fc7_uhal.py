@@ -19,7 +19,7 @@ class fc7_interface:
 		self.hw = uhal.getDevice(name, uri, address_table)
 	
 	# simple read
-	def read(self, reg_name):
+	def read(self, reg_name, p2 = 0):
 		# read the value
 		reg = self.hw.getNode(reg_name).read()
 		# transaction

@@ -78,7 +78,8 @@ class SSA_ASIC:
 				if(display): utils.print_info("->  Reset SSA Chip")
 			utils.activate_I2C_chip(self.fc7)
 			#time.sleep(0.2)
-			self.ctrl.set_lateral_data(left=0, right=0)
+			# Skip for now, set lateral data registers now available in xml addresstable!
+			#self.ctrl.set_lateral_data(left=0, right=0)
 			if(display):
 				sys.stdout.write("->  Tuning sampling phases..\r")
 				sys.stdout.flush()

@@ -112,15 +112,15 @@ class mpa_ctrl_base:
 		self.I2C.peri_write('OutSetting_5',map[5])
 # Output alignment procedure
 	def align_out(self, verbose = 1):
-		self.fc7.write("ctrl_phy_phase_tune_again", 1)
+		self.fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 		timeout_max = 5
 		timeout = 0
-		while(self.fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done") == 0):
+		while(self.fc7.read("fc7_daq_stat.physical_interface_block.phase_tuning_reply") == 0):
 			time.sleep(0.1)
 			if (timeout == timeout_max):
 				timeout = 0
 				if (verbose): print("Waiting for the phase tuning")
-				self.fc7.write("ctrl_phy_phase_tune_again", 1)
+				self.fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 			else:
 				timeout += 1
 	def align_out_all(self, verbose = 1):

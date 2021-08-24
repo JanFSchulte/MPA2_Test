@@ -6,7 +6,7 @@ from d19cScripts.fc7_daq_methods import *
 ##----- begin main
 
 # start from phase tuning
-fc7.write("ctrl_phy_phase_tune_again", 1)
+fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 while(fc7.read("fc7_daq_ctrl.physical_interface_block.phase_tuning_ctrl_done") == 0):
 	sleep(0.5)
 	print "Waiting for the phase tuning"
