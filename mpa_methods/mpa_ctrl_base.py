@@ -32,13 +32,21 @@ class mpa_ctrl_base:
 		self.I2C.peri_write("ConfSLVS", currSLVS)
 ## Operation mode selection:
 	def activate_async(self):
-		self.I2C.peri_write('ReadoutMode',0b01)
+		self.I2C.peri_write("Mask", 0b00000011)
+		self.I2C.peri_write("Control", 0b01)
+		self.I2C.peri_write("Mask", 0b11111111)
 	def activate_sync(self):
-		self.I2C.peri_write('ReadoutMode',0b00)
+		self.I2C.peri_write("Mask", 0b00000011)
+		self.I2C.peri_write("Control", 0b00)
+		self.I2C.peri_write("Mask", 0b11111111)
 	def activate_shift(self):
-		self.I2C.peri_write('ReadoutMode',0b10)
+		self.I2C.peri_write("Mask", 0b00000011)
+		self.I2C.peri_write("Control", 0b10)
+		self.I2C.peri_write("Mask", 0b11111111)
 	def activate_pp(self):
+		self.I2C.peri_write("Mask", 0b11111111)
 		self.I2C.peri_write('ECM',0b10000001)
+		self.I2C.peri_write("Mask", 0b11111111)
 	def activate_ss(self):
 		self.I2C.peri_write('ECM',0b01000001)
 	def activate_ps(self):
@@ -110,6 +118,12 @@ class mpa_ctrl_base:
 		self.I2C.peri_write('OutSetting_3',map[3])
 		self.I2C.peri_write('OutSetting_4',map[4])
 		self.I2C.peri_write('OutSetting_5',map[5])
+# Output Pad mapping
+	def set_out_mapping_probing(self, map = [1, 2, 3, 4, 5, 0]):
+		self.I2C.peri_write('OutSetting_1_0', 0b001000);time.sleep(0.1)
+		self.I2C.peri_write('OutSetting_3_2', 0b011010);time.sleep(0.1)
+		self.I2C.peri_write('OutSetting_5_4', 0b101100);time.sleep(0.1)
+
 # Output alignment procedure
 	def align_out(self, verbose = 1):
 		self.fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
@@ -123,13 +137,14 @@ class mpa_ctrl_base:
 				self.fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 			else:
 				timeout += 1
-	def align_out_all(self, verbose = 1):
-		self.I2C.peri_write("ReadoutMode", 2)
+	def align_out_all(self, verbose = 1, pattern = 0b10100000):
+		self.activate_shift()
 		# set pattern
-		self.I2C.peri_write("LFSR_data", 0b10100000)
+		self.I2C.peri_write("LFSR_data", pattern)
+
 		time.sleep(0.1)
-		return TuneMPA()
-		#self.I2C.peri_write("ReadoutMode", 0)
+		return TuneMPA(pattern)
+
 
 
 #	def save_configuration(self, file = '../MPA_Results/Configuration.csv', display=True):

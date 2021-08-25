@@ -54,8 +54,10 @@ else
 	printf '\n->  Starting loading the firmware\n'
 	cd ~/Ph2_ACF
     source ~/Ph2_ACF/setup.sh
-	fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_04082021.bin
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_04082021.bin
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i d19c_mpa_none_28042019.bin
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_configDelay.bin
+	fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_newCapture.bin
 
 
 

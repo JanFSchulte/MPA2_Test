@@ -162,6 +162,8 @@ def read_L1(verbose = 1):
 
     for i in range(1,200):
         if ((l1[i] == 255)&(l1[i-1] == 255)&(~found)):
+            print("Header found at BX:")
+            print(i)
             header = l1[i-1] << 11 | l1[i-1] << 3 | ((l1[i+1] & 0b11100000) >> 5)
             error = ((l1[i+1] & 0b00011000) >> 3)
             L1_ID = ((l1[i+1] & 0b00000111) << 6) | ((l1[i+2] & 0b11111100) >> 2)
@@ -426,7 +428,7 @@ def EncodeMainSlaveMapItem(slave_item):
     shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes) #shift 0
     shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en) #shift 24
     shifted_nack_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en) #shift 23
-    
+
     final_command = shifted_i2c_address + shifted_register_address_nbytes + shifted_data_wr_nbytes + shifted_data_rd_nbytes + shifted_stop_for_rd_en + shifted_nack_en
 
     return final_command

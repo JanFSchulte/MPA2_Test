@@ -12,7 +12,7 @@
     <node id="user_stat" address ="0x40000000" permission="r" mode="block" size="0x0000000F">
     </node>
 
-    <node id="fc7_daq_cnfg" address="0x40010000" permission="rw" > 
+    <node id="fc7_daq_cnfg" address="0x40010000" permission="rw" >
     <node id="stub_debug"			address="0x0008000">
 	    <node id="enable"			mask="0x00000001"/>
 	</node>
@@ -47,7 +47,7 @@
             <node id="chips_enable_hyb_12"		address="0x009" mask="0x000000FF"/>
             <node id="chips_enable_hyb_13"		address="0x009" mask="0x0000FF00"/>
             <node id="chips_enable_hyb_14"		address="0x009" mask="0x00FF0000"/>
-            <node id="chips_enable_hyb_15"		address="0x009" mask="0xFF000000"/>	
+            <node id="chips_enable_hyb_15"		address="0x009" mask="0xFF000000"/>
         </node>
 
         <node id="command_processor_block"      address="0x1000">
@@ -68,7 +68,7 @@
             <node id="triggers_to_accept"               address="0x000" description="# of periodic fast signal cycle from the start signal."/>
             <node id="user_trigger_frequency"           address="0x001" description="User-defined frequency in kHz"/>
             <node id="trigger_source"                   address="0x002" mask="0x0000000F" description="1 - L1, 2 - Stubs, 3 - User-Defined Frequency"/>
-            <node id="stubs_mask"                       address="0x003" mask="0x0000FFFF" description="if mode is stubs, then coincidence mask can be set here: 0x0000000f requires presence of stubs from hybrids 0,1,2,3"/>	    
+            <node id="stubs_mask"                       address="0x003" mask="0x0000FFFF" description="if mode is stubs, then coincidence mask can be set here: 0x0000000f requires presence of stubs from hybrids 0,1,2,3"/>
             <node id="stub_trigger_veto_length"         address="0x003" mask="0x01FF0000" description="if mode is stubs, then following triggers can be vetoed (to control the rate)"/>
             <node id="test_pulse" description="configuration of the test pulse delays.">
                 <node id="delay_after_fast_reset"       address="0x004" description="delay between fast reset and following test pulse command"/>
@@ -131,12 +131,13 @@
                 <node id="pattern_320MHz"                 mask="0x000000ff"/>
                 <node id="pattern_640MHz"                 mask="0x0000ff00"/>
             </node>
-            
+
             <node id="slvs_debug" address = "0x000">
                 <!--<node id="hybrid_select"                   mask="0x000F0000"/>
                 <node id="chip_select"                     mask="0x00F00000"/>
             --> <!-- for firmware with multiple hybrids -->
                 <node id="chip_select"                     mask="0x000F0000"/>
+                <node id="SSA_first_counter_del"           mask="0x0000FF00"/>
             </node>
 
             <!-- line debug -->
@@ -146,9 +147,9 @@
        </node>
 
         <node id="readout_block"                address="0x5000">
-            <node id="packet_nbr"                       address="0x000" mask="0x0000ffff"/>	    
+            <node id="packet_nbr"                       address="0x000" mask="0x0000ffff"/>
             <node id="global"                          address="0x001">
-		        <node id="data_handshake_enable"            mask="0x00000001"/>                
+		        <node id="data_handshake_enable"            mask="0x00000001"/>
                 <node id="int_trig_enable"                  mask="0x00000004"/>
                 <node id="int_trig_rate"                    mask="0x000001f0"/>
                 <node id="trigger_type"                     mask="0x0000f000"/>
@@ -186,7 +187,7 @@
                 <node id="threshold"                        mask="0x0000ff00"/>
             </node>
         </node>
-	
+
 	<!-- <node id="optical_block"			address="0xD000">
             <node id="sca">
                 <node id="address"                    address = "0x001" mask="0x000000FF"/>
@@ -235,7 +236,7 @@
                 <node id="l12"                          mask="0x0FFF0000" description="note: default value is 0 for all"/>
             </node>
     </node>
-    
+
 
 	    <node id="tlu_block"			address="0x7000">
 		      <node id="handshake_mode"		address="0x000" mask="0x00000003"/>
@@ -297,7 +298,7 @@
                     </node>
                     <node id="command_fifo"             address="0x002" permission="w" mode="non-incremental" description="command fifo(write i2c commands here)"/>
                     <node id="reply_fifo"               address="0x003" permission="r" mode="non-incremental" description="reply fifo(read i2c replies here)"/>
- 
+
             </node> -->
             <node id="i2c">
                     <node id="control"                  address="0x001">
@@ -421,7 +422,7 @@
                 <node id="traffic_str"                      mask="0x00000001"/>
             </node>
         </node>
-        
+
 	<node id="optical_block"                   address="0xD000">
             <node id="general"                     address="0x000"  mask="0xFFFFFFFF"/>
             <node id="sca"                           address="0x001">
@@ -580,7 +581,7 @@
             <node id="fcmd_debug_ssa_r"                address="0x0B5" mask="0xFFFFFFFF" description="scope ssa_r for 4 clock cycles"/>
             <node id="fcmd_debug_cic_l"                address="0x0B6" mask="0xFFFFFFFF" description="scope cic_l for 4 clock cycles"/>
             <node id="fcmd_debug_cic_r"                address="0x0B7" mask="0xFFFFFFFF" description="scope cic_r for 4 clock cycles"/>
-            
+
 
             <node id="fe_for_ps_roh_ssa_fcmd_test"              address="0x0F7">
                 <node id="fe_for_ps_roh_fcmd_SSA_l_ref"                  mask="0x000000ff"/>
@@ -597,7 +598,7 @@
             </node>
 
             <node id="mpa_to_cic_cntr"            address="0x0F9" mask="0xFFFFFFFF"/>
-            
+
             <node id="ps_return"                address="0x00E">
                 <node id="clock_from_ssa1_test_done"            mask="0x00000001" description="test of the return clock from SSA1 done           "/>
                 <node id="clock_from_ssa2_test_done"            mask="0x00000002" description="test of the return clock from SSA2 done           "/>
@@ -616,7 +617,7 @@
             <node id="l1a_debug"                address="0x010" description="l1a scoping " mode="incremental" size="50"/>
 
 
-            
+
             <!-- debug counters -->
             <node id="debug_blk_counter00"                address="0x0BD" mask="0xFFFFFFFF" description="counter on debug block input line 00"/>
             <node id="debug_blk_counter01"                address="0x0BE" mask="0xFFFFFFFF" description="counter on debug block input line 01"/>
@@ -652,7 +653,7 @@
             <node id="debug_blk_counter31"                address="0x0DC" mask="0xFFFFFFFF" description="counter on debug block input line 31"/>
             <node id="input_lines_debug_done"             address="0x0DE" mask="0xFFFFFFFF" description="debugging of input lines done"/>
             <node id="input_lines_debug_done"             address="0x0DF" mask="0xFFFFFFFF" description="debugging of output lines done"/>
-       
+
         </node>
 
         <node id="be_proc"                      address="0x4000">
@@ -682,7 +683,7 @@
                 <node id="fsm_status"                    address="0x000" mask="0x00000ff0"/>
 		<node id="words_cnt"                     address="0x001" mask="0xffffffff"/>
             </node>
-	    
+
         </node>
 
         <node id="dio5_block"                   address="0x6000">
@@ -691,7 +692,7 @@
                 <node id="error"                            mask="0x00000002"/>
             </node>
         </node>
-	
+
         <node id="optical_block"                   address="0xD000">
             <node id="sca">
                 <node id="address"                     address="0x001" mask="0x000000FF"/>
@@ -711,12 +712,12 @@
                 <node id="empty"                       address="0x004" mask="0x02000000"/>
             </node>
         </node>
-	
+
     	<node id="tlu_block"			address="0x7000">
     		<node id="fifo_empty"		address="0x000" mask="0x00000001"/>
     		<node id="fifo_full"		address="0x000" mask="0x00000002"/>
-    		<node id="trigger_id_fifo"	address="0x001" mask="0x00007fff"/>		
-    	</node> 
+    		<node id="trigger_id_fifo"	address="0x001" mask="0x00007fff"/>
+    	</node>
 
         <node id="ddr3_block"			address="0x8000">
                 <node id="is_ddr3_type"		address="0x000" mask="0x00000001"/>
@@ -725,7 +726,7 @@
                 <node id="num_errors"     	address="0x001" mask="0xffffffff"/>
                 <node id="num_words"      	address="0x002" mask="0xffffffff"/>
         </node>
-	
+
         <node id="calibration_2s_block"         address="0xE000">
             <node id="general"                          address="0x000">
                 <node id="counters_ready"                       mask="0x00000001"/>

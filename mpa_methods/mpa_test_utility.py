@@ -16,7 +16,7 @@ class mpa_test_utility():
     """ """
     def __init__(self, mpa, I2C, fc7):
         self.mpa = mpa
-        self.I2C = I2C
+        self.i2c = I2C
         self.fc7 = fc7
 
     def shift(self, verbose = 0):
@@ -26,8 +26,8 @@ class mpa_test_utility():
 
         """
         if verbose: print("Doing Shift Test")
-        self.I2C.peri_write("LFSR_data", 0b10101010)
-        checkI2C = self.I2C.peri_read("LFSR_data")
+        self.i2c.peri_write("LFSR_data", 0b10101010)
+        checkI2C = self.i2c.peri_read("LFSR_data")
         if verbose: print("Writing:", str(bin(checkI2C)))
         self.mpa.ctrl_base.activate_shift()
         time.sleep(0.1)
@@ -50,7 +50,7 @@ class mpa_test_utility():
         :param row:
         :param pixel:
         """
-        self.I2C.pixel_write('ENFLAGS', row, pixel, 0x20)
+        self.i2c.pixel_write('PixelEnables', row, pixel, 0x20)
         self.fc7.send_test(8)
         return read_stubs(fast = 1)
 
@@ -68,13 +68,17 @@ class mpa_test_utility():
         if print_log:
             f = open(filename, 'w')
             f.write("Starting Test:\n")
+        self.i2c.peri_write('Mask', 0b11111111)
+        self.i2c.row_write('Mask', 0, 0b11111111)
         self.mpa.ctrl_base.activate_sync()
         time.sleep(0.1)
         self.mpa.ctrl_base.activate_pp()
         time.sleep(0.1)
-        self.I2C.pixel_write('DigPattern', 0, 0,  0b10000000)
+        self.i2c.pixel_write('DigPattern', 0, 0,  0b10000000)
         time.sleep(0.1)
-        self.I2C.peri_write('RetimePix', 1)
+        self.i2c.peri_write('Mask', 0b00001100)
+        self.i2c.peri_write('Control', 0b00000100)
+        self.i2c.peri_write('Mask', 0b11111111)
         time.sleep(0.1)
         for r in row:
             for p in pixel:
@@ -217,8 +221,8 @@ class mpa_test_utility():
         line_check : line x value array
             Each field cointains count of correct matches for respective line and test value
         """
-        self.I2C.peri_write('EdgeSelTrig',edge) # 1 = rising
-        self.I2C.peri_write('LatencyRx320', latency) # Trigger line aligned with FC7
+        self.i2c.peri_write('EdgeSelTrig',edge) # 1 = rising
+        self.i2c.peri_write('LatencyRx320', latency) # Trigger line aligned with FC7
         line = np.array(line)
         value = np.array(value)
         nline = int(line.shape[0])
@@ -272,17 +276,17 @@ class mpa_test_utility():
         self.mpa.ctrl_base.activate_ss()
         data_array = np.zeros((8, 8 ), dtype = np.float16 )
         if probe:
-            self.I2C.peri_write("InSetting_0",0)
-            self.I2C.peri_write("InSetting_1",1)
-            self.I2C.peri_write("InSetting_2",2)
-            self.I2C.peri_write("InSetting_3",3)
-            self.I2C.peri_write("InSetting_4",4)
-            self.I2C.peri_write("InSetting_5",5)
-            self.I2C.peri_write("InSetting_6",6)
-            self.I2C.peri_write("InSetting_7",7)
-            self.I2C.peri_write("InSetting_8",8)
+            self.i2c.peri_write("InSetting_0",0)
+            self.i2c.peri_write("InSetting_1",1)
+            self.i2c.peri_write("InSetting_2",2)
+            self.i2c.peri_write("InSetting_3",3)
+            self.i2c.peri_write("InSetting_4",4)
+            self.i2c.peri_write("InSetting_5",5)
+            self.i2c.peri_write("InSetting_6",6)
+            self.i2c.peri_write("InSetting_7",7)
+            self.i2c.peri_write("InSetting_8",8)
         time.sleep(0.1)
-        
+
         for i in range(0,8):
             latency = (i  << 3)
             if verbose: print("Testing Latency ", i)
@@ -311,12 +315,12 @@ class mpa_test_utility():
         """
         self.mpa.ctrl_pix.disable_pixel(0,0)
         if dig_inj:
-            self.I2C.pixel_write('ENFLAGS', row, pixel, 0x20)
+            self.i2c.pixel_write('PixelEnables', row, pixel, 0x20)
         else:
             self.mpa.ctrl_pix.enable_pix_LevelBRcal(row,pixel, polarity = "rise")
-        #time.sleep(0.001)
+        time.sleep(0.001)
         self.fc7.SendCommand_CTRL("start_trigger")
-        #time.sleep(0.001)
+        time.sleep(0.001)
         return read_L1(verbose)
 
 
@@ -334,7 +338,7 @@ class mpa_test_utility():
 
         self.mpa.ctrl_pix.disable_pixel(0,0)
         if dig_inj:
-            self.I2C.pixel_write('ENFLAGS', r_rnd, p_rnd, 0x20)
+            self.i2c.pixel_write('PixelEnables', r_rnd, p_rnd, 0x20)
         else:
             self.mpa.ctrl_pix.enable_pix_LevelBRcal(r_rnd ,p_rnd, polarity = "rise")
         #time.sleep(0.001)
@@ -369,10 +373,10 @@ class mpa_test_utility():
 
         self.mpa.ctrl_base.activate_sync()
         self.mpa.ctrl_base.activate_pp()
-        self.I2C.row_write('L1Offset_1', 0,  latency - diff)
-        self.I2C.row_write('L1Offset_2', 0,  0)
-        self.I2C.row_write('MemGatEn', 0,  gate)
-        self.I2C.pixel_write('DigPattern', 0, 0,  0b00000001)
+        self.i2c.row_write('L1Offset_1', 0,  latency - diff)
+        self.i2c.row_write('L1Offset_2', 0,  0)
+        self.i2c.row_write('MemGatEn', 0,  gate)
+        self.i2c.pixel_write('DigPattern', 0, 0,  0b00000001)
         self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
         self.mpa.ctrl_pix.disable_pixel(0,0)
 
@@ -431,7 +435,7 @@ class mpa_test_utility():
 
         return bad_pix, error, stuck, i2c_issue
 
-    def mem_test(self, latency = 255, delay = [10], row = list(range(1,17)), pixel = list(range(1,121)), diff = 2, print_log = 0, filename =  "../cernbox/MPA_Results/digital_mem_test.log", dig_inj =1, gate = 0, verbose = 1):
+    def mem_test(self, latency = 255, delay = [10], row = list(range(1,17)), pixel = list(range(1,121)), diff = 3, print_log = 0, filename =  "../cernbox/MPA_Results/digital_mem_test.log", dig_inj =1, gate = 0, verbose = 1):
         """
 
         :param latency:  (Default value = 255)
@@ -452,17 +456,23 @@ class mpa_test_utility():
         if print_log:
             f = open(filename, 'w')
             f.write("Starting Test:\n")
+        self.fc7.write("fc7_daq_cnfg.physical_interface_block.slvs_debug.SSA_first_counter_del", 100)
+        self.fc7.activate_I2C_chip()
         self.mpa.ctrl_base.activate_sync()
         self.mpa.ctrl_base.activate_pp()
-        self.I2C.row_write('L1Offset_1', 0,  latency - diff)
-        self.I2C.row_write('L1Offset_2', 0,  0)
-        self.I2C.row_write('MemGatEn', 0,  gate)
-        self.I2C.pixel_write('DigPattern', 0, 0,  0b00000001)
+        self.i2c.row_write('Mask', 0,  0b11111111)
+        self.i2c.row_write('MemoryControl_1', 0,  latency - diff)
+        self.i2c.row_write('Mask', 0,  0b00000001)
+        self.i2c.row_write('MemoryControl_2', 0,  0)
+        self.i2c.row_write('Mask', 0,  0b00000010)
+        self.i2c.row_write('MemoryControl_2', 0,  gate)
+        self.i2c.row_write('Mask', 0,  0b11111111)
+        self.i2c.pixel_write('DigPattern', 0, 0,  0b00000001)
         self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
         self.mpa.ctrl_pix.disable_pixel(0,0)
         stuck = 0; i2c_issue = 0; error = 0; missing = 0
         for d in delay:
-            Configure_TestPulse_MPA(delay_after_fast_reset = d + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 200, number_of_test_pulses = 1, enable_L1 = 1, enable_rst = 1, enable_init_rst = 1)
+            Configure_TestPulse_MPA(delay_after_fast_reset = d + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 200, number_of_test_pulses = 1, enable_L1 = 1, enable_rst = 0, enable_init_rst = 0)
             time.sleep(0.1)
             ## Automatic change of sampling edge on error
             #try:
@@ -472,9 +482,10 @@ class mpa_test_utility():
             #	I2C.peri_write('EdgeSelT1Raw', 0)
             #time.sleep(1)
             for r in row:
+                self.fc7.SendCommand_CTRL("fast_fast_reset")
                 for p in pixel:
                     #try:
-                    strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = self.memory_test(latency = latency, row = r, pixel = p, diff = diff, dig_inj = dig_inj, verbose = 0)
+                    strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = self.memory_test(latency = latency, row = r, pixel = p, diff = diff, dig_inj = dig_inj, verbose = 1)
                     found = 0
                     for i in range(0, pixel_counter):
                         if (pos_pixel[i] == p) and (Z[i] == r):

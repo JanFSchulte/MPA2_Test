@@ -4,7 +4,7 @@ import time
 from myScripts.Utilities import *
 from utilities.tbsettings import *
 from ssa_methods.Configuration.ssa1_reg_map import *
-from ssa_methods.Configuration.mpa_reg_map import * # Change location for register map file
+from ssa_methods.Configuration.mpa2_reg_map import * # Change location for register map file
 
 class I2CConf:
 
@@ -221,8 +221,8 @@ class I2CConf:
             pixel_id = 0b1111001
             base = mpa_row_reg_map[register]
             adr  = ((row & 0x0001f) << 11 ) | ((base & 0x000f) << 7 ) | pixel_id
-            #print bin(adr)
-            rep  = self.read_I2C('MPA', adr, timeout)
+            print(bin(adr))
+            rep  = self.read_I2C('MPA', adr)
         return rep
 
     def pixel_write(self, register, row, pixel, data):
@@ -251,12 +251,7 @@ class I2CConf:
             base = mpa_pixel_reg_map[register]
             adr  = ((row & 0x0001f) << 11 ) | ((base & 0x000f) << 7 ) | (pixel_id & 0xfffffff)
             #print bin(adr)
-            rep  = self.read_I2C('MPA', adr, timeout)
-            if rep == None:
-                time.sleep(1)
-                activate_I2C_chip()
-                time.sleep(1)
-                rep  = self.read_I2C('MPA', adr, timeout)
+            rep  = self.read_I2C('MPA', adr)
 
         return rep
 

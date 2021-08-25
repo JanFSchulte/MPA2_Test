@@ -35,7 +35,7 @@ class MPA_ASIC:
 #
 #	def load_configuration(self, file = '../MPA_Results/Configuration.csv', display=True):
 #		self.ctrl.load_configuration(file = file, display = display)
-	def init(self, reset_board = False, reset_chip = False, slvs_current = 0b001, edge = "negative", display = True, read_current = False):
+	def init(self, reset_board = False, reset_chip = False, slvs_current = 0b111, edge = "negative", display = True, read_current = False, pattern = 0b10100000):
 		if(display):
 			sys.stdout.write("->  \tInitialising..\r")
 			sys.stdout.flush()
@@ -44,6 +44,8 @@ class MPA_ASIC:
 		if(reset_chip):
 			self.ctrl_base.reset(display=False)
 		utils.activate_I2C_chip(self.fc7)
+		self.i2c.peri_write("Mask", 0b11111111); time.sleep(0.1)
+		self.ctrl_base.set_out_mapping_probing()
 		if(display): time.sleep(0.2)
 		else: time.sleep(0.1)
 		if(display):
@@ -51,7 +53,7 @@ class MPA_ASIC:
 			sys.stdout.flush()
 		self.ctrl_base.set_sampling_edge(edge); time.sleep(0.2)
 		self.ctrl_base.init_slvs(slvs_current); time.sleep(0.2)
-		rt = self.ctrl_base.align_out_all()
+		rt = self.ctrl_base.align_out_all(pattern = pattern)
 		if(display): time.sleep(0.2)
 		else: time.sleep(0.1)
 		self.ctrl_base.activate_sync()
@@ -72,12 +74,16 @@ class MPA_ASIC:
 	def init_all(self):
 		self.init(reset_board = True, reset_chip = False)
 
-	def init_probe(self, reset_chip = True, slvs_current = 0b001, edge = "negative"):
+	def init_probe(self, reset_chip = True, slvs_current = 0b111, edge = "negative"):
 		sys.stdout.write("->  \tInitialising..\r")
 		sys.stdout.flush()
 		if(reset_chip):
 			self.ctrl_base.reset(display=False)
+
 		utils.activate_I2C_chip(self.fc7)
+		self.ctrl_base.set_out_mapping()
+		self.i2c.peri_write("Mask", 0b11111111)
+
 		sys.stdout.write("->  \tTuning sampling phases..\r")
 		sys.stdout.flush()
 		self.ctrl_base.set_sampling_edge(edge);
@@ -86,6 +92,7 @@ class MPA_ASIC:
 		if (not rt):
 			print("->  \tRepeating alignment...")
 			rt = self.ctrl_base.align_out_all()
+		utils.activate_I2C_chip(self.fc7)
 		self.ctrl_base.activate_sync()
 		print("->  \tInitialised SLVS pads and sampling edges")
 		print("->  \tSampling phases tuned")

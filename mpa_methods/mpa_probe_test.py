@@ -43,8 +43,8 @@ class MPAProbeTest:
 		# Current Limits
 		self.current_limit_pads_high = 25
 		self.current_limit_pads_low = 5
-		self.current_limit_digital_high = 200
-		self.current_limit_digital_low = 100
+		self.current_limit_digital_high = 150
+		self.current_limit_digital_low = 50
 		self.current_limit_digital_high_leakage = 20
 		self.current_limit_digital_low_leakage = 5
 		self.current_limit_analog_high = 100

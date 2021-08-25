@@ -43,11 +43,11 @@ def GetPhaseTuningStatus(printStatus = True):
         return -1
     # tuning status
     elif(output_type == 1):
-        delay = (data & 0x00F80000) >> 19
-        bitslip = (data & 0x00070000) >> 16
-        done = (data & 0x00008000) >> 15
-        wa_fsm_state = (data & 0x00000F00) >> 8
-        pa_fsm_state = (data & 0x0000000F) >> 0
+        delay = (data & 0x1F<<19) >> 19
+        bitslip = (data & 0xF<<15) >> 15
+        done = (data & 0x1<<14) >> 14
+        wa_fsm_state = (data & 0xF<<7) >> 7
+        pa_fsm_state = (data & 0xF<<0) >> 0
         if printStatus:
             print("Line Status: ")
             print("\tTuning done/applied: "+ str(done))
@@ -190,18 +190,18 @@ def SetLinePattern(hybrid_id, chip_id, line_id, pattern, pattern_period):
     command_final = hybrid_raw + chip_raw + line_raw + command_raw + byte_id_raw + pattern_raw
     SendPhaseTuningCommand(command_final)
 
-def TuneLine(line_id, pattern, pattern_period, changePattern = True, printStatus = False):
+def TuneLine(line_id, pattern, pattern_period, changePattern = True, printStatus = True):
     # in that case all set specified pattern (same for all lines)
     if changePattern:
         SetLineMode(0,0,line_id,mode = 0)
         SetLinePattern(0,0,line_id,pattern, pattern_period)
-        time.sleep(0.01)
+        time.sleep(0.1)
     # do phase alignment
     SendControl(0,0,line_id,"do_phase")
-    time.sleep(0.01)
+    time.sleep(0.1)
     # do word alignment
     SendControl(0,0,line_id,"do_word")
-    time.sleep(0.01)
+    time.sleep(0.1)
 
     if printStatus:
         GetLineStatus(0,0,line_id)
@@ -209,7 +209,7 @@ def TuneLine(line_id, pattern, pattern_period, changePattern = True, printStatus
 
     return CheckLineDone(0,0,line_id)
 
-def TuneMPA():
+def TuneMPA(pattern):
     # in case of MPA the pattern is following: stub lines (1-5) tune on patterns 0b10100000, l1a inherited from the line 1
 
     # set mpa
@@ -220,7 +220,7 @@ def TuneMPA():
     state = True
 
     for line in range(0,6):
-        TuneLine(line, np.array(0b10100000), 1, True, False)
+        TuneLine(line, np.array(pattern), 8, True, False)
         if CheckLineDone(0,0,line) != 1:
             print(f"Failed tuning line {line}")
             state = False

@@ -400,7 +400,7 @@ class SSA_readout():
 		#t = time.time()
 		if(initialize):
 			self.ctrl.setup_readout_chip_id()
-			self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)# set the raw mode to the firmware
+			self.fc7.write("fc7_daq_cnfg.physical_interface_block.ps_counters_raw_en", raw_mode_en)# set the raw mode to the firmware
 			#self.I2C.peri_write('AsyncRead_StartDel_LSB', (11 + shift) )
 		if(isinstance(shift, int) and (shift != self.countershift['value'])):
 			self.ctrl.set_async_readout_start_delay(delay=8, fc7_correction=shift)
@@ -412,7 +412,7 @@ class SSA_readout():
 				self.ctrl.set_async_readout_start_delay(delay=8, fc7_correction=self.countershift['value'])
 			else:
 				self.align_counters_readout()
-		mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
+		mpa_counters_ready = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug.ps_counters_ready")
 		#self.I2C.peri_write('AsyncRead_StartDel_LSB', (8) )
 		self.fc7.start_counters_read(1)
 		timeout = 0
@@ -420,27 +420,27 @@ class SSA_readout():
 		while ((mpa_counters_ready == 0) & (timeout < 100)):
 			#### time.sleep(0.01)
 			timeout += 1
-			mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
+			mpa_counters_ready = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug.ps_counters_ready")
 			time.sleep(0.001)
 		if(timeout >= 50):
 			failed = True;
 			return failed, -1
 		if raw_mode_en == 0:
-			count = self.fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 120)
+			count = self.fc7.fifoRead("fc7_daq_ctrl.physical_interface_block.fifo2_datadata", 120)
 			if(tbconfig.VERSION['SSA'] == 1):
 				if(119 in striplist): ## BUG IN SSA CHIP (STRIP 120 COUNTER READABLE ONLY VIA I2C) FIXED in SSAv2
 					count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
 		else:
 			count = np.zeros((20000, ), dtype = np.uint16)
 			for i in range(0,20000):
-				fifo1_word = self.fc7.read("ctrl_slvs_debug_fifo1_data")
-				fifo2_word = self.fc7.read("ctrl_slvs_debug_fifo2_data")
+				fifo1_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.fifo1_data")
+				fifo2_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.fifo2_datadata")
 				line1 = to_number(fifo1_word,8,0)
 				line2 = to_number(fifo1_word,16,8)
 				count[i] = (line2 << 8) | line1
 				if (i%1000 == 0): utils.print_log("Reading BX #" + str(i))
 		#### time.sleep(0.1)
-		#### mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
+		#### mpa_counters_ready = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug.ps_counters_ready")
 		for s in range(0,120):
 			if (not (s+1) in striplist):
 				count[s] = 0

@@ -15,7 +15,7 @@ class mpa_bias_utility():
 
     def __init__(self, mpa, I2C, fc7, multimeter, mpa_peri_reg_map, mpa_row_reg_map, mpa_pixel_reg_map):
         self.mpa = mpa
-        self.I2C = I2C
+        self.i2c= I2C
         self.fc7 = fc7
         self.multimeter = multimeter
         self.mpa_peri_reg_map = mpa_peri_reg_map
@@ -41,12 +41,12 @@ class mpa_bias_utility():
     def DAC_linearity(self, block, point, bit, step = 1, plot = 1, verbose = 1):
         DAC = self.nameDAC[point] + str(block)
         test = "TEST" + str(block)
-        self.I2C.peri_write('TESTMUX',0b00000001 << block)
-        self.I2C.peri_write(test, 0b00000001 << point)
+        self.i2c.peri_write('TESTMUX',0b00000001 << block)
+        self.i2c.peri_write(test, 0b00000001 << point)
         data = np.zeros(1 << bit, dtype=np.float)
         if verbose: print("DAC: ", DAC)
         for i in range(0, 1 << bit, step):
-            self.I2C.peri_write(DAC, i)
+            self.i2c.peri_write(DAC, i)
             data[i] = self.multimeter.measure()
             if (i % 10 == 0):
                 if verbose: print("Done point ", i, " of ", 1 << bit)
@@ -55,6 +55,7 @@ class mpa_bias_utility():
             plt.xlabel('DAC voltage [LSB]'); plt.ylabel('DAC value [mV]'); plt.show()
         return data
 
+    
     def measure_DAC_testblocks(self, point, bit, step = 1, plot = 1,print_file = 0, filename = "../cernbox/MPA_Results/DAC_", verbose = 1):
         data = np.zeros((7, 1 << bit), dtype=np.float)
         for i in range(0,7):
@@ -93,14 +94,14 @@ class mpa_bias_utility():
         """        
         DAC = self.nameDAC[point] + str(block)
         test = "TEST" + str(block)
-        self.I2C.peri_write('TESTMUX',0b00000001 << block) # enable a specific bias block
-        self.I2C.peri_write(test, 0b00000001 << point) # select test point on specific bias block
-        self.I2C.peri_write(DAC, 0)
+        self.i2c.peri_write('TESTMUX',0b00000001 << block) # enable a specific bias block
+        self.i2c.peri_write(test, 0b00000001 << point) # select test point on specific bias block
+        self.i2c.peri_write(DAC, 0)
         #time.sleep(0.1)
 
         off_val = self.multimeter.measure()
         #time.sleep(0.1)
-        self.I2C.peri_write(DAC, DAC_val)
+        self.i2c.peri_write(DAC, DAC_val)
         #time.sleep(0.1)
         act_val = self.multimeter.measure()
         LSB = (act_val - off_val) / DAC_val
@@ -110,7 +111,7 @@ class mpa_bias_utility():
         elif DAC_new_val > 31:
             DAC_new_val = 31
 
-        self.I2C.peri_write(DAC, DAC_new_val)
+        self.i2c.peri_write(DAC, DAC_new_val)
         new_val = self.multimeter.measure()
         if (new_val - gnd_corr < exp_val + exp_val*self.cal_precision  )&(new_val - gnd_corr > exp_val - exp_val*self.cal_precision ):
             print("Calibration bias point ", point, "of bias block", block, "--> Done (", new_val, "V for ", DAC_new_val, " DAC)")
@@ -149,6 +150,33 @@ class mpa_bias_utility():
         if print_file: CSV.ArrayToCSV (data, str(filename) + ".csv"); print("Saved!")
         return data
 
+    def measure_block(self, block, test_point):
+        """Measure selected value for selected block with the multimeter. 
+        See ADC/Bias Register Description for more detail.
+
+        Parameters
+        ----------
+        block : int
+            Select block, 0 – disabled, 1-7 – Bias Block 1-7, 8 – BG, 9 – VDAC_REF, 10 - VREF
+        test_point : int
+            Select test point 1-7 for DAC A-E
+
+        Returns
+        -------
+        multimeter.measure()
+        """        
+        self.i2c.peri_write('Mask',0xFF)
+
+        sw_enable = 1 << 7
+        block_selection = block
+        value_selection = test_point << 4
+
+        command = sw_enable + block_selection + value_selection
+        print(bin(command))
+        self.i2c.peri_write('ADC_TEST_selection', command)
+        return self.multimeter.measure()
+
+
     def measure_gnd(self):
         """Measures GND voltage 
 
@@ -157,22 +185,19 @@ class mpa_bias_utility():
         [type]
             [description]
         """        
-        self.mpa.ctrl_base.disable_test()
+        #self.mpa.ctrl_base.disable_test()
         data = np.zeros((7, ), dtype=np.float)
-        for block in range(0,7):
-            test = "TEST" + str(block)
-            self.I2C.peri_write('TESTMUX',0b00000001 << block)
-            self.I2C.peri_write(test, 0b10000000) # Bit 7 high enables GND Bias Block
-            #time.sleep(0.1)
-            data[block] = self.multimeter.measure()
-        self.mpa.ctrl_base.disable_test()
+        for block in range(1,8):
+            data[block-1] = self.measure_block(block, 7) # 7 to Measure GND 
+            print(data[block-1])
+        #self.mpa.ctrl_base.disable_test()
         print("Measured Analog Ground:", np.mean(data))
         return np.mean(data)
 
     def measure_bg(self):
         time.sleep(1)
         self.mpa.ctrl_base.disable_test()
-        self.I2C.peri_write('TESTMUX',0b10000000)
+        self.i2c.peri_write('TESTMUX',0b10000000)
         time.sleep(1)
         data = self.multimeter.measure()
         self.mpa.ctrl_base.disable_test()
@@ -183,7 +208,7 @@ class mpa_bias_utility():
         for block in range(0,7):
         #curr = I2C.peri_read("C"+str(block))
         #new_value = curr + value
-            self.I2C.peri_write("C"+str(block), value)
+            self.i2c.peri_write("C"+str(block), value)
         trm_LSB = round(((0.172-0.048)/32.0*value+0.048)/32.0*1000.0,2)
         return trm_LSB
 
@@ -192,5 +217,5 @@ class mpa_bias_utility():
         for point in range(0,5):
             for block in range(0,7):
                 DAC = self.nameDAC[point] + str(block)
-                self.I2C.peri_write(DAC, array[point, block+1])
+                self.i2c.peri_write(DAC, array[point, block+1])
                 time.sleep(0.001)

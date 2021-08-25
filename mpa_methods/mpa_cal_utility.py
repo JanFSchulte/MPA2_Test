@@ -129,9 +129,9 @@ class mpa_cal_utility():
 
         """
     # set the raw mode to the firmware
-        self.fc7.write("cnfg_phy_slvs_raw_mode_en", raw_mode_en)
+        self.fc7.write("fc7_daq_cnfg.physical_interface_block.ps_counters_raw_en", raw_mode_en)
         t0 = time.time()
-        mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
+        mpa_counters_ready = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug.ps_counters_ready")
     #time.sleep(0.1)
     #print "---> Sending Start and Waiting for Data"
     #StartCountersRead()
@@ -139,10 +139,10 @@ class mpa_cal_utility():
         timeout = 0
         while ((mpa_counters_ready == 0) & (timeout < 50)):
             time.sleep(0.01)
-            mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
+            mpa_counters_ready = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug.ps_counters_ready")
             timeout += 1
         if (timeout >= 50):
-            print("Fail: ", self.fc7.read("stat_slvs_debug_mpa_counters_store_fsm_state"))
+            print("Fail: ", self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug.ps_counters_fsm_state"))
             failed = True;
             return failed, 0
     #print "---> MPA Counters Ready(should be one): ", mpa_counters_ready
@@ -150,8 +150,8 @@ class mpa_cal_utility():
             count = np.zeros((2040, ), dtype = np.uint16)
             cycle = 0
             for i in range(0,20000):
-                fifo1_word = self.fc7.read("ctrl_slvs_debug_fifo1_data")
-                fifo2_word = self.fc7.read("ctrl_slvs_debug_fifo2_data")
+                fifo1_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.fifo1_data")
+                fifo2_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.fifo2_data")
                 line1 = to_number(fifo1_word,8,0)
                 line2 = to_number(fifo1_word,16,8)
                 line3 = to_number(fifo1_word,24,16)
@@ -164,11 +164,11 @@ class mpa_cal_utility():
                         cycle += 1
         else:
             # here is the parsed mode, when the fpga parses all the counters
-            count = self.fc7.fifoRead("ctrl_slvs_debug_fifo2_data", 2040)
+            count = self.fc7.fifoRead("fc7_daq_ctrl.physical_interface_block.fifo2_data", 2040)
             for i in range(2040):
                 count[i] = count[i] - 1
         time.sleep(0.001)
-        mpa_counters_ready = self.fc7.read("stat_slvs_debug_mpa_counters_ready")
+        mpa_counters_ready = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug.ps_counters_ready")
         failed = False
         return failed, count
     
