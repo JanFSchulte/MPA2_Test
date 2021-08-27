@@ -2,6 +2,9 @@
 mpa_peri_reg_map = {'test': 0xfff}
 mpa_pixel_reg_map = {'test': 0xfff}
 mpa_row_reg_map = {'test': 0xfff}
+mpa_row_wr_reg = 0b1111001
+mpa_row_ro0_reg = 0b1111010
+mpa_row_ro1_reg = 0b1111011
 ################# Pixel register map #########################
 
 mpa_pixel_reg_map['PixelEnables']      = 0b0000
@@ -12,50 +15,50 @@ mpa_pixel_reg_map['AC_ReadCounterLSB']  = 0b0100
 mpa_pixel_reg_map['AC_ReadCounterMSB']  = 0b0101
 
 ################# Memory register map #########################
-mpa_row_reg_map['MemoryControl_1']              = 0b0000
-mpa_row_reg_map['MemoryControl_2']              = 0b0001
-mpa_row_reg_map['PixelControl']                 = 0b0010
-mpa_row_reg_map['RingOscillator']               = 0b0011
-mpa_row_reg_map['SRAM_BIST']                    = 0b0100
-mpa_row_reg_map['RowLogic_BIST']                = 0b0101
-mpa_row_reg_map['RowLogic_BIST_input_1']        = 0b0110
-mpa_row_reg_map['RowLogic_BIST_input_2']        = 0b0111
-mpa_row_reg_map['RowLogic_BIST_ref_output_1']   = 0b1000
-mpa_row_reg_map['RowLogic_BIST_ref_output_2']   = 0b1001
-mpa_row_reg_map['-']                            = 0b1010
-mpa_row_reg_map['-']                            = 0b1011
-mpa_row_reg_map['-']                            = 0b1100
-mpa_row_reg_map['Mask']                         = 0b1101
-mpa_row_reg_map['Async_SEUcntPixels']           = 0b1110
-mpa_row_reg_map['Sync_SEUcntRow']               = 0b1111
+mpa_row_reg_map['MemoryControl_1']              = (0b0000<<7) | mpa_row_wr_reg
+mpa_row_reg_map['MemoryControl_2']              = (0b0001<<7) | mpa_row_wr_reg
+mpa_row_reg_map['PixelControl']                 = (0b0010<<7) | mpa_row_wr_reg
+mpa_row_reg_map['RingOscillator']               = (0b0011<<7) | mpa_row_wr_reg
+mpa_row_reg_map['SRAM_BIST']                    = (0b0100<<7) | mpa_row_wr_reg
+mpa_row_reg_map['RowLogic_BIST']                = (0b0101<<7) | mpa_row_wr_reg
+mpa_row_reg_map['RowLogic_BIST_input_1']        = (0b0110<<7) | mpa_row_wr_reg
+mpa_row_reg_map['RowLogic_BIST_input_2']        = (0b0111<<7) | mpa_row_wr_reg
+mpa_row_reg_map['RowLogic_BIST_ref_output_1']   = (0b1000<<7) | mpa_row_wr_reg
+mpa_row_reg_map['RowLogic_BIST_ref_output_2']   = (0b1001<<7) | mpa_row_wr_reg
+mpa_row_reg_map['-']                            = (0b1010<<7) | mpa_row_wr_reg
+mpa_row_reg_map['-']                            = (0b1011<<7) | mpa_row_wr_reg
+mpa_row_reg_map['-']                            = (0b1100<<7) | mpa_row_wr_reg
+mpa_row_reg_map['Mask']                         = (0b1101<<7) | mpa_row_wr_reg
+mpa_row_reg_map['Async_SEUcntPixels']           = (0b1110<<7) | mpa_row_wr_reg
+mpa_row_reg_map['Sync_SEUcntRow']               = (0b1111<<7) | mpa_row_wr_reg
 
 
 ################# Row register map - Read only #########################
-mpa_row_reg_map['RowBIST_summary_reg']          = 0b0000
-mpa_row_reg_map['Ring_oscillator_Row_T1_LSB']   = 0b0001
-mpa_row_reg_map['Ring_oscillator_Row_T1_MSB']   = 0b0010
-mpa_row_reg_map['Ring_oscillator_Row_T2_LSB']   = 0b0011
-mpa_row_reg_map['Ring_oscillator_Row_T2_MSB']   = 0b0100
-mpa_row_reg_map['SRAM_BIST_done']               = 0b0101
-mpa_row_reg_map['SRAM_BIST_fail']               = 0b0110
+mpa_row_reg_map['RowBIST_summary_reg']          = (0b0000<<7) | mpa_row_ro0_reg
+mpa_row_reg_map['RO_Row_Del_LSB']   = (0b0001<<7) | mpa_row_ro0_reg
+mpa_row_reg_map['RO_Row_Del_MSB']   = (0b0010<<7) | mpa_row_ro0_reg
+mpa_row_reg_map['RO_Row_Inv_LSB']   = (0b0011<<7) | mpa_row_ro0_reg
+mpa_row_reg_map['RO_Row_Inv_MSB']   = (0b0100<<7) | mpa_row_ro0_reg
+mpa_row_reg_map['SRAM_BIST_done']               = (0b0101<<7) | mpa_row_ro0_reg
+mpa_row_reg_map['SRAM_BIST_fail']               = (0b0110<<7) | mpa_row_ro0_reg
 
 
-mpa_row_reg_map['BIST_SRAM_output_0']           = 0b0000
-mpa_row_reg_map['BIST_SRAM_output_1']           = 0b0001
-mpa_row_reg_map['BIST_SRAM_output_2']           = 0b0010
-mpa_row_reg_map['BIST_SRAM_output_3']           = 0b0011
-mpa_row_reg_map['BIST_SRAM_output_4']           = 0b0100
-mpa_row_reg_map['BIST_SRAM_output_5']           = 0b0101
-mpa_row_reg_map['BIST_SRAM_output_6']           = 0b0110
-mpa_row_reg_map['BIST_SRAM_output_7']           = 0b0111
-mpa_row_reg_map['BIST_SRAM_output_8']           = 0b1000
-mpa_row_reg_map['BIST_SRAM_output_9']           = 0b1001
-mpa_row_reg_map['BIST_SRAM_output_10']          = 0b1010
-mpa_row_reg_map['BIST_SRAM_output_11']          = 0b1011
-mpa_row_reg_map['BIST_SRAM_output_12']          = 0b1100
-mpa_row_reg_map['BIST_SRAM_output_13']          = 0b1101
-mpa_row_reg_map['BIST_SRAM_output_14']          = 0b1110
-mpa_row_reg_map['BIST_SRAM_output_15']          = 0b1111
+mpa_row_reg_map['BIST_SRAM_output_0']           = (0b0000<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_1']           = (0b0001<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_2']           = (0b0010<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_3']           = (0b0011<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_4']           = (0b0100<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_5']           = (0b0101<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_6']           = (0b0110<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_7']           = (0b0111<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_8']           = (0b1000<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_9']           = (0b1001<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_10']          = (0b1010<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_11']          = (0b1011<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_12']          = (0b1100<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_13']          = (0b1101<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_14']          = (0b1110<<7) | mpa_row_ro1_reg
+mpa_row_reg_map['BIST_SRAM_output_15']          = (0b1111<<7) | mpa_row_ro1_reg
 
 
 ################# Periphery register map #####################
@@ -181,10 +184,10 @@ mpa_peri_reg_map['EfuseValue1']=        0b1001000000000011
 mpa_peri_reg_map['EfuseValue2']=        0b1001000000000100
 mpa_peri_reg_map['EfuseValue3']=        0b1001000000000101
 mpa_peri_reg_map['DLLlocked']=      0b1001000000000110
-mpa_peri_reg_map['Ring_oscillator_T1_LSB']= 0b1001000000000111
-mpa_peri_reg_map['Ring_oscillator_T1_MSB']= 0b1001000000001000
-mpa_peri_reg_map['Ring_oscillator_T2_LSB']= 0b1001000000001001
-mpa_peri_reg_map['Ring_oscillator_T2_MSB']= 0b1001000000001010
+mpa_peri_reg_map['RO_Inv_LSB']= 0b1001000000000111
+mpa_peri_reg_map['RO_Inv_MSB']= 0b1001000000001000
+mpa_peri_reg_map['RO_Del_LSB']= 0b1001000000001001
+mpa_peri_reg_map['RO_Del_MSB']= 0b1001000000001010
 mpa_peri_reg_map['ADC_output_LSB']=        0b1001000000001011
 mpa_peri_reg_map['ADC_output_MSB']= 0b1001000000001100
 mpa_peri_reg_map['L1_miss_pixel']=  0b1001000000001101

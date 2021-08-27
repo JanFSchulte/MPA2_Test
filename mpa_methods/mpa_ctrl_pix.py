@@ -19,36 +19,36 @@ class mpa_ctrl_pix:
 		self.fc7 = FC7;
 		self.pwr = pwr
 	def disable_pixel(self, r, p):
-		self.I2C.pixel_write('ENFLAGS', r, p, 0x00)
+		self.I2C.pixel_write('PixelEnables', r, p, 0x00)
 		#self.I2C.pixel_write('ModeSel', r, p, 0x00)
 # Pixel mode selection
 	def enable_pix_counter(self, r, p):
-		self.I2C.pixel_write('ENFLAGS', r, p, 0x53)
+		self.I2C.pixel_write('PixelEnables', r, p, 0x53)
 	def enable_pix_disable_ancal(self, r,p):
-		self.I2C.pixel_write('ENFLAGS', r, p, 0x13)
+		self.I2C.pixel_write('PixelEnables', r, p, 0x13)
 	def enable_pix_sync(self, r,p):
-		self.I2C.pixel_write('ENFLAGS', r, p, 0x53)
+		self.I2C.pixel_write('PixelEnables', r, p, 0x53)
 
 	def enable_pix_EdgeBRcal(self, r,p, polarity = "rise"):
-		self.I2C.pixel_write('ModeSel', r, p, 0b00)
+		self.I2C.row_write('PixelControl', r, 0x14)
 		if (polarity == "rise"):
-			self.I2C.pixel_write('ENFLAGS', r, p, 0x57) # with pixel counter for debugging
+			self.I2C.pixel_write('PixelEnables', r, p, 0x57) # with pixel counter for debugging
 		elif (polarity == "fall"):
-			self.I2C.pixel_write('ENFLAGS', r, p, 0x55) # with pixel counter for debugging
+			self.I2C.pixel_write('PixelEnables', r, p, 0x55) # with pixel counter for debugging
 		else:
 			print("Polarity not recognized")
 			return
 	def enable_pix_LevelBRcal(self, r,p, polarity = "rise"):
 		self.I2C.pixel_write('ModeSel', r, p, 0b01)
 		if (polarity == "rise"):
-			self.I2C.pixel_write('ENFLAGS', r, p, 0x5b) # with pixel counter for debugging
+			self.I2C.pixel_write('PixelEnables', r, p, 0x5b) # with pixel counter for debugging
 		elif (polarity == "fall"):
-			self.I2C.pixel_write('ENFLAGS', r, p, 0x59) # with pixel counter for debugging
+			self.I2C.pixel_write('PixelEnables', r, p, 0x59) # with pixel counter for debugging
 		else:
 			print("Polarity not recognized")
 			return
 	def enable_dig_cal(self, r,p, pattern = 0b00000001):
-		self.I2C.pixel_write('ENFLAGS', r, p, 0x20)
+		self.I2C.pixel_write('PixelEnables', r, p, 0x20)
 		self.I2C.pixel_write('DigPattern', r, p, pattern)
 	def load_trim(self, trim_array):
 		count = 0

@@ -360,6 +360,11 @@ class PowerUtility:
         self.enable_ssa(display)
         self.enable_mpa(display)
 
+    def reset_mpa(self, display = True):
+        self.disable_mpa(display)   
+        time.sleep(0.001)
+        self.enable_mpa(display)    
+
     def disable_ssa(self, display=True):
         self.ssastate = False
         self.__enable_disable_chip()

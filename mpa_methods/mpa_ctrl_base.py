@@ -30,7 +30,7 @@ class mpa_ctrl_base:
 	def init_slvs(self, curr = 1):
 		currSLVS = 0b00111000 | curr
 		self.I2C.peri_write("ConfSLVS", currSLVS)
-## Operation mode selection:
+	# Operation mode selection:
 	def activate_async(self):
 		self.I2C.peri_write("Mask", 0b00000011)
 		self.I2C.peri_write("Control", 0b01)
@@ -51,24 +51,79 @@ class mpa_ctrl_base:
 		self.I2C.peri_write('ECM',0b01000001)
 	def activate_ps(self):
 		self.I2C.peri_write('ECM',0b00001000)
-# Pixel mode selection
+
+	def ro_peri(self, duration = 100, verbose = 0):
+		self.set_peri_mask()
+		self.I2C.peri_write('RingOscillator', duration)
+		self.I2C.peri_write("Mask", 0b10000000)
+		self.I2C.peri_write('RingOscillator', 0b10000000)
+		self.set_peri_mask()
+		time.sleep(0.01)
+		lsb_1 = self.I2C.peri_read('RO_Inv_LSB')
+		msb_1 = self.I2C.peri_read('RO_Inv_MSB')
+		lsb_2 = self.I2C.peri_read('RO_Del_LSB')
+		msb_2 = self.I2C.peri_read('RO_Del_MSB')
+		res_1 = ((msb_1<<8) | lsb_1)
+		res_2 = ((msb_2<<8) | lsb_2)
+		if verbose:
+			print("Ring Oscillator Inverter: " , res_1)
+			print("Ring Oscillator Delay: " , res_2)
+		return res_1, res_2
+		
+	def ro_row(self, row, duration = 100, verbose = 0):
+		self.set_row_mask(row)
+		self.I2C.row_write('RingOscillator', row, duration)
+		self.I2C.row_write("Mask", row, 0b10000000)
+		self.I2C.row_write('RingOscillator', row, 0b10000000)
+		self.set_peri_mask(row)
+		time.sleep(0.01)
+		lsb_1 = self.I2C.row_read('RO_Row_Inv_LSB', row)
+		msb_1 = self.I2C.row_read('RO_Row_Inv_MSB', row)
+		lsb_2 = self.I2C.row_read('RO_Row_Del_LSB', row)
+		msb_2 = self.I2C.row_read('RO_Row_Del_MSB', row)
+		res_1 = ((msb_1<<8) | lsb_1)
+		res_2 = ((msb_2<<8) | lsb_2)
+		if verbose:
+			print("Ring Oscillator Inverter: " , res_1)
+			print("Ring Oscillator Delay: " , res_2)
+		return res_1, res_2	
+
+	
+	
+	def set_peri_mask(self, bit_mask = 0):
+		""""Set/Reset mask register, which enables the given bit position for writing across all i2c registers. Required before register writes.
+
+		Args:
+			bit_mask (int, optional): Bit mask, to enable I2C register bits for writing. If left unset, all bits are set to enabled, i.e. value = 0b11111111. Defaults to 0.
+		"""		
+		if bit_mask:
+			self.I2C.peri_write("Mask", bit_mask)
+		else:
+			self.I2C.peri_write("Mask", 0b111111111)
+	
+	def set_row_mask(self, r = 0, bit_mask = 0):
+		""""Set/Reset mask register, which enables the given bit position for writing across all i2c registers. Required before register writes.
+
+		Args:
+			bit_mask (int, optional): Bit mask, to enable I2C register bits for writing. If left unset, all bits are set to enabled, i.e. value = 0b11111111. Defaults to 0.
+		"""		
+		if bit_mask:
+			self.I2C.row_write("Mask", r , bit_mask)
+		else:
+			self.I2C.row_write("Mask", r, 0b111111111)
+
+	# Pixel mode selection
 	def enable_pix_counter(self, r, p):
 		self.I2C.pixel_write('ENFLAGS', r, p, 0x53)
 	def enable_pix_disable_ancal(self, r,p):
 		self.I2C.pixel_write('ENFLAGS', r, p, 0x13)
 	def enable_pix_sync(self, r,p):
 		self.I2C.pixel_write('ENFLAGS', r, p, 0x53)
-# Analog Mux control
+	# Analog Mux control
 	def disable_test(self):
 		#activate_I2C_chip()
-		self.I2C.peri_write('TESTMUX',0b00000000)
-		self.I2C.peri_write('TEST0',0b00000000)
-		self.I2C.peri_write('TEST1',0b00000000)
-		self.I2C.peri_write('TEST2',0b00000000)
-		self.I2C.peri_write('TEST3',0b00000000)
-		self.I2C.peri_write('TEST4',0b00000000)
-		self.I2C.peri_write('TEST5',0b00000000)
-		self.I2C.peri_write('TEST6',0b00000000)
+		self.set_peri_mask()
+		self.I2C.peri_write('ADC_TEST_selection',0b00000000)
 	def enable_test(self, block, point):
 		#activate_I2C_chip()
 		self.disable_test()

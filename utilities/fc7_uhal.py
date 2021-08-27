@@ -35,10 +35,10 @@ class fc7_interface:
 		self.hw.dispatch()
 
 	def blockRead(self, reg_name, value, p3 = 0):
-		self.hw.getNode(reg_name).writeBlock(value)
-		self.hw.dispatch()
-
-	def blockWrite(self, reg_name, valeu, p3 = 0):
-		ret = self.hw.getNode(reg_name).writeBlock(value)
+		ret = self.hw.getNode(reg_name).readBlock(value)
 		self.hw.dispatch()
 		return ret
+
+	def blockWrite(self, reg_name, value, p3 = 0):
+		self.hw.getNode(reg_name).writeBlock(value)
+		self.hw.dispatch()

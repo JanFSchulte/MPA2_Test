@@ -41,6 +41,11 @@ class mpassa_power_utility:
 		time.sleep(0.1)
 		self.enable_ssa(display)
 		self.enable_mpa(display)
+	
+	def reset_mpa(self, display = True):
+		self.disable_mpa(display)
+		time.sleep(0.001)
+		self.enable_mpa(display)
 
 	def resync(self):
 		SendCommand_CTRL("fast_fast_reset");

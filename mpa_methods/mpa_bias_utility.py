@@ -1,14 +1,20 @@
+from os import EX_OSFILE, stat
+from numpy.core.defchararray import _to_string_or_unicode_array
+
+from numpy.lib.twodim_base import _trilu_dispatcher
 from d19cScripts.fc7_daq_methods import *
 from d19cScripts.MPA_SSA_BoardControl import *
 from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
+from scipy import stats
 
 import time
 import sys
 import inspect
 import random
 import numpy as np
+
 import matplotlib.pyplot as plt
 
 class mpa_bias_utility():
@@ -25,6 +31,7 @@ class mpa_bias_utility():
         self.nameDAC = ["A", "B", "C", "D", "E", "ThDAC", "CalDAC"]
         self.DAC_val = [15, 15, 15, 15, 15] # 0x0f, default DAC value for PVT adjustment, max 32
         self.exp_val = [0.082, 0.082, 0.108, 0.082, 0.082] # 
+        self.exp_VREF = 0.85
         self.cal_precision = 0.05
         self.measure_avg = 1
 
@@ -55,7 +62,6 @@ class mpa_bias_utility():
             plt.xlabel('DAC voltage [LSB]'); plt.ylabel('DAC value [mV]'); plt.show()
         return data
 
-    
     def measure_DAC_testblocks(self, point, bit, step = 1, plot = 1,print_file = 0, filename = "../cernbox/MPA_Results/DAC_", verbose = 1):
         data = np.zeros((7, 1 << bit), dtype=np.float)
         for i in range(0,7):
@@ -71,34 +77,31 @@ class mpa_bias_utility():
             else: 		bit = 8
             measure_DAC_testblocks(i, bit, plot = 0,print_file = 1, filename = filename + "_" + chip);
 
-    def calibrate_bias(self,point, block, DAC_val, exp_val, gnd_corr):
-        """[summary]
+    def calibrate_bias(self, point, block, DAC_val, exp_val, gnd_corr):
+        """Calibrates DAC bias values for a given test point to compensate for PVT variations local to that test point.
 
-        Parameters
-        ----------
-        point : [type]
-            [description]
-        block : [type]
-            [description]
-        DAC_val : [type]
-            [description]
-        exp_val : [type]
-            [description]
-        gnd_corr : [type]
-            [description]
+        Estimates new DAC value between 0 to 32, starts at 15. 
+        Fails if resulting voltage falls outside of given precision margin.
 
-        Returns
-        -------
-        [type]
-            [description]
+        Args:
+            point (int): Selects test point
+            block (int): Selects block bias block
+            DAC_val (int): DAC value
+            exp_val (int): Reference voltage
+            gnd_corr (int): Correction for shifted GND value
+
+        Returns:
+            int: calibrated DAC_val
         """        
-        DAC = self.nameDAC[point] + str(block)
-        test = "TEST" + str(block)
-        self.i2c.peri_write('TESTMUX',0b00000001 << block) # enable a specific bias block
-        self.i2c.peri_write(test, 0b00000001 << point) # select test point on specific bias block
-        self.i2c.peri_write(DAC, 0)
-        #time.sleep(0.1)
+        DAC = self.nameDAC[point] + str(block) # Careful to set string to correct DAC
 
+        # enable a specific bias block and test point. add +1 as blocks are indexed 1-7 in register "ADC_TEST_Selection"
+        self.select_block(block + 1, point)
+        
+        # set adjustment of specific DAC to 0 initially
+        self.i2c.peri_write(DAC, 0) 
+
+        #time.sleep(0.1)
         off_val = self.multimeter.measure()
         #time.sleep(0.1)
         self.i2c.peri_write(DAC, DAC_val)
@@ -118,79 +121,130 @@ class mpa_bias_utility():
         else:
             print("Calibration bias point ", point, "of bias block", block, "--> Failed (", new_val, "V for ", DAC_new_val, " DAC)")
         return DAC_new_val
+    
+    def calculate_ADC_LSB(self, vref_exp):
+        self.mpa.ctrl_base.set_peri_mask()
+
+        #self.calibrate_vref(vref_exp)
+
+        self.select_block(1, 7 ,0)
+        offset = self.adc_measure()
+        LSB = vref_exp/(4095 - offset)
+        return LSB
+    
+    def calibrate_vref(self, vref_exp, lin_pts):
+        # init
+        self.mpa.ctrl_base.disable_test()
+        self.mpa.ctrl_base.set_peri_mask()
+        self.i2c.peri_write("ADCtrimming", 0b01000000) # Bit 7 "trim_sel" to 1 selects I2C ctrl of VREF DAC
+        self.select_block(10, 0 ,1)
+        self.mpa.ctrl_base.set_peri_mask(0b00011111)
+
+        if lin_pts < 1:
+            lin_pts = 1
+        elif lin_pts > 31:
+            lin_pts = 31
+
+        vref_dac_vals = np.zeros((2, lin_pts))
+        iterable = np.ndenumerate(np.around(np.linspace(0, 31, lin_pts),0))
+
+        # step through all DAC values, measure and capture VREF
+        for index, dac_val in iterable:
+            self.i2c.peri_write("ADCcontrol", int(dac_val))
+            vref_val = self.multimeter.measure()
+            vref_dac_vals[0:,index[0]] = (dac_val, vref_val)
+            print(f"VREF DAC val {int(dac_val)} : {round(vref_val, 4)}V")
+
+        # linear regression
+        slope = round(stats.linregress(vref_dac_vals)[0], 5) # return first value of linregress, which is the calculated slope
+
+        # slope from two points
+        #slope = (vref_val - vref_dac_vals[1].flat[0]) / 31
+
+        # calculate new DAC value
+        offset = vref_dac_vals[1].flat[0]
+        vref_dac_new = int(round((vref_exp - offset) / slope,0))
+        if (vref_dac_new > 31): vref_dac_new = 31
+
+        # measure corrected VREF
+        self.i2c.peri_write("ADCcontrol", int(vref_dac_new))
+        vref_act = self.multimeter.measure()
+
+        if (vref_act < (vref_exp + vref_exp*0.01)) & (vref_act > (vref_exp - vref_exp*0.01)):
+            print(f"Calibration of VREF DAC --> Done ({vref_act}V for {vref_dac_new})")
+        else:
+            print(f"Calibration of VREF DAC --> Failed ({vref_act}V for {vref_dac_new})")
+
+        print(f"Slope = {slope}, Offset = {round(offset, 4)}V, vref_dac_new = {vref_dac_new}, VREF = {round(vref_act, 4)}V")
+        self.mpa.ctrl_base.set_peri_mask()
+        return vref_dac_new, vref_dac_vals
 
     def calibrate_chip(self, gnd_corr = 0, print_file = 1, filename = "test"):
-        """[summary]
+        """Runs calibrate_bias for all seven bias blocks and test points A-E.
 
-        Parameters
-        ----------
-        gnd_corr : int, optional
-            [description], by default 0
-        print_file : int, optional
-            [description], by default 1
-        filename : str, optional
-            [description], by default "test"
+        Args:
+            gnd_corr (int, optional): Correction for shifted GND value. Defaults to 0.
+            print_file (int, optional): [description]. Defaults to 1.
+            filename (str, optional): [description]. Defaults to "test".
 
-        Returns
-        -------
-        [type]
-            [description]
+        Returns:
+            np.array: Array of all new DAC values
         """        
-        data = np.zeros((5, 7), dtype = np.int16 )
-        self.mpa.ctrl_base.disable_test()
+        data = np.zeros((5, 7), dtype = np.int16)
+
+        self.mpa.ctrl_base.disable_test() 
+        self.mpa.ctrl_base.set_peri_mask()
 
         # for the DAC points A to E
         for point in range(0,5):
-            calrowval = []
-
             # for all seven bias blocks
             for block in range(0,7):
                 data[point, block] = self.calibrate_bias(point, block, self.DAC_val[point], self.exp_val[point], gnd_corr)
+    
         self.mpa.ctrl_base.disable_test()
         if print_file: CSV.ArrayToCSV (data, str(filename) + ".csv"); print("Saved!")
         return data
 
-    def measure_block(self, block, test_point):
-        """Measure selected value for selected block with the multimeter. 
-        See ADC/Bias Register Description for more detail.
+    def select_block(self, block, test_point = 0, sw_en = 0):
+        """Enables test point for given block for measurement by external multimeter. Done by i2c writing to "ADC_TEST_selection" multiplexing register. 
+        See MPA2 ADC/Bias Register Description for more detail.
 
-        Parameters
-        ----------
-        block : int
-            Select block, 0 – disabled, 1-7 – Bias Block 1-7, 8 – BG, 9 – VDAC_REF, 10 - VREF
-        test_point : int
-            Select test point 1-7 for DAC A-E
-
-        Returns
-        -------
-        multimeter.measure()
+        Args:
+            block (int): Select block; [0] disable all,  [1-7] – Bias Blocks 0 to 6, [8] – BG, [9] – VDAC_REF, [10] - VREF, [11]- TEMP
+            test_point (int): Select test point; [1-7] for DAC A-E.
+            sw_en (int): [0] for ADC, [1] for external multimeter measurement
         """        
-        self.i2c.peri_write('Mask',0xFF)
 
-        sw_enable = 1 << 7
+        sw_enable = sw_en << 7
         block_selection = block
         value_selection = test_point << 4
-
         command = sw_enable + block_selection + value_selection
-        print(bin(command))
-        self.i2c.peri_write('ADC_TEST_selection', command)
-        return self.multimeter.measure()
 
+        self.mpa.ctrl_base.set_peri_mask()
+        self.i2c.peri_write('ADC_TEST_selection', command)
+
+    def adc_measure(self, nsamples=1):
+        r1 = []
+        for i in range(nsamples):
+            self.i2c.peri_write( "ADCcontrol", 0b11100000 )
+            self.i2c.peri_write( "ADCcontrol", 0b11000000 )
+            time.sleep(0.001)
+            msb = self.i2c.peri_read( "ADC_output_MSB")
+            lsb = self.i2c.peri_read( "ADC_output_LSB")
+            res = ((msb<<8) | lsb)
+            r1.append(res)
+        if(nsamples>1): r = np.sum(r1) / float(nsamples)
+        else: r = r1[0]
+        return r
 
     def measure_gnd(self):
-        """Measures GND voltage 
-
-        Returns
-        -------
-        [type]
-            [description]
-        """        
-        #self.mpa.ctrl_base.disable_test()
+        """Measures and returns GND voltage averaged over all seven bias blocks. """
+        self.mpa.ctrl_base.disable_test()
         data = np.zeros((7, ), dtype=np.float)
-        for block in range(1,8):
-            data[block-1] = self.measure_block(block, 7) # 7 to Measure GND 
-            print(data[block-1])
-        #self.mpa.ctrl_base.disable_test()
+        for block in range(0,7):
+            self.select_block(block, 7, 1) # 7 to select GND 
+            data[block] = self.multimeter.measure()
+        self.mpa.ctrl_base.disable_test()
         print("Measured Analog Ground:", np.mean(data))
         return np.mean(data)
 

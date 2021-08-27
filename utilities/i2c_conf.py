@@ -4,7 +4,7 @@ import time
 from myScripts.Utilities import *
 from utilities.tbsettings import *
 from ssa_methods.Configuration.ssa1_reg_map import *
-from ssa_methods.Configuration.mpa2_reg_map import * # Change location for register map file
+from mpa_methods.Configuration.mpa2_reg_map import * 
 
 class I2CConf:
 
@@ -16,7 +16,7 @@ class I2CConf:
         #self.i2c_address = address
         self.fc7AddrTable = fc7AddrTable
 
-    def __load_reg_map(self, version):
+    def __load_reg_map(self, version):        
         if(self.chip_adr == "MPA"):
             self.peri_reg_map = mpa_peri_reg_map
             self.mpa_pixel_reg_map = mpa_pixel_reg_map
@@ -205,10 +205,9 @@ class I2CConf:
             rep = False
 
         else:
-            pixel_id = 0b1111001
             base = mpa_row_reg_map[register]
-            adr  = ((row & 0x0001f) << 11 ) | ((base & 0x000f) << 7 ) | pixel_id
-            #print bin(adr)
+            adr  = ((row & 0x0001f) << 11 ) | base
+            #print(bin(adr))
             rep  = self.write_I2C('MPA', adr, data, self.freq)
 
     def row_read(self, register, row, timeout = 0.001):
@@ -218,10 +217,9 @@ class I2CConf:
             rep = False
 
         else:
-            pixel_id = 0b1111001
             base = mpa_row_reg_map[register]
-            adr  = ((row & 0x0001f) << 11 ) | ((base & 0x000f) << 7 ) | pixel_id
-            print(bin(adr))
+            adr  = ((row & 0x0001f) << 11 ) | base
+            #print(bin(adr))
             rep  = self.read_I2C('MPA', adr)
         return rep
 

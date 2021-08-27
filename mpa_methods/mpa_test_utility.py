@@ -137,6 +137,8 @@ class mpa_test_utility():
         if print_log:
             f = open(filename, 'w')
             f.write("Starting Test:\n")
+        self.i2c.peri_write('Mask', 0b11111111)
+        self.i2c.row_write('Mask', 0, 0b11111111)
         self.mpa.ctrl_base.set_calibration(200)
         self.mpa.ctrl_base.set_threshold(200)
         self.mpa.ctrl_base.activate_sync()
@@ -485,7 +487,7 @@ class mpa_test_utility():
                 self.fc7.SendCommand_CTRL("fast_fast_reset")
                 for p in pixel:
                     #try:
-                    strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = self.memory_test(latency = latency, row = r, pixel = p, diff = diff, dig_inj = dig_inj, verbose = 1)
+                    strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = self.memory_test(latency = latency, row = r, pixel = p, diff = diff, dig_inj = dig_inj, verbose = 0)
                     found = 0
                     for i in range(0, pixel_counter):
                         if (pos_pixel[i] == p) and (Z[i] == r):
@@ -566,3 +568,117 @@ class mpa_test_utility():
         fig.set_figwidth(5)
 
         plt.show()
+
+    def ro_scan (self, duration = 127, n_samples = 1):
+        r0 = np.zeros((17))
+        r1 = np.zeros((17))
+        self.fc7.activate_I2C_chip(verbose = 0)
+        for j in range(0, n_samples):
+            res0, res1 = self.mpa.ctrl_base.ro_peri(duration = duration)
+            r0[0] += res0 
+            r1[0] += res1
+        for i in range(1,17):
+            for j in range(0, n_samples):
+                res0, res1 = self.mpa.ctrl_base.ro_row( row = i, duration = duration)
+                r0[i] += res0 
+                r1[i] += res1
+        r0 = r0 / n_samples
+        r1 = r1 / n_samples        
+        return r0, r1
+
+    def ro_scan_voltage (self, duration = 127, n_samples = 1, voltages = range(800, 1300, 50)):
+        r0 = []
+        r1 = []
+        for i in range(0, len(voltages)):
+            print("Testing at voltage", voltages[i]/1000)
+            self.mpa.pwr.set_dvdd(voltages[i]/1000)
+            res0, res1 = self.ro_scan(duration, n_samples)
+            r0.append(res0)
+            r1.append(res1)
+        self.mpa.pwr.set_dvdd(1)     
+        r0 = np.array(r0)
+        r1 = np.array(r1)
+        for i in range(0, 17):
+            plt.plot(voltages, r0[:,i])
+        plt.title('Ring Oscillator Inverter')
+        plt.xlabel('Voltage [mV]')
+        plt.ylabel('Count')
+        plt.show()
+        for i in range(0, 17):
+            plt.plot(voltages, r1[:,i])
+        plt.title('Ring Oscillator Delay')
+        plt.xlabel('Voltage [mV]')
+        plt.ylabel('Count')
+        plt.show()
+        return r0, r1
+
+    def dll_basic_test(self):
+        self.fc7.activate_I2C_chip(verbose = 0)
+        self.mpa.ctrl_base.set_peri_mask()
+        self.mpa.i2c.peri_write('BypassMode', 0b00000100)
+        self.mpa.i2c.peri_write('ConfDLL', 0b00110001)
+        send_trigger()
+        l1, stub = read_regs(verbose = 0)
+        if ( l1[0] == 4042322160): print("DLL at 0 - test passed")
+        else: print("DLL at 1 - test failed", print(l1[0]))
+        self.mpa.i2c.peri_write('ConfDLL', 0b00111111)
+        send_trigger()
+        l1, stub = read_regs(verbose = 0)
+        if ( l1[0] == 2021161080): print("DLL at 31 - test passed")
+        else: print("DLL at 31 - test failed",  print(l1[0]))
+        self.mpa.i2c.peri_write('ConfDLL', 0b00110001)
+        self.mpa.i2c.peri_write('BypassMode', 0b00000000)
+
+    def sram_bist_test(self, verbose = 0):
+        self.fc7.activate_I2C_chip(verbose = 0)
+        self.mpa.ctrl_base.set_row_mask()
+        fail = np.zeros(16)
+        for i in range (1,17):
+            if (self.mpa.i2c.row_read('SRAM_BIST_done', i)): print ("Test for row", i, "already run!")
+        self.mpa.i2c.row_write('SRAM_BIST', 0 , 0b00001111 )
+        self.mpa.i2c.row_write('SRAM_BIST', 0 , 0b11111111 )
+        time.sleep(0.1)
+        for i in range (1,17):
+            if (self.mpa.i2c.row_read('SRAM_BIST_done', i)):
+                if verbose: print("Test for row", i, "done!")
+                if (self.mpa.i2c.row_read('SRAM_BIST_fail', i)):
+                    sys.stdout.write("\033[1;31m")
+                    print("Test for row", i, "failed")
+                    fail[i-1] = 1
+                    sys.stdout.write("\033[0;0m")
+            else: 
+                sys.stdout.write("\033[1;31m")
+                print("Test for row", i, "not run")
+                fail[i-1] = 1
+                sys.stdout.write("\033[0;0m")
+
+        return fail
+
+    def sram_bist_voltage_scan(self, n_samples = 1, voltages = range(700, 1000, 50)):
+        res = []
+        for i in range(0, len(voltages)):
+            fail = np.zeros(16)
+            print("Testing at voltage", voltages[i]/1000)
+            self.mpa.pwr.set_dvdd(voltages[i]/1000)
+            for n in range(0, n_samples):
+                self.mpa.pwr.reset_mpa(display=False)
+                time.sleep(0.1)
+                fail += self.sram_bist_test()
+            res.append(n_samples - fail)
+        self.mpa.pwr.set_dvdd(1)     
+        res = np.array(res)/n_samples
+        for i in range(0, 16):
+            plt.plot(voltages, res[:,i], label = str(i))
+        plt.title('BIST results')
+        plt.xlabel('Voltage [mV]')
+        plt.ylabel('Success rate')
+        plt.legend()
+        plt.show()
+        return res
+
+
+
+                
+
+
+

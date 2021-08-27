@@ -151,7 +151,9 @@ class mpa_cal_utility():
             cycle = 0
             for i in range(0,20000):
                 fifo1_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.fifo1_data")
+                #print(fifo1_word)
                 fifo2_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.fifo2_data")
+                #print(fifo2_word)
                 line1 = to_number(fifo1_word,8,0)
                 line2 = to_number(fifo1_word,16,8)
                 line3 = to_number(fifo1_word,24,16)
@@ -164,12 +166,13 @@ class mpa_cal_utility():
                         cycle += 1
         else:
             # here is the parsed mode, when the fpga parses all the counters
-            count = self.fc7.fifoRead("fc7_daq_ctrl.physical_interface_block.fifo2_data", 2040)
+            count = np.array(self.fc7.blockRead("fc7_daq_ctrl.physical_interface_block.fifo2_data", 2040))
             for i in range(2040):
                 count[i] = count[i] - 1
         time.sleep(0.001)
         mpa_counters_ready = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug.ps_counters_ready")
         failed = False
+        # print(count)
         return failed, count
     
     # Test S-curve (~10 secs):
@@ -221,6 +224,8 @@ class mpa_cal_utility():
         nrow = int(row.shape[0])
         nstep = int((stop-start)/step+1)
         data_array = np.zeros((2040, nstep), dtype = np.int16 )
+        self.I2C.peri_write('Mask', 0b11111111)
+        self.I2C.row_write('Mask', 0, 0b11111111)
         self.mpa.ctrl_base.activate_async()
         if s_type == "THR":     self.mpa.ctrl_base.set_calibration(ref_val)
         elif s_type == "CAL":   self.mpa.ctrl_base.set_threshold(ref_val)
@@ -240,8 +245,8 @@ class mpa_cal_utility():
                 for r in row:
                     self.mpa.inject.send_pulses_fast(n_pulse, r, 0, cur_val)
             else: self.mpa.inject.send_pulses_fast(n_pulse, 0, 0, cur_val)
-            fail, temp = self.ReadoutCounters()
-            if fail: fail, temp = self.ReadoutCounters()
+            fail, temp = self.ReadoutCounters(raw_mode_en=0)
+            if fail: fail, temp = self.ReadoutCounters(raw_mode_en=0)
             data_array [:, count]= temp
             count += 1
             cur_val += step

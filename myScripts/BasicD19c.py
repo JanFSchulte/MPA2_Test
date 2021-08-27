@@ -82,7 +82,7 @@ def read_regs( verbose =  1 ):
                 '{:10s}'.format( bin(to_number(reverse_mask(word),16, 8)).lstrip('-0b').zfill(8) ) +
                 '{:10s}'.format( bin(to_number(reverse_mask(word),24,16)).lstrip('-0b').zfill(8) ) +
                 '{:10s}'.format( bin(to_number(reverse_mask(word),32,24)).lstrip('-0b').zfill(8) ) )
-    return mpa_stub_data
+    return mpa_l1_data, mpa_stub_data
 
 def read_stubs(raw = 0, fast = 0):
     status = fc7.read("stat_slvs_debug_general")
@@ -162,8 +162,9 @@ def read_L1(verbose = 1):
 
     for i in range(1,200):
         if ((l1[i] == 255)&(l1[i-1] == 255)&(~found)):
-            print("Header found at BX:")
-            print(i)
+            if verbose:
+                print("Header found at BX:")
+                print(i)
             header = l1[i-1] << 11 | l1[i-1] << 3 | ((l1[i+1] & 0b11100000) >> 5)
             error = ((l1[i+1] & 0b00011000) >> 3)
             L1_ID = ((l1[i+1] & 0b00000111) << 6) | ((l1[i+2] & 0b11111100) >> 2)

@@ -426,7 +426,7 @@ class SSA_readout():
 			failed = True;
 			return failed, -1
 		if raw_mode_en == 0:
-			count = self.fc7.fifoRead("fc7_daq_ctrl.physical_interface_block.fifo2_datadata", 120)
+			count = self.fc7.fifoRead("fc7_daq_ctrl.physical_interface_block.fifo2_data", 120)
 			if(tbconfig.VERSION['SSA'] == 1):
 				if(119 in striplist): ## BUG IN SSA CHIP (STRIP 120 COUNTER READABLE ONLY VIA I2C) FIXED in SSAv2
 					count[119] = (self.I2C.strip_read("ReadCounter_MSB",120) << 8) | self.I2C.strip_read("ReadCounter_LSB",120)
@@ -434,7 +434,7 @@ class SSA_readout():
 			count = np.zeros((20000, ), dtype = np.uint16)
 			for i in range(0,20000):
 				fifo1_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.fifo1_data")
-				fifo2_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.fifo2_datadata")
+				fifo2_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.fifo2_data")
 				line1 = to_number(fifo1_word,8,0)
 				line2 = to_number(fifo1_word,16,8)
 				count[i] = (line2 << 8) | line1
