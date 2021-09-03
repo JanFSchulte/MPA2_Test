@@ -471,7 +471,8 @@ class mpa_cal_utility():
 
         """
         t0 = time.time()
-
+        self.I2C.peri_write('Mask', 0b11111111)
+        self.I2C.row_write('Mask', 0, 0b11111111)
         if trim_ampl > -1:
             for block in range(0,7):
                 self.I2C.peri_write("C"+str(block), trim_ampl)

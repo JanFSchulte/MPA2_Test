@@ -138,7 +138,7 @@ class mpa_ctrl_base:
 		nameDAC = ["A", "B", "C", "D", "E", "F"]
 		DAC = nameDAC[point] + str(block)
 		self.I2C.peri_write(DAC, value)
-# Threshold and Calibration control
+	# Threshold and Calibration control
 	def set_calibration(self, cal):
 		self.I2C.peri_write('CalDAC0',cal)
 		self.I2C.peri_write('CalDAC1',cal)
@@ -155,7 +155,7 @@ class mpa_ctrl_base:
 		self.I2C.peri_write('ThDAC4',th)
 		self.I2C.peri_write('ThDAC5',th)
 		self.I2C.peri_write('ThDAC6',th)
-# Sampling edge control
+	# Sampling edge control
 	def set_sampling_edge(self, edge):
 		if edge == "rising" or edge == "positive":
 			self.I2C.peri_write('EdgeSelT1Raw', 0b11)
@@ -167,12 +167,10 @@ class mpa_ctrl_base:
 			print("Error! The edge name is wrong")
 # Output Pad mapping
 	def set_out_mapping(self, map = [1, 2, 3, 4, 5, 0]):
-		self.I2C.peri_write('OutSetting_0',map[0])
-		self.I2C.peri_write('OutSetting_1',map[1])
-		self.I2C.peri_write('OutSetting_2',map[2])
-		self.I2C.peri_write('OutSetting_3',map[3])
-		self.I2C.peri_write('OutSetting_4',map[4])
-		self.I2C.peri_write('OutSetting_5',map[5])
+		self.I2C.peri_write('OutSetting_1_0', 0b010001);time.sleep(0.1)
+		self.I2C.peri_write('OutSetting_3_2', 0b100011);time.sleep(0.1)
+		self.I2C.peri_write('OutSetting_5_4', 0b000101);time.sleep(0.1)
+
 # Output Pad mapping
 	def set_out_mapping_probing(self, map = [1, 2, 3, 4, 5, 0]):
 		self.I2C.peri_write('OutSetting_1_0', 0b001000);time.sleep(0.1)
@@ -192,13 +190,73 @@ class mpa_ctrl_base:
 				self.fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 			else:
 				timeout += 1
+
 	def align_out_all(self, verbose = 1, pattern = 0b10100000):
 		self.activate_shift()
 		# set pattern
 		self.I2C.peri_write("LFSR_data", pattern)
-
 		time.sleep(0.1)
 		return TuneMPA(pattern)
+
+	def fuse_write(self, lot, wafer_n, pos, process, adc_ref, status, pulse = 0, confirm = 0 ):
+		val = ((adc_ref & 0x1F) << 27) | ((process & 0x1F) << 22) | (status & 0x3) << 20 | ((lot & 0x7F) << 13) | ((wafer_n & 0x1F) << 8) | (pos & 0xFF) 
+		print(bin(val))
+		d0 = (val >>  0) & 0xFF
+		d1 = (val >>  8) & 0xFF
+		d2 = (val >> 16) & 0xFF
+		d3 = (val >> 24) & 0xFF 
+		print(bin(d3).lstrip('-0b').zfill(8), ' ', bin(d2).lstrip('-0b').zfill(8), ' ', bin(d1).lstrip('-0b').zfill(8), ' ', bin(d0).lstrip('-0b').zfill(8))
+		self.I2C.peri_write('EfuseProg0', d0); self.I2C.peri_write('EfuseProg1', d1); self.I2C.peri_write('EfuseProg2', d2); self.I2C.peri_write('EfuseProg3', d3)
+		r0 = self.I2C.peri_read('EfuseProg0'); r1 = self.I2C.peri_read('EfuseProg1'); r2 = self.I2C.peri_read('EfuseProg2'); r3 = self.I2C.peri_read('EfuseProg3');
+		if (((r3<<24) | (r2<<16) | (r1<<8) | (r0<<0) ) != val):
+			print("Error in setting the e-fuses write buffer")
+			return False
+		if (pulse):
+			if confirm:  rp = 'Y'
+			else:  rp = input("\n->  Are you sure you want to write the e-fuses? [Y|n] : ")
+			if (rp == 'Y'):
+				time.sleep(0.1); self.I2C.peri_write('BypassMode', 0b00000001)
+				time.sleep(0.1); self.I2C.peri_write('EfuseMode', 0b11110000)
+				time.sleep(1)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_7_0", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_7_1", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_6_0", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_6_1", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_5_0", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_5_1", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_4_0", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_4_1", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_3_0", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_3_1", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_2_0", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_2_1", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_1_0", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_1_1", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_0_0", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_0_1", 0xFF)
+				self.fc7.send_test(7)
+				time.sleep(5)
+				#self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_7_0", 0x00)
+				#self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_7_1", 0x00)
+				time.sleep(0.1); self.I2C.peri_write('EfuseMode', 0b00000000)
+		else:
+			return False
+		return val
+
+	def read_fuses(self):
+		self.I2C.peri_write('EfuseMode', 0b00000000)
+		time.sleep(1)
+		self.I2C.peri_write('EfuseMode', 0b00001111)
+		time.sleep(1)
+		self.I2C.peri_write('EfuseMode', 0b00000000)
+		r0 = self.I2C.peri_read('EfuseValue0'); r1 = self.I2C.peri_read('EfuseValue1'); r2 = self.I2C.peri_read('EfuseValue2'); r3 = self.I2C.peri_read('EfuseValue3');
+		print(bin(r3).lstrip('-0b').zfill(8), ' ', bin(r2).lstrip('-0b').zfill(8), ' ', bin(r1).lstrip('-0b').zfill(8), ' ', bin(r0).lstrip('-0b').zfill(8))
+		
+
+
+
+
+
 
 
 

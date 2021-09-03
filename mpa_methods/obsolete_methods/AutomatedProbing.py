@@ -36,10 +36,12 @@ class AUTOPROBER:
         self.ProbeStation.write("*RST")
         time.sleep(0.1)
         self.ConnToPS()
+
     def colprint(self, text):
         sys.stdout.write("\033[1;34m")
     	print((str(text)))
     	sys.stdout.write("\033[0;0m")
+
     def ConnToPS(self):
         self.colprint("\n\n===== PROBE STATION INITIALIZED: =====")
         self.ProbeStation.write("*IDN?")
@@ -52,6 +54,7 @@ class AUTOPROBER:
         self.ProbeStation.write("ReadChuckPosition")
         self.colprint("Initial Chuck Position: " + self.ProbeStation.read(100))
         time.sleep(0.25)
+
     def MSR_ALL(self, N=88):
         self.DieNumber = 0
         self.DieR = 0
@@ -79,9 +82,11 @@ class AUTOPROBER:
         self.ProbeStation.write("SetChuckHeight O V Y 0")
         self.colprint("Resetting overtravel: " + self.ProbeStation.read(100))
         time.sleep(0.25)
+
     def NEWCHIPMSR(self, inf):
         PCM = ChipMeasurement(self.name + "_" + self.DieNumber)
         return PCM.RUN(inf)
+        
     def NEXT(self, N):
         self.ProbeStation.write("GetDieDataAsNum")
         DieData = self.ProbeStation.read(100)
@@ -109,6 +114,7 @@ class AUTOPROBER:
         else:
             self.KeepOnStepping = False
         return GoodNess
+        
     def PROBESPECIFIC(self,R,C):
         self.ProbeStation.write("StepNextDie "+ R + " " + C)
         self.ProbeStation.read(100)

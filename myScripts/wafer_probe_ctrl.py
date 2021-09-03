@@ -4,7 +4,7 @@ import sys
 import os
 import random
 import time
-#from mpa_methods.mpa_probe_test import *
+from mpa_methods.mpa_probe_test import *
 from ssa_methods.main_ssa_test_2 import *
 
 '''
@@ -88,21 +88,21 @@ class AUTOPROBER:
         print(self.BadChips)
         print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
         # set overtravel a little higher for second pass
-        self.ProbeStation.write("SetChuckHeight O V Y 0")
-        self.colprint("Increasing overtravel: " + self.ProbeStation.read(100))
-        time.sleep(0.25)
-        # go over bad chips
-        #for C in self.BadChips:
-        #    ChipStatus = self.PROBESPECIFIC(C[0],C[1])
-        #    print(ChipStatus)
-        self.ProbeStation.write("SetChuckHeight O V Y 0")
-        self.colprint("Resetting overtravel: " + self.ProbeStation.read(100))
-        time.sleep(0.25)
+        #self.ProbeStation.write("SetChuckHeight O V Y 0")
+        #self.colprint("Increasing overtravel: " + self.ProbeStation.read(100))
+        #time.sleep(0.25)
+        ## go over bad chips
+        ##for C in self.BadChips:
+        ##    ChipStatus = self.PROBESPECIFIC(C[0],C[1])
+        ##    print(ChipStatus)
+        #self.ProbeStation.write("SetChuckHeight O V Y 0")
+        #self.colprint("Resetting overtravel: " + self.ProbeStation.read(100))
+        #time.sleep(0.25)
 
     def NEWCHIPMSR(self, inf):
         if  (self.chip == 'MPA'):
             #PCM = mpa_probe_test(  self.name + "_" + self.DieNumber)
-            PCM = mpa_probe_test('../MPA_Results/Wafer_' + str(self.wafer) + '/' +  self.name + "_" + self.DieNumber)
+            PCM = MPAProbeTest('../MPA_Results/Wafer_' + str(self.wafer) + '/' +  self.name + "_" + self.DieNumber)
             return PCM.RUN(inf, self.DieNumber)
         elif(self.chip == 'SSA'):
             # WIP

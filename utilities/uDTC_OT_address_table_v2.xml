@@ -106,6 +106,24 @@
         </node>
 
         <node id="physical_interface_block"     address="0x3000">
+            <node id="ssa_stub_data"            description="stub data to inject into MPA">
+                <node id ="format_0_0"              address="0x006"/>
+                <node id ="format_0_1"              address="0x007"/>
+                <node id ="format_1_0"              address="0x008"/>
+                <node id ="format_1_1"              address="0x009"/>
+                <node id ="format_2_0"              address="0x00a"/>
+                <node id ="format_2_1"              address="0x00b"/>
+                <node id ="format_3_0"              address="0x00c"/>
+                <node id ="format_3_1"              address="0x00d"/>
+                <node id ="format_4_0"              address="0x00e"/>
+                <node id ="format_4_1"              address="0x00f"/>
+                <node id ="format_5_0"              address="0x010"/>
+                <node id ="format_5_1"              address="0x011"/>
+                <node id ="format_6_0"              address="0x012"/>
+                <node id ="format_6_1"              address="0x013"/>
+                <node id ="format_7_0"              address="0x014"/>
+                <node id ="format_7_1"              address="0x015"/>
+            </node>
             <node id="ps_counters_raw_en"               address="0x000" mask="0x00000001" description="enabling outputing raw counters data instead of already parsed"/>
             <node id="cic"				address="0x000" >
                 <node id="2s_sparsified_enable"		        mask="0x00000002"/>

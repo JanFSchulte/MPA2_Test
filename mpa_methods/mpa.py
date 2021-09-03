@@ -64,7 +64,7 @@ class MPA_ASIC:
 			sys.stdout.write("                              \r")
 			sys.stdout.flush()
 			if(reset_board): print("->  \tReset FC7 Firmware")
-			if(reset_chip):  print("->  \tReset SSA Chip")
+			if(reset_chip):  print("->  \tReset Chip")
 			print("->  \tInitialised SLVS pads and sampling edges")
 			print("->  \tSampling phases tuned")
 			print("->  \tActivated normal readout mode")
@@ -81,7 +81,7 @@ class MPA_ASIC:
 			self.ctrl_base.reset(display=False)
 
 		utils.activate_I2C_chip(self.fc7)
-		self.ctrl_base.set_out_mapping()
+		self.ctrl_base.set_out_mapping_probing()
 		self.i2c.peri_write("Mask", 0b11111111)
 
 		sys.stdout.write("->  \tTuning sampling phases..\r")
