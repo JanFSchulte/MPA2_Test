@@ -124,7 +124,7 @@ class MPAwp:
             self.bias = False
             print("- Impossible to access GPIB instruments")
 
-        self.probe         = MPAProbeTest("../MPA_Results/TEST", self.chip, self.i2c, FC7, self.cal, self.test, self.bias)
+        #self.probe         = MPAProbeTest("../MPA2_Results/Lot1_Wafer6/", self.chip, self.i2c, FC7, self.cal, self.test, self.bias)
 
         # Higher level test routines
         # self.main_test   = main_mpa_test(self.chip, self.i2c, FC7, self.cal, 0, self.pwr, self.test, 0)

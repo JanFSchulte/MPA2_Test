@@ -18,13 +18,14 @@ class MPAProbeTest:
 		version = 0
 
 		# Select Directory
-		while not exists:
-			if not os.path.exists(self.DIR+"_v"+str(version)):
-				print(self.DIR)
-				self.DIR = self.DIR+"_v"+str(version)
-				os.makedirs(self.DIR)
-				exists = True
-			version += 1
+		#while not exists:
+		#	if not os.path.exists(self.DIR+"_v"+str(version)):
+		#		print(self.DIR)
+		#		self.DIR = self.DIR+"_v"+str(version)
+		#		os.makedirs(self.DIR)
+		#		exists = True
+		#	version += 1
+		os.makedirs(self.DIR)
 		print(self.DIR + "<<< USING THIS")
 		self.mpa = mpa
 		self.I2C = I2C
