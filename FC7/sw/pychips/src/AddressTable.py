@@ -154,14 +154,10 @@ class AddressTable(object):
             reg_name_full = s.join(reg_name)
             reg_addr_full = reduce(lambda x, y: x | y, reg_addr)
             reg_mask_full = reduce(lambda x, y: x | y, reg_mask)
-
             if not reg_mask_full: reg_mask_full = 0xffffffff
-
-            print (f"{reg_name_full} {hex(reg_addr_full)} {hex(reg_mask_full)} {reg_rw}")
-
+            #print (f"{reg_name_full} {hex(reg_addr_full)} {hex(reg_mask_full)} {reg_rw}")
             item = AddressTableItem(reg_name_full, reg_addr_full, reg_mask_full, reg_read, reg_write)
             self.items[reg_name_full] = item
-
             # remove last entry when going back up the Elementree
             if reg_name: reg_name.pop()
             if reg_mask: reg_mask.pop()

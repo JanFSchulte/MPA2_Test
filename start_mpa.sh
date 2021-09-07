@@ -25,7 +25,7 @@ done <"$file"
 eth=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
 
 printf '______________________________________________________\n'
-printf '             Starting SSA Test System                 \n'
+printf '             Starting MPA2 Test System                 \n'
 printf '                                                      \n'
 
 echo ""
@@ -58,12 +58,12 @@ if ! (( $rep == 0 )); then
 		read -r -p "    Do you want to configure the communication? [y/N] " response
 		if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
 			sudo /usr/sbin/rarpd -a
-			sudo ifconfig ${eth}:1 192.168.0.100
+			sudo ifconfig ${eth}:1 192.168.1.100
 			sudo udevadm control --reload-rules
 			sudo modprobe ni_usb_gpib
 			ping -c 1 -W 1 $IP; rep=$?
 			if ! (( $rep == 0 )); then
-				printf '=>  MPA Testbench unrichable'
+				printf '=>  MPA Testbench unreachable'
 			else
 				printf '=>  MPA Testbench correctly found on %s' "$IP"
 				#printf '______________________________________________________\n'

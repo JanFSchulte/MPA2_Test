@@ -16,16 +16,15 @@ class MPAProbeTest:
 		self.DIR = DIR
 		exists = False
 		version = 0
-
 		# Select Directory
-		#while not exists:
-		#	if not os.path.exists(self.DIR+"_v"+str(version)):
-		#		print(self.DIR)
-		#		self.DIR = self.DIR+"_v"+str(version)
-		#		os.makedirs(self.DIR)
-		#		exists = True
-		#	version += 1
-		os.makedirs(self.DIR)
+		while not exists:
+			if not os.path.exists(self.DIR+"_v"+str(version)):
+				print(self.DIR)
+				self.DIR = self.DIR+"_v"+str(version)
+				os.makedirs(self.DIR)
+				exists = True
+			version += 1
+		#os.makedirs(self.DIR)
 		print(self.DIR + "<<< USING THIS")
 		self.mpa = mpa
 		self.I2C = I2C
@@ -36,7 +35,7 @@ class MPAProbeTest:
 		# Variables
 		self.GlobalSummary = []
 		self.LogFile = open(self.DIR+"/LogFile.txt", "w")
-		self.Legend = ["Chip_N", "I/O pwr reset" , "Digital pwr reset", "Analog pwr reset", "I/O pwr " , "Digital pwr ", "Analog pwr ", "Shift Test", "Ground Value", "Bias Average Cal", "Gain", "Threshold LSB", "Calibration LSB", "Noise [Cal LSB]", "Threshold Spread [Cal LSB]", "Pixel errors [N]", "Strip input test", "Memory @ 1.0 test", "SRAM BIST test", "ROW BIST test","DLL test","VREF DAC cal"]
+		self.Legend = ["Chip_N", "I/O pwr reset" , "Digital pwr reset", "Analog pwr reset", "I/O pwr " , "Digital pwr ", "Analog pwr ", "Shift Test", "Ground Value", "Bias Average Cal", "Gain", "Threshold LSB", "Calibration LSB", "Noise [Cal LSB]", "Threshold Spread [Cal LSB]", "Pixel errors [N]", "Strip input test", "Memory @ 1.0 test", "SRAM BIST test", "ROW BIST test","DLL test","VREF DAC cal", "RO Inverter", "RO Delay"]
 		self.n_tests = len(self.Legend)
 		self.LogFileCSV = open(self.DIR+"/LogFile.txt", "w")
 		self.GeneralLogFile = open(self.DIR+"/../LogFile.txt", "a")
@@ -109,6 +108,9 @@ class MPAProbeTest:
 					self.fc7.activate_I2C_chip(verbose=0)
 					self.analog_measurement()
 					self.digital_test()
+					self.colprint("Writing e-fuse!")
+					self.mpa.init(reset_chip = 1, reset_board = 1)
+					self.mpa.ctrl_base.fuse_write( lot = 1, wafer_n = 6, pos = int(N), process = 0 , adc_ref = int(self.GlobalSummary[21]), status = 0, pulse = 1 , confirm = 1)
 					self.colprint("DONE!")
 
 		except Exception as e:
@@ -144,6 +146,7 @@ class MPAProbeTest:
 			for i in range(0, self.n_tests):
 				CVwriter.writerow([self.Legend[i], self.GlobalSummary[i]])
 				print(self.Legend[i], self.GlobalSummary[i])
+		
 		self.end = time.time()
 		self.colprint("TOTAL TIME:")
 		self.colprint(str(round(self.end - self.start)) + "sec")
@@ -317,14 +320,24 @@ class MPAProbeTest:
 		else:
 			dll_pass=0
 		self.colprint(f"DLL Test:{dll_pass}")
+
+		r0,r1=self.test.ro_scan(n_samples = 10)
+
 		self.GlobalSummary[18] = sram_bist_pass
 		self.GlobalSummary[19] = row_bist_pass
 		self.GlobalSummary[20] = dll_pass
+		self.GlobalSummary[22] = r0[0]
+		self.GlobalSummary[23] = r1[0]
 
+		
 		with open(self.DIR+'/DigitalSummary.csv', 'w') as csvfile:
 			CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			DigitalFlags = [Analog, StripIn, Mem10, sram_bist_pass, row_bist_pass]
 			CVwriter.writerow(DigitalFlags)
+		
+		with open(self.DIR+'/RoSummary.csv', 'w') as csvfile:
+			CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
+			CVwriter.writerow([r0, r1])
 
 	def memory_test(self, voltage):
 		#self.mpa.pwr.set_dvdd(voltage/100.0)
@@ -333,12 +346,11 @@ class MPAProbeTest:
 		mempix = []
 		mempix.append(bad_pix)
 
-		#if ((len(mempix[0]) > 0) & (len(mempix[0]) < 20)):
-		#	bad_pix, error, stuck, i2c_issue, missing = self.test.mem_test(print_log=1, filename = self.DIR + "/LogMemTest_" + str(voltage) + "_bis.txt", verbose = 0)
-		#	mempix.append(bad_pix)
-		#	BadPixM = self.GetActualBadPixels(mempix)
-
-		BadPixM = mempix[0]
+		if ((len(mempix[0]) > 0) & (len(mempix[0]) < 20)):
+			bad_pix, error, stuck, i2c_issue, missing = self.test.mem_test(print_log=1, filename = self.DIR + "/LogMemTest_" + str(voltage) + "_bis.txt", verbose = 0)
+			mempix.append(bad_pix)
+			BadPixM = self.GetActualBadPixels(mempix)
+		else: BadPixM = mempix[0]
 		self.colprint(str(len(BadPixM)) + " << Bad Pixels (Mem)")
 		self.colprint_general(str(len(BadPixM)) + " << Bad Pixels (Mem)")
 		# Write Failing Pixel
@@ -353,7 +365,7 @@ class MPAProbeTest:
 			CVwriter.writerow(Memory12Flags)
 		# Set Flags for final summary
 
-		if ((len(BadPixM)<10) and (stuck <10) and (i2c_issue < 10) and (missing <10)): 	return 0
+		if ((len(BadPixM)<1) and (stuck <10) and (i2c_issue < 20) and (missing <10)): 	return 0
 		
 		else: return 1
 

@@ -69,7 +69,7 @@ class mpa_ctrl_base:
 			print("Ring Oscillator Inverter: " , res_1)
 			print("Ring Oscillator Delay: " , res_2)
 		return res_1, res_2
-		
+
 	def ro_row(self, row, duration = 100, verbose = 0):
 		self.set_row_mask(row)
 		self.I2C.row_write('RingOscillator', row, duration)
@@ -86,27 +86,27 @@ class mpa_ctrl_base:
 		if verbose:
 			print("Ring Oscillator Inverter: " , res_1)
 			print("Ring Oscillator Delay: " , res_2)
-		return res_1, res_2	
+		return res_1, res_2
 
-	
-	
+
+
 	def set_peri_mask(self, bit_mask = 0):
 		""""Set/Reset mask register, which enables the given bit position for writing across all i2c registers. Required before register writes.
 
 		Args:
 			bit_mask (int, optional): Bit mask, to enable I2C register bits for writing. If left unset, all bits are set to enabled, i.e. value = 0b11111111. Defaults to 0.
-		"""		
+		"""
 		if bit_mask:
 			self.I2C.peri_write("Mask", bit_mask)
 		else:
 			self.I2C.peri_write("Mask", 0b111111111)
-	
+
 	def set_row_mask(self, r = 0, bit_mask = 0):
 		""""Set/Reset mask register, which enables the given bit position for writing across all i2c registers. Required before register writes.
 
 		Args:
 			bit_mask (int, optional): Bit mask, to enable I2C register bits for writing. If left unset, all bits are set to enabled, i.e. value = 0b11111111. Defaults to 0.
-		"""		
+		"""
 		if bit_mask:
 			self.I2C.row_write("Mask", r , bit_mask)
 		else:
@@ -199,12 +199,12 @@ class mpa_ctrl_base:
 		return TuneMPA(pattern)
 
 	def fuse_write(self, lot, wafer_n, pos, process, adc_ref, status, pulse = 0, confirm = 0 ):
-		val = ((adc_ref & 0x1F) << 27) | ((process & 0x1F) << 22) | (status & 0x3) << 20 | ((lot & 0x7F) << 13) | ((wafer_n & 0x1F) << 8) | (pos & 0xFF) 
+		val = ((adc_ref & 0x1F) << 27) | ((process & 0x1F) << 22) | (status & 0x3) << 20 | ((lot & 0x7F) << 13) | ((wafer_n & 0x1F) << 8) | (pos & 0xFF)
 		print(bin(val))
 		d0 = (val >>  0) & 0xFF
 		d1 = (val >>  8) & 0xFF
 		d2 = (val >> 16) & 0xFF
-		d3 = (val >> 24) & 0xFF 
+		d3 = (val >> 24) & 0xFF
 		print(bin(d3).lstrip('-0b').zfill(8), ' ', bin(d2).lstrip('-0b').zfill(8), ' ', bin(d1).lstrip('-0b').zfill(8), ' ', bin(d0).lstrip('-0b').zfill(8))
 		self.I2C.peri_write('EfuseProg0', d0); self.I2C.peri_write('EfuseProg1', d1); self.I2C.peri_write('EfuseProg2', d2); self.I2C.peri_write('EfuseProg3', d3)
 		r0 = self.I2C.peri_read('EfuseProg0'); r1 = self.I2C.peri_read('EfuseProg1'); r2 = self.I2C.peri_read('EfuseProg2'); r3 = self.I2C.peri_read('EfuseProg3');
@@ -218,22 +218,22 @@ class mpa_ctrl_base:
 				time.sleep(0.1); self.I2C.peri_write('BypassMode', 0b00000001)
 				time.sleep(0.1); self.I2C.peri_write('EfuseMode', 0b11110000)
 				time.sleep(1)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_7_0", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_7_1", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_6_0", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_6_1", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_5_0", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_5_1", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_4_0", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_4_1", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_3_0", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_3_1", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_2_0", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_2_1", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_1_0", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_1_1", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_0_0", 0xFF)
-				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_0_1", 0xFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_7_0", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_7_1", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_6_0", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_6_1", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_5_0", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_5_1", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_4_0", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_4_1", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_3_0", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_3_1", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_2_0", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_2_1", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_1_0", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_1_1", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_0_0", 0xFFFFFFFF)
+				self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_0_1", 0xFFFFFFFF)
 				self.fc7.send_test(7)
 				time.sleep(5)
 				#self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_7_0", 0x00)
@@ -245,13 +245,13 @@ class mpa_ctrl_base:
 
 	def read_fuses(self):
 		self.I2C.peri_write('EfuseMode', 0b00000000)
-		time.sleep(1)
+		time.sleep(0.1)
 		self.I2C.peri_write('EfuseMode', 0b00001111)
-		time.sleep(1)
+		time.sleep(0.1)
 		self.I2C.peri_write('EfuseMode', 0b00000000)
 		r0 = self.I2C.peri_read('EfuseValue0'); r1 = self.I2C.peri_read('EfuseValue1'); r2 = self.I2C.peri_read('EfuseValue2'); r3 = self.I2C.peri_read('EfuseValue3');
 		print(bin(r3).lstrip('-0b').zfill(8), ' ', bin(r2).lstrip('-0b').zfill(8), ' ', bin(r1).lstrip('-0b').zfill(8), ' ', bin(r0).lstrip('-0b').zfill(8))
-		
+
 
 
 
