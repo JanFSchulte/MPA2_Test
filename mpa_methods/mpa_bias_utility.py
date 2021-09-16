@@ -257,7 +257,7 @@ class mpa_bias_utility():
     def measure_bg(self):
         time.sleep(1)
         self.mpa.ctrl_base.disable_test()
-        self.i2c.peri_write('TESTMUX',0b10000000)
+        self.select_block(8, 7, 1) # 7 to select GND 
         time.sleep(1)
         data = self.multimeter.measure()
         self.mpa.ctrl_base.disable_test()

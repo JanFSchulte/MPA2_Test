@@ -1,4 +1,4 @@
-from ssa_methods.main import *
+from main import *
 try:
     from ssa_methods.main_ssa_test_2 import *
 except:

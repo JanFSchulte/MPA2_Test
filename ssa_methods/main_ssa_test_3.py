@@ -5,7 +5,7 @@ from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from utilities.logs_utility import *
 from collections import OrderedDict
-from ssa_methods.main import *
+from main import *
 import traceback
 
 import time

@@ -35,7 +35,7 @@ class MPAProbeTest:
 		# Variables
 		self.GlobalSummary = []
 		self.LogFile = open(self.DIR+"/LogFile.txt", "w")
-		self.Legend = ["Chip_N", "I/O pwr reset" , "Digital pwr reset", "Analog pwr reset", "I/O pwr " , "Digital pwr ", "Analog pwr ", "Shift Test", "Ground Value", "Bias Average Cal", "Gain", "Threshold LSB", "Calibration LSB", "Noise [Cal LSB]", "Threshold Spread [Cal LSB]", "Pixel errors [N]", "Strip input test", "Memory @ 1.0 test", "SRAM BIST test", "ROW BIST test","DLL test","VREF DAC cal", "RO Inverter", "RO Delay"]
+		self.Legend = ["Chip_N", "I/O pwr reset" , "Digital pwr reset", "Analog pwr reset", "I/O pwr " , "Digital pwr ", "Analog pwr ", "Shift Test", "Ground Value", "Bias Average Cal", "Gain", "Threshold LSB", "Calibration LSB", "Noise [Cal LSB]", "Threshold Spread [Cal LSB]", "Pixel errors [N]", "Strip input test", "Memory @ 1.0 test", "SRAM BIST test", "ROW BIST test","DLL test","VREF DAC cal", "RO Inverter", "RO Delay", "Bandgap"]
 		self.n_tests = len(self.Legend)
 		self.LogFileCSV = open(self.DIR+"/LogFile.txt", "w")
 		self.GeneralLogFile = open(self.DIR+"/../LogFile.txt", "a")
@@ -110,7 +110,8 @@ class MPAProbeTest:
 					self.digital_test()
 					self.colprint("Writing e-fuse!")
 					self.mpa.init(reset_chip = 1, reset_board = 1)
-					self.mpa.ctrl_base.fuse_write( lot = 1, wafer_n = 6, pos = int(N), process = 0 , adc_ref = int(self.GlobalSummary[21]), status = 0, pulse = 1 , confirm = 1)
+					# Change How Parameters to write fuse are passed!
+					#self.mpa.ctrl_base.fuse_write( lot = 1, wafer_n = 6, pos = int(N), process = 0 , adc_ref = int(self.GlobalSummary[21]), status = 0, pulse = 0 , confirm = 1)
 					self.colprint("DONE!")
 
 		except Exception as e:
@@ -172,10 +173,16 @@ class MPAProbeTest:
 			message = "Measured Analog Ground: " + str(round(np.mean(gnd),3))
 			self.colprint(message)
 			self.colprint_general(message)
+			bg = self.bias.measure_bg()
+			message = "Measured bandgap: " + str(round(np.mean(bg),3))
+			self.colprint(message)
+			self.colprint_general(message)
 			cal = self.bias.calibrate_chip(gnd_corr = gnd, print_file = 1, filename = self.DIR+"/bias_calibration")
 			
 			# Ground Value
 			self.GlobalSummary[8] = round(np.mean(gnd),3)
+			# Ground Value
+			self.GlobalSummary[24] = round(np.mean(bg),3)
 			# Bias Average Cal
 			self.GlobalSummary[9] = round(np.mean(cal),1)
 

@@ -32,7 +32,7 @@ echo ""
 
 echo "from d19cScripts import *" >  LaunchPy.py
 echo "from myScripts import *" >> LaunchPy.py
-echo "from ssa_methods.main import *" >> LaunchPy.py
+echo "from main import *" >> LaunchPy.py
 #echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('ssa') "  >> LaunchPy.py
 echo "from utilities import tbconfig " >  utilities/tbsettings.py
 

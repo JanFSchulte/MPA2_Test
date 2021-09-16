@@ -628,18 +628,33 @@ class mpa_test_utility():
         return fail
 
     def sram_bist_test(self, verbose = 1, rbr = 1):
+        """SRAM row blocks include a BIST module, which can be controlled and monitored
+        with I2C-registers "SRAM_BIST", "SRAM_BIST_done" and "bist_fail". The result
+        can be read out with register "BIST_SRAM_output_x".
+
+        Args:
+            verbose (int, optional): [description]. Defaults to 1.
+            rbr (int, optional): Test Row-By-Row if 1. Defaults to 1.
+
+        Returns:
+            [type]: [description]
+        """        
         #self.fc7.activate_I2C_chip(verbose = 0)
         #self.mpa.ctrl_base.set_row_mask()
         fail = np.zeros(16)
+        # Set SRAM-BIST_Mode bits to test mode.
+
+        #start timing here
         self.mpa.i2c.row_write('SRAM_BIST', 0 , 0b00001111 )
         for i in range (1,17):
             if (self.mpa.i2c.row_read('SRAM_BIST_done', i)): print ("Test for row", i, "already run!")
         if (rbr==0): self.mpa.i2c.row_write('SRAM_BIST', 0 , 0b11111111 ); time.sleep(0.1)
         for i in range (1,17):
+            # Set SRAM_BIST-Start bits to 0b1111 to start. Wait at least 7ms before read. 
             if rbr: self.mpa.i2c.row_write('SRAM_BIST', i , 0b11111111 ); time.sleep(0.1)
             if (self.mpa.i2c.row_read('SRAM_BIST_done', i)):
                 if verbose: print("Test for row", i, "done!")
-                if (self.mpa.i2c.row_read('SRAM_BIST_fail', i)):
+                if (self.mpa.i2c.row_read('bist_fail', i)):
                     if verbose:
                         sys.stdout.write("\033[1;31m")
                         print("Test for row", i, "failed")
@@ -678,37 +693,88 @@ class mpa_test_utility():
         plt.show()
         return res
 
-    def row_bist(self, row = range(1,17), vector_fail=0, verbose = 0):
+    def row_bist_voltage_scan(self, n_samples = 10, voltages = range(780, 830, 5), rbr = 1, verbose =1):
+        res = []
+        for i in range(0, len(voltages)):
+            fail = 0
+            print(">>>>>> Testing at voltage", voltages[i]/1000)
+            self.mpa.pwr.set_dvdd(voltages[i]/1000)
+            self.mpa.pwr.reset_mpa(display=False)
+            self.fc7.activate_I2C_chip(verbose = 0)
+            self.mpa.ctrl_base.set_row_mask()
+            print("Start...")
+            for n in range(0, n_samples):
+                try:
+                    row_bist_compare, bist_fail = self.row_bist_all(sram_test = 0)
+                    check5 = (row_bist_compare == 5)
+                    print(row_bist_compare)
+                except:
+                    check5 = False
+                    bist_fail =1
+                if (not np.all(check5)) or bist_fail: 
+                    fail += 1 
+            res.append(n_samples - fail)
+            print("Success_rate:", res)
+        self.mpa.pwr.set_dvdd(1)     
+        res = np.array(res)/n_samples
+        #for i in range(0, 16):
+        #    plt.plot(voltages, res[:,i], label = str(i))
+        #plt.title('BIST results')
+        #plt.xlabel('Voltage [mV]')
+        #plt.ylabel('Success rate')
+        #plt.legend()
+        #plt.show()
+        return res
+
+
+    def row_bist_all(self, row = range(1,17), vector_fail=0, verbose = 0, sram_test = 1):
         t0 = time.time()
         self.mpa.init(reset_chip=1)
         self.fc7.activate_I2C_chip(verbose = 0)
         self.mpa.ctrl_base.set_row_mask()
-        sram_bist_fail = self.sram_bist_test()
         fail = np.zeros(16)
         fail_row = np.zeros(16)
         miscompare = np.zeros(16)
-        if sram_bist_fail.any():
-            print("SRAM BIST Failed! Exiting ROW BIST!")
-            return fail_row, sram_bist_fail
+        bist_fail = 0
+        if sram_test:
+            bist_fail = self.sram_bist_test()
+            if bist_fail.any():
+                bist_fail = 1
+                print("SRAM BIST Failed! Exiting ROW BIST!")
+                return fail_row, bist_fail
+        else:
+            # Set SRAM BIST into test mode to force correct inputs for ROW BIST
+            self.mpa.ctrl_base.set_row_mask(0b1111)
+            self.mpa.i2c.row_write('SRAM_BIST', 0 , 0b1111)
+
         t1 = time.time()
-        print("Init + SRAM BIST Elapsed Time: " + str(t1 - t0))
+        if sram_test:
+            print("Init + SRAM BIST Elapsed Time: " + str(t1 - t0))
+        else:
+            print("Init Elapsed Time: " + str(t1 - t0))
+
         self.mpa.ctrl_base.set_row_mask()
         self.mpa.i2c.row_write('MemoryControl_1', 0 , 0 )
         self.mpa.i2c.row_write('MemoryControl_2', 0 , 0 )
         self.mpa.i2c.row_write('PixelControl', 0 , 0 )
-        # Reset check
+        
+        # This block tests reset assertion for the BIST block
         self.mpa.i2c.row_write('RowLogic_BIST_ref_output_1', 0 , 0b00000001 )
         self.mpa.i2c.row_write('RowLogic_BIST_ref_output_2', 0 , 0b00000000 )
+        # Set to test mode with RowLogic_BIST-Mode bit to 1
         self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000001 )
+        self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000011 )
         for i in row:
-            self.mpa.i2c.row_write('RowLogic_BIST', i , 0b00000011 )
+            # Start test with RowLogic_BIST-Start and RowLogic_BIST-Mode bits to 1
             time.sleep(0.001)
             r = self.mpa.i2c.row_read('RowBIST_summary_reg', i)
             if (r != miscompare[i-1]):
                 print("Test for row", i, "failed")
                 fail[i-1]=1; miscompare[i-1] += r
+                bist_fail = 1
         print("Reset test finished. Number of error:", np.sum(fail))
-        # Scan Test
+
+        # This block tests the ScanChain block
         self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000001 )
         self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000101 )
         self.mpa.i2c.row_write('RowLogic_BIST_input_1', 0 , 0b01100110 )
@@ -716,28 +782,32 @@ class mpa_test_utility():
         self.mpa.i2c.row_write('RowLogic_BIST_ref_output_1', 0 , 0b11111111 )
         self.mpa.i2c.row_write('RowLogic_BIST_ref_output_2', 0 , 0b11111111 )
         fail = np.zeros(16)
+        self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000111 )
         for i in row:
-            self.mpa.i2c.row_write('RowLogic_BIST', i , 0b00000111 )
             time.sleep(0.001)
             r = self.mpa.i2c.row_read('RowBIST_summary_reg', i)
             if (r != miscompare[i-1]):
                 print("Test for row", i, "failed")
                 fail[i-1]=1; miscompare[i-1] += r
+                bist_fail = 1
         print("Scan test 1 finished. Number of error:", np.sum(fail))
-        # Scan Test
+        
+        # Sanity check of BIST hardware
         self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000101 )
         self.mpa.i2c.row_write('RowLogic_BIST_input_1', 0 , 0b00000000 )
         self.mpa.i2c.row_write('RowLogic_BIST_input_1', 0 , 0b00000000 )
         fail = np.zeros(16)
+        self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000111 )
         for i in row:
-            self.mpa.i2c.row_write('RowLogic_BIST', i , 0b00000111 )
             time.sleep(0.001)
             r = self.mpa.i2c.row_read('RowBIST_summary_reg', i)
             if (r != miscompare[i-1]):
                 print("Test for row", i, "failed")
                 fail[i-1]=1; miscompare[i-1] += r
+                bist_fail = 1
         print("Scan test 2 finished. Number of error:", np.sum(fail))
-        # Vector Check
+
+        # Finally, perform BIST with provided test vectors
         count=0
         f=open('mpa_methods/row_bist_vector.txt','r')
         for l in range(1,306):
@@ -775,16 +845,118 @@ class mpa_test_utility():
                 if verbose: print("repeat read operation for row", r, "at vector", l )
             if verbose: print("Row:", i, ", N of failed at vector: " , r)
             fail_row[i-1] = r
-        return fail_row, sram_bist_fail
+        return fail_row, bist_fail
 
 
+    def row_bist(self, row = range(1,17), vector_fail=0, verbose = 0, sram_test = 1):
+        t0 = time.time()
+        self.mpa.init(reset_chip=1)
+        self.fc7.activate_I2C_chip(verbose = 0)
+        self.mpa.ctrl_base.set_row_mask()
+        fail = np.zeros(16)
+        fail_row = np.zeros(16)
+        miscompare = np.zeros(16)
+        if sram_test:
+            bist_fail = self.sram_bist_test()
+            if bist_fail.any():
+                print("SRAM BIST Failed! Exiting ROW BIST!")
+                return fail_row, bist_fail
+        else:
+            # Set SRAM BIST into test mode to force correct inputs for ROW BIST
+            bist_fail = 0
+            self.mpa.ctrl_base.set_row_mask(0b1111)
+            self.mpa.i2c.row_write('SRAM_BIST', 0 , 0b1111)
 
+        t1 = time.time()
+        print("Init + SRAM BIST Elapsed Time: " + str(t1 - t0))
+        self.mpa.ctrl_base.set_row_mask()
+        self.mpa.i2c.row_write('MemoryControl_1', 0 , 0 )
+        self.mpa.i2c.row_write('MemoryControl_2', 0 , 0 )
+        self.mpa.i2c.row_write('PixelControl', 0 , 0 )
 
+        # This block tests reset assertion for the BIST block
+        self.mpa.i2c.row_write('RowLogic_BIST_ref_output_1', 0 , 0b00000001 )
+        self.mpa.i2c.row_write('RowLogic_BIST_ref_output_2', 0 , 0b00000000 )
+        # Set to test mode with RowLogic_BIST-Mode bit to 1
+        self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000001 )
+        for i in row:
+            # Start test with RowLogic_BIST-Start and RowLogic_BIST-Mode bits to 1
+            self.mpa.i2c.row_write('RowLogic_BIST', i , 0b00000011 )
+            time.sleep(0.001)
+            r = self.mpa.i2c.row_read('RowBIST_summary_reg', i)
+            if (r != miscompare[i-1]):
+                print("Test for row", i, "failed")
+                fail[i-1]=1; miscompare[i-1] += r
+        print("Reset test finished. Number of error:", np.sum(fail))
 
+        # This block tests the ScanChain block
+        self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000001 )
+        self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000101 )
+        self.mpa.i2c.row_write('RowLogic_BIST_input_1', 0 , 0b01100110 )
+        self.mpa.i2c.row_write('RowLogic_BIST_input_1', 0 , 0b01100110 )
+        self.mpa.i2c.row_write('RowLogic_BIST_ref_output_1', 0 , 0b11111111 )
+        self.mpa.i2c.row_write('RowLogic_BIST_ref_output_2', 0 , 0b11111111 )
+        fail = np.zeros(16)
+        for i in row:
+            self.mpa.i2c.row_write('RowLogic_BIST', i , 0b00000111 )
+            time.sleep(0.001)
+            r = self.mpa.i2c.row_read('RowBIST_summary_reg', i)
+            if (r != miscompare[i-1]):
+                print("Test for row", i, "failed")
+                fail[i-1]=1; miscompare[i-1] += r
+        print("Scan test 1 finished. Number of error:", np.sum(fail))
+        # Sanity check of BIST hardware
+        self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000101 )
+        self.mpa.i2c.row_write('RowLogic_BIST_input_1', 0 , 0b00000000 )
+        self.mpa.i2c.row_write('RowLogic_BIST_input_1', 0 , 0b00000000 )
+        fail = np.zeros(16)
+        for i in row:
+            self.mpa.i2c.row_write('RowLogic_BIST', i , 0b00000111 )
+            time.sleep(0.001)
+            r = self.mpa.i2c.row_read('RowBIST_summary_reg', i)
+            if (r != miscompare[i-1]):
+                print("Test for row", i, "failed")
+                fail[i-1]=1; miscompare[i-1] += r
+        print("Scan test 2 finished. Number of error:", np.sum(fail))
 
-
-
-                
-
+        # Finally, perform BIST with provided test vectors
+        count=0
+        f=open('mpa_methods/row_bist_vector.txt','r')
+        for l in range(1,306):
+            line = int(f.readline(),2)
+            self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000001 )
+            self.mpa.i2c.row_write('RowLogic_BIST_input_1', 0 , line & 0xFF )
+            self.mpa.i2c.row_write('RowLogic_BIST_input_2', 0 ,(line >> 8) & 0xFF )
+            line = int(f.readline(),2)
+            self.mpa.i2c.row_write('RowLogic_BIST_ref_output_1', 0 , line & 0xFF )
+            self.mpa.i2c.row_write('RowLogic_BIST_ref_output_2', 0 ,(line >> 8) & 0xFF )
+            self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000011 )
+            self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000001 )
+            if (vector_fail):
+                for i in row:
+                    r = self.mpa.i2c.row_read('RowBIST_summary_reg', i)
+                    if (r == None): 
+                        self.fc7.activate_I2C_chip(verbose = 0)
+                        time.sleep(0.001)
+                        r = self.mpa.i2c.row_read('RowBIST_summary_reg', i)
+                        print("repeat read operation for row", r, "at vector", l )
+                    if (r != miscompare[i-1]):
+                        print("Row:", i, ", N of failed at vector: " , l)
+                        #print("Input Vector: ", self.mpa.i2c.row_read('RowLogic_BIST_input_2', i ), self.mpa.i2c.row_read('RowLogic_BIST_input_1', i ) )
+                        #print("Output Vector: ", self.mpa.i2c.row_read('RowLogic_BIST_ref_output_2', i ), self.mpa.i2c.row_read('RowLogic_BIST_ref_output_1', i ) )
+                        miscompare[i-1] = r
+            line = f.readline()
+        t2 = time.time()
+        print("Row BIST Elapsed Time: " + str(t2 - t1))
+        for i in row:
+            r = self.mpa.i2c.row_read('RowBIST_summary_reg', i)
+            if (r == None): 
+                self.fc7.activate_I2C_chip(verbose = 0)
+                time.sleep(0.001)
+                r = self.mpa.i2c.row_read('RowBIST_summary_reg', i)
+                if verbose: print("repeat read operation for row", r, "at vector", l )
+            if verbose: print("Row:", i, ", N of failed at vector: " , r)
+            fail_row[i-1] = r
+        return fail_row, bist_fail
 
 

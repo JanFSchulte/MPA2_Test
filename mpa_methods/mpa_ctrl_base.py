@@ -243,7 +243,7 @@ class mpa_ctrl_base:
 			return False
 		return val
 
-	def read_fuses(self):
+	def read_fuses(self, format = 1):
 		self.I2C.peri_write('EfuseMode', 0b00000000)
 		time.sleep(0.1)
 		self.I2C.peri_write('EfuseMode', 0b00001111)
@@ -251,15 +251,18 @@ class mpa_ctrl_base:
 		self.I2C.peri_write('EfuseMode', 0b00000000)
 		r0 = self.I2C.peri_read('EfuseValue0'); r1 = self.I2C.peri_read('EfuseValue1'); r2 = self.I2C.peri_read('EfuseValue2'); r3 = self.I2C.peri_read('EfuseValue3');
 		print(bin(r3).lstrip('-0b').zfill(8), ' ', bin(r2).lstrip('-0b').zfill(8), ' ', bin(r1).lstrip('-0b').zfill(8), ' ', bin(r0).lstrip('-0b').zfill(8))
+		val = (r3<<24) | (r2<<16) | (r1<<8) | (r0<<0)
+		if (format):
+			pos =val & 0xFF
+			wafer_n =(val >> 8) & 0x1F
+			lot =(val >> 13) & 0x7F
+			status =(val >> 20) & 0x3 
+			process =(val >> 22) & 0x1F 
+			adc_ref =(val >> 27) & 0x1F 
+			print("Lot N:", lot, "; Wafer N:", wafer_n, "; Position: ", pos, "; Status: ", status, "; Process bin: ", process, "; ADC reference: ", adc_ref, ";" )
 
-
-
-
-
-
-
-
-
+		return pos, wafer_n, lot, status, process, adc_ref
+		
 #	def save_configuration(self, file = '../MPA_Results/Configuration.csv', display=True):
 #		registers = []
 #		for reg in self.mpa_peri_reg_map:
