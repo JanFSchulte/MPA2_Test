@@ -58,7 +58,6 @@ class AUTOPROBER():
         except:
             print("Output Folder already exist")
 
-
     def colprint(self, text):
         sys.stdout.write("\033[1;34m")
         print(str(text))

@@ -645,6 +645,7 @@ class mpa_test_utility():
         # Set SRAM-BIST_Mode bits to test mode.
 
         #start timing here
+        t0 = time.time()
         self.mpa.i2c.row_write('SRAM_BIST', 0 , 0b00001111 )
         for i in range (1,17):
             if (self.mpa.i2c.row_read('SRAM_BIST_done', i)): print ("Test for row", i, "already run!")
@@ -654,7 +655,7 @@ class mpa_test_utility():
             if rbr: self.mpa.i2c.row_write('SRAM_BIST', i , 0b11111111 ); time.sleep(0.1)
             if (self.mpa.i2c.row_read('SRAM_BIST_done', i)):
                 if verbose: print("Test for row", i, "done!")
-                if (self.mpa.i2c.row_read('bist_fail', i)):
+                if (self.mpa.i2c.row_read('SRAM_BIST_fail', i)):
                     if verbose:
                         sys.stdout.write("\033[1;31m")
                         print("Test for row", i, "failed")
@@ -666,6 +667,8 @@ class mpa_test_utility():
                     print("Test for row", i, "not run")
                     sys.stdout.write("\033[0;0m")
                 fail[i-1] = 1
+        t1 = time.time()
+        print(f"SRAM Bist Time:{str(t1-t0)}")
         return fail
 
     def sram_bist_voltage_scan(self, n_samples = 1, voltages = range(700, 1000, 50), rbr = 1, verbose =0):
@@ -695,6 +698,7 @@ class mpa_test_utility():
 
     def row_bist_voltage_scan(self, n_samples = 10, voltages = range(780, 830, 5), rbr = 1, verbose =1):
         res = []
+        bist_rows = np.zeros(16)
         for i in range(0, len(voltages)):
             fail = 0
             print(">>>>>> Testing at voltage", voltages[i]/1000)
@@ -704,6 +708,7 @@ class mpa_test_utility():
             self.mpa.ctrl_base.set_row_mask()
             print("Start...")
             for n in range(0, n_samples):
+                row_bist_compare = np.zeros(16)
                 try:
                     row_bist_compare, bist_fail = self.row_bist_all(sram_test = 0)
                     check5 = (row_bist_compare == 5)
@@ -711,6 +716,7 @@ class mpa_test_utility():
                 except:
                     check5 = False
                     bist_fail =1
+                bist_rows = np.vstack((bist_rows, row_bist_compare))
                 if (not np.all(check5)) or bist_fail: 
                     fail += 1 
             res.append(n_samples - fail)
@@ -724,7 +730,7 @@ class mpa_test_utility():
         #plt.ylabel('Success rate')
         #plt.legend()
         #plt.show()
-        return res
+        return res, bist_rows
 
 
     def row_bist_all(self, row = range(1,17), vector_fail=0, verbose = 0, sram_test = 1):
@@ -846,7 +852,6 @@ class mpa_test_utility():
             if verbose: print("Row:", i, ", N of failed at vector: " , r)
             fail_row[i-1] = r
         return fail_row, bist_fail
-
 
     def row_bist(self, row = range(1,17), vector_fail=0, verbose = 0, sram_test = 1):
         t0 = time.time()
