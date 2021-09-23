@@ -131,11 +131,11 @@ class mpa_bias_utility():
         self.i2c.peri_write("ADCcontrol", int(vref_dac_new))
         vref_act = self.multimeter.measure()
         if (vref_act < (vref_exp + vref_exp*0.01)) & (vref_act > (vref_exp - vref_exp*0.01)):
-            print(f"Calibration of VREF DAC --> Done ({vref_act}V for {vref_dac_new})")
+            utils.print_good(f"Calibration of VREF DAC --> Done ({vref_act} V for {vref_dac_new} DAC)")
             ret = 1
         else:
-            print(f"Calibration of VREF DAC --> Failed ({vref_act}V for {vref_dac_new})")
-            ret =-1
+            utils.print_error(f"Calibration of VREF DAC --> Failed ({vref_act} V for {vref_dac_new} DAC)")
+            ret =0
         if verbose:
             print(f"Slope = {slope}, Offset = {round(offset, 4)}V, vref_dac_new = {vref_dac_new}, VREF = {round(vref_act, 4)}V")
         self.mpa.ctrl_base.set_peri_mask()
@@ -205,9 +205,9 @@ class mpa_bias_utility():
         self.i2c.peri_write(DAC, DAC_new_val)
         new_val = self.multimeter.measure()
         if (new_val - gnd_corr < exp_val + exp_val*self.cal_precision  )&(new_val - gnd_corr > exp_val - exp_val*self.cal_precision ):
-            print("Calibration bias point ", point, "of bias block", block, "--> Done (", new_val, "V for ", DAC_new_val, " DAC)")
+            utils.print_good(f"Calibration bias point {point} of bias block {block} -> Done ({new_val} V for {DAC_new_val} DAC)")
         else:
-            print("Calibration bias point ", point, "of bias block", block, "--> Failed (", new_val, "V for ", DAC_new_val, " DAC)")
+            utils.print_error(f"Calibration bias point {point} of bias block {block} -> Failed ({new_val} V for {DAC_new_val} DAC)")        
         return DAC_new_val
 
     def select_block(self, block, test_point = 0, sw_en = 0):
@@ -250,8 +250,7 @@ class mpa_bias_utility():
             self.select_block(block+1, 7, 1) # 7 to select GND 
             data[block] = self.multimeter.measure()
         self.mpa.ctrl_base.disable_test()
-        print("Measured Analog Ground:", np.mean(data))
-        print(data)
+        utils.print_info(f"Measured Avg GND:{np.mean(data)}")
         return np.mean(data)
 
     def measure_bg(self):
@@ -261,7 +260,7 @@ class mpa_bias_utility():
         time.sleep(1)
         data = self.multimeter.measure()
         self.mpa.ctrl_base.disable_test()
-        print(data)
+        utils.print_info(f"Measured VBG:{np.mean(data)}")
         return data
 
     def trimDAC_amplitude(self, value):

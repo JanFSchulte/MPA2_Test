@@ -80,10 +80,18 @@ class PowerUtility:
             d_limit = [ 5.0, 15.0]
             a_limit = [18.0, 28.0]
             p_limit = [ 0.0,  8.0]
+        elif(state=='reset_mpa'):  
+            d_limit = [ 5.0,  20.0]
+            a_limit = [50.0, 100.0]
+            p_limit = [ 5.0,  25.0]
         elif(state=='startup'):   #enable after reset
             d_limit = [18.0, 35.0]
             a_limit = [18.0, 28.0]
             p_limit = [ 0.0,  8.0]
+        elif(state=='startup_mpa'):   #enable after reset
+            d_limit = [50.0, 100.0]
+            a_limit = [50.0, 100.0]
+            p_limit = [ 5.0,  25.0]
         elif(state=='uncalibrated'): #configured
             d_limit = [18.0, 35.0]
             a_limit = [18.0, 28.0]

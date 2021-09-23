@@ -63,11 +63,11 @@ class MPA_ASIC:
             time.sleep(0.2)
             sys.stdout.write("                              \r")
             sys.stdout.flush()
-            if(reset_board): print("->  \tReset FC7 Firmware")
-            if(reset_chip):  print("->  \tReset Chip")
-            print("->  \tInitialised SLVS pads and sampling edges")
-            print("->  \tSampling phases tuned")
-            print("->  \tActivated normal readout mode")
+            if(reset_board): utils.print_info("->  \tReset FC7 Firmware")
+            if(reset_chip):  utils.print_info("->  \tReset Chip")
+            utils.print_info("->  \tInitialised SLVS pads and sampling edges")
+            utils.print_info("->  \tSampling phases tuned")
+            utils.print_info("->  \tActivated normal readout mode")
             if(read_current):
                 self.pwr.get_power(display = True)
         return rt

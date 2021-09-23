@@ -1,12 +1,16 @@
 #
+from myScripts.Utilities import *
+from myScripts.BasicD19c import *
+from myScripts.ArrayToCSV import *
+from d19cScripts import *
+
 import os
 import csv
 import numpy as np
 import time
 import sys
 import traceback
-from d19cScripts import *
-from myScripts import *
+
 #from mpa_methods.mpa_main import *
 import time
 
@@ -32,7 +36,7 @@ class MPAProbeTest:
         self.cal = cal
         self.test = test
         self.bias = bias
-        # Variables
+        # Logging
         self.GlobalSummary = []
         self.LogFile = open(self.DIR+"/LogFile.txt", "w")
         self.Legend = ["Chip_N", "I/O pwr reset" , "Digital pwr reset", "Analog pwr reset", "I/O pwr " , "Digital pwr ", "Analog pwr ", "Shift Test", "Ground Value", "Bias Average Cal", "Gain", "Threshold LSB", "Calibration LSB", "Noise [Cal LSB]", "Threshold Spread [Cal LSB]", "Pixel errors [N]", "Strip input test", "Memory @ 1.0 test", "SRAM BIST test", "ROW BIST test","DLL test","VREF DAC cal", "RO Inverter", "RO Delay", "Bandgap"]
@@ -41,7 +45,6 @@ class MPAProbeTest:
         self.GeneralLogFile = open(self.DIR+"/../LogFile.txt", "a")
         self.colprint("Creating new chip measurement: "+self.DIR)
         self.Flag = 1
-
         # Current Limits
         self.current_limit_pads_high = 25
         self.current_limit_pads_low = 5
@@ -51,7 +54,6 @@ class MPAProbeTest:
         self.current_limit_digital_low_leakage = 5
         self.current_limit_analog_high = 100
         self.current_limit_analog_low = 50
-
         # Analog Paramters
         self.vref_nominal = 0.850
         self.ideal_th_LSB = 1.456
@@ -64,7 +66,6 @@ class MPAProbeTest:
         self.low_cl_DAC = 15
         self.high_cl_ofs = 30
         self.trim_amplitude = 24
-        
         # Digital Paramters
         self.signal_integrity_limit = 0.99
 
@@ -309,7 +310,7 @@ class MPAProbeTest:
         #	Mem10 = self.memory_test(105)
 
         # Digital Summary filename
-        self.colprint_general("ROW BIST test")		
+        self.colprint_general("ROW BIST test")
         row_bist, sram_bist = self.test.row_bist(verbose=0)
         sram_bist_pass = 0; row_bist_pass = 0
         if np.all(sram_bist == 0): # sram bist passed if all elements are 0
@@ -328,7 +329,7 @@ class MPAProbeTest:
             dll_pass=0
         self.colprint(f"DLL Test:{dll_pass}")
 
-        r0,r1=self.test.ro_scan(n_samples = 10)
+        r0, r1=self.test.ro_scan(n_samples = 10)
 
         self.GlobalSummary[18] = sram_bist_pass
         self.GlobalSummary[19] = row_bist_pass
