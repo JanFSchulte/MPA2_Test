@@ -112,7 +112,7 @@ class MPAProbeTest:
                     self.colprint("Writing e-fuse!")
                     self.mpa.init(reset_chip = 1, reset_board = 1)
                     # Change How Parameters to write fuse are passed!
-                    #self.mpa.ctrl_base.fuse_write( lot = 1, wafer_n = 6, pos = int(N), process = 0 , adc_ref = int(self.GlobalSummary[21]), status = 0, pulse = 0 , confirm = 1)
+                    self.mpa.ctrl_base.fuse_write( lot = 1, wafer_n = 6, pos = int(N), process = 0 , adc_ref = int(self.GlobalSummary[21]), status = 0, pulse = 1 , confirm = 1)
                     self.colprint("DONE!")
 
         except Exception as e:

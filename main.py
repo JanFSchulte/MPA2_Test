@@ -39,9 +39,9 @@ from mpa_methods.mpa_cal_utility import *
 from mpa_methods.mpa_test_utility import *
 from mpa_methods.mpa_bias_utility import *
 
-# MPA Test procedures
-from mpa_methods.mpa_probe_test import *
-#from mpa_methods.main_mpa_test import *
+# MPA2 Test procedures
+from mpa_methods.mpa_main_test import *
+
 
 ipaddr, fc7AddrTable, fc7_if = configure_communication()
 FC7 = fc7_com(fc7_if, fc7AddrTable)
@@ -123,12 +123,7 @@ class MPAwp:
         except ImportError:
             self.bias = False
             print("- Impossible to access GPIB instruments")
-
-        self.probe         = MPAProbeTest("../MPA2_Results/Lot1_Wafer5/TEST", self.chip, self.i2c, FC7, self.cal, self.test, self.bias)
-
-        # Higher level test routines
-        # self.main_test   = main_mpa_test(self.chip, self.i2c, FC7, self.cal, 0, self.pwr, self.test, 0)
-
+            
     def on():
         utils.activate_I2C_chip(FC7)
         time.sleep(0.1);  pwr.set_supply('on', display=False)

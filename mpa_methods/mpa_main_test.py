@@ -10,6 +10,7 @@ import traceback
 
 import time
 import sys
+import csv
 import inspect
 import random
 import numpy as np
@@ -17,6 +18,15 @@ import matplotlib.pyplot as plt
 
 '''
 MPA2 Test routines
+
+To run probe, e.g. for chip 3:
+
+from mpa_methods.mpa_main_test import all
+probe = MainTestsMPA(tag = 187, chip = mpa)
+probe.RUN()
+
+If no directory name passed to MainTestsMPA, results will be located in ../MPA2_Results/TEST/
+
 '''
 try:
     mpa
@@ -30,7 +40,10 @@ class MainTestsMPA():
             self._init(chip)
             self.summary = results()
             self.runtest = RunTest('default')
-            self.tag = tag
+            self.die_number = tag
+            self.tag = f"N_{tag}"
+            self.wafer = False
+            self.lot = False
             self.Configure(directory=directory, runtest=runtest)
 
     def Configure(self, directory = '../MPA2_Results/Wafer0/', runtest = 'default'):
@@ -56,8 +69,9 @@ class MainTestsMPA():
     def RUN(self, runname='default', write_header=True):       
         self.test_good = True
         ## Setup log files #####################
-        if(runname=='default'): chip_info = self.tag
-        else: chip_info = runname
+        #if(runname=='default'): chip_info = self.tag
+        #else: chip_info = runname
+        chip_info = self.tag
         time_init = time.time()
         version = 0
         while(True):
@@ -81,7 +95,7 @@ class MainTestsMPA():
         #if(self.runtest.is_active('ADC', display=False)):
         #    self.ssa.biascal.SetMode('Keithley_Sourcemeter_2410_GPIB')
         ## Main test routine ##################
-        self.pwr.set_supply(mode='ON', display=False, d=self.dvdd, a=self.avdd, p=self.pvdd)
+        self.pwr.set_supply(mode='on', display=False, d=self.dvdd, a=self.avdd, p=self.pvdd)
         # Init Tests
         self.pwr.disable_mpa()
         self.test_routine_power(filename=fo, mode='reset_mpa')
@@ -104,11 +118,12 @@ class MainTestsMPA():
         # Save summary ######################
         self.summary.save(
             directory=self.DIR, filename=("Chip_{c:s}_v{v:d}/".format(c=str(chip_info), v=version)),
-            runname='', write_header = write_header)
+            runname=str(version), write_header = write_header)
         self.summary.display()
         time_end = time.time()
         utils.print_log(f"->  Total Time: {time_end - time_init}")
         utils.close_log_files()
+        self.pwr.set_supply(mode='off', display=False)
         return self.test_good
 
     def test_routine_power(self, filename = 'default', runname = '', mode = ''):
@@ -128,7 +143,11 @@ class MainTestsMPA():
             except:
                 self.print_exception("->  power measurements error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3): 
+                    self.summary.set('I_DVDD_'+mode, -1000, '', '',  runname)
+                    self.summary.set('I_AVDD_'+mode, -1000, '', '',  runname)
+                    self.summary.set('I_PVDD_'+mode, -1000, '', '',  runname)
+                    self.test_good = False
 
     def test_routine_initialize(self, filename = 'default', runname = ''):
         filename = self.summary.get_file_name(filename)
@@ -139,14 +158,16 @@ class MainTestsMPA():
             try:
                 time.sleep(1)
                 r1 = self.mpa.init()
-                self.summary.set('Initialize', int(r1), '', '',  runname)
+                self.summary.set('init', int(r1), '', '',  runname)
                 if(not r1): self.test_good = False
                 break
             except(KeyboardInterrupt): break
             except:
                 self.print_exception("->  Initializing MPA error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3):
+                    self.summary.set('init', -1000, '', '',  runname)
+                    self.test_good = False
 
     def test_routine_shift(self, filename= "default", runname=''):
         filename = self.summary.get_file_name(filename)
@@ -164,7 +185,9 @@ class MainTestsMPA():
             except:
                 self.print_exception("->  Shift test error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3): 
+                    self.summary.set('shift', -1000, '', '',  runname)
+                    self.test_good = False
 
     def test_routine_calibrate_bias(self, filename = 'default', runname = ''):
         filename = self.summary.get_file_name(filename)
@@ -177,15 +200,19 @@ class MainTestsMPA():
                 bg = self.bias.measure_bg()
                 r1 = self.bias.calibrate_chip(gnd_corr = gnd, print_file = 1, filename = filename+"bias_calibration")
                 r1 = round(np.mean(r1),1)
-                self.summary.set('avg_GND',gnd*1000 ,'mA', '',  runname)
-                self.summary.set('avg_VBG', bg*1000, 'mA', '',  runname)
-                self.summary.set('avg_bias_DAC', round(r1,2), '', '',  runname)
+                self.summary.set('avg_GND',gnd*1000 ,'mV', '',  runname)
+                self.summary.set('avg_VBG', bg*1000, 'mV', '',  runname)
+                self.summary.set('avg_bias_DAC', round(r1,3), '', '',  runname)
                 break
             except(KeyboardInterrupt): break
             except:
                 self.print_exception("-> Calibration error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3): 
+                    self.summary.set('avg_GND',-1000,'', '',  runname)
+                    self.summary.set('avg_VBG',-1000, '', '',  runname)
+                    self.summary.set('avg_bias_DAC', -1000, '', '',  runname)
+                    self.test_good = False
 
     def test_routine_calibrate_vref(self, filename = 'default', runname = ''):
         filename = self.summary.get_file_name(filename)
@@ -194,14 +221,16 @@ class MainTestsMPA():
         en = self.runtest.is_active('Calibrate VREF')
         while (en and wd < 3):
             try:
-                vref_dac_val = self.bias.calibrate_vref(self.vref_nominal,32)[1]
-                self.summary.set('VREF_DAC', int(vref_dac_val), '', '',  runname)
+                self.vref_dac_val = self.bias.calibrate_vref(self.vref_nominal, 32)[1]
+                self.summary.set('VREF_DAC', int(self.vref_dac_val), '', '',  runname)
                 break
             except(KeyboardInterrupt): break
             except:
                 self.print_exception("-> Calibration error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3): 
+                    self.summary.set('VREF_DAC',-1000, '', '',  runname)
+                    self.test_good = False
 
     def test_routine_save_config(self, filename = 'default', runname = ''):
         filename = self.summary.get_file_name(filename)
@@ -227,8 +256,8 @@ class MainTestsMPA():
         while (en and wd < 3):
             try:
                 self.bias.trimDAC_amplitude(self.trim_amplitude)
-                thDAC = self.bias.measure_DAC_testblocks(point = 5, bit = 8, step = 127, plot = plot, print_file = 1, filename = filename + "Th_DAC", verbose = 0)
-                calDAC = self.bias.measure_DAC_testblocks(point = 6, bit = 8, step = 127, plot = plot, print_file = 1, filename = filename + "Cal_DAC", verbose = 0)
+                thDAC = self.bias.measure_DAC_testblocks(point = 5, bit = 8, step = 127, plot = 0, print_file = 1, filename = filename + "Th_DAC", verbose = 0)
+                calDAC = self.bias.measure_DAC_testblocks(point = 6, bit = 8, step = 127, plot = 0, print_file = 1, filename = filename + "Cal_DAC", verbose = 0)
                 self.thLSB = np.mean((thDAC[:,127] - thDAC[:,0])/127)*1000 #LSB Threshold DAC in mV
                 self.calLSB = np.mean((calDAC[:,127] - calDAC[:,0])/127)*0.035/1.768*1000 #LSB Calibration DAC in fC
                 self.summary.set('thLSB'    , self.thLSB, 'mV', '',  runname)
@@ -238,7 +267,10 @@ class MainTestsMPA():
             except:
                 self.print_exception("->  Measure DAC testblocks error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3): 
+                    self.summary.set('thLSB'    , -1000, '', '',  runname)
+                    self.summary.set('calLSB'    , -1000, '', '',  runname)
+                    self.test_good = False
 
     def test_routine_analog(self, filename='../SSA_Results/Chip0/', runname = ''):
         filename = self.summary.get_file_name(filename)
@@ -257,7 +289,7 @@ class MainTestsMPA():
                 cal_L = int(round(self.low_cl_DAC*self.ideal_cl_LSB/self.calLSB))
 
                 self.mpa.chip.ctrl_base.disable_test()
-                self.mpa.init()
+                self.mpa.init(display=0)
                 self.fc7.activate_I2C_chip(verbose=0)
 
                 data_array,cal_A, noise_A, trim, pix_out = self.cal.trimming_probe(
@@ -267,8 +299,8 @@ class MainTestsMPA():
                     nominal_req = cal_T, 
                     trim_ampl = self.trim_amplitude, 
                     rbr = 0, 
-                    plot = plot)
-
+                    plot = 0)
+                utils.print_info("->  Final scurve ...")
                 scurve, cal_B, noise_B  = self.cal.s_curve(
                     n_pulse = 1000, 
                     s_type = "CAL", 
@@ -281,30 +313,45 @@ class MainTestsMPA():
                     pulse_delay = 500, 
                     extract_val = cal_L, 
                     extract = 1, 
-                    plot = plot, 
+                    plot = 0, 
                     print_file = 1, 
                     filename = filename + "Scurve15")
+
                 gain = (th_T-th_L)/(np.mean(cal_A[1:1920]) - np.mean(cal_B[1:1920])) * self.thLSB / self.calLSB # Average
-                if(scurve.any()):
-                    utils.print_good(f"->  Scurve FE Gain:      {str(round(gain,1))} mV/fC")
+                thr_spread = np.std(cal_B[1:1919])
+                noise = np.mean(noise_B[1:1919])
+                self.summary.set('gain'    , gain, 'mV/fC', '',  runname)
+                self.summary.set('noise'    , noise, '', '',  runname)
+                self.summary.set('threshold_spread'    , thr_spread, '', '',  runname)
+
+                if(scurve.any() and (thr_spread < 2.5) and (thr_spread > 0.5) and (noise < 2)):
+                    utils.print_good(f"\n->  Scurve FE Gain:      {str(round(gain,1))} mV/fC")
                     utils.print_good(f"->  ThLSB:               {str(round(self.thLSB,3))}")
                     utils.print_good(f"->  CalLSB:              {str(round(self.calLSB,3))}")
-                    utils.print_good(f"->  Noise:               {str(round(np.mean(noise_B[1:1919]),3))}")
-                    utils.print_good(f"->  Threshold Spread:    {str(round(np.std(cal_B[1:1919]),3))}")
-                    utils.print_log(  "->  Test time:    {:7.2f} s".format((time.time()-time_init))); time_init = time.time();
+                    utils.print_good(f"->  Noise:               {str(round(noise,3))}")
+                    utils.print_good(f"->  Threshold Spread:    {str(round(thr_spread,3))}")
+                    utils.print_log(  "->  Total Test time:     {:7.2f} s".format((time.time()-time_init))); time_init = time.time();
                 else:
+                    utils.print_error(f"\n->  Scurve FE Gain:      {str(round(gain,1))} mV/fC")
+                    utils.print_error(f"->  ThLSB:               {str(round(self.thLSB,3))}")
+                    utils.print_error(f"->  CalLSB:              {str(round(self.calLSB,3))}")
+                    utils.print_error(f"->  Noise:               {str(round(noise,3))}")
+                    utils.print_error(f"->  Threshold Spread:    {str(round(thr_spread,3))}")
+                    utils.print_log(  "->  Total Test time:     {:7.2f} s".format((time.time()-time_init))); time_init = time.time();
                     utils.print_error( "->  Scurve trimming error.")
                     utils.print_error( "->  Scurve noise evaluation error.")
                     utils.print_error( "->  Scurve Gain and Offset evaluation error.")
-                self.summary.set('Gain'    , gain, 'mV/fC', '',  runname)
-                self.summary.set('Noise'    , np.mean(noise_B[1:1919]), '', '',  runname)
-                self.summary.set('threshold_spread'    , np.std(cal_B[1:1919]), '', '',  runname)
+                    self.test_good = False
                 break
             except(KeyboardInterrupt): break
             except:
                 self.print_exception("->  Scurve measures test error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3): 
+                    self.summary.set('gain'    , -1000, '', '',  runname)
+                    self.summary.set('noise'    , -1000, '', '',  runname)
+                    self.summary.set('threshold_spread'    , -1000, '', '',  runname)
+                    self.test_good = False
         wd = 0
     
     def test_routine_analog_pixel(self, filename, runname = ''):
@@ -326,14 +373,21 @@ class MainTestsMPA():
                 with open(filename+'BadPixelsA.csv', 'w') as csvfile:
                     CVwriter = csv.writer(csvfile, delimiter=' ',	quotechar='|', quoting=csv.QUOTE_MINIMAL)
                     for i in BadPixA: CVwriter.writerow(i)
-                utils.print_info(str(np.size(BadPixA)) + " << Bad Pixels (Ana)")
-                self.summary.set('Pixel_errors', np.size(BadPixA), 'cnt', '', runname)
+                
+                self.summary.set('pixel_errors', np.size(BadPixA), 'cnt', '', runname)
+                if np.size(BadPixA) > 100:
+                    utils.print_warning(str(np.size(BadPixA)) + " << Bad Pixels (Ana)")
+                    self.test_good = False
+                else: 
+                    utils.print_info(str(np.size(BadPixA)) + " << Bad Pixels (Ana)")
                 break
             except(KeyboardInterrupt): break
             except:
                 self.print_exception("->  Analog Pixel test error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3):
+                    self.summary.set('pixel_errors',-1000, '', '', runname)
+                    self.test_good = False
         wd = 0
 
     def test_routine_strip_in(self, filename, runname = ''):
@@ -363,6 +417,7 @@ class MainTestsMPA():
                         StripIn = 1
                     else:
                         utils.print_error("Strip In Scan failed")
+                        self.test_good = False
                         StripIn = 0
                 self.summary.set('strip_in', StripIn, '', '', runname)
                 break
@@ -370,7 +425,9 @@ class MainTestsMPA():
             except:
                 self.print_exception("->  Strip Input test error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3):
+                    self.summary.set('strip_in', -1000, '', '', runname)
+                    self.test_good = False
         wd = 0
 
     def test_routine_memory(self, filename, runname = ''):
@@ -407,13 +464,16 @@ class MainTestsMPA():
                 else:
                     Mem10 = 0
                     utils.print_warning(str(len(BadPixM)) + " << Bad Pixels (Mem)")
-                self.summary.set('Memory_1V', Mem10, '', '', runname)
+                    self.test_good = False
+                self.summary.set('memory_1V', Mem10, '', '', runname)
                 break
             except(KeyboardInterrupt): break
             except:
                 self.print_exception("->  Memory test error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3):
+                    self.summary.set('memory_1V', -1000, '', '', runname)
+                    self.test_good = False
         wd = 0
 
     def test_routine_bist(self, filename= "default", runname=''):
@@ -432,6 +492,7 @@ class MainTestsMPA():
                     row_bist_pass = 1
                 else:
                     utils.print_error(f"->  Row BIST failed with: {row_bist}")
+                    self.test_good = False
                 self.summary.set('SRAM_BIST', sram_bist_pass, '', '', runname)
                 self.summary.set('row_BIST', row_bist_pass, '', '', runname)
                 break
@@ -439,7 +500,10 @@ class MainTestsMPA():
             except:
                 self.print_exception("->  BIST error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3):
+                    self.test_good = False
+                    self.summary.set('SRAM_BIST', -1000, '', '', runname)
+                    self.summary.set('row_BIST', -1000, '', '', runname)
 
     def test_routine_ring_oscillators(self, filename = 'default', runname = ''):
         filename = self.summary.get_file_name(filename)
@@ -458,7 +522,10 @@ class MainTestsMPA():
             except:
                 self.print_exception("->  Ring Oscillators error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3):
+                    self.summary.set('ro_inverter'    , -1000, '', '',  runname)
+                    self.summary.set('ro_delay'    , -1000, '', '',  runname)
+                    self.test_good = False
 
     def test_routine_dll(self, filename = 'default', runname = ''):
         filename = self.summary.get_file_name(filename)
@@ -468,15 +535,20 @@ class MainTestsMPA():
         while (en and wd < 3):
             try:
                 dll_pass = self.test.dll_basic_test()
-                if dll_pass==0: dll_pass=1
-                else: dll_pass=0
+                if dll_pass==0: 
+                    dll_pass=1
+                else: 
+                    dll_pass=0
+                    self.test_good = False
                 self.summary.set('DLL'    , dll_pass, '', '',  runname)
                 break
             except(KeyboardInterrupt): break
             except:
                 self.print_exception("-> DLL error. Reiterating...")
                 wd +=1;
-                if(wd>=3): self.test_good = False
+                if(wd>=3):
+                    self.summary.set('DLL' , -1000, '', '',  runname)
+                    self.test_good = False
 
     def print_exception(self, text='Exception'):
         utils.print_warning(text)
@@ -494,6 +566,18 @@ class MainTestsMPA():
                 self.ssa.reset(); time.sleep(1)
             except:
                 wd +=1;
+    
+    def GetActualBadPixels(self, BPA):
+        #print BPA
+        badpix = BPA[0]
+        goodpix = []
+        for i in range(1, len(BPA)):
+            for j in badpix:
+                if j not in BPA[i]:
+                    goodpix.append(j)
+        for i in goodpix:
+            badpix.remove(i)
+        return badpix
 
     def idle_routine(self, filename = 'default', runname = '', duration=5, voltage=1.0):
         # run all functional test with STUB at BX rate, L1 data at 1MHz
@@ -547,6 +631,7 @@ class MainTestsMPA():
         self.avdd = 1.20
         self.thLSB = False
         self.calLSB = False
+        self.vref_dac_val = False
         # Nominal values
         # Analog Paramters
         self.vref_nominal = 0.850

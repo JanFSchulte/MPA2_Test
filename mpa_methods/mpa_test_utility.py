@@ -728,7 +728,7 @@ class mpa_test_utility():
         fail_row = np.zeros(16)
         miscompare = np.zeros(16)
         if sram_test:
-            bist_fail = self.sram_bist_test()
+            bist_fail = self.sram_bist_test(verbose = verbose)
             if bist_fail.any():
                 utils.print_error("->  SRAM BIST Failed! Exiting ROW BIST!")
                 return fail_row, bist_fail
@@ -740,7 +740,6 @@ class mpa_test_utility():
             self.mpa.i2c.row_write('SRAM_BIST', 0 , 0b1111)
 
         t1 = time.time()
-        utils.print_log("->  Init + SRAM BIST Elapsed Time: " + str(t1 - t0))
         self.mpa.ctrl_base.set_row_mask()
         self.mpa.i2c.row_write('MemoryControl_1', 0 , 0 )
         self.mpa.i2c.row_write('MemoryControl_2', 0 , 0 )
@@ -759,7 +758,7 @@ class mpa_test_utility():
             if (r != miscompare[i-1]):
                 utils.print_info(f"->  Test for row {i} failed")
                 fail[i-1]=1; miscompare[i-1] += r
-        if verbose: utils.print_info(f"->  Reset test finished. Number of error: {np.sum(fail)}")
+        utils.print_info(f"->  Reset test finished. Number of error: {np.sum(fail)}")
         # This block tests the ScanChain block
         self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000001 )
         self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000101 )
@@ -775,7 +774,7 @@ class mpa_test_utility():
             if (r != miscompare[i-1]):
                 utils.print_info(f"->  Test for row {i} failed")
                 fail[i-1]=1; miscompare[i-1] += r
-        if verbose:  utils.print_info(f"->  Scan test 1 finished. Number of error: {np.sum(fail)}")
+        utils.print_info(f"->  Scan test 1 finished. Number of error: {np.sum(fail)}")
         # Sanity check of BIST hardware
         self.mpa.i2c.row_write('RowLogic_BIST', 0 , 0b00000101 )
         self.mpa.i2c.row_write('RowLogic_BIST_input_1', 0 , 0b00000000 )
@@ -788,9 +787,10 @@ class mpa_test_utility():
             if (r != miscompare[i-1]):
                 utils.print_info(f"->  Test for row {i} failed")
                 fail[i-1]=1; miscompare[i-1] += r
-        if verbose: utils.print_info(f"->  Scan test 2 finished. Number of error: {np.sum(fail)}")
+        utils.print_info(f"->  Scan test 2 finished. Number of error: {np.sum(fail)}")
 
         # Finally, perform BIST with provided test vectors
+
         count=0
         f=open('mpa_methods/row_bist_vector.txt','r')
         for l in range(1,306):
@@ -812,13 +812,13 @@ class mpa_test_utility():
                         r = self.mpa.i2c.row_read('RowBIST_summary_reg', i)
                         utils.print_info(f"->  repeat read operation for row {r} at vector {l}")
                     if (r != miscompare[i-1]):
-                        utils.print_info(f"->  Row: {i}, N of miscomparisons at vector: {l}")
+
+                        if verbose: utils.print_info(f"->  Row: {i}, N of miscomparisons at vector: {l}")
                         #print("Input Vector: ", self.mpa.i2c.row_read('RowLogic_BIST_input_2', i ), self.mpa.i2c.row_read('RowLogic_BIST_input_1', i ) )
                         #print("Output Vector: ", self.mpa.i2c.row_read('RowLogic_BIST_ref_output_2', i ), self.mpa.i2c.row_read('RowLogic_BIST_ref_output_1', i ) )
                         miscompare[i-1] = r
             line = f.readline()
         t2 = time.time()
-        utils.print_log("->  Row BIST Elapsed Time: " + str(t2 - t1))
         for i in row:
             r = self.mpa.i2c.row_read('RowBIST_summary_reg', i)
             if (r == None): 
@@ -828,6 +828,8 @@ class mpa_test_utility():
                 if verbose: utils.print_info(f"->  repeat read operation for row {r}, at vector {l}")
             if verbose: utils.print_info(f"->  Row: {i}, N of miscomparisons at vector: {r}")
             fail_row[i-1] = r
+        utils.print_log("->  Init + SRAM BIST Elapsed Time: " + str(t1 - t0))
+        utils.print_log("->  Row BIST Elapsed Time: " + str(t2 - t1))
         return fail_row, bist_fail
 
     def row_bist_all(self, row = range(1,17), vector_fail=0, verbose = 0, sram_test = 1):
@@ -924,6 +926,7 @@ class mpa_test_utility():
 
         # Finally, perform BIST with provided test vectors
         count=0
+        utils.print_info("->  Doing Row BIST ...")
         f=open('mpa_methods/row_bist_vector.txt','r')
         for l in range(1,306):
             line = int(f.readline(),2)

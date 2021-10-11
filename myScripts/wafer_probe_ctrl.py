@@ -3,8 +3,11 @@ import numpy
 import sys
 import os
 import random
+from numpy.core.overrides import verify_matching_signatures
+import pandas as pd
+import numpy as np
 import time
-from mpa_methods.mpa_probe_test import *
+from mpa_methods.mpa_main_test import *
 from ssa_methods.main_ssa_test_2 import *
 
 '''
@@ -31,8 +34,7 @@ class tmperrgpib:
 
 class AUTOPROBER():
 
-    def __init__(self, wafer, name, chip='MPA', mpa=False, i2c = False, fc7 = False, cal = False, test= False, bias = False, dryRun = False, exclude = []):
-        self.name = name
+    def __init__(self, wafer, chip='MPA', mpa=False, dryRun = False, exclude = [], efuse = False):
         self.wafer = wafer
         try:
             self.ProbeStation = Gpib.Gpib(1, 22)
@@ -44,15 +46,11 @@ class AUTOPROBER():
         time.sleep(0.1)
         #self.ConnToPS()
         self.mpa = mpa
-        self.i2c = i2c
-        self.fc7 = fc7
-        self.cal = cal
-        self.test = test
-        self.bias = bias
         self.dryRun = dryRun
         self.chip = chip
         self.DieNumber = 0
         self.exclude = exclude
+        self.efuse = efuse
         try:
             os.mkdir(f"../MPA2_AutoProbe_results/Wafer_{self.wafer}")
         except:
@@ -74,8 +72,8 @@ class AUTOPROBER():
         self.ProbeStation.write("*IDN?")
         print(self.read(100))
         time.sleep(0.25)
-        #self.ProbeStation.write("StepFirstDie") # Start from 1
-        self.ProbeStation.write("StepNextDie -1 6") # Starts from specific (Numbering is automatic)
+        self.ProbeStation.write("StepFirstDie") # Start from 1
+        #self.ProbeStation.write("StepNextDie -1 6") # Starts from specific (Numbering is automatic)
         print(f"Stepped to first die: {self.read(100)}")
         time.sleep(0.25)
         self.ProbeStation.write("ReadChuckPosition")
@@ -115,11 +113,41 @@ class AUTOPROBER():
         #time.sleep(0.25)
 
     def NEWCHIPMSR(self, inf):
-        if  (self.chip == 'MPA'):
-            #PCM = mpa_probe_test(  self.name + "_" + self.DieNumber)
-            PCM = MPAProbeTest(f"../MPA2_AutoProbe_results/Wafer_{self.wafer}/{self.name}_{self.DieNumber}", self.mpa, self.i2c, self.fc7, self.cal, self.test, self.bias)
-            #PCM= MPAProbeTest("../MPA2_Results/Lot1_Wafer6/", self.chip, self.i2c, FC7, self.cal, self.test, self.bias)
-            return PCM.RUN(inf, self.DieNumber)
+        if (self.chip == 'MPA'):
+            if self.efuse:  # Efuse Block#
+                print(f"### Efuse write procedure: {inf}")
+                df = pd.read_csv('yield3.csv', sep=',')
+                row=df[df['chip'] == int(self.DieNumber)]
+                print(row)
+                vref = row['VREF_DAC'].values[0]
+                yd = row['yield'].values[0]
+                status = 0
+                if yd == 0:
+                    status = 0b01
+                elif yd == 1:
+                    status = 0b10
+                adc_ref = vref
+                if vref == -1000:
+                    adc_ref = 0
+                self.mpa.pwr.set_supply(mode='on', display=False, d=1.0, a=1.2, p=1.2)
+                self.mpa.init()
+                #### Change according to wafer number !!!!!
+                mpa.chip.ctrl_base.fuse_write(lot=1, wafer_n=3, pos=int(self.DieNumber), process=0, adc_ref = int(adc_ref), status = status, pulse=1 , confirm=1)
+                self.mpa.pwr.set_supply(mode='off', display=False)
+                return True
+
+            else: # Standard functionality test block
+                PCM = MainTestsMPA(directory = f"../MPA2_AutoProbe_results/Wafer_{self.wafer}/", tag = self.DieNumber, chip = self.mpa)
+                if self.efuse:
+                    PCM.runtest.set_enable('efuse', 'ON')
+                    PCM.wafer = 2
+                    PCM.lot = 1 
+                else:
+                    PCM.runtest.set_enable('efuse', 'OFF')
+                #PCM= MPAProbeTest("../MPA2_Results/Lot1_Wafer6/", self.chip, self.i2c, FC7, self.cal, self.test, self.bias)
+
+                return PCM.RUN(runname = inf, write_header=False)
+
         #elif(self.chip == 'SSA'):
             # WIP
             #PCM = SSA_Measurements(

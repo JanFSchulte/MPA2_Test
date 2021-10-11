@@ -198,14 +198,17 @@ class mpa_ctrl_base:
         time.sleep(0.1)
         return TuneMPA(pattern)
 
-    def fuse_write(self, lot, wafer_n, pos, process, adc_ref, status, pulse = 0, confirm = 0 ):
+    def fuse_write(self, lot, wafer_n, pos, process, adc_ref, status, pulse = 0, confirm = 0):
+        self.pwr.efusepoweron()
+        self.fc7.activate_I2C_chip(verbose=0)
         val = ((adc_ref & 0x1F) << 27) | ((process & 0x1F) << 22) | (status & 0x3) << 20 | ((lot & 0x7F) << 13) | ((wafer_n & 0x1F) << 8) | (pos & 0xFF)
-        print(bin(val))
+        utils.print_info("->  Writing efuse!")
+        utils.print_info(bin(val))
         d0 = (val >>  0) & 0xFF
         d1 = (val >>  8) & 0xFF
         d2 = (val >> 16) & 0xFF
         d3 = (val >> 24) & 0xFF
-        print(bin(d3).lstrip('-0b').zfill(8), ' ', bin(d2).lstrip('-0b').zfill(8), ' ', bin(d1).lstrip('-0b').zfill(8), ' ', bin(d0).lstrip('-0b').zfill(8))
+        utils.print_info(f"{bin(d3).lstrip('-0b').zfill(8)} {bin(d2).lstrip('-0b').zfill(8)} {bin(d1).lstrip('-0b').zfill(8)} {bin(d0).lstrip('-0b').zfill(8)}")
         self.I2C.peri_write('EfuseProg0', d0); self.I2C.peri_write('EfuseProg1', d1); self.I2C.peri_write('EfuseProg2', d2); self.I2C.peri_write('EfuseProg3', d3)
         r0 = self.I2C.peri_read('EfuseProg0'); r1 = self.I2C.peri_read('EfuseProg1'); r2 = self.I2C.peri_read('EfuseProg2'); r3 = self.I2C.peri_read('EfuseProg3');
         if (((r3<<24) | (r2<<16) | (r1<<8) | (r0<<0) ) != val):
@@ -239,18 +242,32 @@ class mpa_ctrl_base:
                 #self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_7_0", 0x00)
                 #self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.format_7_1", 0x00)
                 time.sleep(0.1); self.I2C.peri_write('EfuseMode', 0b00000000)
+        # check if efuse is written correctly
+        utils.print_info("->  Checking efuse!")
+        self.pwr.efusepoweroff()
+        self.pwr.mainpoweron()
+        self.fc7.activate_I2C_chip(verbose=0)
+        r_pos, r_wafer, r_lot, r_status, r_process, r_adc = self.read_fuses()
+        if pos == r_pos and wafer_n == r_wafer and lot == r_lot and status == r_status and process == r_process and adc_ref == r_adc:
+            utils.print_good("->  Efuse written successfully.")
+            utils.print_good(f"\tLot N: {lot} ; Wafer N: {wafer_n}; Position: {pos}; Status:  {status}; Process bin: {process}; ADC reference: {adc_ref}")
+            return True
         else:
+            utils.print_error("->  Error when writing efuse!")
+            utils.print_error(f"\tWriting bits - Lot N: {lot} ; Wafer N: {wafer_n} ; Position: {pos} ; Status: {status} ; Process bin: {process} ; ADC reference: {adc_ref}")
+            utils.print_error(f"\tReading bits - Lot N: {r_lot} ; Wafer N: {r_wafer} ; Position: {r_pos} ; Status: {r_status} ; Process bin: {r_process} ; ADC reference: {r_adc}")
             return False
-        return val
+        
 
-    def read_fuses(self, format = 1):
+    def read_fuses(self, format = 1, verbose = 0):
         self.I2C.peri_write('EfuseMode', 0b00000000)
         time.sleep(0.1)
         self.I2C.peri_write('EfuseMode', 0b00001111)
         time.sleep(0.1)
         self.I2C.peri_write('EfuseMode', 0b00000000)
         r0 = self.I2C.peri_read('EfuseValue0'); r1 = self.I2C.peri_read('EfuseValue1'); r2 = self.I2C.peri_read('EfuseValue2'); r3 = self.I2C.peri_read('EfuseValue3');
-        print(bin(r3).lstrip('-0b').zfill(8), ' ', bin(r2).lstrip('-0b').zfill(8), ' ', bin(r1).lstrip('-0b').zfill(8), ' ', bin(r0).lstrip('-0b').zfill(8))
+        if verbose:
+            print(bin(r3).lstrip('-0b').zfill(8), ' ', bin(r2).lstrip('-0b').zfill(8), ' ', bin(r1).lstrip('-0b').zfill(8), ' ', bin(r0).lstrip('-0b').zfill(8))
         val = (r3<<24) | (r2<<16) | (r1<<8) | (r0<<0)
         if (format):
             pos =val & 0xFF
@@ -259,7 +276,8 @@ class mpa_ctrl_base:
             status =(val >> 20) & 0x3 
             process =(val >> 22) & 0x1F 
             adc_ref =(val >> 27) & 0x1F 
-            print("Lot N:", lot, "; Wafer N:", wafer_n, "; Position: ", pos, "; Status: ", status, "; Process bin: ", process, "; ADC reference: ", adc_ref, ";" )
+            if verbose:
+                print("Lot N:", lot, "; Wafer N:", wafer_n, "; Position: ", pos, "; Status: ", status, "; Process bin: ", process, "; ADC reference: ", adc_ref, ";" )
 
         return pos, wafer_n, lot, status, process, adc_ref
         

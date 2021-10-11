@@ -158,7 +158,7 @@ class fc7_com():
             try:
                 return self.fc7_if.write(p1, p2, p3)
             except:
-                print('=>  FC7 Communication error - fc7_write')
+                utils.print_error('=>  FC7 Communication error - fc7_write')
                 ex = sys.exc_info()
                 time.sleep(0.1)
                 cnt += 1
@@ -171,7 +171,7 @@ class fc7_com():
                 return self.fc7_if.read(p1, p2)
             except:
                 ex = sys.exc_info()
-                print('=>  \tFC7 Communication error - fc7_read')
+                utils.print_error('=>  FC7 Communication error - fc7_read')
                 time.sleep(0.1)
                 cnt += 1
         print(ex)
@@ -185,7 +185,7 @@ class fc7_com():
                 break
             except:
                 ex = sys.exc_info()
-                print('=>  \tFC7 Communication error - fc7_read_block')
+                utils.print_error('=>  FC7 Communication error - fc7_read_block')
                 time.sleep(0.1)
                 cnt += 1
         if(cnt>=4):
@@ -208,7 +208,7 @@ class fc7_com():
                 break
             except:
                 ex = sys.exc_info()
-                print('=>  \tFC7 Communication error - fc7_write_block')
+                utils.print_error('=>  FC7 Communication error - fc7_write_block')
                 time.sleep(0.1)
                 cnt += 1
         if(cnt>=4):
@@ -230,7 +230,7 @@ class fc7_com():
                 return self.fc7_if.fifoRead(p1, p2, p3)
             except:
                 ex = sys.exc_info()
-                print('=>  \tFC7 Communication error - fc7_read_fifo')
+                utils.print_error('=>  \tFC7 Communication error - fc7_read_fifo')
                 time.sleep(0.1)
                 cnt += 1
         print(ex)
@@ -242,7 +242,7 @@ class fc7_com():
                 return SendCommand_CTRL(p1)
             except:
                 ex = sys.exc_info()
-                print('=>  \tFC7 Communication error - SendCommand_CTRL')
+                utils.print_error('=>  \tFC7 Communication error - SendCommand_CTRL')
                 time.sleep(0.1)
                 cnt += 1
         print(ex)
