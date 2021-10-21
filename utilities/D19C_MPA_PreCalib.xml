@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <HwDescription>
   <BeBoard Id="0" boardType="D19C" eventType="MPAAS">
-      	<connection id="board" uri="ipbusudp-2.0://192.168.1.79:50001" address_table="file:///home/mpc/MPA_Test/utilities/uDTC_OT_address_table_v2.xml" />
+      	<connection id="board" uri="ipbusudp-2.0://192.163248.0.77:50001" address_table="uDTC_OT_address_table_v2.xml" />
     <OpticalGroup Id="0" FMCId="0" >
         <Hybrid Id="0" Status="1">
             <MPA_Files path="/home/mpc/Ph2_ACF/settings/MPAFiles/" />

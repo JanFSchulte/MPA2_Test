@@ -206,6 +206,23 @@
             </node>
         </node>
 
+        <node id="scanchain_block"      address="0xA000">
+            <node id="general">
+                <node id="start_test"        address="0x000" mask="0x00000001"/>
+                <node id="is_scanchain_test" address="0x000" mask="0x00000002"/>
+                <node id="is_reset_test"     address="0x000" mask="0x00000004"/>
+                <node id="is_capture_test"   address="0x000" mask="0x00000008"/>
+                <node id="is_5MHz_test"      address="0x000" mask="0x00000010"/>
+                <node id="is_10MHz_test"     address="0x000" mask="0x00000020"/>
+                <node id="is_20MHz_test"     address="0x000" mask="0x00000040"/>
+                <node id="is_test_mode"      address="0x000" mask="0x00000080"/>
+                <node id="continue_reset"    address="0x000" mask="0x00000100"/>
+            </node>
+            <node id="test_vector_to_write" address="0x001" description="registers to feel the vector" mode="incremental" size="710"/>
+            <node id="expected_response"    address="0x2C7" description="registers to feel the vector" mode="incremental" size="710"/>
+            <node id="mask_on_response"     address="0x58D" description="registers to feel the vector" mode="incremental" size="710"/>
+        </node>
+
 	<!-- <node id="optical_block"			address="0xD000">
             <node id="sca">
                 <node id="address"                    address = "0x001" mask="0x000000FF"/>
@@ -441,7 +458,11 @@
             </node>
         </node>
 
-	<node id="optical_block"                   address="0xD000">
+        <node id="scanchain_block"                   address="0xA000">
+            <node id="general_reset"                 address="0x000" mask="0x00000001"/>
+        </node>
+
+	    <node id="optical_block"                   address="0xD000">
             <node id="general"                     address="0x000"  mask="0xFFFFFFFF"/>
             <node id="sca"                           address="0x001">
                 <node id="reset"                        mask="0x00000001"/>
@@ -738,12 +759,23 @@
     	</node>
 
         <node id="ddr3_block"			address="0x8000">
-                <node id="is_ddr3_type"		address="0x000" mask="0x00000001"/>
-                <node id="init_calib_done"      address="0x000" mask="0x00000002"/>
-                <node id="self_check_done"      address="0x000" mask="0x00000004"/>
-                <node id="num_errors"     	address="0x001" mask="0xffffffff"/>
-                <node id="num_words"      	address="0x002" mask="0xffffffff"/>
+            <node id="is_ddr3_type"		address="0x000" mask="0x00000001"/>
+            <node id="init_calib_done"      address="0x000" mask="0x00000002"/>
+            <node id="self_check_done"      address="0x000" mask="0x00000004"/>
+            <node id="num_errors"     	address="0x001" mask="0xffffffff"/>
+            <node id="num_words"      	address="0x002" mask="0xffffffff"/>
         </node>
+
+        <node id="scanchain_block"                 address="0xA000">
+            <node id="test_done"                   address="0x000" mask="0x00000001"/>
+            <node id="comparator_out"              address="0x000" mask="0x00000002"/>
+            <node id="comparator_negedge_out"      address="0x000" mask="0x00000004"/>
+            <node id="comparator_negedge_next_out" address="0x000" mask="0x00000008"/>
+            <node id="miscompares"                 address="0x000" mask="0x0000fff0"/>
+            <node id="dio5_input"                  address="0x000" mask="0x00010000"/>
+            <node id="test_response"               address="0x001" description="registers to feel the vector" mode="incremental" size="710"/>
+        </node>
+
 
         <node id="calibration_2s_block"         address="0xE000">
             <node id="general"                          address="0x000">
@@ -771,13 +803,13 @@
     <node id="fc7_daq_ddr3" address="0xC0000000" permission="r" mode="incremental" size="134217728"/>
     <!--Present in Glib or FC7 address table for fpgaconfig-->
 	<node id="flash_async_read_cmd"	address="0x0800bddf"  mask="0xFFFFFFFF" description="FLASH memory asynchronous read mode"/>
-    	<node id="flash_block" address="0x08000000"     mode="block" size="0x00800000" permission="rw" description="FLASH memory for FPGA configuration"/>
+    <node id="flash_block" address="0x08000000"     mode="block" size="0x00800000" permission="rw" description="FLASH memory for FPGA configuration"/>
     <!-- ICAP MEMORY SPACE -->
-    	<node id="icap" address="0x00000200" mask="0xffffffff" permission="rw" />
+    <node id="icap" address="0x00000200" mask="0xffffffff" permission="rw" />
 
-    	<node id="buf_cta" address="0x0000400" class="MmcPipeInterface" description="UC link buffer test register" size="0x3" tags="slave">
-      		<node id="FPGAtoMMCcounters" address="0x0"/>
-      		<node id="MMCtoFPGAcounters" address="0x1"/>
-      		<node id="FIFO" address="0x2" mode="non-incremental" size="512" />
-  	</node>
+    <node id="buf_cta" address="0x0000400" class="MmcPipeInterface" description="UC link buffer test register" size="0x3" tags="slave">
+        <node id="FPGAtoMMCcounters" address="0x0"/>
+      	<node id="MMCtoFPGAcounters" address="0x1"/>
+      	<node id="FIFO" address="0x2" mode="non-incremental" size="512" />
+    </node>
 </node>

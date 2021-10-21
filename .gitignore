@@ -8,3 +8,5 @@ fw_bitfiles/
 *ssa_utils_adc.py
 utilities/ipaddr_mpa.dat
 yield*
+logs/
+*.log

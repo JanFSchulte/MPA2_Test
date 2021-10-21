@@ -13,9 +13,9 @@ BOARD_MAC="08:00:30:00:22:f0"
 MPA_ADR_0="0b1000000"
 SSA_ADR_0="0b0100000"
 SSA_ADR_1="0b0100111"
-CHIP_SELECT="MPA"
+CHIP_SELECT="SSA"
 
-file="./utilities/ipaddr.dat"
+file="./utilities/ipaddr_mpa.dat"
 while IFS= read -r line
 do
 	IP=$line
@@ -29,6 +29,7 @@ printf '             Starting MPA2 Test System                 \n'
 printf '                                                      \n'
 
 echo ""
+
 echo "from d19cScripts import *" >  LaunchPy.py
 echo "from myScripts import *" >> LaunchPy.py
 echo "from main import *" >> LaunchPy.py
@@ -42,6 +43,10 @@ echo "tbconfig.BOARD_SELECT = '$BOARD_MAC'" >> utilities/tbsettings.py
 echo "tbconfig.MPA_ADR[0] = $MPA_ADR_0" >> utilities/tbsettings.py
 echo "tbconfig.SSA_ADR[0] = $SSA_ADR_0" >> utilities/tbsettings.py
 echo "tbconfig.SSA_ADR[1] = $SSA_ADR_1" >> utilities/tbsettings.py
+
+
+
+cp $file d19cScripts/ipaddr.dat
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 

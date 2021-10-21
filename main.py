@@ -38,6 +38,7 @@ from mpa_methods.mpa import *
 from mpa_methods.mpa_cal_utility import *
 from mpa_methods.mpa_test_utility import *
 from mpa_methods.mpa_bias_utility import *
+from mpa_methods.mpa_scanchain_test import *
 
 # MPA2 Test procedures
 from mpa_methods.mpa_main_test import *
@@ -116,6 +117,7 @@ class MPAwp:
         self.init          = self.chip.init
         self.inject        = self.chip.inject
         self.data_dir = "../cernbox_anvesh/MPA_test_data/"
+        self.scanchain = MPA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
 
         try:
             multimeter = keithley_multimeter()

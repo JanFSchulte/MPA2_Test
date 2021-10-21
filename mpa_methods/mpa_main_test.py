@@ -17,9 +17,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 '''
-MPA2 Test routines
+MPA2 Basic Testing Routine
 
-To run probe, e.g. for chip 3:
+Collection of basic tests for functionality verification of MPA2 ASICS
+
+To run probe, e.g. for chip 187:
 
 from mpa_methods.mpa_main_test import all
 probe = MainTestsMPA(tag = 187, chip = mpa)

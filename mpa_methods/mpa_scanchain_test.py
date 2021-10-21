@@ -14,258 +14,223 @@ from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 
-class SSA_scanchain_test():
+class MPA_scanchain_test():
 
-	##############################################################
-	def __init__(self, ssa, I2C, FC7, pwr):
-		self.ssa = ssa; self.I2C = I2C; self.fc7 = FC7; self.pwr = pwr;
-		self.seu_check_time = -1; self.last_test_duration = 0;
+    ##############################################################
+    def __init__(self, mpa, I2C, FC7, pwr):
+        self.mpa = mpa; self.i2c = I2C; self.fc7 = FC7; self.pwr = pwr;
+        self.seu_check_time = -1; self.last_test_duration = 0;
 
-	##############################################################
+    ##############################################################
 
-	def launch_all_scanchain_all_vectors(self,
-		file_scan    = "ssa_methods/Configuration/vectors_for_test_scan.txt",
-		file_reset   = "ssa_methods/Configuration/vectors_for_test_reset.txt",
-		file_capture = "ssa_methods/Configuration/vectors_for_test_capture.txt"):
-		rt1 = self.launch_scan_test_all_vectors(filename=file_scan, nvectors=1)
-		rt2 = self.launch_reset_test_all_vectors(filename=file_reset, nvectors=2)
-		rt3 = self.launch_capture_all_vectors(filename=file_capture, nvectors=725)
-		#return rt1, rt2, rt3
+    def launch_all_scanchain_all_vectors(self,
+        file_scan    = "mpa_methods/Configuration/vectors_scan.txt",
+        file_reset   = "mpa_methods/Configuration/vectors_capture.txt",
+        file_capture = "mpa_methods/Configuration/vectors_capture.txt"):
+        rt1 = self.launch_scan_test_all_vectors(filename=file_scan, nvectors=1)
+        rt2 = self.launch_reset_test_all_vectors(filename=file_reset, nvectors=2)
+        rt3 = self.launch_capture_all_vectors(filename=file_capture, nvectors=725)
+        return rt1, rt2, rt3
 
-	def enable_dio5_scanchain(self, threshold=127):
-		time.sleep(0.1)
-		self.fc7.write("system_fmc_l12_pwr_en" ,1)
-		self.fc7.write("system_fmc_l8_pwr_en" ,1)
-		self.fc7.write("cnfg_dio5_en" ,1)
-		self.fc7.write("cnfg_dio5_ch1_out_en",  1)
-		self.fc7.write("cnfg_dio5_ch2_out_en",  0)
-		self.fc7.write("cnfg_dio5_ch3_out_en",  1)
-		self.fc7.write("cnfg_dio5_ch4_out_en",  1)
-		self.fc7.write("cnfg_dio5_ch5_out_en",  1)
-		self.fc7.write("cnfg_dio5_ch1_term_en", 0)
-		self.fc7.write("cnfg_dio5_ch2_term_en", 0)
-		self.fc7.write("cnfg_dio5_ch3_term_en", 0)
-		self.fc7.write("cnfg_dio5_ch4_term_en", 0)
-		self.fc7.write("cnfg_dio5_ch5_term_en", 0)
-		self.fc7.write("cnfg_dio5_ch1_threshold", threshold)
-		self.fc7.write("cnfg_dio5_ch2_threshold", threshold)
-		self.fc7.write("cnfg_dio5_ch3_threshold", threshold)
-		self.fc7.write("cnfg_dio5_ch4_threshold", threshold)
-		self.fc7.write("cnfg_dio5_ch5_threshold", threshold)
-		self.fc7.write("fc7_daq_ctrl.dio5_block.control.load_config" , 1)
+    def read_scan_out_vector(self, lenght=188):
+        data = self.fc7.blockRead("fc7_daq_stat.scanchain_block.test_response", lenght, 0)
+        rep = []
+        for dd in data[::-1]:
+            rep.extend( bin(to_number(dd,32,0)).lstrip('-0b').zfill(32) )
+            #print(bin(dd))
+        rpvect = np.array(rep, dtype=int)
+        return rpvect
 
-	def read_scan_out_vector(self, lenght=188):
-		data = self.fc7.blockRead("fc7_daq_stat.scanchain_block.test_response", lenght, 0)
-		rep = []
-		for dd in data[::-1]:
-			rep.extend( bin(to_number(dd,32,0)).lstrip('-0b').zfill(32) )
-			#print(bin(dd))
-		rpvect = np.array(rep, dtype=int)
-		return rpvect
+    def scanchain_test(self, input_vector, expected_response, input_mask, mode='capture', reset_fw=False, reset_chip=False):
+        if(reset_fw):
+            reset(); time.sleep(0.1)
+            utils.activate_I2C_chip(self.fc7)
+        if(reset_chip):
+            self.mpa.reset()
+        expected_response = expected_response
+        self.fc7.blockWrite("fc7_daq_cnfg.scanchain_block.test_vector_to_write", self.split_bin(input_vector))
+        self.fc7.blockWrite("fc7_daq_cnfg.scanchain_block.expected_response", self.split_bin(expected_response))
+        self.fc7.blockWrite("fc7_daq_cnfg.scanchain_block.mask_on_response", self.split_bin(input_mask))
+        self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_test_mode",1)
+        self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",0)
+        if (mode=='capture'):
+            self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",1)
+            self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_reset_test",0)
+            self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_scanchain_test",0)
+        elif (mode=='reset'):
+            self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",0)
+            self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_reset_test",1)
+            self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_scanchain_test",0)
+        elif (mode=='scan'):
+            self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",0)
+            self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_reset_test",0)
+            self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_scanchain_test",1)
+        else:
+            return 'error'
+        self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",1)
 
-	def scanchain_test(self, input_vector, expected_response, input_mask, mode='capture', reset_fw=False, reset_chip=False):
-		if(reset_fw):
-			reset(); time.sleep(0.1)
-			utils.activate_I2C_chip(self.fc7)
-			self.enable_dio5_scanchain(threshold=10)
-		if(reset_chip):
-			self.ssa.reset()
-		expected_response = expected_response
-		self.fc7.blockWrite("fc7_daq_cnfg.scanchain_block.test_vector_to_write", self.split_bin(input_vector))
-		self.fc7.blockWrite("fc7_daq_cnfg.scanchain_block.expected_response", self.split_bin(expected_response))
-		self.fc7.blockWrite("fc7_daq_cnfg.scanchain_block.mask_on_response", self.split_bin(input_mask))
-		self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_test_mode",1)
-		self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",0)
-		if (mode=='capture'):
-			self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",1)
-			self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_reset_test",0)
-			self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_scanchain_test",0)
-		elif (mode=='reset'):
-			self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",0)
-			self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_reset_test",1)
-			self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_scanchain_test",0)
-		elif (mode=='scan'):
-			self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",0)
-			self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_reset_test",0)
-			self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_scanchain_test",1)
-		else:
-			return 'error'
-		self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",1)
+        if (mode=='reset'):
+            time.sleep(0.1)
+            self.mpa.reset() 
+            self.fc7.write("fc7_daq_cnfg.scanchain_block.general.continue_reset",1)
+            time.sleep(0.1)
 
-		if (mode=='reset'):
-			time.sleep(0.1)
-			self.ssa.reset() # SSA specific
-			self.fc7.write("fc7_daq_cnfg.scanchain_block.general.continue_reset",1)
-			time.sleep(0.1)
+        time.sleep(0.010);
 
-		time.sleep(0.010);
+        scanchain_test_done               = self.fc7.read("fc7_daq_stat.scanchain_block.test_done")
+        scanchain_comparator              = self.fc7.read("fc7_daq_stat.scanchain_block.comparator_out")
+        scanchain_comparator_negedge      = self.fc7.read("fc7_daq_stat.scanchain_block.comparator_negedge_out")
+        scanchain_comparator_negedge_next = self.fc7.read("fc7_daq_stat.scanchain_block.comparator_negedge_next_out")
+        scanchain_comparator_miscompares  = self.fc7.read("fc7_daq_stat.scanchain_block.miscompares")
 
-		scanchain_test_done               = self.fc7.read("fc7_daq_stat.scanchain_block.test_done")
-		scanchain_comparator              = self.fc7.read("fc7_daq_stat.scanchain_block.comparator_out")
-		scanchain_comparator_negedge      = self.fc7.read("fc7_daq_stat.scanchain_block.comparator_negedge_out")
-		scanchain_comparator_negedge_next = self.fc7.read("fc7_daq_stat.scanchain_block.comparator_negedge_next_out")
-		scanchain_comparator_miscompares  = self.fc7.read("fc7_daq_stat.scanchain_block.miscompares")
+        if(not scanchain_test_done): ptype='info'
+        elif(scanchain_comparator or scanchain_comparator_negedge or scanchain_comparator_negedge_next): ptype='good'
+        else: ptype='error'
+        utils.print( 'test_done            = {:3d}'.format(scanchain_test_done               ), ptype)
+        utils.print( 'comparator           = {:3d}'.format(scanchain_comparator              ), ptype)
+        utils.print( 'comparator_neg_pre   = {:3d}'.format(scanchain_comparator_negedge      ), ptype)
+        utils.print( 'comparator_neg_next  = {:3d}'.format(scanchain_comparator_negedge_next ), ptype)
+        utils.print( 'miscompares          = {:3d}'.format(scanchain_comparator_miscompares  ), ptype)
+        scan_out = self.read_scan_out_vector()
+        scan_out = int("".join(str(i) for i in scan_out),2)
+        mismatch = (scan_out ^ expected_response) & input_mask
+        test_result = (scanchain_comparator or scanchain_comparator_negedge or scanchain_comparator_negedge_next)
+        return mismatch, scan_out, scanchain_test_done, scanchain_comparator_miscompares, test_result
 
-		if(not scanchain_test_done): ptype='info'
-		elif(scanchain_comparator or scanchain_comparator_negedge or scanchain_comparator_negedge_next): ptype='good'
-		else: ptype='error'
-		utils.print( 'test_done            = {:3d}'.format(scanchain_test_done               ), ptype)
-		utils.print( 'comparator           = {:3d}'.format(scanchain_comparator              ), ptype)
-		utils.print( 'comparator_neg_pre   = {:3d}'.format(scanchain_comparator_negedge      ), ptype)
-		utils.print( 'comparator_neg_next  = {:3d}'.format(scanchain_comparator_negedge_next ), ptype)
-		utils.print( 'miscompares          = {:3d}'.format(scanchain_comparator_miscompares  ), ptype)
-		scan_out = self.read_scan_out_vector()
-		scan_out = int("".join(str(i) for i in scan_out),2)
-		mismatch = (scan_out ^ expected_response) & input_mask
-		test_result = (scanchain_comparator or scanchain_comparator_negedge or scanchain_comparator_negedge_next)
-		return mismatch, scan_out, scanchain_test_done, scanchain_comparator_miscompares, test_result
+    def split_bin(self, word):
+        N = 32
+        binword = bin(word)[2:]
+        # nbits = int((np.floor(len(binword)/N)+1)*N)
+        nbits = 6016 # MPA vectors are 	22711
+        binword = binword.zfill(nbits)
+        array = [int('0b'+binword[i:i+N] ,2) for i in range(0, len(binword), N)][::-1]
+        return array
 
-	def split_bin(self, word):
-		N = 32
-		binword = bin(word)[2:]
-		# nbits = int((np.floor(len(binword)/N)+1)*N)
-		nbits = 6016
-		binword = binword.zfill(nbits)
-		array = [int('0b'+binword[i:i+N] ,2) for i in range(0, len(binword), N)][::-1]
-		return array
+    def launch_capture_all_vectors(self, nvectors=633, filename = "mpa_methods/Configuration/vectors_capture.txt", start_from=0):
+        time.sleep(0.1);
+        self.mpa.reset()
+        utils.activate_I2C_chip(self.fc7)
+        mismatches = []
+        fin = open(filename, 'rt')
+        lines = fin.readlines()
+        shift=0
+        for i in range (138, len(lines)-68, 69):
+            if i > (nvectors + 1)*69:
+                break 
 
-	def launch_capture_all_vectors(self, nvectors=725, filename = "ssa_methods/Configuration/vectors_for_test_capture.txt", start_from=0):
-		fin = open(filename, 'rt')
-		lines = fin.readlines()
-		reset(); time.sleep(0.1);
-		utils.activate_I2C_chip(self.fc7)
-		self.ssa.reset()
-		self.enable_dio5_scanchain(threshold=10)
-		mismatches = []
-		for i in range(start_from, nvectors-1):
-			print('___________________________________')
-			print('Starting vector {:d}'.format(i))
-			shift = i*10
-			input_vector = np.int('0b' + lines[0+shift].rstrip() ,2)
-			expected_response = np.int('0b' + lines[1+shift].rstrip() ,2)
-			input_mask = np.int('0b' + lines[2+shift].rstrip() ,2)
-			debug = lines[3+shift]
-			mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
-				mode='capture', reset_fw=False, reset_chip=False,
-				input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
-			if(not test_done):
-				reset();
-				utils.activate_I2C_chip(self.fc7)
-				self.enable_dio5_scanchain(threshold=10)
-				mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
-					mode='capture', reset_fw=False, reset_chip=False,
-					input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
-			if(not test_result and test_done):
-				print(bin(mismatch))
-				print('---------')
-				mismatches.append(i)
-				#print(bin(expected_response))
-				#print('---------')
-				#print(bin(scan_out))
-				#print('---------')
-		return len(mismatches)
-		#return rt
+            shift= i
+            print("shift " + str(shift))
+            if "vector" in lines[shift]:
+                l = ''.join(lines[shift:shift+23]).replace('\n', '')
+                test_vector = np.int('0b' + ''.join(l.split(' ')[2:]), 2)
+            shift += 23
+            if "mask" in lines[shift]:
+                l = ''.join(lines[shift:shift+23]).replace('\n', '')
+                test_mask = np.int('0b' + ''.join(l.split(' ')[3:]), 2)
+            shift += 23
+            if "response" in lines[shift]:
+                l = ''.join(lines[shift:shift+23]).replace('\n', '')
+                test_response = np.int('0b' + ''.join(l.split(' ')[3:]), 2)
+            #mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
+            #    mode='capture', reset_fw=False, reset_chip=False,
+            #    input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
+            #if(not test_result and test_done):
+            #    print(bin(mismatch))
+            #    print('---------')
+            #    mismatches.append(i)
+                #print(bin(expected_response))
+                #print('---------')
+                #print(bin(scan_out))
+                #print('---------')
+            print(f"\nvector {bin(test_vector)}")
+            print(f"\nmask {bin(test_mask)}")
+            print(f"\nresponse {bin(test_response)}")
+        return len(mismatches)
+        #return rt
 
-	def launch_reset_test_all_vectors(self, nvectors=2, filename = "ssa_methods/Configuration/vectors_for_test_reset.txt", start_from=0):
-		fin = open(filename, 'rt')
-		lines = fin.readlines()
-		reset(); time.sleep(0.1);
-		utils.activate_I2C_chip(self.fc7)
-		self.ssa.reset()
-		self.enable_dio5_scanchain(threshold=10)
-		for i in range(start_from, nvectors):
-			print('___________________________________')
-			print('Starting vector {:d}'.format(i))
-			shift = i*10
-			input_vector = np.int('0b' + lines[0+shift].rstrip() ,2)
-			expected_response = np.int('0b' + lines[1+shift].rstrip() ,2)
-			input_mask = np.int('0b' + lines[2+shift].rstrip() ,2)
-			debug = lines[3+shift]
-			rt = self.scanchain_test(
-				mode='reset', reset_fw=True, reset_chip=False,
-				input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
-		#return rt
+    
+    def launch_reset_all_vectors(self, filename = "ssa_methods/Configuration/vectors_for_test_capture.txt", start_from=0):
+        time.sleep(0.1);
+        self.mpa.reset()
+        utils.activate_I2C_chip(self.fc7)
+        mismatches = []
+        fin = open(filename, 'rt')
+        lines = fin.readlines()
+        shift=0
+        for i in range (0, 139, 69):
+            shift= i
+            if "vector" in lines[shift]:
+                l = ''.join(lines[shift:shift+22]).replace('\n', '')
+                test_vector = np.int('0b' + ''.join(l.split(' ')[3:]), 2)
+            shift += 23
+            if "mask" in lines[shift]:
+                l = ''.join(lines[shift:shift+22]).replace('\n', '')
+                test_mask = np.int('0b' + ''.join(l.split(' ')[4:]), 2)
+            shift += 23
+            if "response" in lines[shift]:
+                l = ''.join(lines[shift:shift+22]).replace('\n', '')
+                test_response = np.int('0b' + ''.join(l.split(' ')[4:]), 2)
+            mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
+                mode='capture', reset_fw=False, reset_chip=False,
+                input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
+        return test_vector, test_mask, test_response
 
-	def launch_scan_test_all_vectors(self, nvectors=1, filename = "ssa_methods/Configuration/vectors_for_test_scan.txt", start_from=0, repeat=1):
-		fin = open(filename, 'rt')
-		lines = fin.readlines()
-		reset(); time.sleep(0.1);
-		utils.activate_I2C_chip(self.fc7)
-		self.enable_dio5_scanchain(threshold=10)
-		mismatches = []
-		for rep in range(repeat):
-			for i in range(start_from, nvectors):
-				print('___________________________________')
-				print('Starting vector {:d}'.format(i))
-				shift = i*10
-				input_vector = np.int('0b' + lines[0+shift].rstrip() ,2)
-				expected_response = np.int('0b' + lines[1+shift].rstrip() ,2)
-				input_mask = np.int('0b' + lines[2+shift].rstrip() ,2)
-				debug = lines[3+shift]
-				mismatch, scan_out, scanchain_test_done, scanchain_comparator_miscompares, test_result = self.scanchain_test(
-					mode='scan', reset_fw=True, reset_chip=False,
-					input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
-				if(not scanchain_test_done):
-					reset();
-					utils.activate_I2C_chip(self.fc7)
-					self.enable_dio5_scanchain(threshold=10)
-					mismatch, scan_out, scanchain_test_done, scanchain_comparator_miscompares, test_result = self.scanchain_test(
-						mode='scan', reset_fw=True, reset_chip=False,
-						input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
-				if(not test_result and scanchain_test_done):
-					print(bin(mismatch))
-					print('---------')
-					mismatches.append(i)
-				#print(bin(mismatch))
-				#print('---------')
-				#print(bin(expected_response))
-				#print('---------')
-				#print(bin(scan_out))
-				#print('---------')
-		return mismatches
+    def launch_scan_test_all_vectors(self, nvectors=1, filename = "ssa_methods/Configuration/vectors_for_test_scan.txt", start_from=0, repeat=1):
+        file= open(filename,"rt")
+        lines = file.readlines()
+        vector_shift = ''.join(lines[0:23]).replace('\n', '').replace(' ', '')
+        expected_respone = ''.join(lines[25:47]).replace('\n', '').replace(' ', '')
+        utils.activate_I2C_chip(self.fc7)
+        mismatch, scan_out, scanchain_test_done, scanchain_comparator_miscompares, test_result = self.scanchain_test(
+                    mode='scan', reset_fw=True, reset_chip=False,
+                    input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
+        if(not test_result and scanchain_test_done):
+            print(bin(mismatch))
+            print('---------')
+        return mismatch
 
-	#############################################################################
+    #############################################################################
 
-	def prova2(self):
-		fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",0)
-		fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",1)
+    def prova2(self):
+        fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",0)
+        fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",1)
 
-	def prova1(self):
-		self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",0)
-		time.sleep(1)
-		self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_reset_test",0)
-		time.sleep(1)
-		self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_scanchain_test",1)
-		time.sleep(1)
-		fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",1)
+    def prova1(self):
+        self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",0)
+        time.sleep(1)
+        self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_reset_test",0)
+        time.sleep(1)
+        self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_scanchain_test",1)
+        time.sleep(1)
+        fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",1)
 
-	def prova3(self, repeat=3, threshold=10):
-		reset()
-		time.sleep(0.5)
-		utils.activate_I2C_chip(self.fc7)
-		self.ssa.reset()
-		self.enable_dio5_scanchain(threshold=threshold)
-		for i in range(repeat):
-			print( self.try_scanchain() )
-			print('------------------------')
+    def prova3(self, repeat=3, threshold=10):
+        reset()
+        time.sleep(0.5)
+        utils.activate_I2C_chip(self.fc7)
+        self.mpa.reset()
+        self.enable_dio5_scanchain(threshold=threshold)
+        for i in range(repeat):
+            print( self.try_scanchain() )
+            print('------------------------')
 
-	def try_scanchain(self):
-		time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_test_mode",1)
-		time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",0)
-		time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",1)
-		time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_reset_test",0)
-		time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_scanchain_test",0)
-		time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",1)
-		time.sleep(1);
-		print( 'test_done            = {:3d}'.format( self.fc7.read("fc7_daq_stat.scanchain_block.test_done")               ))
-		print( 'comparator           = {:3d}'.format( self.fc7.read("fc7_daq_stat.scanchain_block.comparator_out")              ))
-		print( 'comparator_neg_pre   = {:3d}'.format( self.fc7.read("fc7_daq_stat.scanchain_block.comparator_negedge_out")      ))
-		print( 'comparator_neg_next  = {:3d}'.format( self.fc7.read("fc7_daq_stat.scanchain_block.comparator_negedge_next_out") ))
-		print( 'miscompares          = {:3d}'.format( self.fc7.read("fc7_daq_stat.scanchain_block.miscompares")  ))
-		scan_out = self.read_scan_out_vector()
-		for i in scan_out: print(i, end='')
-		print('\n')
-		return scan_out
+    def try_scanchain(self):
+        time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_test_mode",1)
+        time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",0)
+        time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",1)
+        time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_reset_test",0)
+        time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_scanchain_test",0)
+        time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",1)
+        time.sleep(1);
+        print( 'test_done            = {:3d}'.format( self.fc7.read("fc7_daq_stat.scanchain_block.test_done")               ))
+        print( 'comparator           = {:3d}'.format( self.fc7.read("fc7_daq_stat.scanchain_block.comparator_out")              ))
+        print( 'comparator_neg_pre   = {:3d}'.format( self.fc7.read("fc7_daq_stat.scanchain_block.comparator_negedge_out")      ))
+        print( 'comparator_neg_next  = {:3d}'.format( self.fc7.read("fc7_daq_stat.scanchain_block.comparator_negedge_next_out") ))
+        print( 'miscompares          = {:3d}'.format( self.fc7.read("fc7_daq_stat.scanchain_block.miscompares")  ))
+        scan_out = self.read_scan_out_vector()
+        for i in scan_out: print(i, end='')
+        print('\n')
+        return scan_out
 
 
 
@@ -281,13 +246,13 @@ class SSA_scanchain_test():
 
 #input_mask = 0b11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111001100111111111110100011000000001111111111111111111011100001000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000001111111111111111111111111111111111111111111111000000111111111100111111111111111111111111111110011111111111111111111111110011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111011011111111111111111101111110000000011010111100011111111000010011100011101101110100001111000101111100111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111001111101110100101001101111001011100000001110111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110111011111001111111111110110100111110101111111110111111111111111111111111111111001011111111011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111001001101110001110001100111111101000010000101010010010110110111111000011111110111111111001111110111101111100001100101110001101011110000001110110010101110100011000101111110001110011001000001001110100101001100001110101110100000110100000000001000010110110111010111111110111111011011100110001111111111011001110111001001100111010110000011011001011011001010000110000111110111111011010011111111110010000001100010100111000100111101011011001001010000000100011011100001010100000100000000000000000000000000000000000011110111111011010000000000000000000000000001111000000000000000000000000000000000000000000000000000000000010111110110110110000000011111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000111000000000001000000110011100111101111010110110111010101010010010000110111100110010010110111111111111011111111111111111111111111111111111111111111111111111111111111111111111111111111111110101001111111111111111011111111111111110110011111111111111100001111111111111111111111111111111111111111001111101111010110110111111111111111101011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111101010111111111111111111111000000011111111111111111111110000000011011111111111011101111111010001001111111110110111111111111111111111111111111101101101101111101101111111111101101111100110100010001111100010000101111101010111010000000000000001111111111011110111011111111111111000011001111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110011110000001111100001101101100110011011110111100111001011111111011110111101100111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111100011111100001111001001111100000111110010000011110000000001111110000000000000000000111111111111100001111110011111100001111111110111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111;
 
-	#   cnfg_ddr3_scanchain_test_enable          40018000    00000002     1     1 *enable scanchain test mode
-	#   fc7_daq_cnfg.scanchain_block.general.start_test            4001A000    00000001     1     1 * scanchain test start
-	#   fc7_daq_cnfg.scanchain_block.general.is_scanchain_test     4001A000    00000002     1     1 * scanchain is_scan_test
-	#   fc7_daq_cnfg.scanchain_block.general.is_reset_test         4001A000    00000004     1     1 * scanchain is_reset test
-	#   fc7_daq_cnfg.scanchain_block.general.is_capture_test       4001A000    00000008     1     1 * scanchain is capture test
-	#   fc7_daq_cnfg.scanchain_block.test_vector_to_write                4001A001    ffffffff     1     1 * scanchain input vector
-	#   fc7_daq_cnfg.scanchain_block.expected_response              4001A002    ffffffff     1     1 * scanchain input response
-	#   fc7_daq_cnfg.scanchain_block.mask_on_response                  4001A003    ffffffff     1     1 * scanchain input mask
+    #   cnfg_ddr3_scanchain_test_enable          40018000    00000002     1     1 *enable scanchain test mode
+    #   fc7_daq_cnfg.scanchain_block.general.start_test            4001A000    00000001     1     1 * scanchain test start
+    #   fc7_daq_cnfg.scanchain_block.general.is_scanchain_test     4001A000    00000002     1     1 * scanchain is_scan_test
+    #   fc7_daq_cnfg.scanchain_block.general.is_reset_test         4001A000    00000004     1     1 * scanchain is_reset test
+    #   fc7_daq_cnfg.scanchain_block.general.is_capture_test       4001A000    00000008     1     1 * scanchain is capture test
+    #   fc7_daq_cnfg.scanchain_block.test_vector_to_write                4001A001    ffffffff     1     1 * scanchain input vector
+    #   fc7_daq_cnfg.scanchain_block.expected_response              4001A002    ffffffff     1     1 * scanchain input response
+    #   fc7_daq_cnfg.scanchain_block.mask_on_response                  4001A003    ffffffff     1     1 * scanchain input mask
 
-	###################################################
+    ###################################################

@@ -21,8 +21,7 @@ printf '______________________________________________________\n'
 printf '           Starting SSA-MPA Test System               \n'
 printf '                                                      \n'
 
-cp ./utilities/ipaddr_mpa.dat  d19cScripts/ipaddr.dat
-IP=$(<d19cScripts/ipaddr.dat)
+IP=$(<utilities/ipaddr.dat)
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
@@ -54,12 +53,12 @@ else
 	printf '\n->  Starting loading the firmware\n'
 	cd ~/Ph2_ACF
     source ~/Ph2_ACF/setup.sh
+	# check if FC7/D19C_MPA_PreCalib.xml has correct IP address in header!
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_04082021.bin
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i d19c_mpa_none_28042019.bin
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_configDelay.bin
 	fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_configDelay.bin
-	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_newCapture.bin
-
-
-
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_20102021.bin
+	
 	cd -
 fi
