@@ -116,7 +116,7 @@ def CheckLineDone(hybrid_id, chip_id, line_id):
     SendPhaseTuningCommand(command_final)
     time.sleep(0.01)
 
-    line_done = GetPhaseTuningStatus(printStatus = False)
+    line_done = GetPhaseTuningStatus(printStatus = True)
     if line_done >= 0:
         pass
     else:

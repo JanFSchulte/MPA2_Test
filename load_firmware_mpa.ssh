@@ -1,9 +1,6 @@
 #!/usr/bin/bash
 
 # Makes use of new addressing scheme and Ph2_ACF Middleware to program FC7
-
-
-
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export LC_ALL=C; unset LANGUAGE
 
@@ -56,9 +53,11 @@ else
 	# check if FC7/D19C_MPA_PreCalib.xml has correct IP address in header!
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_04082021.bin
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i d19c_mpa_none_28042019.bin
-	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_configDelay.bin
 	fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_configDelay.bin
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_20102021.bin
-	
-	cd -
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i mpa_scanchain_20MHz_221021.bin
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i mpa_scanchain_5MHz_221021.bin
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i mpa_board_on_l12_211021.bin
+
+	cd
 fi

@@ -19,7 +19,7 @@ class MPA_scanchain_test():
     ##############################################################
     def __init__(self, mpa, I2C, FC7, pwr):
         self.mpa = mpa; self.i2c = I2C; self.fc7 = FC7; self.pwr = pwr;
-        self.seu_check_time = -1; self.last_test_duration = 0;
+        self.seu_check_time = -1; self.last_test_duration = 0; self.clk_freq=0;
 
     ##############################################################
 
@@ -28,11 +28,13 @@ class MPA_scanchain_test():
         file_reset   = "mpa_methods/Configuration/vectors_capture.txt",
         file_capture = "mpa_methods/Configuration/vectors_capture.txt"):
         rt1 = self.launch_scan_test_all_vectors(filename=file_scan, nvectors=1)
-        rt2 = self.launch_reset_test_all_vectors(filename=file_reset, nvectors=2)
-        rt3 = self.launch_capture_all_vectors(filename=file_capture, nvectors=725)
+        #rt2 = self.launch_reset_test_all_vectors(filename=file_reset, nvectors=2)
+        #rt3 = self.launch_capture_all_vectors(filename=file_capture, nvectors=634)
+        rt2 = 0
+        rt3 = 0
         return rt1, rt2, rt3
 
-    def read_scan_out_vector(self, lenght=188):
+    def read_scan_out_vector(self, lenght=710):
         data = self.fc7.blockRead("fc7_daq_stat.scanchain_block.test_response", lenght, 0)
         rep = []
         for dd in data[::-1]:
@@ -71,11 +73,11 @@ class MPA_scanchain_test():
 
         if (mode=='reset'):
             time.sleep(0.1)
-            self.mpa.reset() 
+            self.mpa.reset()
             self.fc7.write("fc7_daq_cnfg.scanchain_block.general.continue_reset",1)
             time.sleep(0.1)
 
-        time.sleep(0.010);
+        time.sleep(1);
 
         scanchain_test_done               = self.fc7.read("fc7_daq_stat.scanchain_block.test_done")
         scanchain_comparator              = self.fc7.read("fc7_daq_stat.scanchain_block.comparator_out")
@@ -93,17 +95,18 @@ class MPA_scanchain_test():
         utils.print( 'miscompares          = {:3d}'.format(scanchain_comparator_miscompares  ), ptype)
         scan_out = self.read_scan_out_vector()
         scan_out = int("".join(str(i) for i in scan_out),2)
-        mismatch = (scan_out ^ expected_response) & input_mask
+        mismatch = (scan_out ^ int(expected_response,2)) & int(input_mask,2)
         test_result = (scanchain_comparator or scanchain_comparator_negedge or scanchain_comparator_negedge_next)
         return mismatch, scan_out, scanchain_test_done, scanchain_comparator_miscompares, test_result
 
     def split_bin(self, word):
         N = 32
-        binword = bin(word)[2:]
+        #binword = bin(word)[2:]
         # nbits = int((np.floor(len(binword)/N)+1)*N)
-        nbits = 6016 # MPA vectors are 	22711
-        binword = binword.zfill(nbits)
-        array = [int('0b'+binword[i:i+N] ,2) for i in range(0, len(binword), N)][::-1]
+        nbits = 22720 # MPA vectors are max 22711
+        binword = word.zfill(nbits)
+        array = [int(binword[i:i+N] ,2) for i in range(0, len(binword), N)][::-1]
+        #print(array)
         return array
 
     def launch_capture_all_vectors(self, nvectors=633, filename = "mpa_methods/Configuration/vectors_capture.txt", start_from=0):
@@ -116,7 +119,7 @@ class MPA_scanchain_test():
         shift=0
         for i in range (138, len(lines)-68, 69):
             if i > (nvectors + 1)*69:
-                break 
+                break
 
             shift= i
             print("shift " + str(shift))
@@ -131,24 +134,24 @@ class MPA_scanchain_test():
             if "response" in lines[shift]:
                 l = ''.join(lines[shift:shift+23]).replace('\n', '')
                 test_response = np.int('0b' + ''.join(l.split(' ')[3:]), 2)
-            #mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
-            #    mode='capture', reset_fw=False, reset_chip=False,
-            #    input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
-            #if(not test_result and test_done):
-            #    print(bin(mismatch))
-            #    print('---------')
-            #    mismatches.append(i)
-                #print(bin(expected_response))
-                #print('---------')
-                #print(bin(scan_out))
-                #print('---------')
+            mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
+                mode='capture', reset_fw=False, reset_chip=False,
+                input_vector=test_vector, expected_response=test_response, input_mask=test_mask)
+            if(not test_result and test_done):
+                print(bin(mismatch))
+                print('---------')
+                mismatches.append(i)
+            print(bin(expected_response))
+            print('---------')
+            print(bin(scan_out))
+            print('---------')
             print(f"\nvector {bin(test_vector)}")
             print(f"\nmask {bin(test_mask)}")
             print(f"\nresponse {bin(test_response)}")
         return len(mismatches)
         #return rt
 
-    
+
     def launch_reset_all_vectors(self, filename = "ssa_methods/Configuration/vectors_for_test_capture.txt", start_from=0):
         time.sleep(0.1);
         self.mpa.reset()
@@ -161,33 +164,34 @@ class MPA_scanchain_test():
             shift= i
             if "vector" in lines[shift]:
                 l = ''.join(lines[shift:shift+22]).replace('\n', '')
-                test_vector = np.int('0b' + ''.join(l.split(' ')[3:]), 2)
+                test_vector = np.int(''.join(l.split(' ')[3:]), 2)
             shift += 23
             if "mask" in lines[shift]:
                 l = ''.join(lines[shift:shift+22]).replace('\n', '')
-                test_mask = np.int('0b' + ''.join(l.split(' ')[4:]), 2)
+                test_mask = np.int(''.join(l.split(' ')[4:]), 2)
             shift += 23
             if "response" in lines[shift]:
                 l = ''.join(lines[shift:shift+22]).replace('\n', '')
-                test_response = np.int('0b' + ''.join(l.split(' ')[4:]), 2)
+                test_response = np.int(''.join(l.split(' ')[4:]), 2)
             mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
                 mode='capture', reset_fw=False, reset_chip=False,
-                input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
+                input_vector=test_vector, expected_response=test_response, input_mask=test_mask)
         return test_vector, test_mask, test_response
 
-    def launch_scan_test_all_vectors(self, nvectors=1, filename = "ssa_methods/Configuration/vectors_for_test_scan.txt", start_from=0, repeat=1):
+    def launch_scan_test_all_vectors(self, nvectors=1, filename = "mpa_methods/Configuration/vectors_scan.txt", start_from=0, repeat=1):
         file= open(filename,"rt")
         lines = file.readlines()
-        vector_shift = ''.join(lines[0:23]).replace('\n', '').replace(' ', '')
-        expected_respone = ''.join(lines[25:47]).replace('\n', '').replace(' ', '')
+        vector_shift = ''.join(lines[1:24]).replace('\n', '').replace(' ', '')
+        expected_response = ''.join(lines[25:48]).replace('\n', '').replace(' ', '')
         utils.activate_I2C_chip(self.fc7)
         mismatch, scan_out, scanchain_test_done, scanchain_comparator_miscompares, test_result = self.scanchain_test(
                     mode='scan', reset_fw=True, reset_chip=False,
-                    input_vector=input_vector, expected_response=expected_response, input_mask=input_mask)
+                    input_vector=''.rjust(22720, '1'), expected_response=''.rjust(22720, '1'), input_mask=''.rjust(22720, '1'))
+        
         if(not test_result and scanchain_test_done):
-            print(bin(mismatch))
+            #print(bin(mismatch))
             print('---------')
-        return mismatch
+        return scan_out
 
     #############################################################################
 
@@ -217,9 +221,9 @@ class MPA_scanchain_test():
     def try_scanchain(self):
         time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_test_mode",1)
         time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",0)
-        time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",1)
+        time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",0)
         time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_reset_test",0)
-        time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_scanchain_test",0)
+        time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_scanchain_test",1)
         time.sleep(0.1); self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",1)
         time.sleep(1);
         print( 'test_done            = {:3d}'.format( self.fc7.read("fc7_daq_stat.scanchain_block.test_done")               ))

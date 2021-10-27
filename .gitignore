@@ -10,3 +10,5 @@ utilities/ipaddr_mpa.dat
 yield*
 logs/
 *.log
+mpa_methods/Configuration/vectors_capture.txt
+mpa_methods/Configuration/vectors_scan.txt
