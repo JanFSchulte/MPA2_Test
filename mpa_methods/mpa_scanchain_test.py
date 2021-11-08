@@ -27,11 +27,15 @@ class MPA_scanchain_test():
         file_scan    = "mpa_methods/Configuration/vectors_scan.txt",
         file_reset   = "mpa_methods/Configuration/vectors_capture.txt",
         file_capture = "mpa_methods/Configuration/vectors_capture.txt"):
+
+        time_init = time.time()
+        utils.set_log_files("scanchain.log", "scanchain_error.log")
         rt1 = self.launch_scan_test_all_vectors(filename=file_scan, nvectors=1)
-        #rt2 = self.launch_reset_test_all_vectors(filename=file_reset, nvectors=2)
-        #rt3 = self.launch_capture_all_vectors(filename=file_capture, nvectors=634)
-        rt2 = 0
-        rt3 = 0
+        rt2 = self.launch_reset_all_vectors(filename=file_reset)
+        rt3 = self.launch_capture_all_vectors(filename=file_capture, nvectors=634)
+        tend = time.time()
+        utils.print_info(f"{len(rt3)} Miscomparisons for vectors: {rt3}")
+        utils.print_info(f"Time elapsed> {tend-time_init}")
         return rt1, rt2, rt3
 
     def read_scan_out_vector(self, lenght=710):
@@ -45,16 +49,16 @@ class MPA_scanchain_test():
 
     def scanchain_test(self, input_vector, expected_response, input_mask, mode='capture', reset_fw=False, reset_chip=False):
         if(reset_fw):
-            reset(); time.sleep(0.1)
-            utils.activate_I2C_chip(self.fc7)
+            self.fc7.reset(); time.sleep(0.1)
+            self.fc7.activate_I2C_chip(verbose=0)
         if(reset_chip):
             self.mpa.reset()
         expected_response = expected_response
+        self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",0)
         self.fc7.blockWrite("fc7_daq_cnfg.scanchain_block.test_vector_to_write", self.split_bin(input_vector))
         self.fc7.blockWrite("fc7_daq_cnfg.scanchain_block.expected_response", self.split_bin(expected_response))
         self.fc7.blockWrite("fc7_daq_cnfg.scanchain_block.mask_on_response", self.split_bin(input_mask))
         self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_test_mode",1)
-        self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",0)
         if (mode=='capture'):
             self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_capture_test",1)
             self.fc7.write("fc7_daq_cnfg.scanchain_block.general.is_reset_test",0)
@@ -72,18 +76,22 @@ class MPA_scanchain_test():
         self.fc7.write("fc7_daq_cnfg.scanchain_block.general.start_test",1)
 
         if (mode=='reset'):
+            print("Reset")
             time.sleep(0.1)
             self.mpa.reset()
+            time.sleep(0.1)
             self.fc7.write("fc7_daq_cnfg.scanchain_block.general.continue_reset",1)
             time.sleep(0.1)
 
-        time.sleep(1);
+        time.sleep(2);
 
         scanchain_test_done               = self.fc7.read("fc7_daq_stat.scanchain_block.test_done")
         scanchain_comparator              = self.fc7.read("fc7_daq_stat.scanchain_block.comparator_out")
         scanchain_comparator_negedge      = self.fc7.read("fc7_daq_stat.scanchain_block.comparator_negedge_out")
         scanchain_comparator_negedge_next = self.fc7.read("fc7_daq_stat.scanchain_block.comparator_negedge_next_out")
         scanchain_comparator_miscompares  = self.fc7.read("fc7_daq_stat.scanchain_block.miscompares")
+
+        time.sleep(0.1);
 
         if(not scanchain_test_done): ptype='info'
         elif(scanchain_comparator or scanchain_comparator_negedge or scanchain_comparator_negedge_next): ptype='good'
@@ -110,49 +118,60 @@ class MPA_scanchain_test():
         return array
 
     def launch_capture_all_vectors(self, nvectors=633, filename = "mpa_methods/Configuration/vectors_capture.txt", start_from=0):
-        time.sleep(0.1);
+        utils.print_info("->  Running Scanchain Capture Test")
+        self.fc7.reset(); time.sleep(0.1)
+        self.fc7.activate_I2C_chip(verbose=0)
         self.mpa.reset()
-        utils.activate_I2C_chip(self.fc7)
         mismatches = []
+        failed = []
         fin = open(filename, 'rt')
         lines = fin.readlines()
         shift=0
         for i in range (138, len(lines)-68, 69):
             if i > (nvectors + 1)*69:
                 break
-
             shift= i
-            print("shift " + str(shift))
             if "vector" in lines[shift]:
                 l = ''.join(lines[shift:shift+23]).replace('\n', '')
-                test_vector = np.int('0b' + ''.join(l.split(' ')[2:]), 2)
+                vector_line = l.split(' ')
+                test_vector = ''.join(vector_line[2:])
+                vector_no = vector_line[1]
             shift += 23
             if "mask" in lines[shift]:
                 l = ''.join(lines[shift:shift+23]).replace('\n', '')
-                test_mask = np.int('0b' + ''.join(l.split(' ')[3:]), 2)
+                test_mask = ''.join(l.split(' ')[3:])
             shift += 23
             if "response" in lines[shift]:
                 l = ''.join(lines[shift:shift+23]).replace('\n', '')
-                test_response = np.int('0b' + ''.join(l.split(' ')[3:]), 2)
+                test_response = ''.join(l.split(' ')[3:])
+            utils.print_info('---------')
+            utils.print_info(f'Vector No. {vector_no}')
             mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
                 mode='capture', reset_fw=False, reset_chip=False,
                 input_vector=test_vector, expected_response=test_response, input_mask=test_mask)
-            if(not test_result and test_done):
-                print(bin(mismatch))
-                print('---------')
-                mismatches.append(i)
-            print(bin(expected_response))
-            print('---------')
-            print(bin(scan_out))
-            print('---------')
-            print(f"\nvector {bin(test_vector)}")
-            print(f"\nmask {bin(test_mask)}")
-            print(f"\nresponse {bin(test_response)}")
-        return len(mismatches)
+            if(not test_done):
+                mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
+                    mode='capture', reset_fw=True, reset_chip=False,
+                    input_vector=test_vector, expected_response=test_response, input_mask=test_mask)
+            if(not test_done) or (not test_result and test_done):
+                ptype = "error"
+            else:
+                ptype = "good"
+            if ptype == "error":
+                utils.print(f"vector {vector_no} {test_vector}", ptype)
+                utils.print(f"scan out {bin(scan_out)}", ptype)
+                utils.print(f"mask {test_mask}", ptype)
+                utils.print(f"expected response {test_response}", ptype)
+                utils.print_error(f"mismatch {bin(mismatch)}")
+                mismatches.append(vector_no)    
+            utils.print_info('---------')
+            utils.print_info('\n')
+        return mismatches
         #return rt
 
 
-    def launch_reset_all_vectors(self, filename = "ssa_methods/Configuration/vectors_for_test_capture.txt", start_from=0):
+    def launch_reset_all_vectors(self, filename = "mpa_methods/Configuration/vectors_capture.txt", start_from=0):
+        utils.print_info("->  Running Scanchain Reset Test")
         time.sleep(0.1);
         self.mpa.reset()
         utils.activate_I2C_chip(self.fc7)
@@ -160,25 +179,30 @@ class MPA_scanchain_test():
         fin = open(filename, 'rt')
         lines = fin.readlines()
         shift=0
-        for i in range (0, 139, 69):
+        for i in range (0, 70, 69):
             shift= i
+            print(shift)
             if "vector" in lines[shift]:
-                l = ''.join(lines[shift:shift+22]).replace('\n', '')
-                test_vector = np.int(''.join(l.split(' ')[3:]), 2)
+                #import pdb; pdb.set_trace()
+                l = ''.join(lines[shift:shift+23]).replace('\n', '')
+                test_vector = ''.join(l.split(' ')[3:])
             shift += 23
             if "mask" in lines[shift]:
-                l = ''.join(lines[shift:shift+22]).replace('\n', '')
-                test_mask = np.int(''.join(l.split(' ')[4:]), 2)
+                l = ''.join(lines[shift:shift+23]).replace('\n', '')
+                test_mask = ''.join(l.split(' ')[4:])
             shift += 23
             if "response" in lines[shift]:
-                l = ''.join(lines[shift:shift+22]).replace('\n', '')
-                test_response = np.int(''.join(l.split(' ')[4:]), 2)
+                l = ''.join(lines[shift:shift+23]).replace('\n', '')
+                test_response = ''.join(l.split(' ')[4:])
             mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
-                mode='capture', reset_fw=False, reset_chip=False,
+                mode='reset', reset_fw=True, reset_chip=False,
                 input_vector=test_vector, expected_response=test_response, input_mask=test_mask)
+            utils.print_info(f'\nVector {test_vector}')
+            utils.print_info(f"scan out {bin(scan_out)}")
         return test_vector, test_mask, test_response
 
     def launch_scan_test_all_vectors(self, nvectors=1, filename = "mpa_methods/Configuration/vectors_scan.txt", start_from=0, repeat=1):
+        utils.print_info("->  Running Scanchain Scan Test")
         file= open(filename,"rt")
         lines = file.readlines()
         vector_shift = ''.join(lines[1:24]).replace('\n', '').replace(' ', '')
@@ -186,12 +210,12 @@ class MPA_scanchain_test():
         utils.activate_I2C_chip(self.fc7)
         mismatch, scan_out, scanchain_test_done, scanchain_comparator_miscompares, test_result = self.scanchain_test(
                     mode='scan', reset_fw=True, reset_chip=False,
-                    input_vector=''.rjust(22720, '1'), expected_response=''.rjust(22720, '1'), input_mask=''.rjust(22720, '1'))
-        
+                    input_vector=vector_shift, expected_response=expected_response, input_mask=''.rjust(22720, '1'))
+
         if(not test_result and scanchain_test_done):
-            #print(bin(mismatch))
+            print(bin(mismatch))
             print('---------')
-        return scan_out
+        return bin(scan_out)
 
     #############################################################################
 
@@ -235,10 +259,6 @@ class MPA_scanchain_test():
         for i in scan_out: print(i, end='')
         print('\n')
         return scan_out
-
-
-
-
 
 #input_vector = 0b10011001011000011000001100101000100011000111000100111010110000011001110010011111111001001001110101011100100000110101110110111000110010101110100000100100101100000010101111100001011101010011010000101001101101010010111010010000101110001001010100010110001010001010010111010101010011101110101010101011111111011110110011101100010010011010011001001110011111101001100111000010001001110010110000011100111001111111111111001001100011111010010001000111011110000110001001101001000001000001111011011101110011101101111111110010001111110010010111001001011011001011001111000010011000011001111001000101110110010110111101110001111000111110000010101101111101010010001000000010010010010100101111111001110010101110101101001010100011101001011111000111100000101011111110101011110011101001001100001000000110111010000001000010010101100000011100111110100100101101011101100100000100110010101111110110110011101110000100101100000100101001010001001010010010100011011010001011110001110110100111110110010000010011111010100010010100001100111000100101000100000001010000000101000011000010100101111101011110110011010100001011110001101111110000100011100111011010000110110010001001011111010111111101010110000100001110000000100100100011100010010011010111100110101000010011000100111010100110111001101001011101000000111111101111101110110101111001100111101110100100111010001101011100110101101010101100110000000011101000111000011111110011110000001111011000000100100010110110000001111011100111110100111111111000101100110101101011101111010000111100011001000000000110111111101111111111110000001101110001111010000110011010000000000110111001000000101011110101011100000100111011110010101011011111100001101001111011000000110100001110111000010100111000111110101101111111000100111011111001010100010111001010011110001001101101111011110111011101101101011000001101110101110101101110000010011110111111001000111110111010111111010111011110110110101011110000100101111100110011010000001110000110100001111010010001010111111111001010011010110000111101111000111111011010100100011000001010000101010100010100101010111000000000101110101110111110010110000001100110001010011101010111111010010001000110001100010110100000110100000011010001100101000000011110100100011001110001001000101100100111100001000010001101011010011000000100010110001000011100100011001000011000101011101001000110110100001011111111101010011000010011011001000101011111000011011101010101011110100010100000100101011011101111101010010100111010100100010110110010100000001011100101110001101010101110110111010111111100010100010101111001100111110011100100000110010001110101000101100001101101111010101101101101100110010111100101011011000001000000000110010111001010111011111111011101111111110001011001110101011110110010001001111011001100111100101011000111101100100011100011111001101111100000111111010001110010011010011010110001010001100000001100011100001111000100111111010010101010011000011111000101111011110011110010001000110100000100101010010011111111011111011011101100010111110001010101110110011010011000001010010010111000000110111111111111001111001000011010110011111111011100000010101101101010100011110100100001111011111100100110010001010011101110100000111110000111011101001111111110101111100100101110011111100011100101001110110111110110101001001111010101111111010100100101011111111001101010010000101101001001100001111001000011101111010001000100011010101010010001110101000010011010100011000001011100000111001111111000110001010100110011100000101011001111111010011011001101100111100011000101011110110110000111011111100011110111110010011011101001010110010011111100010010111000000000101010000110000101011110000110001000000110100011110101100101100111111011001101000110101111101111111101111101011001101100001101110010111010000111011110100011111101111100001000001001111011000110100100111111111011101010001111000110001110000000101101111100011000100100100100010100100101101110010011011000010010011011100100110001111010010011011011000000110101111100001110000101001011110011111000100101111001100101000000010010000010001110000000100111011001001111110101001001001000111001111101000111010101100000110001111110001110011111110100101010001100100100100110001001010010000100111011111111111111111101001101001001011111101001100100011010011001000101010100111111010010000000111111011010011010111110000010011100010100011111000100111111110100111111001001111111111000100001011110101101001110001110110001100000011110111111101111100000110101000011101000010000111001110100110000000111110000110100001000010000111110110010101110100101110010101000001110101001100001110111011010011101110111100011011000101111000100000010010100000110100110011000101101100011000110110010010011101110010101011011010000011001010011011111110111110100011001101000011000101100101101001110100101100001011110001100010111010100011110010011100000011100100110100101110001110010010101000101000111001001100010110000111000111010100011111011000000100010011001000101000000000001000011001100010010101011100100110010011111010011001011101001011100011001010100100101111010100010110010010001111001100011100110111001100100011111111101110100010100110010101100111101000001001100001010000010111101001011001000101101011001111011000011110110000000111011001110111011111100101111010101011001100001110100111101011100110011000010000001000101111110010110010111011100011100110110011001011111111000101000101001101111001100000110001110011101111010100011101101100001000111110110100110110001010101100100011000001111011001101000000101001100101000011111111011001100101010011001001110000001011011011001111010000001100110100100100100100011010110001010001100010000001111111101110111000101001110011001010011010000101011001111010110010110010010100111000000111110010111001000001000011101100111111000001110111011011000100011001111101000100000100101101100110011101011011010101000011001000000001010001001001101000010001010010000110110110101011100000111001000101000100010100011100101111110111000011111001101011000010111100001111101000110011000001100011010101010011010111100000000010000101010001001101010;
 

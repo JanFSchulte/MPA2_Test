@@ -119,13 +119,21 @@ class mpa_bias_utility():
             vref_dac_vals[0:,index[0]] = (dac_val, vref_val)
             if verbose:
                 print(f"VREF DAC val {int(dac_val)} : {round(vref_val, 4)}V")
-        # linear regression
-        slope = round(stats.linregress(vref_dac_vals)[0], 5) # return first value of linregress, which is the calculated slope
+        
+        # linear regression, commented out because because not always the most accurate :/
+        #slope = round(stats.linregress(vref_dac_vals)[0], 5) # return first value of linregress, which is the calculated slope
         # slope from two points
         #slope = (vref_val - vref_dac_vals[1].flat[0]) / 31
         # calculate new DAC value
-        offset = vref_dac_vals[1].flat[0]
-        vref_dac_new = int(round((vref_exp - offset) / slope,0))
+        #offset = vref_dac_vals[1].flat[0]
+        #vref_dac_new = int(round((vref_exp - offset) / slope,0))
+
+        # choose DAC value based on closest to expected value
+        diff = [(vref_exp - i)**2 for i in vref_dac_vals[1]]
+        index_min = np.argmin(diff)
+        vref_dac_new = vref_dac_vals[0][index_min]
+
+        print(f"vref_dac_now: {offset}")
         if (vref_dac_new > 31): vref_dac_new = 31
         # measure corrected VREF
         self.i2c.peri_write("ADCcontrol", int(vref_dac_new))

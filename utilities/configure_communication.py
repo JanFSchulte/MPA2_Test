@@ -15,9 +15,9 @@ def configure_communication():
 	ipaddr = ipaddr.replace('\t', '')
 	ipaddr = ipaddr.replace(' ' , '')
 	# UDP Connection
-	fc7 = fc7_interface("fc7", "ipbusudp-2.0://"+ipaddr+":50001", "file://utilities/uDTC_OT_address_table_v2.xml")
+	#fc7 = fc7_interface("fc7", "ipbusudp-2.0://"+ipaddr+":50001", "file://utilities/uDTC_OT_address_table_v2.xml")
 	# TCP with ControlHub
-	#fc7 = fc7_interface("fc7", "chtcp-2.0://localhost:10203?target="+ipaddr+":50001", "file://utilities/uDTC_OT_address_table_v2.xml") 
+	fc7 = fc7_interface("fc7", "chtcp-2.0://localhost:10203?target="+ipaddr+":50001", "file://utilities/uDTC_OT_address_table_v2.xml") 
 
 
 	print('->  Board Selected MAC > {:s} IP > {:s}'.format(tbconfig.BOARD_SELECT, ipaddr))

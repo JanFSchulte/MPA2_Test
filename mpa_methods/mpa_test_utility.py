@@ -928,6 +928,7 @@ class mpa_test_utility():
         return fail_row, bist_fail
 
     def row_bist_voltage_scan(self, n_samples = 10, voltages = range(780, 830, 5), rbr = 1, verbose =1):
+        "Used to make nice ROW BIST vs Voltage plots."
         res = []
         bist_rows = np.zeros(16)
         for i in range(0, len(voltages)):
@@ -962,3 +963,36 @@ class mpa_test_utility():
         #plt.legend()
         #plt.show()
         return res, bist_rows
+    
+    def test_l1_delay(self, ntests):
+        self.mpa.init()
+        result = []
+        for i in range(0,ntests+1):
+            delay = random.randint(38,188)
+            self.fc7.write("fc7_daq_cnfg.physical_interface_block.slvs_debug.SSA_first_counter_del", delay)
+            time.sleep(0.01)
+            self.fc7.send_trigger()
+            time.sleep(0.01)
+            bx_expected = 188 - delay
+            try:
+                bx = read_L1()[-1]
+                result.append(bx+delay)
+            except: 
+                result.append(delay)
+        return result
+            #if (bx == bx_expected)
+
+
+
+
+
+        # SSA_first_counter_del | expected BX
+        # 188 | 	header not found
+        # 187 | 	BX 1
+        # 150 | 	BX 38
+        # 100 | 	BX 88
+        # 50 | 	BX 138
+        # 38 | 	BX 150 
+        # 37 | 
+
+        return

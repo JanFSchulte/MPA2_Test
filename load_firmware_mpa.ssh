@@ -55,9 +55,11 @@ else
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i d19c_mpa_none_28042019.bin
 	fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_configDelay.bin
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_MPA_20102021.bin
-	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i mpa_scanchain_20MHz_221021.bin
-	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i mpa_scanchain_5MHz_221021.bin
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i mpa_scanchain_20MHz_221021.bin #good for carrier board
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i mpa_scanchain_5MHz_221021.bin #good for carrier board
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i mpa_board_on_l12_211021.bin
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i mpa_scanchain_20MHz_281021.bin #good for probe card
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i mpa_scanchain_5MHz_281021.bin #good for probe card
 
 	cd
 fi
