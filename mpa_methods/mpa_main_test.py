@@ -647,5 +647,5 @@ class MainTestsMPA():
         self.low_cl_DAC = 15
         self.high_cl_ofs = 30
         self.trim_amplitude = 24
-        # Digital Paramters
+        # Digital Parameters
         self.signal_integrity_limit = 0.99

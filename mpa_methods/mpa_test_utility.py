@@ -475,7 +475,7 @@ class mpa_test_utility():
                 self.fc7.SendCommand_CTRL("fast_fast_reset")
                 for p in pixel:
                     #try:
-                    strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = self.memory_test(latency = latency, row = r, pixel = p, diff = diff, dig_inj = dig_inj, verbose = 0)
+                    strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z, bx  = self.memory_test(latency = latency, row = r, pixel = p, diff = diff, dig_inj = dig_inj, verbose = 0)
                     found = 0
                     for i in range(0, pixel_counter):
                         if (pos_pixel[i] == p) and (Z[i] == r):
@@ -968,23 +968,28 @@ class mpa_test_utility():
         self.mpa.init()
         result = []
         for i in range(0,ntests+1):
-            delay = random.randint(38,188)
+            if (i%500 == 0):
+                time.sleep(0.01)
+                self.fc7.send_resync()
+            delay = random.randint(38,187)
             self.fc7.write("fc7_daq_cnfg.physical_interface_block.slvs_debug.SSA_first_counter_del", delay)
             time.sleep(0.01)
             self.fc7.send_trigger()
             time.sleep(0.01)
-            bx_expected = 188 - delay
             try:
-                bx = read_L1()[-1]
-                result.append(bx+delay)
+                bx = read_L1()[-1] # returns bx 
+                if(bx + delay == 188):
+                    result.append(1)
+                else:
+                    result.append(delay)
             except: 
+                utils.print_error("Error: Header not found!")
                 result.append(delay)
+        ptype = "error"
+        if result.count(1) == len(result): ptype = "good"
+        utils.print(result, ptype)
         return result
             #if (bx == bx_expected)
-
-
-
-
 
         # SSA_first_counter_del | expected BX
         # 188 | 	header not found
@@ -994,5 +999,3 @@ class mpa_test_utility():
         # 50 | 	BX 138
         # 38 | 	BX 150 
         # 37 | 
-
-        return

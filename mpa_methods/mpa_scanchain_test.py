@@ -83,7 +83,7 @@ class MPA_scanchain_test():
             self.fc7.write("fc7_daq_cnfg.scanchain_block.general.continue_reset",1)
             time.sleep(0.1)
 
-        time.sleep(2);
+        time.sleep(1);
 
         scanchain_test_done               = self.fc7.read("fc7_daq_stat.scanchain_block.test_done")
         scanchain_comparator              = self.fc7.read("fc7_daq_stat.scanchain_block.comparator_out")

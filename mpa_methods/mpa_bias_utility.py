@@ -129,11 +129,9 @@ class mpa_bias_utility():
         #vref_dac_new = int(round((vref_exp - offset) / slope,0))
 
         # choose DAC value based on closest to expected value
-        diff = [(vref_exp - i)**2 for i in vref_dac_vals[1]]
+        diff = [(vref_exp - i)**2 for i in vref_dac_vals[1]] 
         index_min = np.argmin(diff)
         vref_dac_new = vref_dac_vals[0][index_min]
-
-        print(f"vref_dac_now: {offset}")
         if (vref_dac_new > 31): vref_dac_new = 31
         # measure corrected VREF
         self.i2c.peri_write("ADCcontrol", int(vref_dac_new))
@@ -145,12 +143,11 @@ class mpa_bias_utility():
             utils.print_error(f"Calibration of VREF DAC --> Failed ({vref_act} V for {vref_dac_new} DAC)")
             ret =0
         if verbose:
-            print(f"Slope = {slope}, Offset = {round(offset, 4)}V, vref_dac_new = {vref_dac_new}, VREF = {round(vref_act, 4)}V")
+            print(f"vref_dac_new = {vref_dac_new}, VREF = {round(vref_act, 4)}V")
         self.mpa.ctrl_base.set_peri_mask()
         if plot:
             plt.plot(vref_dac_vals[0], vref_dac_vals[1])
             plt.xlabel('VREF code [LSB]'); plt.ylabel('VREF value [mV]'); plt.show()
-    
         return ret, vref_dac_new, vref_dac_vals
 
     def calibrate_chip(self, gnd_corr = 0, print_file = 1, filename = "test"):
