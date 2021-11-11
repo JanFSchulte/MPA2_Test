@@ -226,7 +226,7 @@ def read_L1(verbose = 1):
                 print("strip_counter: " + str(strip_counter))
                 print("pixel_counter: " + str(pixel_counter))
             if verbose: print("Position: " + str(pos_pixel[i]) + " Width: " + str(width_pixel[i]) + " Row Number: " + str(Z[i]))
-        return strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z, bx
+        return strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z, bx, L1_ID
     else:
         print("Header not found!")
 

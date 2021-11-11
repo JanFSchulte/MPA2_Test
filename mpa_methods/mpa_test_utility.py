@@ -475,7 +475,7 @@ class mpa_test_utility():
                 self.fc7.SendCommand_CTRL("fast_fast_reset")
                 for p in pixel:
                     #try:
-                    strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z, bx  = self.memory_test(latency = latency, row = r, pixel = p, diff = diff, dig_inj = dig_inj, verbose = 0)
+                    strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z, bx, l1_id  = self.memory_test(latency = latency, row = r, pixel = p, diff = diff, dig_inj = dig_inj, verbose = 0)
                     found = 0
                     for i in range(0, pixel_counter):
                         if (pos_pixel[i] == p) and (Z[i] == r):
@@ -965,37 +965,48 @@ class mpa_test_utility():
         return res, bist_rows
     
     def test_l1_delay(self, ntests):
-        self.mpa.init()
-        result = []
-        for i in range(0,ntests+1):
+        #self.mpa.init()
+        t0 = time.time()
+        time.sleep(0.01)
+        exp = 188
+        r_size = 5
+        record = np.array([np.full(r_size, exp),np.zeros(r_size)])
+        utils.print_info("-> Running L1 Delay Test...")
+        for i in range(1,ntests+1):
+            print(f"Iteration {i}", end='\r')
             if (i%500 == 0):
-                time.sleep(0.01)
+                # Reset L1 ID every 500, since it's size is 9 bit
+                #time.sleep(0.01)
                 self.fc7.send_resync()
+            if not record[0,2] == exp:
+                # if middle entry is an error, print record
+                utils.print_error(record)
             delay = random.randint(38,187)
             self.fc7.write("fc7_daq_cnfg.physical_interface_block.slvs_debug.SSA_first_counter_del", delay)
-            time.sleep(0.01)
+            #time.sleep(0.01)
             self.fc7.send_trigger()
-            time.sleep(0.01)
+            #time.sleep(0.01)
             try:
-                bx = read_L1()[-1] # returns bx 
-                if(bx + delay == 188):
-                    result.append(1)
+                bx, l1_id = read_L1(verbose=0)[-2:] # returns bx and l1_id
+                if (bx + delay == exp):
+                    res = exp
                 else:
-                    result.append(delay)
+                    res = delay
             except: 
                 utils.print_error("Error: Header not found!")
-                result.append(delay)
-        ptype = "error"
-        if result.count(1) == len(result): ptype = "good"
-        utils.print(result, ptype)
-        return result
-            #if (bx == bx_expected)
-
+                res = delay
+                l1_id = 0
+            # record 5 values (2 preceding, 2 following and unexpected bx read)
+            record = np.pad(record,((0,0),(0,1)), mode='constant')[:,-r_size:] # essentially shift the record left
+            record[:,-1] = res, l1_id # record new entry
+        t1 = time.time()
+        utils.print_info(f"-> Elapsed Time {t1-t0}s")
+        return True
         # SSA_first_counter_del | expected BX
         # 188 | 	header not found
         # 187 | 	BX 1
         # 150 | 	BX 38
         # 100 | 	BX 88
-        # 50 | 	BX 138
-        # 38 | 	BX 150 
-        # 37 | 
+        # 50  | 	BX 138
+        # 38  | 	BX 150 
+        # 37  |     header not found

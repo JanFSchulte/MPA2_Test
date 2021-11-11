@@ -2,7 +2,7 @@
 
 # first argument
 
-start_tb='python3 -i LaunchPy.py'
+start_tb='python3.6 -i LaunchPy.py'
 
 source ./FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
