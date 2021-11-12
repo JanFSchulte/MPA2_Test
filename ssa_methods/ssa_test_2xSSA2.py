@@ -3,7 +3,7 @@ import numpy as np
 from utilities.tbsettings import *
 from scipy import interpolate as scipy_interpolate
 import seaborn as sns
-from myScripts.BasicD19c import *
+#from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 import itertools

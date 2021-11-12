@@ -1,6 +1,7 @@
 
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
+from main import *
 
 import seaborn as sns
 import pickle
@@ -35,7 +36,7 @@ class mpa_test_utility():
         time.sleep(0.1)
         self.fc7.send_trigger()
         time.sleep(0.1)
-        check = read_regs(verbose = 0)[1] #return stubs
+        check = self.mpa.rdo.read_regs(verbose = 0)[1] #return stubs
         
         OK = True
         for i,C in enumerate(check):

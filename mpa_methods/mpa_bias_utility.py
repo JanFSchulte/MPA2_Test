@@ -2,9 +2,9 @@ from os import EX_OSFILE, stat
 from numpy.core.defchararray import _to_string_or_unicode_array
 
 from numpy.lib.twodim_base import _trilu_dispatcher
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
+from utilities.fc7_daq_methods import *
+#from d19cScripts.MPA_SSA_BoardControl import *
+#from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from scipy import stats

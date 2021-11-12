@@ -6,9 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
+from utilities.fc7_daq_methods import *
+#from d19cScripts.MPA_SSA_BoardControl import *
+#from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from myScripts.Instruments_Keithley_Multimeter_2000_GPIB import *

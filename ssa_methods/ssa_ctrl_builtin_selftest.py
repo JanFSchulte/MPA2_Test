@@ -7,9 +7,9 @@ import copy
 from random import randint
 
 from utilities.tbsettings import *
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
+from utilities.fc7_daq_methods import *
+#from d19cScripts.MPA_SSA_BoardControl import *
+#from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 

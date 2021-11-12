@@ -116,6 +116,9 @@ class MPAwp:
 
         self.init          = self.chip.init
         self.inject        = self.chip.inject
+        self.read_regs     = self.chip.rdo.read_regs
+        self.read_L1       = self.chip.rdo.read_L1
+        self.read_Stubs    = self.chip.rdo.read_stubs
         self.data_dir = "../cernbox_anvesh/MPA_test_data/"
         self.scanchain = MPA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
 
@@ -153,6 +156,10 @@ ssa0 = SSAwp(0, 0b000)
 #ssa1 = SSAwp(1, 0b111)
 ssa  = ssa0
 mpa  = MPAwp(address = 0b000)
+
+read_regs     = mpa.chip.rdo.read_regs
+read_L1       = mpa.chip.rdo.read_L1
+read_stubs    = mpa.chip.rdo.read_stubs
 
 #t2xSSA2 = Test_2xSSA2(ssa0, ssa1, FC7)
 

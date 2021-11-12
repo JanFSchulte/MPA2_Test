@@ -11,7 +11,7 @@ from fc7_daq_methods import *
 from PSDataTypes import *
 from mpa_methods.mpa_i2c_conf import *
 from mpa_methods.cal_utility import *
-from myScripts.BasicD19c import *
+#from myScripts.BasicD19c import *
 
 class PSDAQ:
     def __init__(self, EmulatorMode = False):

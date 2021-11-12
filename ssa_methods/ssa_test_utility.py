@@ -10,9 +10,9 @@ from threading import Thread
 
 from utilities.tbsettings import *
 from scipy import interpolate as scipy_interpolate
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
+from utilities.fc7_daq_methods import *
+#from d19cScripts.MPA_SSA_BoardControl import *
+#from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 

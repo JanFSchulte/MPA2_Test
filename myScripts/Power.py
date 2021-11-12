@@ -1,9 +1,9 @@
 import time
 import sys
 import os
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
+from utilities.fc7_daq_methods import *
+#from d19cScripts.MPA_SSA_BoardControl import *
+#from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from datetime import datetime
@@ -98,11 +98,6 @@ class power_utilities:
 		Configure_MPA_SSA_I2C_Master(1, 2)
 		return Send_MPA_SSA_I2C_Command(self.const.powerenable, 0, self.const.pcbread, 0, 0, False)
 
-
-
-
-
-
 	def set_supply(self,  chip, supply, voltage):
 		if(chip == 'ssa'):
 			if(supply == 'dvdd') : reg = 0x31
@@ -127,9 +122,6 @@ class power_utilities:
 		utils.print_enable(True)
 		self.state.ssa[supply] = voltage
 
-
-
-
 	def set_vbf(self, targetvoltage = 0.270):
 		utils.print_enable(False)
 		if (targetvoltage > 0.5):
@@ -142,14 +134,6 @@ class power_utilities:
 		Send_MPA_SSA_I2C_Command(self.dac7678, 0, self.pcbwrite, 0x37, setvoltage)  # tx to DAC C
 		utils.activate_I2C_chip()
 		utils.print_enable(True)
-
-
-
-
-
-
-
-
 
 	def _assamlemain(self, ):
 		return (

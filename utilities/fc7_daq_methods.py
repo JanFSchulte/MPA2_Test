@@ -9,9 +9,10 @@ from PyChipsUser import *
 
 import sys
 import os
-from d19cScripts.ErrorHandler import *
+from utilities.ErrorHandler import *
 import time
 import numpy as np
+from main import *
 
 # sometimes you may want to run the script from the sw directory
 isInD19CScripts = True
@@ -20,23 +21,23 @@ if os.path.isdir("./d19cScripts"):
 
 
 if isInD19CScripts:
-    fc7AddrTable = AddressTable("./fc7AddrTable.dat")
+    fc7AddrTable = AddressTable("./utilities/fc7AddrTable.dat")
 else:
-    fc7AddrTable = AddressTable("./d19cScripts/fc7AddrTable.dat")
+    fc7AddrTable = AddressTable("./utilities/fc7AddrTable.dat")
 fc7ErrorHandler = ErrorHandler()
 ########################################
 # IP address
 ########################################
 if isInD19CScripts:
-    f = open('./ipaddr.dat', 'r')
+    f = open('./utilities/ipaddr.dat', 'r')
 else:
-    f = open('./d19cScripts/ipaddr.dat', 'r')
+    f = open('./utilities/ipaddr.dat', 'r')
 ipaddr = f.readline()
 ipaddr = ipaddr.replace('\n', '')
 ipaddr = ipaddr.replace('\t', '')
 ipaddr = ipaddr.replace(' ' , '')
 f.close()
-fc7 = ChipsBusUdp(fc7AddrTable, ipaddr, 50001)
+FC7 = ChipsBusUdp(fc7AddrTable, ipaddr, 50001)
 #############
 
 def SendCommand_I2C(command, hybrid_id, chip_id, page, read, register_address, data, ReadBack):
@@ -63,11 +64,11 @@ def SendCommand_I2C(command, hybrid_id, chip_id, page, read, register_address, d
     description = "Command: type = " + str(command) + ", hybrid = " + str(hybrid_id) + ", chip = " + str(chip_id)
     #print(hex(cmd))
     if(read == 1):
-        fc7.write("fc7_daq_ctrl.command_processor_block.i2c.command_fifo", cmd0)
+        FC7.write("fc7_daq_ctrl.command_processor_block.i2c.command_fifo", cmd0)
     else:
-        fc7.write("fc7_daq_ctrl.command_processor_block.i2c.command_fifo", cmd0)
+        FC7.write("fc7_daq_ctrl.command_processor_block.i2c.command_fifo", cmd0)
         #time.sleep(0.01)
-        fc7.write("fc7_daq_ctrl.command_processor_block.i2c.command_fifo", cmd1)
+        FC7.write("fc7_daq_ctrl.command_processor_block.i2c.command_fifo", cmd1)
     
     return description
 
@@ -80,34 +81,34 @@ def SendCommand_CTRL(name = "none", profile=0):
     if name == "none":
         print("Sending nothing")
     elif name == "global_reset":
-        fc7.write("fc7_daq_ctrl.command_processor_block.global.reset", 1)
+        FC7.write("fc7_daq_ctrl.command_processor_block.global.reset", 1)
         time.sleep(0.5)
     elif name == "reset_trigger":
-        fc7.write("fc7_daq_ctrl.fast_command_block.control.reset", 1)
+        FC7.write("fc7_daq_ctrl.fast_command_block.control.reset", 1)
     elif name == "start_trigger":
-        fc7.write("fc7_daq_ctrl.fast_command_block.control.start_trigger", 1)
+        FC7.write("fc7_daq_ctrl.fast_command_block.control.start_trigger", 1)
     elif name == "stop_trigger":
-        fc7.write("fc7_daq_ctrl.fast_command_block.control.stop_trigger", 1)
+        FC7.write("fc7_daq_ctrl.fast_command_block.control.stop_trigger", 1)
     elif name == "load_trigger_config":
-        fc7.write("fc7_daq_ctrl.fast_command_block.control.load_config", 1)
+        FC7.write("fc7_daq_ctrl.fast_command_block.control.load_config", 1)
     elif name == "reset_i2c":
-        fc7.write("fc7_daq_ctrl.command_processor_block.i2c.control.reset", 1)
+        FC7.write("fc7_daq_ctrl.command_processor_block.i2c.control.reset", 1)
     elif name == "reset_i2c_fifos":
-        fc7.write("fc7_daq_ctrl.command_processor_block.i2c.control.reset_fifos", 1)
+        FC7.write("fc7_daq_ctrl.command_processor_block.i2c.control.reset_fifos", 1)
     elif name == "fast_orbit_reset":
-        fc7.write("fc7_daq_ctrl.fast_command_block.control.fast_orbit_reset", 1)
+        FC7.write("fc7_daq_ctrl.fast_command_block.control.fast_orbit_reset", 1)
     elif name == "fast_fast_reset":
-        fc7.write("fc7_daq_ctrl.fast_command_block.control.fast_reset", 1)
+        FC7.write("fc7_daq_ctrl.fast_command_block.control.fast_reset", 1)
     elif name == "fast_trigger":
-        fc7.write("fc7_daq_ctrl.fast_command_block.control.fast_trigger", 1)
+        FC7.write("fc7_daq_ctrl.fast_command_block.control.fast_trigger", 1)
     elif name == "fast_test_pulse":
-        fc7.write("fc7_daq_ctrl.fast_command_block.control.fast_test_pulse", 1)
+        FC7.write("fc7_daq_ctrl.fast_command_block.control.fast_test_pulse", 1)
     elif name == "fast_i2c_refresh":
-        fc7.write("fc7_daq_ctrl.fast_command_block.control.fast_i2c_refresh", 1)
+        FC7.write("fc7_daq_ctrl.fast_command_block.control.fast_i2c_refresh", 1)
     elif name == "load_dio5_config":
-        fc7.write("fc7_daq_ctrl.dio5_block.control.load_config", 1)
+        FC7.write("fc7_daq_ctrl.dio5_block.control.load_config", 1)
     elif name == "reset_readout":
-        fc7.write("fc7_daq_ctrl.readout_block.control.readout_reset", 1)
+        FC7.write("fc7_daq_ctrl.readout_block.control.readout_reset", 1)
     else:
         print("Unknown Command" + str(name))
     if(profile): print('->  FC7 SendCommand_CTRL -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
@@ -189,23 +190,21 @@ def print_data(chip_type, package_size, num_chips, packet_nbr, data):
                 else:
                     print("\t\t" + to_str(data[header_size+j+pkg*package_size]))
 
-
-
 # Power initialization for FMC's
 def InitFMCPower(fmc_id):
-  fc7.write("system_fmc_pg_c2m",1)
+  FC7.write("system_fmc_pg_c2m",1)
 
   if (fmc_id == "fmc_l12"):
-    fc7.write("system_fmc_l12_pwr_en",0)
+    FC7.write("system_fmc_l12_pwr_en",0)
     os.system("python fc7_i2c_voltage_set.py L12 p2v5");
     time.sleep(0.5)
-    fc7.write("system_fmc_l12_pwr_en",1)
+    FC7.write("system_fmc_l12_pwr_en",1)
 
   if (fmc_id == "fmc_l8"):
-    fc7.write("system_fmc_l8_pwr_en",0)
+    FC7.write("system_fmc_l8_pwr_en",0)
     os.system("python fc7_i2c_voltage_set.py L8 p2v5");
     time.sleep(0.5)
-    fc7.write("system_fmc_l8_pwr_en",1)
+    FC7.write("system_fmc_l8_pwr_en",1)
 
   os.system("python fc7_i2c_voltage_get_all.py");
 
@@ -215,20 +214,20 @@ def SetLineDelayManual(hybrid_id, chip_id, line_id, delay, bitslip):
     # bits: 31-28 - hybrid id, 27-24 - chip id, 23-20 - line id, 16 - enable manual delays, 12-8 - manual tap delay, 2-0 - bitslip
     word = ((hybrid_id & 0xF) << 28) + ((chip_id & 0xF) << 24) + ((line_id & 0xF) << 20) + (1 << 16) + ((delay & 0x1F) << 8) + ((bitslip & 0x07) << 0)
     # write word
-    fc7.write("cnfg_phy_manual_delays", word)
+    FC7.write("cnfg_phy_manual_delays", word)
     time.sleep(0.01)
     # do tuning
-    fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
+    FC7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
     # time.sleep
     time.sleep(0.1)
 
 # Configure Fast Block
 def Configure_Fast(triggers_to_accept, user_frequency, source, stubs_mask, stubs_latency):
-  fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", triggers_to_accept)
-  fc7.write("cnfg_fast_user_frequency", user_frequency)
-  fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", source)
-  fc7.write("cnfg_fast_stub_mask", stubs_mask)
-  fc7.write("cnfg_fast_stub_trigger_delay", stubs_latency)
+  FC7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", triggers_to_accept)
+  FC7.write("cnfg_fast_user_frequency", user_frequency)
+  FC7.write("fc7_daq_cnfg.fast_command_block.trigger_source", source)
+  FC7.write("cnfg_fast_stub_mask", stubs_mask)
+  FC7.write("cnfg_fast_stub_trigger_delay", stubs_latency)
   #time.sleep(1)
   SendCommand_CTRL("reset_trigger")
   time.sleep(0.001)
@@ -237,11 +236,11 @@ def Configure_Fast(triggers_to_accept, user_frequency, source, stubs_mask, stubs
 
 def Configure_TestPulse_MPA_SSA(delay_before_next_pulse, number_of_test_pulses):
   # fast commands within the test pulse fsm
-  fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", 0)
-  fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 1)
-  fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", 0)
+  FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", 0)
+  FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 1)
+  FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", 0)
   # disable the l1 backpressure
-  fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
+  FC7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
   # now write
   Configure_TestPulse(50, 50, delay_before_next_pulse, number_of_test_pulses)
 
@@ -276,62 +275,62 @@ def Configure_TestPulse_SSA(
     enable_initial_reset = 0,
     enable_L1 = 0,
     backpressure = 0):
-    fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", backpressure)
-    fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", (enable_rst_L1 or enable_initial_reset))
-    fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset", delay_after_fast_reset)
-    fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_test_pulse", delay_after_test_pulse)
-    fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", delay_before_next_pulse)
-    fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", (enable_rst_L1 or enable_initial_reset))
-    fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 1)
-    fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", enable_L1)
-    fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_test_pulses)
-    fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 6)
-    #fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", (enable_rst_L1 or enable_initial_reset))
-    #### fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", delay_before_next_pulse)
+    FC7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", backpressure)
+    FC7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", (enable_rst_L1 or enable_initial_reset))
+    FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset", delay_after_fast_reset)
+    FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_test_pulse", delay_after_test_pulse)
+    FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", delay_before_next_pulse)
+    FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", (enable_rst_L1 or enable_initial_reset))
+    FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 1)
+    FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", enable_L1)
+    FC7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_test_pulses)
+    FC7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 6)
+    #FC7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", (enable_rst_L1 or enable_initial_reset))
+    #### FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", delay_before_next_pulse)
     time.sleep(0.1)
     SendCommand_CTRL("load_trigger_config")
     time.sleep(0.1)
 
 def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses):
-  fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", 0)
-  fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset", delay_after_fast_reset)
-  fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_test_pulse", delay_after_test_pulse)
-  fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", delay_before_next_pulse)
-  fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_test_pulses)
-  fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 6)
+  FC7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", 0)
+  FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset", delay_after_fast_reset)
+  FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_test_pulse", delay_after_test_pulse)
+  FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", delay_before_next_pulse)
+  FC7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_test_pulses)
+  FC7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 6)
   time.sleep(0.01)
   SendCommand_CTRL("load_trigger_config")
   time.sleep(0.01)
 
 def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst, enable_init_rst, enable_L1):
-  fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", enable_init_rst) #enable_rst_L1
-  fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset", delay_after_fast_reset)
-  fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_test_pulse", delay_after_test_pulse)
-  fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", delay_before_next_pulse)
-  #fc7.write("cnfg_fast_tp_fsm_shutter_en", enable_shut)
-  fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", enable_rst) #enable_rst_L1
-  fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 1)
-  fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", enable_L1)
-  fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_test_pulses)
-  fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 6)
+  FC7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", enable_init_rst) #enable_rst_L1
+  FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset", delay_after_fast_reset)
+  FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_test_pulse", delay_after_test_pulse)
+  FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", delay_before_next_pulse)
+  #FC7.write("cnfg_fast_tp_fsm_shutter_en", enable_shut)
+  FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_fast_reset", enable_rst) #enable_rst_L1
+  FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_test_pulse", 1)
+  FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.en_l1a", enable_L1)
+  FC7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_test_pulses)
+  FC7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 6)
   time.sleep(0.1)
   SendCommand_CTRL("load_trigger_config")
   time.sleep(0.1)
 
 def Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses, initial_reset = 0):
-  fc7.write('fc7_daq_ctrl.fast_command_block.control.reset', 1)
-  time.sleep(0.10); fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", initial_reset)
-  time.sleep(0.01); fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", cal_pulse_period)
-  time.sleep(0.01); fc7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
-  time.sleep(0.01); fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_cal_pulses)
-  time.sleep(0.01); fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 9)
+  FC7.write('fc7_daq_ctrl.fast_command_block.control.reset', 1)
+  time.sleep(0.10); FC7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", initial_reset)
+  time.sleep(0.01); FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", cal_pulse_period)
+  time.sleep(0.01); FC7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
+  time.sleep(0.01); FC7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_cal_pulses)
+  time.sleep(0.01); FC7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 9)
   time.sleep(0.1)
   SendCommand_CTRL("load_trigger_config")
   time.sleep(0.1)
 
 # Configure I2C
 def Configure_I2C(mask):
-  fc7.write("cnfg_command_i2c", fc7AddrTable.getItem("cnfg_command_i2c_mask").shiftDataToMask(mask))
+  FC7.write("cnfg_command_i2c", fc7AddrTable.getItem("cnfg_command_i2c_mask").shiftDataToMask(mask))
   SendCommand_CTRL("reset_i2c")
   SendCommand_CTRL("reset_i2c_fifos")
 
@@ -374,7 +373,7 @@ def SetParameterI2C(parameter_name, data):
     write_data = data
     # FIXME no mask anymore
     if cbc2_map[parameter_name].mask != 255:
-        fc7.write("cnfg_command_i2c_mask", cbc2_map[parameter_name].mask)
+        FC7.write("cnfg_command_i2c_mask", cbc2_map[parameter_name].mask)
         write_data = ShiftDataToMask(cbc2_map[parameter_name].mask, data)
 
     SendCommand_I2C(2, 0, 0, cbc2_map[parameter_name].page, write, cbc2_map[parameter_name].reg_address, write_data, 0)
@@ -412,10 +411,10 @@ def CBC_ConfigTXT():
 
 # Configure DIO5
 def Configure_DIO5(out_en, term_en, thresholds):
-  fc7.write("cnfg_dio5_en", 1)
+  FC7.write("cnfg_dio5_en", 1)
   for i in range (1,6):
     combined_config = fc7AddrTable.getItem("cnfg_dio5_ch1_out_en").shiftDataToMask(out_en[i-1]) + fc7AddrTable.getItem("cnfg_dio5_ch1_term_en").shiftDataToMask(term_en[i-1]) + fc7AddrTable.getItem("cnfg_dio5_ch1_threshold").shiftDataToMask(thresholds[i-1])
-    fc7.write(("cnfg_dio5_ch"+str(i)+"_sel"), combined_config)
+    FC7.write(("cnfg_dio5_ch"+str(i)+"_sel"), combined_config)
 
   time.sleep(0.5)
   SendCommand_CTRL("load_dio5_config")
@@ -426,18 +425,18 @@ def ReadStatus(name = "Current Status"):
   print("============================")
   print(name + ":")
 
-  error_counter = fc7.read("fc7_daq_stat.general.global_error.counter")
+  error_counter = FC7.read("fc7_daq_stat.general.global_error.counter")
   print("   -> Error Counter: " + str(error_counter))
   if error_counter > 0:
         for i in range (0,error_counter):
-          error_full = fc7.read("fc7_daq_stat.general.global_error.full_error")
+          error_full = FC7.read("fc7_daq_stat.general.global_error.full_error")
           error_block_id = DataFromMask(error_full,"stat_error_block_id");
           error_code = DataFromMask(error_full,"stat_error_code");
           print("   -> ")
           fc7ErrorHandler.getErrorDescription(error_block_id,error_code)
   else:
     print("   -> No Errors")
-  temp_source = fc7.read("fc7_daq_stat.fast_command_block.general.source")
+  temp_source = FC7.read("fc7_daq_stat.fast_command_block.general.source")
   temp_source_name = "Unknown"
   if temp_source == 1:
     temp_source_name = "L1-Trigger"
@@ -454,7 +453,7 @@ def ReadStatus(name = "Current Status"):
   elif temp_source == 7:
     temp_source_name = "Antenna Trigger"
   print("   -> trigger source:" + str(temp_source_name))
-  temp_state = fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
+  temp_state = FC7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
   temp_state_name = "Unknown"
   if temp_state == 0:
     temp_state_name = "Idle"
@@ -463,15 +462,15 @@ def ReadStatus(name = "Current Status"):
   elif temp_state == 2:
     temp_state_name = "Paused. Waiting for readout"
   print("   -> trigger state:" + str(temp_state_name))
-  print("   -> trigger configured:"  + str(fc7.read("fc7_daq_stat.fast_command_block.general.configured")))
+  print("   -> trigger configured:"  + str(FC7.read("fc7_daq_stat.fast_command_block.general.configured")))
   print(   "   -> --------------------------------")
-  print("   -> i2c commands fifo empty:" + str( fc7.read("fc7_daq_stat.command_processor_block.i2c.command_fifo.empty")))
-  print("   -> i2c replies fifo empty:" + str( fc7.read("fc7_daq_stat.command_processor_block.i2c.reply_fifo.empty")))
-  print("   -> i2c nreplies available:" + str( fc7.read("fc7_daq_stat.command_processor_block.i2c.nreplies")))
-  print("   -> i2c fsm state:" + str( fc7.read("fc7_daq_stat.command_processor_block.i2c.master_status_fsm") ))
+  print("   -> i2c commands fifo empty:" + str( FC7.read("fc7_daq_stat.command_processor_block.i2c.command_fifo.empty")))
+  print("   -> i2c replies fifo empty:" + str( FC7.read("fc7_daq_stat.command_processor_block.i2c.reply_fifo.empty")))
+  print("   -> i2c nreplies available:" + str( FC7.read("fc7_daq_stat.command_processor_block.i2c.nreplies")))
+  print("   -> i2c fsm state:" + str( FC7.read("fc7_daq_stat.command_processor_block.i2c.master_status_fsm") ))
   print(   "   -> --------------------------------")
-  print(   "   -> dio5 not ready:" + str(fc7.read("fc7_daq_stat.dio5_block.status.not_ready")))
-  print(   "   -> dio5 error:" + str( fc7.read("fc7_daq_stat.dio5_block.status.error")))
+  print(   "   -> dio5 not ready:" + str(FC7.read("fc7_daq_stat.dio5_block.status.not_ready")))
+  print(   "   -> dio5 error:" + str( FC7.read("fc7_daq_stat.dio5_block.status.error")))
   print("============================")
 
 def ReadChipData(checking, expected_value):
@@ -481,14 +480,14 @@ def ReadChipData(checking, expected_value):
   print("   | Hybrid ID             || Chip ID             || Register                || DATA         |")
   print("   ==========================================================================================")
 
-  while fc7.read("fc7_daq_stat.command_processor_block.i2c.reply_fifo.empty") == 0:
+  while FC7.read("fc7_daq_stat.command_processor_block.i2c.reply_fifo.empty") == 0:
       numberOfReads = numberOfReads + 1
-      reply = fc7.read("fc7_daq_ctrl.command_processor_block.i2c.reply_fifo")
+      reply = FC7.read("fc7_daq_ctrl.command_processor_block.i2c.reply_fifo")
       hybrid_id = DataFromMask(reply, "ctrl_command_i2c_reply_hybrid_id")
       chip_id = DataFromMask(reply, "ctrl_command_i2c_reply_chip_id")
       data = DataFromMask(reply, "ctrl_command_i2c_reply_data")
       register = DataFromMask(reply, "ctrl_command_i2c_reply_register")
-      #print(bin(fc7.read("ctrl_i2c_command_fifo")))
+      #print(bin(FC7.read("ctrl_i2c_command_fifo")))
       #print(bin(reply)[4:12])
       print('   | {:s} %-12i || {:s} %-12i || {:s} %-12s || %-12s |'.format("Hybrid #", hybrid_id, "Chip #", chip_id, "Register #", hex(register)[:4], hex(data)[:4]))
       if(checking and data != expected_value and register != 0):
@@ -565,9 +564,9 @@ def SetLineDelayManual(hybrid_id, chip_id, line_id, delay, bitslip):
     # bits: 31-28 - hybrid id, 27-24 - chip id, 23-20 - line id, 16 - enable manual delays, 12-8 - manual tap delay, 2-0 - bitslip
     word = ((hybrid_id & 0xF) << 28) + ((chip_id & 0xF) << 24) + ((line_id & 0xF) << 20) + (1 << 16) + ((delay & 0x1F) << 8) + ((bitslip & 0x07) << 0)
     # write word
-    fc7.write("cnfg_phy_manual_delays", word)
+    FC7.write("cnfg_phy_manual_delays", word)
     time.sleep(0.01)
     # do tuning
-    fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
+    FC7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
     # time.sleep
     time.sleep(0.1)

@@ -1,9 +1,10 @@
 ### Ported to python 3.5 on April 2020 - acaratel
 
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
+#from utilities.fc7_daq_methods import *
+#from d19cScripts.MPA_SSA_BoardControl import *
 import sys, os
 import numpy as np
+from main import FC7
 
 #####################
 # START HERE
@@ -13,25 +14,25 @@ import numpy as np
 
 ################
 #change the phase of the fast_cmd wrt the 320MHz clock going to the chip:
-#fc7.write("ctrl_phy_fast_cmd_phase",x)
+#FC7.write("ctrl_phy_fast_cmd_phase",x)
 
 #change the phase of the fake L1 data going to the MPA wrt the 320MHz clock going to the chip:
-#fc7.write("ctrl_phy_ssa_gen_trig_phase",x)
+#FC7.write("ctrl_phy_ssa_gen_trig_phase",x)
 
 #change the phase of the fake stub data going to the MPA wrt the 320MHz clock going to the chip. All 8 lines are phase shifted with the same amount:
-#fc7.write("ctrl_phy_ssa_gen_stub_phase",x)
+#FC7.write("ctrl_phy_ssa_gen_stub_phase",x)
 
 #register to change the data content of the L1 data send by the SSA data generator. See tables in the manual on what to expect:
-#fc7.write("cnfg_phy_SSA_gen_trig_data_format",x)
+#FC7.write("cnfg_phy_SSA_gen_trig_data_format",x)
 
 #register to change the data content of the stub data send by the SSA data generator. See tables in the manual on what to expect:
-#fc7.write("cnfg_phy_SSA_gen_stub_data_format",x)
+#FC7.write("cnfg_phy_SSA_gen_stub_data_format",x)
 
 #register to change the delay (expressed in 25ns) imposed on sending the generated SSA L1 data wrt to the trigger signal:
-#fc7.write("cnfg_phy_SSA_gen_delay_trig_data",x)
+#FC7.write("cnfg_phy_SSA_gen_delay_trig_data",x)
 
 #register to change the delay (expressed in 25ns) imposed on sending the generated SSA stub data wrt to the Cal_strobe signal:
-#fc7.write("cnfg_phy_SSA_gen_delay_stub_data",x)
+#FC7.write("cnfg_phy_SSA_gen_delay_stub_data",x)
 
 ################
 
@@ -53,9 +54,9 @@ def reverse_mask(x):
 ##----- begin main
 
 def read_regs( verbose =  1 ):
-    status = fc7.read("stat_slvs_debug_general")
-    mpa_l1_data = fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
-    mpa_stub_data = fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
+    status = FC7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
+    mpa_l1_data = FC7.blockRead("fc7_daq_stat.physical_interface_block.l1a_debug", 50, 0)
+    mpa_stub_data = FC7.blockRead("fc7_daq_stat.physical_interface_block.stub_debug", 80, 0)
     if verbose:
         print("--> Status: ")
         print("---> MPA L1 Data Ready: " +str((status & 0x00000001) >> 0))
@@ -85,8 +86,8 @@ def read_regs( verbose =  1 ):
     return mpa_l1_data, mpa_stub_data
 
 def read_stubs(raw = 0, fast = 0):
-    status = fc7.read("stat_slvs_debug_general")
-    mpa_stub_data = fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
+    status = FC7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
+    mpa_stub_data = FC7.blockRead("fc7_daq_stat.physical_interface_block.stub_debug", 80, 0)
     stubs = np.zeros((5,40), dtype = np.uint8)
     line = 0
     cycle = 0
@@ -149,9 +150,8 @@ def read_stubs(raw = 0, fast = 0):
         return nst,  pos, row, cur
 
 def read_L1(verbose = 1):
-
-    status = fc7.read("stat_slvs_debug_general")
-    mpa_l1_data = fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
+    status = FC7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
+    mpa_l1_data = FC7.blockRead("fc7_daq_stat.physical_interface_block.l1a_debug", 50, 0)
     l1 = np.zeros((200,), dtype = np.uint8)
     cycle = 0
     for word in mpa_l1_data:
@@ -159,7 +159,6 @@ def read_L1(verbose = 1):
             l1[cycle] = to_number(reverse_mask(word),(i+1)*8,i*8)
             cycle += 1
     found = 0
-
     for i in range(1,200):
         if ((l1[i] == 255)&(l1[i-1] == 255)&(~found)):
             if verbose:
@@ -178,7 +177,6 @@ def read_L1(verbose = 1):
                 payload = payload + bin(l1[i+j]).lstrip('-0b').zfill(8)
             found = 1
             bx = i
-
     if found:
         strip_data = payload[0:strip_counter*11]
         pixel_data = payload[strip_counter*11: strip_counter*11 + pixel_counter*14]
@@ -265,7 +263,7 @@ def compose_fast_command(duration = 0, resync_en = 0, l1a_en = 0, cal_pulse_en =
     encode_cal_pulse = fc7AddrTable.getItem("ctrl_fast_signal_test_pulse").shiftDataToMask(cal_pulse_en)
     encode_bc0 = fc7AddrTable.getItem("ctrl_fast_signal_orbit_reset").shiftDataToMask(bc0_en)
     encode_duration = fc7AddrTable.getItem("ctrl_fast_signal_duration").shiftDataToMask(duration)
-    fc7.write("ctrl_fast", encode_resync + encode_l1a + encode_cal_pulse + encode_bc0 + encode_duration)
+    FC7.write("ctrl_fast", encode_resync + encode_l1a + encode_cal_pulse + encode_bc0 + encode_duration)
 
 class I2C_MainSlaveMapItem:
     def __init__(self):
@@ -296,7 +294,7 @@ def SetNumberOfDataBytes(slave_id, data_wr_nbytes, data_rd_nbytes):
     i2c_slave_map[slave_id].data_rd_nbytes = data_rd_nbytes
 
     # update the map
-    fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
+    FC7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 
 # set the default data sizes
 def SetDefaultNumberOfDataBytes(slave_id):
@@ -309,7 +307,7 @@ def SetDefaultNumberOfDataBytes(slave_id):
         print("Wrong chip type")
 
     # update the map
-    fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
+    FC7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 
 # Combine and Send sequential I2C write Command
 def SendCommand_I2C_SeqWrite(command, hybrid_id, chip_id, register_address, data):
@@ -328,7 +326,7 @@ def SendCommand_I2C_SeqWrite(command, hybrid_id, chip_id, register_address, data
     description = "Sequential Write Command: type = " + str(command) + ", hybrid = " + str(hybrid_id) + ", chip = " + str(chip_id)
 
     # first word
-    fc7.write("ctrl_command_i2c_command_fifo", cmd0)
+    FC7.write("ctrl_command_i2c_command_fifo", cmd0)
     time.sleep(0.01)
 
     # nbytes
@@ -347,7 +345,7 @@ def SendCommand_I2C_SeqWrite(command, hybrid_id, chip_id, register_address, data
             byte_counter = byte_counter + 1
 
         cmd = raw_command + raw_word_id + raw_data
-        fc7.write("ctrl_command_i2c_command_fifo", cmd)
+        FC7.write("ctrl_command_i2c_command_fifo", cmd)
         word_counter = word_counter + 1
         time.sleep(0.01)
 
@@ -363,10 +361,10 @@ def ReadChipDataNEW(nbytes = 1, verbose = 0):
         print("   | Hybrid ID             || Chip ID             || Register(LSB)          || DATA         |")
         print("   ==========================================================================================")
 
-    while fc7.read("stat_command_i2c_fifo_replies_empty") == 0:
+    while FC7.read("stat_command_i2c_fifo_replies_empty") == 0:
         byte_counter = 0
 
-        reply = fc7.read("ctrl_command_i2c_reply_fifo")
+        reply = FC7.read("ctrl_command_i2c_reply_fifo")
         hybrid_id = DataFromMask(reply, "ctrl_command_i2c_reply_hybrid_id")
         chip_id = DataFromMask(reply, "ctrl_command_i2c_reply_chip_id")
         register = DataFromMask(reply, "ctrl_command_i2c_reply_register")
@@ -380,10 +378,10 @@ def ReadChipDataNEW(nbytes = 1, verbose = 0):
 # now iterate next words
         while(byte_counter < nbytes):
             # just in case wait next word
-            while(fc7.read("stat_command_i2c_fifo_replies_empty") == 1):
+            while(FC7.read("stat_command_i2c_fifo_replies_empty") == 1):
                 print("debug: waiting next word, should not happen")
                 time.sleep(1)
-            reply = fc7.read("ctrl_command_i2c_reply_fifo")
+            reply = FC7.read("ctrl_command_i2c_reply_fifo")
             data1 = (reply & 0x000000FF) >> 0
             data2 = (reply & 0x0000FF00) >> 8
             data3 = (reply & 0x00FF0000) >> 16
@@ -449,7 +447,7 @@ i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
 #	# updating the slave id table
 #	if verbose: print("---> Updating the Slave ID Map")
 #	for slave_id in range(3):
-#		fc7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
+#		FC7.write("cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
 #		if verbose:
 #			print("Writing","cnfg_i2c_settings_map_slave_" + str(slave_id) + "_config", hex(EncodeMainSlaveMapItem(i2c_slave_map[slave_id])))
 #
@@ -503,14 +501,14 @@ def read_I2C (chip, address, timeout = 0.001):
 	return read_data
 
 #def align_out(verbose = 1):
-#    fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
+#    FC7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 #    timeout_max = 5
 #    timeout = 0
-#    while(fc7.read("fc7_daq_stat.physical_interface_block.hardware_ready") == 0):
+#    while(FC7.read("fc7_daq_stat.physical_interface_block.hardware_ready") == 0):
 #        time.sleep(0.1)
 #        if (timeout == timeout_max):
 #            timeout = 0
 #            if (verbose): print("Waiting for the phase tuning")
-#            fc7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
+#            FC7.write("fc7_daq_ctrl.physical_interface_block.control.cbc3_tune_again", 1)
 #        else:
 #            timeout += 1

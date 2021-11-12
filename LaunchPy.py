@@ -1,3 +1,2 @@
-from d19cScripts import *
-from myScripts import *
+from utilities import *
 from main import *

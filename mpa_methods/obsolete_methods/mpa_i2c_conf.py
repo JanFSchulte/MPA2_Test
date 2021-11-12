@@ -1,5 +1,5 @@
 # to load: from mpa_methods.mpa_i2c_conf import *
-from myScripts.BasicD19c import *
+#from myScripts.BasicD19c import *
 import numpy as np
 import time
 import sys

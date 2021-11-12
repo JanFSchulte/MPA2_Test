@@ -21,9 +21,9 @@ from scipy.interpolate import BSpline as interpspline
 from multiprocessing import Process
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
+#from utilities.fc7_daq_methods import *
+#from d19cScripts.MPA_SSA_BoardControl import *
+#from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from sympy.combinatorics.graycode import GrayCode
 

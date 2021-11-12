@@ -25,9 +25,9 @@
 #        cnfg_dio5_ch5_term_en		40016004    00000002	 1     1 *Enable 50 Ohm termination
 #        cnfg_dio5_ch5_threshold		40016004    0000ff00	 1     1 *0-255 threshold
 
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
+from utilities.fc7_daq_methods import *
+#from d19cScripts.MPA_SSA_BoardControl import *
+#from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 import time

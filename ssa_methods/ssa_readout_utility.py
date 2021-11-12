@@ -5,19 +5,19 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
+from utilities.fc7_daq_methods import *
+#from d19cScripts.MPA_SSA_BoardControl import *
+#from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from utilities.tbsettings import *
 
 '''
-fc7.read("stat_slvs_debug_general")
-mpa_l1_data = fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
-mpa_stub_data = fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
+fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
+mpa_l1_data = fc7.blockRead("fc7_daq_stat.physical_interface_block.l1a_debug", 50, 0)
+mpa_stub_data = fc7.blockRead("fc7_daq_stat.physical_interface_block.stub_debug", 80, 0)
 lateral_data = fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
-fc7.read("stat_slvs_debug_general")
+fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
 '''
 
 class SSA_readout():
@@ -38,7 +38,7 @@ class SSA_readout():
 		:param display:  (Default value = True)
 
 		"""
-		status = self.fc7.read("stat_slvs_debug_general")
+		status = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
 		l1_data_ready   = ((status & 0x1) >> 0)
 		stub_data_ready = ((status & 0x2) >> 1)
 		counters_ready  = ((status & 0x4) >> 2)
@@ -98,7 +98,7 @@ class SSA_readout():
 		#### 	#time.sleep(0.001)
 		#### 	status = self.status(display=0)
 		#### 	counter += 1
-		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
+		ssa_stub_data = self.fc7.blockRead("fc7_daq_stat.physical_interface_block.stub_debug", 80, 0)
 		#self.fc7.SendCommand_CTRL("stop_trigger")
 		counter = 0
 		if(profile): utils.print_log('->  cluster readout 2 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
@@ -231,10 +231,10 @@ class SSA_readout():
 			#self.send_trigger(1)
 		if(profile): utils.print_log('->  L1 readout 1 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		#time.sleep(0.01)
-		status = self.fc7.read("stat_slvs_debug_general")
+		status = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
 		#time.sleep(0.001)
 		if(profile): utils.print_log('->  L1 readout 2 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
-		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
+		ssa_l1_data = self.fc7.blockRead("fc7_daq_stat.physical_interface_block.l1a_debug", 50, 0)
 		if(profile): utils.print_log('->  L1 readout 3 -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
 		if(display_raw):
 			utils.print_log("\n->  L1 Data: ")
@@ -340,9 +340,9 @@ class SSA_readout():
 		self.fc7.SendCommand_CTRL("start_trigger")
 		#self.fc7.SendCommand_CTRL("start_trigger")
 		time.sleep(0.01)
-		status = self.fc7.read("stat_slvs_debug_general")
+		status = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
 		#while ((status & 0x00000002) >> 1) != 1:
-		#	status = self.fc7.read("stat_slvs_debug_general")
+		#	status = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
 		#	time.sleep(0.001)
 		#	counter = 0
 		time.sleep(0.001)
@@ -524,9 +524,9 @@ class SSA_readout():
 		if(trigger):
 			self.fc7.SendCommand_CTRL("start_trigger")
 			time.sleep(0.001)
-		status = self.fc7.read("stat_slvs_debug_general")
-		ssa_l1_data = self.fc7.blockRead("stat_slvs_debug_mpa_l1_0", 50, 0)
-		ssa_stub_data = self.fc7.blockRead("stat_slvs_debug_mpa_stub_0", 80, 0)
+		status = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
+		ssa_l1_data = self.fc7.blockRead("fc7_daq_stat.physical_interface_block.l1a_debug", 50, 0)
+		ssa_stub_data = self.fc7.blockRead("fc7_daq_stat.physical_interface_block.stub_debug", 80, 0)
 		lateral_data = self.fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
 		utils.print_log("--> Status: ")
 		utils.print_log("---> MPA L1 Data Ready: " + str((status & 0x00000001) >> 0))

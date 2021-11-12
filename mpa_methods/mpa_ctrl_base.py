@@ -1,7 +1,4 @@
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.phase_tuning_control import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
+from utilities.fc7_daq_methods import *
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 
@@ -20,7 +17,7 @@ class mpa_ctrl_base:
         self.fc7 = FC7;
         self.pwr = pwr
     def resync(self):
-        SendCommand_CTRL("fast_fast_reset");
+        self.fc7.SendCommand_CTRL("fast_fast_reset");
         print('->  \tSent Re-Sync command')
         time.sleep(0.001)
     def reset(self, display=True):
@@ -196,7 +193,21 @@ class mpa_ctrl_base:
         # set pattern
         self.I2C.peri_write("LFSR_data", pattern)
         time.sleep(0.1)
-        return TuneMPA(pattern)
+        return self.TuneMPA(pattern)
+
+    def TuneMPA(self, pattern):
+        # in case of MPA the pattern is following: stub lines (1-5) tune on patterns 0b10100000, l1a inherited from the line 1
+        # set mpa
+        #I2C.peri_write("ReadoutMode", 2)
+        #I2C.peri_write("LFSR_data", 0b10100000)
+        # tune all lines
+        state = True
+        for line in range(0,6):
+            self.fc7.TuneLine(line, np.array(pattern), 8, True, False)
+            if self.fc7.CheckLineDone(0,0,line) != 1:
+                print(f"Failed tuning line {line}")
+                state = False
+        return state;
 
     def fuse_write(self, lot, wafer_n, pos, process, adc_ref, status, pulse = 0, confirm = 0):
         self.pwr.efusepoweron()

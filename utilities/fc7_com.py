@@ -12,9 +12,9 @@ from scipy.interpolate import BSpline as interpspline
 from multiprocessing import Process
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
-from myScripts.BasicD19c import *
+from utilities.fc7_daq_methods import *
+##from d19cScripts.MPA_SSA_BoardControl import *
+#from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from datetime import datetime
 from myScripts.Utilities import *
@@ -39,6 +39,25 @@ class I2C_MainSlaveMapItem:
         self.nack_en = nack_en
         self.chip_type = chip_type
         self.chip_name = chip_name
+
+# define the i2c slave map signle item
+class I2C_SlaveMapItem:
+        def __init__(self):
+                self.i2c_address = 0
+                self.register_address_nbytes = 0
+                self.data_wr_nbytes = 1
+                self.data_rd_nbytes = 1
+                self.stop_for_rd_en = 0
+                self.nack_en = 0
+                self.chip_name = "UNKNOWN"
+        def SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en, chip_name):
+                self.i2c_address = i2c_address
+                self.register_address_nbytes = register_address_nbytes
+                self.data_wr_nbytes = data_wr_nbytes
+                self.data_rd_nbytes = data_rd_nbytes
+                self.stop_for_rd_en = stop_for_rd_en
+                self.nack_en = nack_en
+                self.chip_name = chip_name
 
 class fc7_com():
     def __init__(self, fc7_if, fc7AddrTable):
@@ -222,7 +241,6 @@ class fc7_com():
                 ar = rt
             return ar
 
-
     def fifoRead(self, p1, p2, p3 = 0):
         cnt = 0; ex = '';
         while cnt < 4:
@@ -267,7 +285,6 @@ class fc7_com():
         self.fc7_if.write("fc7_daq_ctrl.command_processor_block.i2c.control.reset_fifos", 1)
         self.fc7_if.write("fc7_daq_ctrl.mpa_ssa_board_block.reset", 1)
         time.sleep(0.1)
-
 
     def Send_MPA_SSA_I2C_Command(self, slave_id, board_id, read, register_address, data, verbose = 1, note = ''):
         # this peace of code just shifts the data, also checks if it fits the field
@@ -360,9 +377,9 @@ class fc7_com():
         #i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
         # set the values
         # --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
-        i2c_slave_map[0].SetValues(tbconfig.MPA_ADR[0], 2, 1, 1, 1, 0, "MPA",  "MPA0")
-        i2c_slave_map[1].SetValues(tbconfig.SSA_ADR[0], 2, 1, 1, 1, 0, "SSA",  "SSA0")
-        i2c_slave_map[2].SetValues(tbconfig.SSA_ADR[1], 2, 1, 1, 1, 0, "SSA1", "SSA1")
+        self.i2c_slave_map[0].SetValues(tbconfig.MPA_ADR[0], 2, 1, 1, 1, 0, "MPA",  "MPA0")
+        self.i2c_slave_map[1].SetValues(tbconfig.SSA_ADR[0], 2, 1, 1, 1, 0, "SSA",  "SSA0")
+        self.i2c_slave_map[2].SetValues(tbconfig.SSA_ADR[1], 2, 1, 1, 1, 0, "SSA1", "SSA1")
         #print(bin(tbconfig.MPA_ADR[0]))
         #print(bin(tbconfig.SSA_ADR[0]))
         #print(bin(tbconfig.SSA_ADR[1]))
@@ -370,40 +387,39 @@ class fc7_com():
         if verbose:
             print("---> Updating the Slave ID Map")
         for slave_id in range(3):
-            self.fc7_if.write("fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_" + str(slave_id) + "_config", EncodeMainSlaveMapItem(i2c_slave_map[slave_id]))
+            self.fc7_if.write("fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_" + str(slave_id) + "_config", self.EncodeMainSlaveMapItem(self.i2c_slave_map[slave_id]))
             if verbose:
-                print("Writing","fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_" + str(slave_id) + "_config", hex(EncodeMainSlaveMapItem(i2c_slave_map[slave_id])))
+                print("Writing","fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_" + str(slave_id) + "_config", hex(self.EncodeMainSlaveMapItem(self.i2c_slave_map[slave_id])))
 
     def SetSlaveMap(self, verbose = 1):
         # define the map itself
-        i2c_slave_map = [I2C_SlaveMapItem() for i in range(31)]
+        self.i2c_slave_map = [I2C_SlaveMapItem() for i in range(31)]
         # set the values
         # --- SetValues(self, i2c_address, register_address_nbytes, data_wr_nbytes, data_rd_nbytes, stop_for_rd_en, nack_en) --
         #print('SET SLAVE MAP2')
-        i2c_slave_map[0].SetValues(0b1110000, 0, 1, 1, 0, 1, "PCA9646")
-        i2c_slave_map[1].SetValues(0b0100000, 0, 1, 1, 0, 1, "PCF8574")
-        i2c_slave_map[2].SetValues(0b0100100, 0, 1, 1, 0, 1, "PCF8574")
-        i2c_slave_map[3].SetValues(0b0010100, 0, 2, 3, 0, 1, "LTC2487") # ADC
-        i2c_slave_map[4].SetValues(0b1001000, 1, 2, 2, 0, 0, "DAC7678")
-        i2c_slave_map[5].SetValues(0b1000000, 1, 2, 2, 0, 1, "INA226")
-        i2c_slave_map[6].SetValues(0b1000001, 1, 2, 2, 0, 1, "INA226")
-        i2c_slave_map[7].SetValues(0b1000010, 1, 2, 2, 0, 1, "INA226")
-        i2c_slave_map[8].SetValues(0b1000100, 1, 2, 2, 0, 1, "INA226")
-        i2c_slave_map[9].SetValues(0b1000101, 1, 2, 2, 0, 1, "INA226")
-        i2c_slave_map[10].SetValues(0b1000110, 1, 2, 2, 0, 1, "INA226")
-        i2c_slave_map[11].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA")
-        i2c_slave_map[12].SetValues(0b0100001, 2, 1, 1, 1, 0, "SSA")
-        i2c_slave_map[11].SetValues(tbconfig.MPA_ADR[0], 2, 1, 1, 1, 0, "MPA")
-        i2c_slave_map[12].SetValues(tbconfig.SSA_ADR[0], 2, 1, 1, 1, 0, "SSA0")
-        i2c_slave_map[13].SetValues(tbconfig.SSA_ADR[1], 2, 1, 1, 1, 0, "SSA1")
-        i2c_slave_map[15].SetValues(0b1011111, 1, 1, 1, 1, 0, "CBC3")
+        self.i2c_slave_map[0].SetValues(0b1110000, 0, 1, 1, 0, 1, "PCA9646")
+        self.i2c_slave_map[1].SetValues(0b0100000, 0, 1, 1, 0, 1, "PCF8574")
+        self.i2c_slave_map[2].SetValues(0b0100100, 0, 1, 1, 0, 1, "PCF8574")
+        self.i2c_slave_map[3].SetValues(0b0010100, 0, 2, 3, 0, 1, "LTC2487") # ADC
+        self.i2c_slave_map[4].SetValues(0b1001000, 1, 2, 2, 0, 0, "DAC7678")
+        self.i2c_slave_map[5].SetValues(0b1000000, 1, 2, 2, 0, 1, "INA226")
+        self.i2c_slave_map[6].SetValues(0b1000001, 1, 2, 2, 0, 1, "INA226")
+        self.i2c_slave_map[7].SetValues(0b1000010, 1, 2, 2, 0, 1, "INA226")
+        self.i2c_slave_map[8].SetValues(0b1000100, 1, 2, 2, 0, 1, "INA226")
+        self.i2c_slave_map[9].SetValues(0b1000101, 1, 2, 2, 0, 1, "INA226")
+        self.i2c_slave_map[10].SetValues(0b1000110, 1, 2, 2, 0, 1, "INA226")
+        self.i2c_slave_map[11].SetValues(0b1000000, 2, 1, 1, 1, 0, "MPA")
+        self.i2c_slave_map[12].SetValues(0b0100001, 2, 1, 1, 1, 0, "SSA")
+        self.i2c_slave_map[11].SetValues(tbconfig.MPA_ADR[0], 2, 1, 1, 1, 0, "MPA")
+        self.i2c_slave_map[12].SetValues(tbconfig.SSA_ADR[0], 2, 1, 1, 1, 0, "SSA0")
+        self.i2c_slave_map[13].SetValues(tbconfig.SSA_ADR[1], 2, 1, 1, 1, 0, "SSA1")
+        self.i2c_slave_map[15].SetValues(0b1011111, 1, 1, 1, 1, 0, "CBC3")
         # updating the slave id table
         if verbose: print("---> Updating the Slave ID Map")
         for slave_id in range(16):
-            self.fc7_if.write("fc7_daq_cnfg.mpa_ssa_board_block.slave_" + str(slave_id) + "_config", EncodeSlaveMapItem(i2c_slave_map[slave_id]))
+            self.fc7_if.write("fc7_daq_cnfg.mpa_ssa_board_block.slave_" + str(slave_id) + "_config", self.EncodeSlaveMapItem(self.i2c_slave_map[slave_id]))
             if verbose:
-                print("Writing","fc7_daq_cnfg.mpa_ssa_board_block.slave_" + str(slave_id) + "_config", hex(EncodeSlaveMapItem(i2c_slave_map[slave_id])))
-
+                print("Writing","fc7_daq_cnfg.mpa_ssa_board_block.slave_" + str(slave_id) + "_config", hex(self.EncodeSlaveMapItem(self.i2c_slave_map[slave_id])))
 
     def ReadStatus(self, name = "Current Status"):
         print("============================")
@@ -486,7 +502,6 @@ class fc7_com():
         if(return_full_status): return line_status
         else: return line_done
 
-
     def GetPhaseTuningStatus(self, printStatus = True, return_full_status=False):
         # get data word
         data = self.fc7_if.read("fc7_daq_stat.physical_interface_block.phase_tuning_reply")
@@ -508,11 +523,11 @@ class fc7_com():
                 return [-1, line_id, mode, master_line_id, delay, bitslip]
         # tuning status
         elif(output_type == 1):
-            delay = (data & 0x00F80000) >> 19
-            bitslip = (data & 0x00070000) >> 16
-            done = (data & 0x00008000) >> 15
-            wa_fsm_state = (data & 0x00000F00) >> 8
-            pa_fsm_state = (data & 0x0000000F) >> 0
+            delay = (data & 0x1F<<19) >> 19
+            bitslip = (data & 0xF<<15) >> 15
+            done = (data & 0x1<<14) >> 14
+            wa_fsm_state = (data & 0xF<<7) >> 7
+            pa_fsm_state = (data & 0xF<<0) >> 0
             if printStatus:
                 print("Line Status: ")
                 print("\tTuning done/applied: "+ str(done))
@@ -532,8 +547,7 @@ class fc7_com():
             print("Error! Unknown status message!")
             return -2
 
-
-    def TuneLine(self, line_id, pattern, pattern_period, changePattern = True, printStatus = False):
+    def TuneLine(self, line_id, pattern, pattern_period, changePattern = True, printStatus = True):
         # in that case all set specified pattern (same for all lines)
         if changePattern:
             self.SetLineMode(0,0,line_id,mode = 0)
@@ -559,7 +573,6 @@ class fc7_com():
         # do phase alignment
         self.SendControl(0,0,line_id,"do_phase")
         time.sleep(0.01)
-
 
     def TuneLine_line(self, line_id, pattern, pattern_period, changePattern = True):
         # in that case all set specified pattern (same for all lines)
@@ -591,7 +604,6 @@ class fc7_com():
         command_final = hybrid_raw + chip_raw + line_raw + command_raw + byte_id_raw + pattern_raw
         self.SendPhaseTuningCommand(command_final)
 
-
     def SetLineMode(self, hybrid_id, chip_id, line_id, mode, delay = 0, bitslip = 0, l1_en = 0, master_line_id = 0):
         # shifting
         hybrid_raw = (hybrid_id & 0xF) << 28
@@ -618,7 +630,6 @@ class fc7_com():
         # now combine the command itself
         command_final = hybrid_raw + chip_raw + line_raw + command_raw + mode_raw + l1a_en_raw + master_line_id_raw + delay_raw + bitslip_raw
         self.SendPhaseTuningCommand(command_final)
-
 
     def SendControl(self, hybrid_id, chip_id, line_id, command):
         # shifting
@@ -651,7 +662,7 @@ class fc7_com():
         command_final = hybrid_raw + chip_raw + line_raw + command_raw
         self.SendPhaseTuningCommand(command_final)
         time.sleep(0.01)
-        # self.GetPhaseTuningStatus()
+        self.GetPhaseTuningStatus()
         # command 1
         command_type = 1
         command_raw = (command_type & 0xF) << 16
@@ -661,7 +672,6 @@ class fc7_com():
         time.sleep(0.01)
         done = self.GetPhaseTuningStatus()
         return done
-
 
     # read the chip data (nbytes per read transaction)
     def ReadChipDataNEW(self, nbytes = 1, verbose = 0):
@@ -717,3 +727,34 @@ class fc7_com():
             print("	-----------------------------------------------------------------------------------------")
             print("   ====================================================   ")
         return data
+
+    # encode slave map item:
+    def EncodeSlaveMapItem(self, slave_item):
+        # this peace of code just shifts the data, also checks if it fits the field
+        shifted_i2c_address = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
+        shifted_register_address_nbytes = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
+        shifted_data_wr_nbytes = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes)
+        shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
+        shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
+        shifted_nack_en = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
+        final_command = shifted_i2c_address + shifted_register_address_nbytes + shifted_data_wr_nbytes + shifted_data_rd_nbytes + shifted_stop_for_rd_en + shifted_nack_en
+        return final_command
+    
+    def EncodeMainSlaveMapItem(self, slave_item):
+        """ #doesnt work
+        shifted_i2c_address            = slave_item.i2c_address<<25
+        shifted_register_address_nbytes= slave_item.register_address_nbytes<<6
+        shifted_data_wr_nbytes         = slave_item.data_wr_nbytes<<4
+        shifted_data_rd_nbytes         = slave_item.data_rd_nbytes<<2
+        shifted_stop_for_rd_en         = slave_item.stop_for_rd_en<<1
+        shifted_nack_en                = slave_item.nack_en<<0
+        """
+        # this peace of code just shifts the data, also checks if it fits the field
+        shifted_i2c_address = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
+        shifted_register_address_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes) #shift 10
+        shifted_data_wr_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes) #shift 5
+        shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes) #shift 0
+        shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en) #shift 24
+        shifted_nack_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en) #shift 23
+        final_command = shifted_i2c_address + shifted_register_address_nbytes + shifted_data_wr_nbytes + shifted_data_rd_nbytes + shifted_stop_for_rd_en + shifted_nack_en
+        return final_command

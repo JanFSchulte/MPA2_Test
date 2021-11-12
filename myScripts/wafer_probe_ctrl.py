@@ -145,7 +145,6 @@ class AUTOPROBER():
                 else:
                     PCM.runtest.set_enable('efuse', 'OFF')
                 #PCM= MPAProbeTest("../MPA2_Results/Lot1_Wafer6/", self.chip, self.i2c, FC7, self.cal, self.test, self.bias)
-
                 return PCM.RUN(runname = inf, write_header=False)
 
         #elif(self.chip == 'SSA'):

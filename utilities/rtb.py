@@ -17,7 +17,7 @@ import decimal
 import ConfigParser
 ########################################
 # basic d19c methods include
-from d19cScripts.fc7_daq_methods import *
+from utilities.fc7_daq_methods import *
 
 from d19cScripts import *
 #from myScripts import *

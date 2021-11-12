@@ -1,6 +1,6 @@
 #
 from myScripts.Utilities import *
-from myScripts.BasicD19c import *
+#from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from d19cScripts import *
 

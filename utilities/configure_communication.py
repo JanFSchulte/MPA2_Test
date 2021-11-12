@@ -1,6 +1,6 @@
 from utilities.fc7_uhal import fc7_interface
-from d19cScripts.fc7_daq_methods import *
-from d19cScripts.MPA_SSA_BoardControl import *
+from utilities.fc7_daq_methods import *
+#from d19cScripts.MPA_SSA_BoardControl import *
 from utilities.tbsettings import *
 import uhal 
 
@@ -10,7 +10,7 @@ def configure_communication():
 	global fc7
 
 	ipaddr = tbconfig.ETHERS[tbconfig.BOARD_SELECT]['IP']
-	fc7AddrTable = AddressTable("./d19cScripts/fc7AddrTable.dat")
+	fc7AddrTable = AddressTable("./utilities/fc7AddrTable.dat")
 	ipaddr = ipaddr.replace('\n', '')
 	ipaddr = ipaddr.replace('\t', '')
 	ipaddr = ipaddr.replace(' ' , '')
