@@ -54,7 +54,7 @@ class mpa_test_utility():
         """
         self.i2c.pixel_write('PixelEnables', row, pixel, 0x20)
         self.fc7.send_test(8)
-        return read_stubs(fast = 1)
+        return self.mpa.rdo.read_stubs(fast = 1)
 
     def digital_pixel_test(self, row = list(range(1,17)), pixel = list(range(1,121)), print_log = 1, filename =  "../cernbox/MPA_Results/digital_pixel_test.log"):
         """
@@ -121,7 +121,7 @@ class mpa_test_utility():
         self.mpa.ctrl_pix.enable_pix_EdgeBRcal(row, pixel)
         #time.sleep(0.001)
         self.fc7.send_test(8)
-        return read_stubs(fast = 1)
+        return self.mpa.rdo.read_stubs(fast = 1)
 
     def analog_pixel_test(self, row = list(range(1,17)), pixel = list(range(2,120)), print_log = 1, filename =  "../cernbox/MPA_Results/analog_pixel_test.log0", verbose = 1):
         """
@@ -244,7 +244,7 @@ class mpa_test_utility():
                 check = 0
                 for i in range(0, n_pulse):
                     self.fc7.send_test()
-                    nst, pos, Z, bend = read_stubs()
+                    nst, pos, Z, bend = self.mpa.rdo.read_stubs()
                     for centr in pos[6:14,0]:
                         if (centr == val): check += 1
                     for centr in pos[6:14,1]:
@@ -318,7 +318,7 @@ class mpa_test_utility():
         time.sleep(0.001)
         self.fc7.SendCommand_CTRL("start_trigger")
         time.sleep(0.001)
-        return read_L1(verbose)
+        return self.mpa.rdo.read_L1(verbose)
 
 
     def rnd_pixel(self, row = [1,16], pixel = [1,120], dig_inj = 1, verbose = 1):
@@ -387,7 +387,7 @@ class mpa_test_utility():
             # trigger test pulse for random pixel and get injection coordinate
             p, r = self.rnd_pixel(dig_inj = 1)
 
-            strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = read_L1(verbose)
+            strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = self.mpa.rdo.read_L1(verbose)
             found = 0
 
             for i in range(0, int(pixel_counter)):
@@ -602,14 +602,14 @@ class mpa_test_utility():
         self.mpa.ctrl_base.set_peri_mask()
         self.mpa.i2c.peri_write('BypassMode', 0b00000100)
         self.mpa.i2c.peri_write('ConfDLL', 0b00110001)
-        send_trigger()
-        l1, stub = read_regs(verbose = 0)
+        self.fc7.send_trigger()
+        l1, stub = self.mpa.rdo.read_regs(verbose = 0)
         fail = 0
         if ( l1[0] == 4042322160): utils.print_good("->  DLL at 0 - test passed")
         else: utils.print_error("->  DLL at 1 - test failed", print(l1[0])); fail = 1
         self.mpa.i2c.peri_write('ConfDLL', 0b00111111)
-        send_trigger()
-        l1, stub = read_regs(verbose = 0)
+        self.fc7.send_trigger()
+        l1, stub = self.mpa.rdo.read_regs(verbose = 0)
         if ( l1[0] == 2021161080): utils.print_good("->  DLL at 31 - test passed")
         else: utils.print_error("->  DLL at 31 - test failed",  print(l1[0])); fail = 1
         self.mpa.i2c.peri_write('ConfDLL', 0b00110001)
@@ -965,8 +965,9 @@ class mpa_test_utility():
         #plt.show()
         return res, bist_rows
     
-    def test_l1_delay(self, ntests):
+    def l1_bx_delay(self, ntests):
         #self.mpa.init()
+        utils.set_log_files("l1_delay.log", "l1_delay_error.log")
         t0 = time.time()
         time.sleep(0.01)
         exp = 188
@@ -974,13 +975,15 @@ class mpa_test_utility():
         record = np.array([np.full(r_size, exp),np.zeros(r_size)])
         utils.print_info("-> Running L1 Delay Test...")
         for i in range(1,ntests+1):
-            print(f"Iteration {i}", end='\r')
+            print(f"Loop {i}", end='\r')
             if (i%500 == 0):
                 # Reset L1 ID every 500, since it's size is 9 bit
                 #time.sleep(0.01)
                 self.fc7.send_resync()
             if not record[0,2] == exp:
                 # if middle entry is an error, print record
+                utils.print_info(f"\nLoop {i}")
+                utils.print_info(f"Error after {round(time.time()-t0, 2)}s")
                 utils.print_error(record)
             delay = random.randint(38,187)
             self.fc7.write("fc7_daq_cnfg.physical_interface_block.slvs_debug.SSA_first_counter_del", delay)
@@ -988,7 +991,7 @@ class mpa_test_utility():
             self.fc7.send_trigger()
             #time.sleep(0.01)
             try:
-                bx, l1_id = read_L1(verbose=0)[-2:] # returns bx and l1_id
+                bx, l1_id = self.mpa.rdo.read_L1(verbose=0)[-2:] # returns bx and l1_id
                 if (bx + delay == exp):
                     res = exp
                 else:
@@ -1002,6 +1005,7 @@ class mpa_test_utility():
             record[:,-1] = res, l1_id # record new entry
         t1 = time.time()
         utils.print_info(f"-> Elapsed Time {t1-t0}s")
+        utils.close_log_files()
         return True
         # SSA_first_counter_del | expected BX
         # 188 | 	header not found
