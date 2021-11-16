@@ -299,28 +299,6 @@ class mpa_test_utility():
         utils.print_log("-> Strip In Test Elapsed Time: " + str(t1 - t0))
         return data_array
 
-    def memory_test(self, latency, row, pixel, diff, dig_inj = 1, verbose = 1): # Diff = 2
-        """Memory Test
-
-        :param latency:
-        :param row:
-        :param pixel:
-        :param diff:
-        :param dig_inj: 'True' for digital pulse, 'False' for analog (Default value = 1)
-        :param verbose:  (Default value = 1)
-
-        """
-        self.mpa.ctrl_pix.disable_pixel(0,0)
-        if dig_inj:
-            self.i2c.pixel_write('PixelEnables', row, pixel, 0x20)
-        else:
-            self.mpa.ctrl_pix.enable_pix_LevelBRcal(row,pixel, polarity = "rise")
-        time.sleep(0.001)
-        self.fc7.SendCommand_CTRL("start_trigger")
-        time.sleep(0.001)
-        return self.mpa.rdo.read_L1(verbose)
-
-
     def rnd_pixel(self, row = [1,16], pixel = [1,120], dig_inj = 1, verbose = 1):
         """ Returns one random pixel coordinate in given range and passes it to memory_test
 
@@ -427,9 +405,27 @@ class mpa_test_utility():
         utils.print_log("->  Elapsed Time: " + str(t1 - t0))
         return bad_pix, error, stuck, i2c_issue
 
+    def memory_test(self, latency, row, pixel, diff, dig_inj = 1, verbose = 1): # Diff = 2
+        """Memory Test
+        :param latency:
+        :param row:
+        :param pixel:
+        :param diff:
+        :param dig_inj: 'True' for digital pulse, 'False' for analog (Default value = 1)
+        :param verbose:  (Default value = 1)
+        """
+        self.mpa.ctrl_pix.disable_pixel(0,0)
+        if dig_inj:
+            self.i2c.pixel_write('PixelEnables', row, pixel, 0x20)
+        else:
+            self.mpa.ctrl_pix.enable_pix_LevelBRcal(row,pixel, polarity = "rise")
+        time.sleep(0.001)
+        self.fc7.SendCommand_CTRL("start_trigger")
+        time.sleep(0.001)
+        return self.mpa.rdo.read_L1(verbose)
+
     def mem_test(self, latency = 255, delay = [10], row = list(range(1,17)), pixel = list(range(1,121)), diff = 3, print_log = 0, filename =  "../cernbox/MPA_Results/digital_mem_test.log", dig_inj =1, gate = 0, verbose = 1):
         """
-
         :param latency:  (Default value = 255)
         :param delay:  (Default value = [10])
         :param row:  (Default value = list(range(1)
@@ -440,7 +436,6 @@ class mpa_test_utility():
         :param dig_inj:  (Default value = 1)
         :param gate:  (Default value = 0)
         :param verbose:  (Default value = 1)
-
         """
         t0 = time.time()
         bad_pix = []
@@ -965,53 +960,3 @@ class mpa_test_utility():
         #plt.show()
         return res, bist_rows
     
-    def l1_bx_delay(self, ntests):
-        #self.mpa.init()
-        utils.set_log_files("l1_delay.log", "l1_delay_error.log")
-        t0 = time.time()
-        time.sleep(0.01)
-        exp = 188
-        r_size = 5
-        record = np.array([np.full(r_size, exp),np.zeros(r_size)])
-        utils.print_info("-> Running L1 Delay Test...")
-        for i in range(1,ntests+1):
-            print(f"Loop {i}", end='\r')
-            if (i%500 == 0):
-                # Reset L1 ID every 500, since it's size is 9 bit
-                #time.sleep(0.01)
-                self.fc7.send_resync()
-            if not record[0,2] == exp:
-                # if middle entry is an error, print record
-                utils.print_info(f"\nLoop {i}")
-                utils.print_info(f"Error after {round(time.time()-t0, 2)}s")
-                utils.print_error(record)
-            delay = random.randint(38,187)
-            self.fc7.write("fc7_daq_cnfg.physical_interface_block.slvs_debug.SSA_first_counter_del", delay)
-            #time.sleep(0.01)
-            self.fc7.send_trigger()
-            #time.sleep(0.01)
-            try:
-                bx, l1_id = self.mpa.rdo.read_L1(verbose=0)[-2:] # returns bx and l1_id
-                if (bx + delay == exp):
-                    res = exp
-                else:
-                    res = delay
-            except: 
-                utils.print_error("Error: Header not found!")
-                res = delay
-                l1_id = 0
-            # record 5 values (2 preceding, 2 following and unexpected bx read)
-            record = np.pad(record,((0,0),(0,1)), mode='constant')[:,-r_size:] # essentially shift the record left
-            record[:,-1] = res, l1_id # record new entry
-        t1 = time.time()
-        utils.print_info(f"-> Elapsed Time {t1-t0}s")
-        utils.close_log_files()
-        return True
-        # SSA_first_counter_del | expected BX
-        # 188 | 	header not found
-        # 187 | 	BX 1
-        # 150 | 	BX 38
-        # 100 | 	BX 88
-        # 50  | 	BX 138
-        # 38  | 	BX 150 
-        # 37  |     header not found

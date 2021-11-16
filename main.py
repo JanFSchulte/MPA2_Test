@@ -37,6 +37,7 @@ from ssa_methods.ssa_test_seu import *
 from mpa_methods.mpa import *
 from mpa_methods.mpa_cal_utility import *
 from mpa_methods.mpa_test_utility import *
+from mpa_methods.mpa_data_chain import *
 from mpa_methods.mpa_bias_utility import *
 from mpa_methods.mpa_scanchain_test import *
 
@@ -113,6 +114,7 @@ class MPAwp:
         self.chip          = MPA_ASIC(self.i2c, FC7, self.pwr, self.peri_reg_map, self.row_reg_map, self.pixel_reg_map)
         self.cal           = mpa_cal_utility(self.chip, self.i2c, FC7)
         self.test          = mpa_test_utility(self.chip, self.i2c, FC7)
+        self.dc            = MPATestDataChain(self.chip, self.i2c, FC7)
 
         self.init          = self.chip.init
         self.inject        = self.chip.inject

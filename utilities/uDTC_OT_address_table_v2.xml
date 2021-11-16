@@ -124,6 +124,19 @@
                 <node id ="format_7_0"              address="0x014"/>
                 <node id ="format_7_1"              address="0x015"/>
             </node>
+            <!--Manually added-->
+            <node id="ssa_gen"            description="control for trigger data  to inject into MPA" address="0x004">
+                <node id ="trig_data_delay"                 mask="0x00001f00"/>
+                <node id ="stub_data_delay"                 mask="0x001f0000"/>
+                <node id ="l1_data"                         mask="0x01000000"/>
+            </node>
+            <node id="l1_data"            description="For testing of the single MPA chip. Registers to change the data content of the L1 data send by the SSA data generator on arrival of l1 trigger. Channel data 119 until 96, so 8 MSBs are not used in this register">
+                <node id ="format_0"                address="0x016"/>
+                <node id ="format_1"                address="0x017"/>
+                <node id ="format_2"                address="0x018"/>
+                <node id ="format_3"                address="0x019"/>
+            </node>
+            <!--Manually added-->
             <node id="ps_counters_raw_en"               address="0x000" mask="0x00000001" description="enabling outputing raw counters data instead of already parsed"/>
             <node id="cic"				address="0x000" >
                 <node id="2s_sparsified_enable"		        mask="0x00000002"/>
