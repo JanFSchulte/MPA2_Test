@@ -26,17 +26,27 @@ class MPA_scanchain_test():
     def launch_all_scanchain_all_vectors(self,
         file_scan    = "mpa_methods/Configuration/vectors_scan.txt",
         file_reset   = "mpa_methods/Configuration/vectors_capture.txt",
-        file_capture = "mpa_methods/Configuration/vectors_capture.txt"):
+        file_capture = "mpa_methods/Configuration/vectors_capture.txt",
+        chip_N = False, 
+        scan = False):
+        print_log = 1
+
+        
 
         time_init = time.time()
-        utils.set_log_files("scanchain.log", "scanchain_error.log")
+        if not chip_N and not scan:
+            utils.set_log_files("logs/scanchain.log", "logs/scanchain_error.log")
+        elif chip_N: 
+            utils.set_log_files(f"../MPA2_Results/scanchain/Chip_{chip_N}.log", f"../MPA2_Results/scanchain/Chip_{chip_N}_error.log")
+        elif scan:
+            print_log = 0
         rt1 = self.launch_scan_test_all_vectors(filename=file_scan, nvectors=1)
         rt2 = self.launch_reset_all_vectors(filename=file_reset)
-        rt3 = self.launch_capture_all_vectors(filename=file_capture, nvectors=634)
+        rt3 = self.launch_capture_all_vectors(filename=file_capture, nvectors=634, print_log = print_log)
         tend = time.time()
         utils.print_info(f"{len(rt3)} Miscomparisons for vectors: {rt3}")
         utils.print_info(f"Time elapsed> {tend-time_init}")
-        return rt1, rt2, rt3
+        return rt3
 
     def read_scan_out_vector(self, lenght=710):
         data = self.fc7.blockRead("fc7_daq_stat.scanchain_block.test_response", lenght, 0)
@@ -47,7 +57,7 @@ class MPA_scanchain_test():
         rpvect = np.array(rep, dtype=int)
         return rpvect
 
-    def scanchain_test(self, input_vector, expected_response, input_mask, mode='capture', reset_fw=False, reset_chip=False):
+    def scanchain_test(self, input_vector, expected_response, input_mask, mode='capture', reset_fw=False, reset_chip=False, print_log = False):
         if(reset_fw):
             self.fc7.reset(); time.sleep(0.1)
             self.fc7.activate_I2C_chip(verbose=0)
@@ -83,7 +93,7 @@ class MPA_scanchain_test():
             self.fc7.write("fc7_daq_cnfg.scanchain_block.general.continue_reset",1)
             time.sleep(0.1)
 
-        time.sleep(1);
+        time.sleep(0.01);
 
         scanchain_test_done               = self.fc7.read("fc7_daq_stat.scanchain_block.test_done")
         scanchain_comparator              = self.fc7.read("fc7_daq_stat.scanchain_block.comparator_out")
@@ -96,11 +106,12 @@ class MPA_scanchain_test():
         if(not scanchain_test_done): ptype='info'
         elif(scanchain_comparator or scanchain_comparator_negedge or scanchain_comparator_negedge_next): ptype='good'
         else: ptype='error'
-        utils.print( 'test_done            = {:3d}'.format(scanchain_test_done               ), ptype)
-        utils.print( 'comparator           = {:3d}'.format(scanchain_comparator              ), ptype)
-        utils.print( 'comparator_neg_pre   = {:3d}'.format(scanchain_comparator_negedge      ), ptype)
-        utils.print( 'comparator_neg_next  = {:3d}'.format(scanchain_comparator_negedge_next ), ptype)
-        utils.print( 'miscompares          = {:3d}'.format(scanchain_comparator_miscompares  ), ptype)
+        if print_log or ptype=='error':
+            utils.print( 'test_done            = {:3d}'.format(scanchain_test_done               ), ptype)
+            utils.print( 'comparator           = {:3d}'.format(scanchain_comparator              ), ptype)
+            utils.print( 'comparator_neg_pre   = {:3d}'.format(scanchain_comparator_negedge      ), ptype)
+            utils.print( 'comparator_neg_next  = {:3d}'.format(scanchain_comparator_negedge_next ), ptype)
+            utils.print( 'miscompares          = {:3d}'.format(scanchain_comparator_miscompares  ), ptype)
         scan_out = self.read_scan_out_vector()
         scan_out = int("".join(str(i) for i in scan_out),2)
         mismatch = (scan_out ^ int(expected_response,2)) & int(input_mask,2)
@@ -117,7 +128,7 @@ class MPA_scanchain_test():
         #print(array)
         return array
 
-    def launch_capture_all_vectors(self, nvectors=633, filename = "mpa_methods/Configuration/vectors_capture.txt", start_from=0):
+    def launch_capture_all_vectors(self, nvectors=633, filename = "mpa_methods/Configuration/vectors_capture.txt", start_from=0, print_log = False):
         utils.print_info("->  Running Scanchain Capture Test")
         self.fc7.reset(); time.sleep(0.1)
         self.fc7.activate_I2C_chip(verbose=0)
@@ -144,8 +155,8 @@ class MPA_scanchain_test():
             if "response" in lines[shift]:
                 l = ''.join(lines[shift:shift+23]).replace('\n', '')
                 test_response = ''.join(l.split(' ')[3:])
-            utils.print_info('---------')
-            utils.print_info(f'Vector No. {vector_no}')
+            #utils.print_info('---------')
+            utils.print_info(f'Capture Vector No. {vector_no}')
             mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
                 mode='capture', reset_fw=False, reset_chip=False,
                 input_vector=test_vector, expected_response=test_response, input_mask=test_mask)
@@ -155,20 +166,18 @@ class MPA_scanchain_test():
                     input_vector=test_vector, expected_response=test_response, input_mask=test_mask)
             if(not test_done) or (not test_result and test_done):
                 ptype = "error"
+                mismatches.append(vector_no)
             else:
                 ptype = "good"
-            if ptype == "error":
+            if ptype == "error" and print_log:
                 utils.print(f"vector {vector_no} {test_vector}", ptype)
                 utils.print(f"scan out {bin(scan_out)}", ptype)
                 utils.print(f"mask {test_mask}", ptype)
                 utils.print(f"expected response {test_response}", ptype)
                 utils.print_error(f"mismatch {bin(mismatch)}")
-                mismatches.append(vector_no)    
-            utils.print_info('---------')
             utils.print_info('\n')
         return mismatches
         #return rt
-
 
     def launch_reset_all_vectors(self, filename = "mpa_methods/Configuration/vectors_capture.txt", start_from=0):
         utils.print_info("->  Running Scanchain Reset Test")
@@ -197,8 +206,8 @@ class MPA_scanchain_test():
             mismatch, scan_out, test_done, miscompares, test_result= self.scanchain_test(
                 mode='reset', reset_fw=True, reset_chip=False,
                 input_vector=test_vector, expected_response=test_response, input_mask=test_mask)
-            utils.print_info(f'\nVector {test_vector}')
-            utils.print_info(f"scan out {bin(scan_out)}")
+            #utils.print_info(f'\nVector {test_vector}')
+            #utils.print_info(f"scan out {bin(scan_out)}")
         return test_vector, test_mask, test_response
 
     def launch_scan_test_all_vectors(self, nvectors=1, filename = "mpa_methods/Configuration/vectors_scan.txt", start_from=0, repeat=1):
@@ -216,6 +225,30 @@ class MPA_scanchain_test():
             print(bin(mismatch))
             print('---------')
         return bin(scan_out)
+
+    def launch_scanchain_dvdd_scan(self, n_samples = 10, dvdd_scan = np.linspace(0.65, 0.55, 10), verbose =1):
+        "Voltage scan along pvdd and dvdd to generate shmoo plot for l1_delay integrity."
+        utils.set_log_files("logs/scanchain_dvdd.log","logs/scanchain_dvdd_error.log")
+        res = np.zeros(len(dvdd_scan))
+        self.mpa.pwr.on()
+        self.mpa.init(display = 0)
+        self.fc7.reset()
+        time.sleep(0.01)
+        for y, dvdd in np.ndenumerate(dvdd_scan):
+            utils.print_info(f"->  Scanchain Voltage Scan DVDD: {round(dvdd,4)}V")
+            self.mpa.pwr.set_dvdd(dvdd, chip = "MPA")
+            res[y] = len(self.launch_all_scanchain_all_vectors(scan=True))
+        self.mpa.pwr.set_dvdd(1)
+        utils.print_info(f"Result: {res}")
+        utils.close_log_files()
+        #for i in range(0, 16):
+        #    plt.plot(voltages, res[:,i], label = str(i))
+        #plt.title('BIST results')
+        #plt.xlabel('Voltage [mV]')
+        #plt.ylabel('Success rate')
+        #plt.legend()
+        #plt.show()
+        return res
 
     #############################################################################
 

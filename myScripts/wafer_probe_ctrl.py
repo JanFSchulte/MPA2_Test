@@ -34,7 +34,7 @@ class tmperrgpib:
 
 class AUTOPROBER():
 
-    def __init__(self, wafer, chip='MPA', mpa=False, dryRun = False, exclude = [], efuse = False):
+    def __init__(self, wafer, chip='MPA', mpa=False, dryRun = False, exclude = [], mode = "test"):
         self.wafer = wafer
         try:
             self.ProbeStation = Gpib.Gpib(1, 22)
@@ -50,7 +50,8 @@ class AUTOPROBER():
         self.chip = chip
         self.DieNumber = 0
         self.exclude = exclude
-        self.efuse = efuse
+        self.mode = mode
+        self.sc_res = np.zeros(187) # scanchain result
         try:
             os.mkdir(f"../MPA2_AutoProbe_results/Wafer_{self.wafer}")
         except:
@@ -90,6 +91,7 @@ class AUTOPROBER():
         self.DieC = 0
         self.KeepOnStepping = True
         self.BadChips = []
+        numpy.savetxt("../MPA2_Results/scanchain/summary.csv", self.sc_res, delimiter=",")
         # first pass at all chips
         while self.KeepOnStepping:
             ChipStatus = self.NEXT(nchips)
@@ -114,7 +116,7 @@ class AUTOPROBER():
 
     def NEWCHIPMSR(self, inf):
         if (self.chip == 'MPA'):
-            if self.efuse:  # Efuse Block#
+            if self.mode == "efuse":  # Efuse Block#
                 print(f"### Efuse write procedure: {inf}")
                 df = pd.read_csv('yield3.csv', sep=',')
                 row=df[df['chip'] == int(self.DieNumber)]
@@ -135,7 +137,15 @@ class AUTOPROBER():
                 mpa.chip.ctrl_base.fuse_write(lot=1, wafer_n=3, pos=int(self.DieNumber), process=0, adc_ref = int(adc_ref), status = status, pulse=1 , confirm=1)
                 self.mpa.pwr.set_supply(mode='off', display=False)
                 return True
-
+            elif self.mode == "scanchain":
+                print(f"### Scanchain mode")
+                self.mpa.pwr.set_supply(mode='on', display=False, d=1.0, a=1.2, p=1.2)
+                sc = self.mpa.scanchain.launch_all_scanchain_all_vectors(chip_N = self.DieNumber)
+                print(sc)
+                print(self.DieNumber)
+                self.sc_res[int(self.DieNumber)-1] = len(sc)
+                self.mpa.pwr.set_supply(mode='off', display=False)
+                return True
             else: # Standard functionality test block
                 PCM = MainTestsMPA(directory = f"../MPA2_AutoProbe_results/Wafer_{self.wafer}/", tag = self.DieNumber, chip = self.mpa)
                 if self.efuse:
@@ -222,6 +232,7 @@ class AUTOPROBER():
         self.ProbeStation.write("MoveChuckSeparation")
         print(f"coming out of contact: {self.read(100)}")
         return GoodNess
+        
 
 #if __name__ == '__main__': # TEST
 #    AutoProbe = AUTOPROBER("ChipN")
