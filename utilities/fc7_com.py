@@ -12,13 +12,14 @@ from scipy.interpolate import BSpline as interpspline
 from multiprocessing import Process
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
-from utilities.fc7_daq_methods import *
 ##from d19cScripts.MPA_SSA_BoardControl import *
 #from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from datetime import datetime
 from myScripts.Utilities import *
 from utilities.tbsettings import *
+from utilities.ErrorHandler import *
+fc7ErrorHandler = ErrorHandler()
 
 class I2C_MainSlaveMapItem:
     def __init__(self):
@@ -256,7 +257,7 @@ class fc7_com():
     def SendCommand_CTRL(self, p1):
         cnt = 0; ex = '';
         while cnt < 4:
-            try:
+            try:    
                 return SendCommand_CTRL(p1)
             except:
                 ex = sys.exc_info()
@@ -290,15 +291,15 @@ class fc7_com():
         # this peace of code just shifts the data, also checks if it fits the field
         # general
         """new addresstable"""
-        shifted_command_type = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.command_type").shiftDataToMask(8)
-        shifted_word_id_0 = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word_id").shiftDataToMask(0)
-        shifted_word_id_1 = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word_id").shiftDataToMask(1)
+        shifted_command_type = self.fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.command_type").shiftDataToMask(8)
+        shifted_word_id_0 = self.fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word_id").shiftDataToMask(0)
+        shifted_word_id_1 = self.fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word_id").shiftDataToMask(1)
         # command specific
-        shifted_slave_id = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_slave_id").shiftDataToMask(slave_id)
-        shifted_board_id = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_board_id").shiftDataToMask(board_id)
-        shifted_read = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_read").shiftDataToMask(read)
-        shifted_register_address = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_register").shiftDataToMask(register_address)
-        shifted_data = fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word1_data").shiftDataToMask(data)
+        shifted_slave_id = self.fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_slave_id").shiftDataToMask(slave_id)
+        shifted_board_id = self.fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_board_id").shiftDataToMask(board_id)
+        shifted_read = self.fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_read").shiftDataToMask(read)
+        shifted_register_address = self.fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word0_register").shiftDataToMask(register_address)
+        shifted_data = self.fc7AddrTable.getItem("fc7_daq_ctrl.command_processor_block.i2c.mpa_ssa_i2c_command.word1_data").shiftDataToMask(data)
         """
         shifted_command_type = fc7AddrTable.getItem("mpa_ssa_i2c_request_command_type").shiftDataToMask(8)
         shifted_word_id_0 = fc7AddrTable.getItem("mpa_ssa_i2c_request_word_id").shiftDataToMask(0)
@@ -371,6 +372,45 @@ class fc7_com():
             else:
                 if verbose: print("Successful write transaction")
 
+
+        # Send command ctrl
+    def SendCommand_CTRL(self, name = "none", profile=0):
+        if(profile): pr_start=time.time()
+        if name == "none":
+            print("Sending nothing")
+        elif name == "global_reset":
+            self.fc7_if.write("fc7_daq_ctrl.command_processor_block.global.reset", 1)
+            time.sleep(0.5)
+        elif name == "reset_trigger":
+            self.fc7_if.write("fc7_daq_ctrl.fast_command_block.control.reset", 1)
+        elif name == "start_trigger":
+            self.fc7_if.write("fc7_daq_ctrl.fast_command_block.control.start_trigger", 1)
+        elif name == "stop_trigger":
+            self.fc7_if.write("fc7_daq_ctrl.fast_command_block.control.stop_trigger", 1)
+        elif name == "load_trigger_config":
+            self.fc7_if.write("fc7_daq_ctrl.fast_command_block.control.load_config", 1)
+        elif name == "reset_i2c":
+            self.fc7_if.write("fc7_daq_ctrl.command_processor_block.i2c.control.reset", 1)
+        elif name == "reset_i2c_fifos":
+            self.fc7_if.write("fc7_daq_ctrl.command_processor_block.i2c.control.reset_fifos", 1)
+        elif name == "fast_orbit_reset":
+            self.fc7_if.write("fc7_daq_ctrl.fast_command_block.control.fast_orbit_reset", 1)
+        elif name == "fast_fast_reset":
+            self.fc7_if.write("fc7_daq_ctrl.fast_command_block.control.fast_reset", 1)
+        elif name == "fast_trigger":
+            self.fc7_if.write("fc7_daq_ctrl.fast_command_block.control.fast_trigger", 1)
+        elif name == "fast_test_pulse":
+            self.fc7_if.write("fc7_daq_ctrl.fast_command_block.control.fast_test_pulse", 1)
+        elif name == "fast_i2c_refresh":
+            self.fc7_if.write("fc7_daq_ctrl.fast_command_block.control.fast_i2c_refresh", 1)
+        elif name == "load_dio5_config":
+            self.fc7_if.write("fc7_daq_ctrl.dio5_block.control.load_config", 1)
+        elif name == "reset_readout":
+            self.fc7_if.write("fc7_daq_ctrl.readout_block.control.readout_reset", 1)
+        else:
+            print("Unknown Command" + str(name))
+        if(profile): print('->  self.fc7_if SendCommand_CTRL -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+        
     def SetMainSlaveMap(self, verbose = 1):
         self.i2c_slave_map = [I2C_MainSlaveMapItem() for i in range(31)]
         # define the map itself
@@ -390,7 +430,6 @@ class fc7_com():
             self.fc7_if.write("fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_" + str(slave_id) + "_config", self.EncodeMainSlaveMapItem(self.i2c_slave_map[slave_id]))
             if verbose:
                 print("Writing","fc7_daq_cnfg.command_processor_block.i2c_address_table.slave_" + str(slave_id) + "_config", hex(self.EncodeMainSlaveMapItem(self.i2c_slave_map[slave_id])))
-
     def SetSlaveMap(self, verbose = 1):
         # define the map itself
         self.i2c_slave_map = [I2C_SlaveMapItem() for i in range(31)]
@@ -731,12 +770,12 @@ class fc7_com():
     # encode slave map item:
     def EncodeSlaveMapItem(self, slave_item):
         # this peace of code just shifts the data, also checks if it fits the field
-        shifted_i2c_address = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
-        shifted_register_address_nbytes = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
-        shifted_data_wr_nbytes = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes)
-        shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
-        shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
-        shifted_nack_en = fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
+        shifted_i2c_address = self.fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
+        shifted_register_address_nbytes = self.fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes)
+        shifted_data_wr_nbytes = self.fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes)
+        shifted_data_rd_nbytes = self.fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes)
+        shifted_stop_for_rd_en = self.fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en)
+        shifted_nack_en = self.fc7AddrTable.getItem("cnfg_mpa_ssa_board_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en)
         final_command = shifted_i2c_address + shifted_register_address_nbytes + shifted_data_wr_nbytes + shifted_data_rd_nbytes + shifted_stop_for_rd_en + shifted_nack_en
         return final_command
     
@@ -750,11 +789,11 @@ class fc7_com():
         shifted_nack_en                = slave_item.nack_en<<0
         """
         # this peace of code just shifts the data, also checks if it fits the field
-        shifted_i2c_address = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
-        shifted_register_address_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes) #shift 10
-        shifted_data_wr_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes) #shift 5
-        shifted_data_rd_nbytes = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes) #shift 0
-        shifted_stop_for_rd_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en) #shift 24
-        shifted_nack_en = fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en) #shift 23
+        shifted_i2c_address = self.fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_i2c_address").shiftDataToMask(slave_item.i2c_address)
+        shifted_register_address_nbytes = self.fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_register_address_nbytes").shiftDataToMask(slave_item.register_address_nbytes) #shift 10
+        shifted_data_wr_nbytes = self.fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_wr_nbytes").shiftDataToMask(slave_item.data_wr_nbytes) #shift 5
+        shifted_data_rd_nbytes = self.fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_data_rd_nbytes").shiftDataToMask(slave_item.data_rd_nbytes) #shift 0
+        shifted_stop_for_rd_en = self.fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_stop_for_rd_en").shiftDataToMask(slave_item.stop_for_rd_en) #shift 24
+        shifted_nack_en = self.fc7AddrTable.getItem("cnfg_i2c_settings_map_slave_0_config_nack_en").shiftDataToMask(slave_item.nack_en) #shift 23
         final_command = shifted_i2c_address + shifted_register_address_nbytes + shifted_data_wr_nbytes + shifted_data_rd_nbytes + shifted_stop_for_rd_en + shifted_nack_en
         return final_command

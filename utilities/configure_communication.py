@@ -1,8 +1,8 @@
 from utilities.fc7_uhal import fc7_interface
-from utilities.fc7_daq_methods import *
+from PyChipsUser import AddressTable
+#from utilities.fc7_daq_methods import *
 #from d19cScripts.MPA_SSA_BoardControl import *
 from utilities.tbsettings import *
-import uhal 
 
 def configure_communication():
 	global ipaddr
@@ -10,7 +10,7 @@ def configure_communication():
 	global fc7
 
 	ipaddr = tbconfig.ETHERS[tbconfig.BOARD_SELECT]['IP']
-	fc7AddrTable = AddressTable("./utilities/fc7AddrTable.dat")
+	fc7AddrTable = AddressTable("./utilities/fc7AddrTable.dat") # not needed for fc7_interface. Kept anyway in case of addressing errors.
 	ipaddr = ipaddr.replace('\n', '')
 	ipaddr = ipaddr.replace('\t', '')
 	ipaddr = ipaddr.replace(' ' , '')
@@ -19,10 +19,9 @@ def configure_communication():
 	# TCP with ControlHub
 	fc7 = fc7_interface("fc7", "chtcp-2.0://localhost:10203?target="+ipaddr+":50001", "file://utilities/uDTC_OT_address_table_v2.xml") 
 
-
 	print('->  Board Selected MAC > {:s} IP > {:s}'.format(tbconfig.BOARD_SELECT, ipaddr))
 	
-	return ipaddr, fc7AddrTable, fc7
+	return ipaddr, fc7, fc7AddrTable
 
 #def SelectBoard(name):
 #	global ipaddr

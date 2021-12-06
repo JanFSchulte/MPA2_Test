@@ -30,13 +30,14 @@ class mpa_bias_utility():
         self.initialised = False
         self.nameDAC = ["A", "B", "C", "D", "E", "ThDAC", "CalDAC"]
         self.DAC_val = [15, 15, 15, 15, 15] # 0x0f, default DAC value for PVT adjustment, max 32
-        self.exp_val = [0.082, 0.082, 0.108, 0.082, 0.082] # 
+        self.exp_val = [0.082, 0.082, 0.108, 0.082, 0.082] #
         self.exp_VREF = 0.85
         self.cal_precision = 0.05
         self.measure_avg = 1
 
-        self.set_gpib_address(16)
-        self.__multimeter_gpib_initialise()
+        # for GPIB multimeters
+        #self.set_gpib_address(16)
+        #self.__multimeter_gpib_initialise()
 
     def set_gpib_address(self, address):
         self.gpib_address = address
@@ -75,7 +76,7 @@ class mpa_bias_utility():
             else: 		bit = 8
             measure_DAC_testblocks(i, bit, plot = 0,print_file = 1, filename = filename + "_" + chip);
 
-    
+
     def calculate_ADC_LSB(self, vref_exp):
         self.mpa.ctrl_base.set_peri_mask()
 
@@ -85,12 +86,12 @@ class mpa_bias_utility():
         offset = self.adc_measure()
         LSB = vref_exp/(4095 - offset)
         return LSB
-    
-    def calibrate_vref(self, vref_exp, lin_pts, plot = 0, verbose = 0):
-        """Calibrates 5-bit DAC in Monitoring Block to set ADCREF to vref_exp (typically 0.850V). 
-        Voltage range is usually between 0.750V to 0.950V. Calibration done by sweeping DAC input
-        output values and finding linear relation for the measured points.
 
+    def calibrate_vref(self, vref_exp, lin_pts, plot = 0, verbose = 0):
+        """Calibrates 5-bit DAC in Monitoring Block. Sets ADCREF to vref_exp (typically 0.850V). 
+        Voltage range is usually between 0.750V to 0.950V. Calibration done by sweeping DAC input
+        values and setting the input resulting in least difference to vref_exp.
+        
         Args:
             vref_exp (float): Target voltage for ADCREF, Range of 0.750V to 0.950V
             lin_pts (int): Number of measurement points to be collected. 1 to 32
@@ -99,7 +100,7 @@ class mpa_bias_utility():
 
         Returns:
             [list]: ret, vref_dac_new, vref_dac_vals
-        """        
+        """
         # init
         self.mpa.ctrl_base.disable_test()
         self.mpa.ctrl_base.set_peri_mask()
@@ -119,7 +120,7 @@ class mpa_bias_utility():
             vref_dac_vals[0:,index[0]] = (dac_val, vref_val)
             if verbose:
                 print(f"VREF DAC val {int(dac_val)} : {round(vref_val, 4)}V")
-        
+
         # linear regression, commented out because because not always the most accurate :/
         #slope = round(stats.linregress(vref_dac_vals)[0], 5) # return first value of linregress, which is the calculated slope
         # slope from two points
@@ -129,7 +130,7 @@ class mpa_bias_utility():
         #vref_dac_new = int(round((vref_exp - offset) / slope,0))
 
         # choose DAC value based on closest to expected value
-        diff = [(vref_exp - i)**2 for i in vref_dac_vals[1]] 
+        diff = [(vref_exp - i)**2 for i in vref_dac_vals[1]]
         index_min = np.argmin(diff)
         vref_dac_new = vref_dac_vals[0][index_min]
         if (vref_dac_new > 31): vref_dac_new = 31
@@ -160,7 +161,7 @@ class mpa_bias_utility():
 
         Returns:
             np.array: Array of all new DAC values
-        """        
+        """
         data = np.zeros((5, 7), dtype = np.int16)
         self.mpa.ctrl_base.disable_test()
         self.mpa.ctrl_base.set_peri_mask()
@@ -176,7 +177,7 @@ class mpa_bias_utility():
     def calibrate_bias(self, point, block, DAC_val, exp_val, gnd_corr):
         """Calibrates DAC bias values for a given test point. Calibration necessary to compensate for PVT variations local to that test point.
 
-        Estimates new DAC value between 0 to 32, starts at 15. 
+        Estimates new DAC value between 0 to 32, starts at 15.
         Fails if resulting voltage falls outside of given precision margin.
 
         Args:
@@ -188,12 +189,12 @@ class mpa_bias_utility():
 
         Returns:
             int: calibrated DAC_val
-        """        
+        """
         DAC = self.nameDAC[point] + str(block) # Careful to set string to correct DAC
         # enable a specific bias block and test point. add +1 as blocks are indexed 1-7 in register "ADC_TEST_Selection"
         self.select_block(block + 1, point, 1)
         # set adjustment of specific DAC to 0 initially
-        self.i2c.peri_write(DAC, 0) 
+        self.i2c.peri_write(DAC, 0)
         #time.sleep(0.1)
         off_val = self.multimeter.measure()
         #time.sleep(0.1)
@@ -212,18 +213,18 @@ class mpa_bias_utility():
         if (new_val - gnd_corr < exp_val + exp_val*self.cal_precision  )&(new_val - gnd_corr > exp_val - exp_val*self.cal_precision ):
             utils.print_good(f"Calibration bias point {point} of bias block {block} -> Done ({new_val} V for {DAC_new_val} DAC)")
         else:
-            utils.print_error(f"Calibration bias point {point} of bias block {block} -> Failed ({new_val} V for {DAC_new_val} DAC)")        
+            utils.print_error(f"Calibration bias point {point} of bias block {block} -> Failed ({new_val} V for {DAC_new_val} DAC)")
         return DAC_new_val
 
     def select_block(self, block, test_point = 0, sw_en = 0):
-        """Enables test point for given block for measurement by external multimeter. Done by i2c writing to "ADC_TEST_selection" multiplexing register. 
+        """Enables test point for given block for measurement by external multimeter. Done by i2c writing to "ADC_TEST_selection" multiplexing register.
         See MPA2 ADC/Bias Register Description for more detail.
 
         Args:
             block (int): Select block; [0] disable all,  [1-7] – Bias Blocks 0 to 6, [8] – BG, [9] – VDAC_REF, [10] - VREF, [11]- TEMP
             test_point (int): Select test point; [1-7] for DAC A-E.
             sw_en (int): [0] for ADC, [1] for external multimeter measurement
-        """        
+        """
 
         sw_enable = sw_en << 7
         block_selection = block
@@ -252,7 +253,7 @@ class mpa_bias_utility():
         self.mpa.ctrl_base.disable_test()
         data = np.zeros((7, ), dtype=np.float)
         for block in range(0,7):
-            self.select_block(block+1, 7, 1) # 7 to select GND 
+            self.select_block(block+1, 7, 1) # 7 to select GND
             data[block] = self.multimeter.measure()
         self.mpa.ctrl_base.disable_test()
         utils.print_info(f"Measured Avg GND:{np.mean(data)}")
@@ -261,7 +262,7 @@ class mpa_bias_utility():
     def measure_bg(self):
         time.sleep(1)
         self.mpa.ctrl_base.disable_test()
-        self.select_block(8, 7, 1) # 7 to select GND 
+        self.select_block(8, 7, 1) # 7 to select GND
         time.sleep(1)
         data = self.multimeter.measure()
         self.mpa.ctrl_base.disable_test()

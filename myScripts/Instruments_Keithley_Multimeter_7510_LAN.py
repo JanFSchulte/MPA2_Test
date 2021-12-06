@@ -4,7 +4,7 @@ import numpy as np
 
 class Instruments_Keithley_Multimeter_7510_LAN:
 
-	def __init__(self, name='Multimeter', IP='192.168.0.90', PORT=5025):
+	def __init__(self, name='Multimeter', IP='192.168.1.90', PORT=5025):
 		self.available = False
 		self.connect(IP, PORT, name)
 		self.nsamples = 10

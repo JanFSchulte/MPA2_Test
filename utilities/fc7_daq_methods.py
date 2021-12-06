@@ -12,13 +12,12 @@ import os
 from utilities.ErrorHandler import *
 import time
 import numpy as np
-from main import *
+from main import FC7
 
 # sometimes you may want to run the script from the sw directory
 isInD19CScripts = True
 if os.path.isdir("./d19cScripts"):
     isInD19CScripts = False
-
 
 if isInD19CScripts:
     fc7AddrTable = AddressTable("./utilities/fc7AddrTable.dat")
@@ -37,7 +36,8 @@ ipaddr = ipaddr.replace('\n', '')
 ipaddr = ipaddr.replace('\t', '')
 ipaddr = ipaddr.replace(' ' , '')
 f.close()
-FC7 = ChipsBusUdp(fc7AddrTable, ipaddr, 50001)
+# Old IPBus software
+#FC7 = ChipsBusUdp(fc7AddrTable, ipaddr, 50001)
 #############
 
 def SendCommand_I2C(command, hybrid_id, chip_id, page, read, register_address, data, ReadBack):
@@ -75,43 +75,7 @@ def SendCommand_I2C(command, hybrid_id, chip_id, page, read, register_address, d
 def DataFromMask(data, mask_name):
     return fc7AddrTable.getItem(mask_name).shiftDataFromMask(data)
 
-# Send command ctrl
-def SendCommand_CTRL(name = "none", profile=0):
-    if(profile): pr_start=time.time()
-    if name == "none":
-        print("Sending nothing")
-    elif name == "global_reset":
-        FC7.write("fc7_daq_ctrl.command_processor_block.global.reset", 1)
-        time.sleep(0.5)
-    elif name == "reset_trigger":
-        FC7.write("fc7_daq_ctrl.fast_command_block.control.reset", 1)
-    elif name == "start_trigger":
-        FC7.write("fc7_daq_ctrl.fast_command_block.control.start_trigger", 1)
-    elif name == "stop_trigger":
-        FC7.write("fc7_daq_ctrl.fast_command_block.control.stop_trigger", 1)
-    elif name == "load_trigger_config":
-        FC7.write("fc7_daq_ctrl.fast_command_block.control.load_config", 1)
-    elif name == "reset_i2c":
-        FC7.write("fc7_daq_ctrl.command_processor_block.i2c.control.reset", 1)
-    elif name == "reset_i2c_fifos":
-        FC7.write("fc7_daq_ctrl.command_processor_block.i2c.control.reset_fifos", 1)
-    elif name == "fast_orbit_reset":
-        FC7.write("fc7_daq_ctrl.fast_command_block.control.fast_orbit_reset", 1)
-    elif name == "fast_fast_reset":
-        FC7.write("fc7_daq_ctrl.fast_command_block.control.fast_reset", 1)
-    elif name == "fast_trigger":
-        FC7.write("fc7_daq_ctrl.fast_command_block.control.fast_trigger", 1)
-    elif name == "fast_test_pulse":
-        FC7.write("fc7_daq_ctrl.fast_command_block.control.fast_test_pulse", 1)
-    elif name == "fast_i2c_refresh":
-        FC7.write("fc7_daq_ctrl.fast_command_block.control.fast_i2c_refresh", 1)
-    elif name == "load_dio5_config":
-        FC7.write("fc7_daq_ctrl.dio5_block.control.load_config", 1)
-    elif name == "reset_readout":
-        FC7.write("fc7_daq_ctrl.readout_block.control.readout_reset", 1)
-    else:
-        print("Unknown Command" + str(name))
-    if(profile): print('->  FC7 SendCommand_CTRL -> {:0.3f}ms'.format(1000*(time.time()-pr_start)))
+
 
 # Data Readout
 def to_str(i):
@@ -229,9 +193,9 @@ def Configure_Fast(triggers_to_accept, user_frequency, source, stubs_mask, stubs
   FC7.write("cnfg_fast_stub_mask", stubs_mask)
   FC7.write("cnfg_fast_stub_trigger_delay", stubs_latency)
   #time.sleep(1)
-  SendCommand_CTRL("reset_trigger")
+  FC7.SendCommand_CTRL("reset_trigger")
   time.sleep(0.001)
-  SendCommand_CTRL("load_trigger_config")
+  FC7.SendCommand_CTRL("load_trigger_config")
   time.sleep(0.001)
 
 def Configure_TestPulse_MPA_SSA(delay_before_next_pulse, number_of_test_pulses):
@@ -288,7 +252,7 @@ def Configure_TestPulse_SSA(
     #FC7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", (enable_rst_L1 or enable_initial_reset))
     #### FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", delay_before_next_pulse)
     time.sleep(0.1)
-    SendCommand_CTRL("load_trigger_config")
+    FC7.SendCommand_CTRL("load_trigger_config")
     time.sleep(0.1)
 
 def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses):
@@ -299,7 +263,7 @@ def Configure_TestPulse(delay_after_fast_reset, delay_after_test_pulse, delay_be
   FC7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_test_pulses)
   FC7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 6)
   time.sleep(0.01)
-  SendCommand_CTRL("load_trigger_config")
+  FC7.SendCommand_CTRL("load_trigger_config")
   time.sleep(0.01)
 
 def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, delay_before_next_pulse, number_of_test_pulses, enable_rst, enable_init_rst, enable_L1):
@@ -314,7 +278,7 @@ def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, dela
   FC7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_test_pulses)
   FC7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 6)
   time.sleep(0.1)
-  SendCommand_CTRL("load_trigger_config")
+  FC7.SendCommand_CTRL("load_trigger_config")
   time.sleep(0.1)
 
 def Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses, initial_reset = 0):
@@ -325,14 +289,14 @@ def Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses, initial_re
   time.sleep(0.01); FC7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_cal_pulses)
   time.sleep(0.01); FC7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 9)
   time.sleep(0.1)
-  SendCommand_CTRL("load_trigger_config")
+  FC7.SendCommand_CTRL("load_trigger_config")
   time.sleep(0.1)
 
 # Configure I2C
 def Configure_I2C(mask):
   FC7.write("cnfg_command_i2c", fc7AddrTable.getItem("cnfg_command_i2c_mask").shiftDataToMask(mask))
-  SendCommand_CTRL("reset_i2c")
-  SendCommand_CTRL("reset_i2c_fifos")
+  FC7.SendCommand_CTRL("reset_i2c")
+  FC7.SendCommand_CTRL("reset_i2c_fifos")
 
 ###################################################################################################
 # CBC Related Methods                                         #
@@ -417,7 +381,7 @@ def Configure_DIO5(out_en, term_en, thresholds):
     FC7.write(("cnfg_dio5_ch"+str(i)+"_sel"), combined_config)
 
   time.sleep(0.5)
-  SendCommand_CTRL("load_dio5_config")
+  FC7.SendCommand_CTRL("load_dio5_config")
   time.sleep(0.5)
 
 

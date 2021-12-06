@@ -124,8 +124,8 @@
                 <node id ="format_7_0"              address="0x014"/>
                 <node id ="format_7_1"              address="0x015"/>
             </node>
-            <!--Manually added-->
-            <node id="ssa_gen"            description="control for trigger data  to inject into MPA" address="0x004">
+            <!--Manually added, Nov 2021-->
+            <node id="ssa_gen"            description="control for trigger data to inject into MPA" address="0x004">
                 <node id ="trig_data_delay"                 mask="0x00001f00"/>
                 <node id ="stub_data_delay"                 mask="0x001f0000"/>
                 <node id ="l1_data"                         mask="0x01000000"/>
@@ -135,6 +135,8 @@
                 <node id ="format_1"                address="0x017"/>
                 <node id ="format_2"                address="0x018"/>
                 <node id ="format_3"                address="0x019"/>
+                <node id ="HIP_data_format"         address="0x01a"/>
+                <node id ="SSA_BX_cnt_format"       address="0x01b"/>
             </node>
             <!--Manually added-->
             <node id="ps_counters_raw_en"               address="0x000" mask="0x00000001" description="enabling outputing raw counters data instead of already parsed"/>

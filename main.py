@@ -1,7 +1,11 @@
-#from utilities.tbconfig import *
-from utilities.tbsettings import *
 from utilities.configure_communication import *
 from utilities.fc7_com import *
+ipaddr, fc7_if, fc7AddrTable = configure_communication()
+FC7 = fc7_com(fc7_if, fc7AddrTable)
+#FC7.activate_I2C_chip(verbose=0)
+
+#from utilities.tbconfig import *
+from utilities.tbsettings import *
 from utilities.i2c_conf import *
 from utilities.power_utility import *
 from myScripts.BasicADC import *
@@ -44,10 +48,6 @@ from mpa_methods.mpa_scanchain_test import *
 # MPA2 Test procedures
 from mpa_methods.mpa_main_test import *
 
-
-ipaddr, fc7AddrTable, fc7_if = configure_communication()
-FC7 = fc7_com(fc7_if, fc7AddrTable)
-#FC7.activate_I2C_chip(verbose=0)
 
 class SSAwp:
     def __init__(self, index = 0, address = 0):
@@ -125,12 +125,13 @@ class MPAwp:
         self.scanchain = MPA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
 
         try:
-            multimeter = keithley_multimeter()
+            #multimeter = keithley_multimeter()
+            multimeter = Instruments_Keithley_Multimeter_7510_LAN()
             self.bias = mpa_bias_utility(self.chip, self.i2c, FC7, multimeter, self.peri_reg_map, self.row_reg_map, self.pixel_reg_map)
         except ImportError:
             self.bias = False
             print("- Impossible to access GPIB instruments")
-            
+
     def on():
         utils.activate_I2C_chip(FC7)
         time.sleep(0.1);  pwr.set_supply('on', display=False)

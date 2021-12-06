@@ -58,7 +58,6 @@ class mpa_test_utility():
 
     def digital_pixel_test(self, row = list(range(1,17)), pixel = list(range(1,121)), print_log = 1, filename =  "../cernbox/MPA_Results/digital_pixel_test.log"):
         """
-
         :param row:  (Default value = list(range(1)
         :param pixel:  (Default value = list(range(1)
         :param print_log:  (Default value = 1)
@@ -113,10 +112,8 @@ class mpa_test_utility():
 
     def test_pp_analog(self, row, pixel):
         """
-
         :param row:
         :param pixel:
-
         """
         self.mpa.ctrl_pix.enable_pix_EdgeBRcal(row, pixel)
         #time.sleep(0.001)
@@ -125,13 +122,11 @@ class mpa_test_utility():
 
     def analog_pixel_test(self, row = list(range(1,17)), pixel = list(range(2,120)), print_log = 1, filename =  "../cernbox/MPA_Results/analog_pixel_test.log0", verbose = 1):
         """
-
         :param row:  (Default value = list(range(1)
         :param pixel:  (Default value = list(range(2)
         :param print_log:  (Default value = 1)
         :param filename:  (Default value = "../cernbox/MPA_Results/analog_pixel_test.log0")
         :param verbose:  (Default value = 1)
-
         """
         t0 = time.time()
         OutputBadPix = []
