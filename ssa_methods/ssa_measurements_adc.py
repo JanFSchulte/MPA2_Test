@@ -91,7 +91,7 @@ class SSA_measurements_adc():
 			inlh[i] = inl
 			fo.write("{:8d}, {:9.6f}, {:9.6f}, {:9.6f}\n".format(i, dnl, inl, float(adchist[i])) )
 		fo.close()
-		plt.clf()
+		plt.clf() 
 		color=iter(sns.color_palette('deep'))
 		if(plot):
 			fig = plt.figure(figsize=(18,6))
@@ -148,10 +148,8 @@ class SSA_measurements_adc():
 		#adc_dnl_inl_histogram()
 
 	def noise_distribution(nsamples=1E3, directory='../SSA_Results/adc_measures/', filename='ADC_noise_samples.csv'):
-
 		res = int(np.round(self.ssa.analog.adc_measure_ext_pad(nsamples=1, reinit_if_error=False)))
 		utils.print_inline('{:8d}'.format(res) )
-
 		#f.close()
 
 	#####################################################################################################
@@ -355,7 +353,6 @@ class SSA_measurements_adc():
 			self.ssa.analog.adc_set_referenence(prevsetting)
 		setting, value = self.bias.get_value_and_voltage('ADC_VREF')
 		utils.print_info('->  VREF set to {:2d} [{:7.3f} mV]'.format(setting, value*1E3))
-		#
 		#
 		#self.ssa.analog.set_output_mux('highimpedence')
 		#self.ssa.analog.adc_measure_ext_pad(nsamples=1)

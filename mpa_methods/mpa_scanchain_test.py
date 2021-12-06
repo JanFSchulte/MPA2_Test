@@ -31,8 +31,6 @@ class MPA_scanchain_test():
         scan = False):
         print_log = 1
 
-        
-
         time_init = time.time()
         if not chip_N and not scan:
             utils.set_log_files("logs/scanchain.log", "logs/scanchain_error.log")
