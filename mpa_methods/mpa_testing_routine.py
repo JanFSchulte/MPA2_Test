@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 '''
 MPA2 Basic Testing Routine
 
-Collection of basic tests for functionality verification of MPA2 ASICS
+Test routine for functionality verification of MPA2 ASICS
 
 To run probe, e.g. for chip 187:
 

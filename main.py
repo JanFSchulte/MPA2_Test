@@ -44,9 +44,10 @@ from mpa_methods.mpa_test_utility import *
 from mpa_methods.mpa_data_chain import *
 from mpa_methods.mpa_bias_utility import *
 from mpa_methods.mpa_scanchain_test import *
+from mpa_methods.mpa_measurements import MPAMeasurements
 
 # MPA2 Test procedures
-from mpa_methods.mpa_main_test import *
+from mpa_methods.mpa_testing_routine import *
 
 
 class SSAwp:
@@ -113,11 +114,17 @@ class MPAwp:
         self.pwr           = PowerUtility(self.i2c, FC7, index)
         self.chip          = MPA_ASIC(self.i2c, FC7, self.pwr, self.peri_reg_map, self.row_reg_map, self.pixel_reg_map)
         self.cal           = mpa_cal_utility(self.chip, self.i2c, FC7)
+        
+        # base functionality tests
         self.test          = mpa_test_utility(self.chip, self.i2c, FC7)
+        
+        # additional characterizations
         self.dc            = MPATestDataChain(self.chip, self.i2c, FC7)
 
         self.init          = self.chip.init
         self.inject        = self.chip.inject
+
+        # faster access to readout methods
         self.read_regs     = self.chip.rdo.read_regs
         self.read_L1       = self.chip.rdo.read_L1
         self.read_Stubs    = self.chip.rdo.read_stubs
@@ -131,6 +138,8 @@ class MPAwp:
         except ImportError:
             self.bias = False
             print("- Impossible to access GPIB instruments")
+            
+        self.measure       = MPAMeasurements(self.chip, self.i2c, FC7, self.bias)
 
     def on():
         utils.activate_I2C_chip(FC7)

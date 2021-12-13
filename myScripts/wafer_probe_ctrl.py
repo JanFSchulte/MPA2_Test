@@ -7,7 +7,7 @@ from numpy.core.overrides import verify_matching_signatures
 import pandas as pd
 import numpy as np
 import time
-from mpa_methods.mpa_main_test import *
+from mpa_methods.mpa_testing_routine import *
 from ssa_methods.main_ssa_test_2 import *
 
 '''

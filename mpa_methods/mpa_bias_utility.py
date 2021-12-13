@@ -237,6 +237,7 @@ class mpa_bias_utility():
     def adc_measure(self, nsamples=1):
         r1 = []
         for i in range(nsamples):
+            self.mpa.ctrl_base.set_peri_mask(0b11100000)
             self.i2c.peri_write( "ADCcontrol", 0b11100000 )
             self.i2c.peri_write( "ADCcontrol", 0b11000000 )
             time.sleep(0.001)

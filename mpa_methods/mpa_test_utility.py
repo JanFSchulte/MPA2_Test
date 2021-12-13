@@ -955,3 +955,33 @@ class mpa_test_utility():
         #plt.show()
         return res, bist_rows
     
+    def time_walk(self, row, pixel, cal = list(range(15,255,10)), th = 100):
+        #self.fc7.reset()
+        self.fc7.activate_I2C_chip()
+        time.sleep(0.1)
+        self.i2c.peri_write('Mask', 0b11111111)
+        self.i2c.row_write('Mask', 0, 0b11111111)
+        self.mpa.ctrl_base.activate_sync()
+        self.mpa.ctrl_base.activate_pp()
+        cal = np.array(cal)
+        delay = np.array(np.arange(1,8))
+        res = np.zeros((cal.size, delay.size))
+
+        self.mpa.ctrl_base.set_threshold(100)
+        for c_idx, c in enumerate(cal):
+            # Shift DLL
+            print(f"set calib {c}")
+            self.mpa.ctrl_base.set_calibration(c)
+            self.mpa.ctrl_pix.disable_pixel(0,0)
+            
+            for d_idx, d in enumerate(delay):
+                self.mpa.ctrl_base.set_phase_shift(d)
+                #self.mpa.ctrl_base.set_dll_delay(d)
+                nst, pos, Z, bend = self.test_pp_analog(row, pixel)
+                tmp = np.where(pos == pixel*2)
+                if tmp[0].size == 0:
+                    res[c_idx, d_idx] = 0
+                else:
+                    res[c_idx, d_idx] = tmp[0][0]
+        return res
+        

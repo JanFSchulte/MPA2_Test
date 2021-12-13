@@ -7,7 +7,7 @@ from myScripts.Utilities import *
 from mpa_methods.mpa_ctrl_base import *
 from mpa_methods.mpa_ctrl_pix import *
 from mpa_methods.mpa_inject_utility import *
-from mpa_methods.mpa_readout import *
+from mpa_methods.mpa_readout import MPAReadout
 
 import time
 
@@ -19,7 +19,7 @@ class MPA_ASIC:
         self.ctrl_base  = mpa_ctrl_base(self.i2c, self.fc7, pwr, mpa_peri_reg_map, mpa_row_reg_map, mpa_pixel_reg_map)
         self.ctrl_pix   = mpa_ctrl_pix(self.i2c, self.fc7, pwr, mpa_peri_reg_map, mpa_row_reg_map, mpa_pixel_reg_map)
         self.inject  	= mpa_inject(self.i2c, self.fc7, self.ctrl_base, self.ctrl_pix)
-        self.rdo        = MPA_readout(self.i2c, self.fc7, self.ctrl_base, self.ctrl_pix)
+        self.rdo        = MPAReadout(self.i2c, self.fc7, self.ctrl_base, self.ctrl_pix)
         
     def reset(self, display=True):
         self.ctrl_base.reset(display = display)

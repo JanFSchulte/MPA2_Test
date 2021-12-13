@@ -20,7 +20,7 @@ lateral_data = fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
 fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
 '''
 
-class MPA_readout():
+class MPAReadout():
 
     def __init__(self, I2C, FC7, ctrl ,ctrl_pix):
         self.ctrl = ctrl

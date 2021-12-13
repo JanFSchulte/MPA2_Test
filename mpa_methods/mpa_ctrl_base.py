@@ -135,6 +135,15 @@ class mpa_ctrl_base:
         nameDAC = ["A", "B", "C", "D", "E", "F"]
         DAC = nameDAC[point] + str(block)
         self.I2C.peri_write(DAC, value)
+    def set_vref(self, set_vref_dac):
+        self.disable_test()
+        self.set_peri_mask()
+        self.I2C.peri_write("ADCtrimming", 0b01000000)
+        self.set_peri_mask(0b00011111) # Bit 7 "trim_sel" to 1 selects I2C ctrl of VREF DAC
+        self.I2C.peri_write("ADCcontrol", set_vref_dac)
+        self.set_peri_mask()
+        rd = bin(self.I2C.peri_read("ADCcontrol"))
+        utils.print_info(f"-> VREF DAC set to {rd}")
     # Threshold and Calibration control
     def set_calibration(self, cal):
         self.I2C.peri_write('CalDAC0',cal)
@@ -209,6 +218,24 @@ class mpa_ctrl_base:
                 state = False
         return state;
 
+    def set_phase_shift(self, shift):
+        if shift > 7:
+            utils.print_error(" -> Value for phase shift control is outside of range [0-7]!") 
+            return False
+        self.I2C.peri_write("Mask", 0b1110000)
+        self.I2C.peri_write("Control", shift << 4)
+        self.I2C.peri_write("Mask", 0b1111111) 
+        return True
+
+    def set_dll_delay(self, delay):
+        if delay > 15:
+            utils.print_error(" -> Value for DLL delay is outside of range [1-15]!") 
+            return False
+        self.I2C.peri_write("Mask", 0b00001111)
+        self.I2C.peri_write("ConfDLL", 0b00110001 | delay)
+        self.I2C.peri_write("Mask", 0b11111111) 
+        return True
+
     def fuse_write(self, lot, wafer_n, pos, process, adc_ref, status, pulse = 0, confirm = 0):
         self.pwr.efusepoweron()
         self.fc7.activate_I2C_chip(verbose=0)
@@ -268,7 +295,6 @@ class mpa_ctrl_base:
             utils.print_error(f"\tWriting bits - Lot N: {lot} ; Wafer N: {wafer_n} ; Position: {pos} ; Status: {status} ; Process bin: {process} ; ADC reference: {adc_ref}")
             utils.print_error(f"\tReading bits - Lot N: {r_lot} ; Wafer N: {r_wafer} ; Position: {r_pos} ; Status: {r_status} ; Process bin: {r_process} ; ADC reference: {r_adc}")
             return False
-        
 
     def read_fuses(self, format = 1, verbose = 0):
         self.I2C.peri_write('EfuseMode', 0b00000000)
