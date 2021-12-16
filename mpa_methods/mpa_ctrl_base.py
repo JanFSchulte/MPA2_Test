@@ -172,16 +172,16 @@ class mpa_ctrl_base:
         else:
             print("Error! The edge name is wrong")
 # Output Pad mapping
-    def set_out_mapping(self, map = [1, 2, 3, 4, 5, 0]):
-        self.I2C.peri_write('OutSetting_1_0', 0b010001);time.sleep(0.1)
-        self.I2C.peri_write('OutSetting_3_2', 0b100011);time.sleep(0.1)
-        self.I2C.peri_write('OutSetting_5_4', 0b000101);time.sleep(0.1)
+    def set_out_mapping(self):
+        self.I2C.peri_write('OutSetting_1_0', 0b010001); time.sleep(0.1)
+        self.I2C.peri_write('OutSetting_3_2', 0b100011); time.sleep(0.1)
+        self.I2C.peri_write('OutSetting_5_4', 0b000101); time.sleep(0.1)
 
 # Output Pad mapping
-    def set_out_mapping_probing(self, map = [1, 2, 3, 4, 5, 0]):
-        self.I2C.peri_write('OutSetting_1_0', 0b001000);time.sleep(0.1)
-        self.I2C.peri_write('OutSetting_3_2', 0b011010);time.sleep(0.1)
-        self.I2C.peri_write('OutSetting_5_4', 0b101100);time.sleep(0.1)
+    def set_out_mapping_probing(self):
+        self.I2C.peri_write('OutSetting_1_0', 0b001000); time.sleep(0.1)
+        self.I2C.peri_write('OutSetting_3_2', 0b011010); time.sleep(0.1)
+        self.I2C.peri_write('OutSetting_5_4', 0b101100); time.sleep(0.1)
 
 # Output alignment procedure
     def align_out(self, verbose = 1):

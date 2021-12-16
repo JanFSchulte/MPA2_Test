@@ -40,7 +40,7 @@ class Instruments_Keithley_Sourcemeter_2410_GPIB():
 			time.sleep(0.1); self.__write("*IDN?")
 			time.sleep(0.1); self.name = self.inst.read(100)
 			print("    Return device name: " + str(self.name))
-			self.config__voltage_measure()
+			### self.config__voltage_measure()
 		except:
 			print('->  Impossible to establish the connection with Sourcemeter via GPIB on address {:d}'.format(address))
 			self.inst = False
@@ -53,6 +53,7 @@ class Instruments_Keithley_Sourcemeter_2410_GPIB():
 	############## VOLTAGE SOURCE - CURRENT MEASURE ######################################
 
 	def config__voltage_source(self, compliance=10E-3, range=2):
+		# Also turns on output!
 		if(not self.inst): return False
 		self.__write('*RST')
 		self.__write(':SOUR:FUNC VOLT')

@@ -45,6 +45,7 @@ from mpa_methods.mpa_data_chain import *
 from mpa_methods.mpa_bias_utility import *
 from mpa_methods.mpa_scanchain_test import *
 from mpa_methods.mpa_measurements import MPAMeasurements
+from mpa_methods.mpa_fast_injection_test import MPAFastInjectionMeasurement
 
 # MPA2 Test procedures
 from mpa_methods.mpa_testing_routine import *
@@ -99,8 +100,6 @@ class SSAwp:
     def disable(self): FC7.disable_chip(self.index)
     def reset(self, display=True): self.chip.reset(display=display)
 
-
-
 class MPAwp:
     def __init__(self, index = "MPA", address = 0):
         ##FC7.set_chip_id(index, address)
@@ -117,10 +116,7 @@ class MPAwp:
         
         # base functionality tests
         self.test          = mpa_test_utility(self.chip, self.i2c, FC7)
-        
-        # additional characterizations
-        self.dc            = MPATestDataChain(self.chip, self.i2c, FC7)
-
+    
         self.init          = self.chip.init
         self.inject        = self.chip.inject
 
@@ -138,8 +134,13 @@ class MPAwp:
         except ImportError:
             self.bias = False
             print("- Impossible to access GPIB instruments")
-            
-        self.measure       = MPAMeasurements(self.chip, self.i2c, FC7, self.bias)
+        
+        # additional characterizations
+        self.dc            = MPATestDataChain(self.chip, self.i2c, FC7)
+        self.measure       = MPAMeasurements(self.chip, self.bias)
+
+        # radiation testing
+        self.fastinj       = MPAFastInjectionMeasurement(self.chip, self.bias, self.test, "../MPA2_RadiationResults/.")
 
     def on():
         utils.activate_I2C_chip(FC7)

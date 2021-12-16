@@ -16,10 +16,8 @@ import matplotlib.pyplot as plt
 
 class MPAMeasurements():
     """ ADC characterizations, additional FE measurements (time walk), power measurements..."""
-    def __init__(self, mpa, I2C, fc7, bias):
+    def __init__(self, mpa, bias):
         self.mpa = mpa
-        self.i2c = I2C
-        self.fc7 = fc7
         self.bias = bias
         try:
             self.sourcemeter = Instruments_Keithley_Sourcemeter_2410_GPIB()
@@ -87,7 +85,7 @@ class MPAMeasurements():
 
     def adc_linearity(self, pts = 100, init=1):
         if init:
-            self.fc7.activate_I2C_chip()
+            self.mpa.fc7.activate_I2C_chip()
             self.sourcemeter.config__voltage_source()
             self.sourcemeter.output_enable()
             self.bias.select_block(1,0,1)
@@ -100,13 +98,13 @@ class MPAMeasurements():
                 codes[idx] = self.bias.adc_measure()
             except Exception as inst:
                 utils.print_error("Ext Pad measurement failed! Retrying")
-                self.fc7.activate_I2C_chip()
+                self.mpa.fc7.activate_I2C_chip()
                 self.sourcemeter.set_voltage(ref)
                 codes[idx] = self.bias.adc_measure()
         return codes
 
     def adc_vs_vref(self, pts = 100):
-        self.fc7.activate_I2C_chip()
+        self.mpa.fc7.activate_I2C_chip()
         self.sourcemeter.config__voltage_source()
         self.sourcemeter.output_enable()
         self.bias.select_block(1,0,1)
@@ -119,12 +117,12 @@ class MPAMeasurements():
         np.save(f"../MPA2_Results/adc_vs_vref_{pts}pts2.npy", res)
 
     def adc_vs_block(self, pts = 100):
-        self.fc7.activate_I2C_chip()
+        self.mpa.fc7.activate_I2C_chip()
         self.sourcemeter.config__voltage_source()
         self.sourcemeter.output_enable()
         self.mpa.ctrl_base.set_vref(11)
-        res = np.zeros((10, pts))
-        for block in range(0,10):
+        res = np.zeros((11, pts))
+        for block in range(0,11):
             self.bias.select_block(block,0,1)
             utils.print_info(f"-> Measuring ADC points for test block {block}")
             res[block] = self.adc_linearity(pts, init = 0)

@@ -269,19 +269,31 @@ class mpa_test_utility():
         self.mpa.ctrl_base.activate_ss()
         data_array = np.zeros((8, 8 ), dtype = np.float16 )
         if probe:
-            self.i2c.peri_write("InSetting_0",0)
-            self.i2c.peri_write("InSetting_1",1)
-            self.i2c.peri_write("InSetting_2",2)
-            self.i2c.peri_write("InSetting_3",3)
-            self.i2c.peri_write("InSetting_4",4)
-            self.i2c.peri_write("InSetting_5",5)
-            self.i2c.peri_write("InSetting_6",6)
-            self.i2c.peri_write("InSetting_7",7)
-            self.i2c.peri_write("InSetting_8",8)
+            #  Working for carrier board
+            self.i2c.peri_write("InSetting_1_0", 0b00011000)
+            self.i2c.peri_write("InSetting_3_2", 0b00110010)
+            self.i2c.peri_write("InSetting_5_4", 0b01010100)
+            self.i2c.peri_write("InSetting_7_6", 0b01110110)
+            self.i2c.peri_write("InSetting_8", 0b00000000)
+            
+            #self.i2c.peri_write("InSetting_1_0", 0b00001000)
+            #self.i2c.peri_write("InSetting_3_2", 0b00100001)
+            #self.i2c.peri_write("InSetting_5_4", 0b01000011)
+            #self.i2c.peri_write("InSetting_7_6", 0b01100101)
+            #self.i2c.peri_write("InSetting_8",   0b00000111)
+        #else: 
+            # Default
+            #self.i2c.peri_write("InSetting_1_0", 0b00010000)
+            #self.i2c.peri_write("InSetting_3_2", 0b00110010)
+            #self.i2c.peri_write("InSetting_5_4", 0b01010100)
+            #self.i2c.peri_write("InSetting_7_6", 0b01110110)
+            #self.i2c.peri_write("InSetting_8", 0b00001000)
+
+            
         time.sleep(0.1)
 
         for i in range(0,8):
-            latency = (i  << 3)
+            latency = (i  << 3) | i
             if verbose: utils.print_info("->  Testing Latency ", i)
             if (edge == "falling" ): temp = self.strip_in_test(n_pulse = n_pulse, latency = latency , edge = 0)
             elif (edge == "rising" ): temp = self.strip_in_test(n_pulse = n_pulse, latency = latency , edge = 255)

@@ -138,6 +138,18 @@
                 <node id ="HIP_data_format"         address="0x01a"/>
                 <node id ="SSA_BX_cnt_format"       address="0x01b"/>
             </node>
+            <node id="seu"            description="SEU check pattens">
+                <node id ="check_patterns1"         address="0x01c"/>
+                <node id ="check_patterns2"         address="0x01d"/>
+                <node id ="check_patterns3"         address="0x01e"/>
+                <node id ="l1_check_patterns1"         address="0x01f"/>
+                <node id ="l1_check_patterns2"         address="0x020"/>
+                <node id ="l1_check_patterns3"         address="0x021"/>
+                <node id ="l1_check_patterns4"         address="0x022"/>
+                <node id ="l1_check_patterns5"         address="0x023"/>
+                <node id ="l1_check_patterns6"         address="0x024"/>
+                <node id ="l1_check_patterns7"         address="0x025"/>
+            </node>
             <!--Manually added-->
             <node id="ps_counters_raw_en"               address="0x000" mask="0x00000001" description="enabling outputing raw counters data instead of already parsed"/>
             <node id="cic"				address="0x000" >
@@ -581,6 +593,23 @@
             <node id="bitslip_done_cbc1"        address="0x002" mask="0x00000040"/>
             <node id="state_tuning_cbc0"        address="0x002" mask="0x00F00000"/>
             <node id="state_tuning_cbc1"        address="0x002" mask="0x0F000000"/>
+            <node id="slvs_compare"             address="0x003">
+                <node id="data_ready"                           mask="0x00000001"/>
+                <node id="state_machine"                        mask="0x0000001E"/>
+                <node id="fifo_almost_full"                     mask="0x00000020"/>
+                <node id="bx_indicator"                         mask="0x00000040"/>
+                <node id="fifo_empty"                           mask="0x00000080"/>
+                <node id="numbere_events_written_to_fifo"       mask="0x003fff00"/>
+            </node>
+            <node id="slvs_compare_number_good_data"             address="0x004"/>
+            <node id="l1_slvs_compare"             address="0x005">
+                <node id="data_ready"                           mask="0x00000001"/>
+                <node id="state_machine"                        mask="0x0000001E"/>
+                <node id="fifo_almost_full"                     mask="0x00000020"/>
+                <node id="bx_indicator"                         mask="0x00000040"/>
+                <node id="fifo_empty"                           mask="0x00000080"/>
+                <node id="numbere_events_written_to_fifo"       mask="0x003fff00"/>
+            </node>
             <node id="cic_decoder"              address="0x00C">
                 <node id="bx0_alignment_state"                  mask="0x0000000f"/>
             </node>

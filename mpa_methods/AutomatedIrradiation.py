@@ -6,7 +6,7 @@ import os
 import random
 import time
 import mpa_methods.RadiationTest as RT
-import mpa_methods.FastInjectionTest as FIT
+import mpa_methods.mpa_fast_injection_test as FIT
 #execfile('mpa_methods/AutomatedIrradiation.py')
 
 #class ChipMeasurement:
