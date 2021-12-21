@@ -37,8 +37,8 @@ class TID_control:
         self.NEWCHIPMSR(info)
     def colprint(self, text):
         sys.stdout.write("\033[1;34m")
-    	print((str(text)))
-    	sys.stdout.write("\033[0;0m")
+        print((str(text)))
+        sys.stdout.write("\033[0;0m")
 
     def MSR_ALL(self, TargetTID = 500, DoseRate = 1.0): # TID in MRAD and DoseRate in MRad/Hour
         self.TID = str(0)
@@ -49,7 +49,7 @@ class TID_control:
         while self.KeepOnStepping:
             self.DIR = "../TestFolder/" + self.name + "_" + self.TID + "_FI"
             os.makedirs(self.DIR)
-            FIM = FIT.FastInjectionMeasurement(self.DIR)
+            FIM = FIT.MPAFastInjectionMeasurement(self.DIR)
             FIM.RunRandomTest8p8s(n = 60, timer_data_taking = 60, cal_pulse_period = 1, l1a_period = 39, latency = 500, runname = "Test")
             self.TID = str(round((((int(time.time())- self.InitialTime) / 3600.0)* DoseRate),2))
             ChipStatus = self.NEXT(TargetTID)

@@ -400,18 +400,18 @@ class MainTestsMPA():
         anapix = []
         while (en and wd < 3):
             try:
-                strip_in = self.test.strip_in_scan(print_file = 1, filename = filename + "strip_input_scan", probe=1, verbose = 1)
+                strip_in = self.test.strip_in_scan(print_file = 1, filename = filename + "strip_input_scan_rising", probe=0, verbose = 1)
                 #Check if any row (latency) is all 1
+                good_si = 0
                 for i in range(0,8):
                     if (strip_in[i,:].all() > self.signal_integrity_limit): good_si = 1
-                good_si = 0
                 if good_si:
                     utils.print_good("Strip In Scan passed")
                     print(strip_in)
                     StripIn = 1
                 else:
                     utils.print_info("Changing edge")
-                    strip_in = self.test.strip_in_scan(print_file = 1, edge = "rising", filename = filename + "strip_input_scan", probe=0, verbose = 1)
+                    strip_in = self.test.strip_in_scan(print_file = 1, edge = "rising", filename = filename + "strip_input_scan_falling", probe=0, verbose = 1)
                     StripIn = 0
                     for i in range(0,8):
                         if (strip_in[i,:].all() > self.signal_integrity_limit): good_si = 1

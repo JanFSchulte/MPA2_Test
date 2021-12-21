@@ -408,17 +408,17 @@ def printInfo(message):
 	print
 	print message
 	print "*** STUB ***"
-	print "State of FSM: " , fc7.read("stat_phy_slvs_compare_state_machine")
+	print "State of FSM: " , fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")
 	print "FIFO almost full: " , fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-	print "number of events written to FIFO", fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo")
+	print "number of events written to FIFO", fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo")
 	print "Number of good 2xBX STUBS: ", fc7.read("stat_phy_slvs_compare_number_good_data")
 	print
 	print "*** L1 ***"
 	print "State of FSM: " , fc7.read("stat_phy_l1_slvs_compare_state_machine")
-	print "Fifo almost full: ", fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+	print "Fifo almost full: ", fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
 	print "Header # ", fc7.read("stat_phy_l1_slvs_compare_number_l1_headers_found")
 	print "Trigger # ", fc7.read("stat_phy_l1_slvs_compare_number_l1_triggers")
-	print "number of events written to FIFO", fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo")
+	print "number of events written to FIFO", fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo")
 	print "number of matched events:", fc7.read("stat_phy_l1_slvs_compare_number_good_data")
 	print "*************************"
 
@@ -426,7 +426,7 @@ def RunStateMachine(runname, iteration, print_file, timer_data_taking, latency):
 	fc7.write("ctrl_phy_l1_SLVS_compare_start",1)
 	SendCommand_CTRL("start_trigger")
 	sleep(0.01)
-	FSM = fc7.read("stat_phy_slvs_compare_state_machine")
+	FSM = fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")
 	if (FSM == 4):
 		print "-----------------------------"
 		print "-----------------------------"
@@ -440,29 +440,29 @@ def RunStateMachine(runname, iteration, print_file, timer_data_taking, latency):
 
 	#start taking data and check the 80% full threshold of the FIFO
 	FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-	FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+	FIFO_almost_full_L1 = fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
 	timer = 0
 	sleep(1)
 	PM.CheckTotalPower(1)
 	activate_I2C_chip(verbose = 0)
 	while(FIFO_almost_full != 1 and FIFO_almost_full_L1 != 1 and timer < timer_data_taking):
 		FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-		FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+		FIFO_almost_full_L1 = fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
 		timer = timer + 5
 		message = "TIMER at: ", timer, "/", timer_data_taking
 		printInfo(message)
 		sleep(5)
-	fc7.write("ctrl_phy_SLVS_compare_stop",1)
+	fc7.write("fc7_daq_ctrl.physical_interface_block.slvs_compare.stop",1)
 	sleep(0.01)
 	SendCommand_CTRL("stop_trigger")
 	FIFO_almost_full = fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-	FIFO_almost_full_L1 = fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+	FIFO_almost_full_L1 = fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
 
 	#
 		#print
 		#print "----------------------------- FINAL REPORT------------------------------------"
 		#print "----------------------------- STUB -------------------------------------------"
-		#print "State of FSM after stopping: " , fc7.read("stat_phy_slvs_compare_state_machine")
+		#print "State of FSM after stopping: " , fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")
 		##if(timer == timer_data_taking and FIFO_almost_full == 0):
 		#if(FIFO_almost_full == 0):
 		#	print "data taking stopped because reached the adequate time"
@@ -473,7 +473,7 @@ def RunStateMachine(runname, iteration, print_file, timer_data_taking, latency):
 		#	print "data taking stopped because the FIFO is full and the timer also just reached the last step (really strange)"
 		#print "-----------------------------------------------------------------------------"
 		#print "------------------------------ L1 -------------------------------------------"
-		#print "State of FSM after stopping: " , fc7.read("stat_phy_slvs_compare_state_machine")
+		#print "State of FSM after stopping: " , fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")
 		##if(timer == timer_data_taking and FIFO_almost_full_L1 == 0):
 		#if(FIFO_almost_full_L1 == 0):
 		#	print "data taking stopped because reached the adequate time"
@@ -486,26 +486,26 @@ def RunStateMachine(runname, iteration, print_file, timer_data_taking, latency):
 	print
 	message = "-------------------------------- RESULTS ITERATION " + str(iteration) + " ---------------------------------------------"
 	printInfo(message)
-	n = fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo")
+	n = fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo")
 	if (latency == 500): l1_limit = 12
 	else: l1_limit = 7
 	if ((n > 0) and print_file):
 		filename = str(runname) + "Error/Iter_" + str(iteration) + "_STUB" + ".csv"
 		writeFIFO(n, filename)
-	n = fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo")
+	n = fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo")
 	if ((n > l1_limit ) and print_file):
 		filename = str(runname) + "Error/Iter_" + str(iteration)+ "_L1" +  ".csv"
 		writeFIFO_L1(n, filename)
-	return 	fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo"), fc7.read("stat_phy_slvs_compare_number_good_data"), fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo"), fc7.read("stat_phy_l1_slvs_compare_number_good_data")
+	return 	fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo"), fc7.read("stat_phy_slvs_compare_number_good_data"), fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo"), fc7.read("stat_phy_l1_slvs_compare_number_good_data")
 
 def writeFIFO(n = 16386, filename = "test.log"):
 	f = open(filename, 'w')
-	stat_phy_slvs_compare_data_ready = fc7.read("stat_phy_slvs_compare_data_ready")
+	stat_phy_slvs_compare_data_ready = fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.data_ready")
 	for i in range (0,n):
-		fifo1_word = fc7.read("ctrl_phy_SLVS_compare_read_data1_fifo")
-		fifo2_word = fc7.read("ctrl_phy_SLVS_compare_read_data2_fifo")
-		fifo3_word = fc7.read("ctrl_phy_SLVS_compare_read_data3_fifo")
-		fifo4_word = fc7.read("ctrl_phy_SLVS_compare_read_data4_fifo")
+		fifo1_word = fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data1_fifo")
+		fifo2_word = fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data2_fifo")
+		fifo3_word = fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data3_fifo")
+		fifo4_word = fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data4_fifo")
 		message = str(i) + ", "
 		f.write(message); message = str(fifo4_word) + ", "
 		f.write(message); message = str(parse_to_bin8((fifo3_word & 0x0000ff00)>>8)) + ", "
@@ -523,26 +523,26 @@ def writeFIFO(n = 16386, filename = "test.log"):
 
 def ReadFIFOs(chip, n = 16386):
 	print "!!!!!!!!!!!!!!!!!!!START READING FIFO NOW!!!!!!!!!!!!!!!!!!!!!!"
-	print "State of FSM before reading FIFOs: " , fc7.read("stat_phy_slvs_compare_state_machine")
+	print "State of FSM before reading FIFOs: " , fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")
 	print "Now printing the data in the FIFO:"
-	stat_phy_slvs_compare_data_ready = fc7.read("stat_phy_slvs_compare_data_ready")
+	stat_phy_slvs_compare_data_ready = fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.data_ready")
 	i = 0
 
-	"""package2 = fc7.fifoRead("ctrl_phy_SLVS_compare_read_data2_fifo", 17000)
-	p l5, l6, l7ackage4 = fc7.fifoRead("ctrl_phy_SLVS_compare_read_data4_fifo", 17000)
+	"""package2 = fc7.fifoRead("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data2_fifo", 17000)
+	p l5, l6, l7ackage4 = fc7.fifoRead("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data4_fifo", 17000)
 	for i in range(16384):
 		print "Package2 #", i+1, ": ", package2[i]
 		print "Package4 #", i+1, ": ", package4[i]
-	print("State of FSM after reading FIFOs: " , fc7.read("stat_phy_slvs_compare_state_machine"))
+	print("State of FSM after reading FIFOs: " , fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine"))
 	print("Fifo almost full: ", fc7.read("stat_phy_slvs_compare_fifo_almost_full"))"""
 
 	for i in range (0,n):
 			print("--------------------------")
 			print("Entry number: ", i ," in the FIFO:")
-			fifo1_word = fc7.read("ctrl_phy_SLVS_compare_read_data1_fifo")
-			fifo2_word = fc7.read("ctrl_phy_SLVS_compare_read_data2_fifo")
-			fifo3_word = fc7.read("ctrl_phy_SLVS_compare_read_data3_fifo")
-			fifo4_word = fc7.read("ctrl_phy_SLVS_compare_read_data4_fifo")
+			fifo1_word = fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data1_fifo")
+			fifo2_word = fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data2_fifo")
+			fifo3_word = fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data3_fifo")
+			fifo4_word = fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data4_fifo")
 			print "MPA: BX counter, 0x0000, BX0 data (l4, l3, l2, l1, l0) and  BX1 data (l4, l3, l2, l1, l0)"
 			print "SSA: 0x0000, BX counter, 0x0000 and centroid data (l7, l6, l5, l4, l3, l2, l1, l0)"
 			print(parse_to_bin32(fifo4_word),parse_to_bin32(fifo3_word),parse_to_bin32(fifo2_word),parse_to_bin32(fifo1_word))
@@ -574,7 +574,7 @@ def ReadFIFOs(chip, n = 16386):
 			else:
 				print "CHIPTYPE UNKNOWN"
 
-	print "State of FSM after reading FIFOs: " , fc7.read("stat_phy_slvs_compare_state_machine")
+	print "State of FSM after reading FIFOs: " , fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")
 	print "Fifo almost full: ", fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 
 def ReadFIFOsL1(n = 16386, verbose = 1):
@@ -584,15 +584,15 @@ def ReadFIFOsL1(n = 16386, verbose = 1):
 	t0 = time.time()
 	i = 0
 	for i in range (0,n):
-			fifo1_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data1_fifo")
-			fifo2_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data2_fifo")
-			fifo3_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data3_fifo")
-			fifo4_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data4_fifo")
-			fifo5_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data5_fifo")
-			fifo6_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data6_fifo")
-			fifo7_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data7_fifo")
-			fifo8_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data8_fifo")
-			fifo9_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data9_fifo")
+			fifo1_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data1_fifo")
+			fifo2_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data2_fifo")
+			fifo3_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data3_fifo")
+			fifo4_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data4_fifo")
+			fifo5_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data5_fifo")
+			fifo6_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data6_fifo")
+			fifo7_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data7_fifo")
+			fifo8_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data8_fifo")
+			fifo9_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data9_fifo")
 			if (verbose):
 				print("--------------------------")
 				print("Entry number: ", i ," in the FIFO:")
@@ -610,15 +610,15 @@ def ReadFIFOsL1(n = 16386, verbose = 1):
 def writeFIFO_L1(n = 16386, filename = "test_L1.csv"):
 	f = open(filename, 'w')
 	for i in range (0,n):
-		fifo1_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data1_fifo")
-		fifo2_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data2_fifo")
-		fifo3_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data3_fifo")
-		fifo4_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data4_fifo")
-		fifo5_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data5_fifo")
-		fifo6_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data6_fifo")
-		fifo7_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data7_fifo")
-		fifo8_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data8_fifo")
-		fifo9_word = fc7.read("ctrl_phy_l1_SLVS_compare_read_data9_fifo")
+		fifo1_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data1_fifo")
+		fifo2_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data2_fifo")
+		fifo3_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data3_fifo")
+		fifo4_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data4_fifo")
+		fifo5_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data5_fifo")
+		fifo6_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data6_fifo")
+		fifo7_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data7_fifo")
+		fifo8_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data8_fifo")
+		fifo9_word = fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data9_fifo")
 		message = str(fifo8_word) + ", " + str(fifo9_word & 0x000001FF) + ", " + str((fifo7_word & 0x3FE00000)>>21) + ", " + str(parse_to_bin32(fifo7_word) + parse_to_bin32(fifo6_word) + parse_to_bin32(fifo5_word) + parse_to_bin32(fifo4_word) + parse_to_bin32(fifo3_word) + parse_to_bin32(fifo2_word) + parse_to_bin32(fifo1_word)) +"\n"
 		f.write(message);
 	f.close

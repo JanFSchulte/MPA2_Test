@@ -201,7 +201,7 @@ class I2CConf:
     def row_write(self, register, row, data):
 
         if register not in list(self.mpa_row_reg_map.keys()):
-            print("Register name not found")
+            utils.print_error(f"-> Register name not found: {register}")
             rep = False
 
         else:
@@ -213,7 +213,7 @@ class I2CConf:
     def row_read(self, register, row, timeout = 0.001):
 
         if register not in list(self.mpa_row_reg_map.keys()):
-            print("Register name not found")
+            utils.print_error(f"-> Register name not found: {register}")
             rep = False
 
         else:
@@ -226,7 +226,7 @@ class I2CConf:
     def pixel_write(self, register, row, pixel, data):
 
         if register not in list(self.mpa_pixel_reg_map.keys()):
-            print("Register name not found")
+            utils.print_error(f"-> Register name not found: {register}")
             rep = False
 
         else:
@@ -241,7 +241,7 @@ class I2CConf:
     def pixel_read(self, register, row, pixel, timeout = 0.001):
 
         if register not in list(self.mpa_pixel_reg_map.keys()):
-            print("Register name not found")
+            utils.print_error(f"-> Register name not found: {register}")
             rep = False
 
         else:
@@ -263,7 +263,7 @@ class I2CConf:
         #	try:
         cnt += 1
         if register not in self.ssa_strip_reg_map.keys():
-            utils.print_error("'X>  I2C Strip register name not found")
+            utils.print_error(f"'X>  I2C Strip register name not found: {register}")
             rep = 'Null'
         else:
 
@@ -340,7 +340,7 @@ class I2CConf:
         V = tbconfig.VERSION['SSA']
         cnt += 1
         if register not in self.ssa_strip_reg_map.keys():
-            utils.print_error("'X>  I2C Strip register name not found")
+            utils.print_error(f"'X>  I2C Strip register name not found: {register}")
             rep = 'Null'
         else:
             if(V >= 2):

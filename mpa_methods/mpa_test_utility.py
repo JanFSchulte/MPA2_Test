@@ -269,26 +269,25 @@ class mpa_test_utility():
         self.mpa.ctrl_base.activate_ss()
         data_array = np.zeros((8, 8 ), dtype = np.float16 )
         if probe:
-            #  Working for carrier board
-            self.i2c.peri_write("InSetting_1_0", 0b00011000)
+            # Default
+            self.i2c.peri_write("InSetting_1_0", 0b00010000)
             self.i2c.peri_write("InSetting_3_2", 0b00110010)
             self.i2c.peri_write("InSetting_5_4", 0b01010100)
             self.i2c.peri_write("InSetting_7_6", 0b01110110)
-            self.i2c.peri_write("InSetting_8", 0b00000000)
-            
-            #self.i2c.peri_write("InSetting_1_0", 0b00001000)
-            #self.i2c.peri_write("InSetting_3_2", 0b00100001)
-            #self.i2c.peri_write("InSetting_5_4", 0b01000011)
-            #self.i2c.peri_write("InSetting_7_6", 0b01100101)
-            #self.i2c.peri_write("InSetting_8",   0b00000111)
-        #else: 
-            # Default
-            #self.i2c.peri_write("InSetting_1_0", 0b00010000)
+            self.i2c.peri_write("InSetting_8",   0b00001000)
+        else: 
+            #  Working for carrier board
+            #self.i2c.peri_write("InSetting_1_0", 0b00011000)
             #self.i2c.peri_write("InSetting_3_2", 0b00110010)
             #self.i2c.peri_write("InSetting_5_4", 0b01010100)
             #self.i2c.peri_write("InSetting_7_6", 0b01110110)
-            #self.i2c.peri_write("InSetting_8", 0b00001000)
-
+            #self.i2c.peri_write("InSetting_8", 0b00000000)
+            
+            self.i2c.peri_write("InSetting_1_0", 0b00001000)
+            self.i2c.peri_write("InSetting_3_2", 0b00100001)
+            self.i2c.peri_write("InSetting_5_4", 0b01000011)
+            self.i2c.peri_write("InSetting_7_6", 0b01100101)
+            self.i2c.peri_write("InSetting_8",   0b00000111)
             
         time.sleep(0.1)
 

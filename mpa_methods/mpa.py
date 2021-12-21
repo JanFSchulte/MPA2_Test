@@ -49,6 +49,7 @@ class MPA_ASIC:
         utils.activate_I2C_chip(self.fc7)
         self.i2c.peri_write("Mask", 0b11111111); time.sleep(0.1)
         self.ctrl_base.set_out_mapping_probing()
+        #self.ctrl_base.set_in_mapping()
         if(display): time.sleep(0.2)
         else: time.sleep(0.1)
         if(display):

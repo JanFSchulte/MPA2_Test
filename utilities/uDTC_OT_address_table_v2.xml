@@ -79,6 +79,7 @@
 		        <node id="en_l1a"			address="0x009" mask="0x00000040" description="enable l1a in the test pulse sequence"/>
                 <node id="en_shutter"                   address="0x009" mask="0x00000080" description="enables automatic shutter for mpa-ssa in the test pulse sequence"/>
             </node>
+            <node id="seu_ntriggers_to_skip"         address="0x00A" description="trigger source 6: number of l1a to skip"/>
             <node id="ps_async_delay" address="0x00E" description="configuration of PS antenna trigger block">
                 <node id="after_clear_counters"     mask="0x000000FF" description="delay between fast reset and following test pulse command"/>
                 <node id="after_open_shutter"       mask="0x0000FF00" description="delay after test pulse command before l1a signal sent to readout the data"/>
@@ -422,9 +423,27 @@
                 <node id="start_bx0_alignment"              mask="0x00000001"/>
                 <node id="backend_alignment_pattern_disable"              mask="0x00000002"/>
             </node>
-	       <node id="fifo1_data"                address="0x001" permission="r" mode="non-incremental"/>
-	       <node id="fifo2_data"                address="0x002" permission="r" mode="non-incremental"/>
-
+	        <node id="fifo1_data"                address="0x001" permission="r" mode="non-incremental"/>
+	        <node id="fifo2_data"                address="0x002" permission="r" mode="non-incremental"/>
+            <node id="slvs_compare"              address="0x005">
+                <node id="start"                        mask="0x001"/>
+                <node id="stop"                         mask="0x002"/>
+                <node id="l1_start"                     mask="0x004"/>
+            </node>
+            <node id="slvs_compare_read_data1_fifo"                 address="0x006"/>
+            <node id="slvs_compare_read_data2_fifo"                 address="0x007"/>
+            <node id="slvs_compare_read_data3_fifo"                 address="0x008"/>
+            <node id="l1_slvs_compare_read_data1_fifo"              address="0x00a"/>
+            <node id="l1_slvs_compare_read_data2_fifo"              address="0x00b"/>
+            <node id="l1_slvs_compare_read_data3_fifo"              address="0x00c"/>
+            <node id="l1_slvs_compare_read_data4_fifo"              address="0x00d"/>
+            <node id="l1_slvs_compare_read_data5_fifo"              address="0x00e"/>
+            <node id="l1_slvs_compare_read_data6_fifo"              address="0x00f"/>
+            <node id="l1_slvs_compare_read_data7_fifo"              address="0x010"/>
+            <node id="l1_slvs_compare_read_data8_fifo"              address="0x011"/>
+            <node id="l1_slvs_compare_read_data9_fifo"              address="0x012"/>
+l1_
+            
             <node id="multiplexing_bp"              address="0x018">
                 <node id="setup_configure"                  mask="0x00000001"/>
                 <node id="setup_disconnect"                 mask="0x00000002"/>
@@ -606,10 +625,13 @@
                 <node id="data_ready"                           mask="0x00000001"/>
                 <node id="state_machine"                        mask="0x0000001E"/>
                 <node id="fifo_almost_full"                     mask="0x00000020"/>
-                <node id="bx_indicator"                         mask="0x00000040"/>
+                <node id="fifo_empty"                           mask="0x00000040"/>
                 <node id="fifo_empty"                           mask="0x00000080"/>
                 <node id="numbere_events_written_to_fifo"       mask="0x003fff00"/>
             </node>
+            <node id="l1_slvs_compare_number_good_data"  address="0x006"/>
+            <node id="l1_slvs_compare_number_l1_headers_found"  address="0x008"/>
+            <node id="l1_slvs_compare_number_l1_triggers"       address="0x007"/>
             <node id="cic_decoder"              address="0x00C">
                 <node id="bx0_alignment_state"                  mask="0x0000000f"/>
             </node>

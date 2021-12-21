@@ -19,6 +19,7 @@ import matplotlib.axes as ax
 #from myScripts import *
 import time
 
+from myScripts.Utilities import *
 from utilities.i2c_conf import *
 from utilities.power_utility import *
 from myScripts.Utilities import *
@@ -79,7 +80,7 @@ class MPAFastInjectionMeasurement:
             #print col
             #print row
             #print strip
-
+            
             wrong, good, wrong_L1, good_L1 = self.Run(col, row, width, strip, timer_data_taking = timer_data_taking, offset = 5, cal_pulse_period = cal_pulse_period, l1a_period = l1a_period, latency = latency, print_file = 1, runname = folder, iteration = i, verbose = 0)
             if ((wrong > 100) and (wrong_L1 > 100)): self.Flag = 0
             message = str(row) + ", "; f.write(message)
@@ -119,16 +120,16 @@ class MPAFastInjectionMeasurement:
         self.GeneralLogFile.write(str(text)+"\n")
 
     def configureChip(self, latency, offset = 5, analog_injection = 0):
-        self.mpa.pwr.set_DVDD(1.2)
+        self.mpa.pwr.set_dvdd(1.2)
         #I2C configuration
-        self.mps.fc7.activate_I2C_chip(frequency = 4, verbose = 0)
+        self.mpa.fc7.activate_I2C_chip(frequency = 4, verbose = 0)
         time.sleep(0.01)
         self.mpa.ctrl_pix.disable_pixel(0,0)
         time.sleep(0.01)
-        self.mpa.i2c.row_write('L1Offset_1', 0,  latency)
+        self.mpa.i2c.row_write('MemoryControl_1', 0, latency)
         time.sleep(0.01)
         if (latency > 255):
-            self.mpa.i2c.row_write('L1Offset_2', 0, 1)
+            self.mpa.i2c.row_write('MemoryControl_2', 0, 1)
         time.sleep(0.01)
         self.mpa.i2c.peri_write('EdgeSelT1Raw', 0)
         time.sleep(0.01)
@@ -165,6 +166,7 @@ class MPAFastInjectionMeasurement:
             #set_calibration(100)
             #set_threshold(200)
         time.sleep(0.01)
+        utils.print_info("-> Chip configured for SEU")
         #activate_pp()
 
     def parse_to_bin32(self, input):
@@ -201,9 +203,8 @@ class MPAFastInjectionMeasurement:
                 if (analog_injection):
                     self.mpa.ctrl_pix.enable_pix_EdgeBRcal(cluster_row[i], cluster_col[i] + j)
                 else:
-                    #self.mpa.i2c.pixel_write('DigPattern', cluster_row[i], cluster_col[i] + j,  0b00000001)
-                    self.mpa.i2c.pixel_write('ENFLAGS', cluster_row[i], cluster_col[i] + j , 0x20)
-            #
+                    #self.mpa.i2c.pixel_write('DigPattern', cluster_row[i], cluster_col[i] + j,  0b00000001
+                    self.mpa.i2c.pixel_write('PixelEnables', cluster_row[i], cluster_col[i] + j , 0x20) #self.I2C.pixel_write('PixelEnables', r, p, 0x20)
             if (n_pclust > 5):
                 if (i != n_pclust-1):
                     row[n_pclust - i -2] = cluster_row[i] - 1
@@ -383,19 +384,19 @@ class MPAFastInjectionMeasurement:
         print("Number of good 2xBX STUBS: ", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare_number_good_data"))
         print()
         print("*** L1 ***")
-        print("State of FSM: " , self.mpa.fc7.read("stat_phy_l1_slvs_compare_state_machine"))
-        print("Fifo almost full: ", self.mpa.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full"))
-        print("Header # ", self.mpa.fc7.read("stat_phy_l1_slvs_compare_number_l1_headers_found"))
-        print("Trigger # ", self.mpa.fc7.read("stat_phy_l1_slvs_compare_number_l1_triggers"))
-        print("number of events written to FIFO", self.mpa.fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo"))
-        print("number of matched events:", self.mpa.fc7.read("stat_phy_l1_slvs_compare_number_good_data"))
+        print("State of FSM: " , self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.state_machine"))
+        print("Fifo almost full: ", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full"))
+        print("Header # ", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare_number_l1_headers_found"))
+        print("Trigger # ", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare_number_l1_triggers"))
+        print("number of events written to FIFO", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare_number_good_data"))
+        print("number of matched events:", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare_number_good_data"))
         print("*************************")
 
     def RunStateMachine(self, runname, iteration, print_file, timer_data_taking, latency):
-        self.mpa.fc7.write("ctrl_phy_l1_SLVS_compare_start",1)
+        self.mpa.fc7.write("fc7_daq_ctrl.physical_interface_block.slvs_compare.l1_start",1)
         self.mpa.fc7.SendCommand_CTRL("start_trigger")
         time.sleep(0.01)
-        FSM = self.mpa.fc7.read("stat_phy_slvs_compare_state_machine")
+        FSM = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")
         if (FSM == 4):
             print("-----------------------------")
             print("-----------------------------")
@@ -405,49 +406,49 @@ class MPAFastInjectionMeasurement:
             print("-----------------------------")
             print("-----------------------------")
             return
-        self.mpa.fc7.write("ctrl_phy_SLVS_compare_start",1)
+        self.mpa.fc7.write("fc7_daq_ctrl.physical_interface_block.slvs_compare.start",1)
 
         #start taking data and check the 80% full threshold of the FIFO
-        FIFO_almost_full = self.mpa.fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-        FIFO_almost_full_L1 = self.mpa.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+        FIFO_almost_full = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.fifo_almost_full")
+        FIFO_almost_full_L1 = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
         timer = 0
         time.sleep(1)
         self.mpa.fc7.activate_I2C_chip(verbose = 0)
         while(FIFO_almost_full != 1 and FIFO_almost_full_L1 != 1 and timer < timer_data_taking):
-            FIFO_almost_full = self.mpa.fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-            FIFO_almost_full_L1 = self.mpa.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+            FIFO_almost_full = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.fifo_almost_full")
+            FIFO_almost_full_L1 = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
             timer = timer + 5
             message = "TIMER at: ", timer, "/", timer_data_taking
             self.printInfo(message)
             time.sleep(5)
-        self.mpa.fc7.write("ctrl_phy_SLVS_compare_stop",1)
+        self.mpa.fc7.write("fc7_daq_ctrl.physical_interface_block.slvs_compare.stop",1)
         time.sleep(0.01)
         self.mpa.fc7.SendCommand_CTRL("stop_trigger")
-        FIFO_almost_full = self.mpa.fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-        FIFO_almost_full_L1 = self.mpa.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+        FIFO_almost_full = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.fifo_almost_full")
+        FIFO_almost_full_L1 = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
 
         message = "-------------------------------- RESULTS ITERATION " + str(iteration) + " ---------------------------------------------"
         self.printInfo(message)
-        n = self.mpa.fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo")
+        n = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo")
         if (latency == 500): l1_limit = 12
         else: l1_limit = 7
         if ((n > 0) and print_file):
             filename = str(runname) + "Error/Iter_" + str(iteration) + "_STUB" + ".csv"
             self.writeFIFO(n, filename)
-        n = self.mpa.fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo")
+        n = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo")
         if ((n > l1_limit ) and print_file):
             filename = str(runname) + "Error/Iter_" + str(iteration)+ "_L1" +  ".csv"
             self.writeFIFO_L1(n, filename)
-        return 	self.mpa.fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo"), self.mpa.fc7.read("stat_phy_slvs_compare_number_good_data"), self.mpa.fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo"), self.mpa.fc7.read("stat_phy_l1_slvs_compare_number_good_data")
+        return 	self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo"), self.mpa.fc7.read("stat_phy_slvs_compare_number_good_data"), self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo"), self.mpa.fc7.read("stat_phy_l1_slvs_compare_number_good_data")
 
     def writeFIFO(self, n = 16386, filename = "test.log"):
         f = open(filename, 'w')
-        stat_phy_slvs_compare_data_ready = self.mpa.fc7.read("stat_phy_slvs_compare_data_ready")
+        stat_phy_slvs_compare_data_ready = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.data_ready")
         for i in range (0,n):
-            fifo1_word = self.mpa.fc7.read("ctrl_phy_SLVS_compare_read_data1_fifo")
-            fifo2_word = self.mpa.fc7.read("ctrl_phy_SLVS_compare_read_data2_fifo")
-            fifo3_word = self.mpa.fc7.read("ctrl_phy_SLVS_compare_read_data3_fifo")
-            fifo4_word = self.mpa.fc7.read("ctrl_phy_SLVS_compare_read_data4_fifo")
+            fifo1_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data1_fifo")
+            fifo2_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data2_fifo")
+            fifo3_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data3_fifo")
+            fifo4_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data4_fifo")
             message = str(i) + ", "
             f.write(message); message = str(fifo4_word) + ", "
             f.write(message); message = str(self.parse_to_bin8((fifo3_word & 0x0000ff00)>>8)) + ", "
@@ -465,26 +466,26 @@ class MPAFastInjectionMeasurement:
 
     def ReadFIFOs(self, chip, n = 16386):
         print("!!!!!!!!!!!!!!!!!!!START READING FIFO NOW!!!!!!!!!!!!!!!!!!!!!!")
-        print("State of FSM before reading FIFOs: " , self.mpa.fc7.read("stat_phy_slvs_compare_state_machine"))
+        print("State of FSM before reading FIFOs: " , self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine"))
         print("Now printing the data in the FIFO:")
-        stat_phy_slvs_compare_data_ready = self.mpa.fc7.read("stat_phy_slvs_compare_data_ready")
+        stat_phy_slvs_compare_data_ready = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.data_ready")
         i = 0
 
-        """package2 = fc7.fifoRead("ctrl_phy_SLVS_compare_read_data2_fifo", 17000)
-        p l5, l6, l7ackage4 = fc7.fifoRead("ctrl_phy_SLVS_compare_read_data4_fifo", 17000)
+        """package2 = fc7.fifoRead("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data2_fifo", 17000)
+        p l5, l6, l7ackage4 = fc7.fifoRead("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data4_fifo", 17000)
         for i in range(16384):
             print "Package2 #", i+1, ": ", package2[i]
             print "Package4 #", i+1, ": ", package4[i]
-        print("State of FSM after reading FIFOs: " , self.mpa.fc7.read("stat_phy_slvs_compare_state_machine"))
-        print("Fifo almost full: ", self.mpa.fc7.read("stat_phy_slvs_compare_fifo_almost_full"))"""
+        print("State of FSM after reading FIFOs: " , self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine"))
+        print("Fifo almost full: ", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.fifo_almost_full"))"""
 
         for i in range (0,n):
                 print("--------------------------")
                 print(("Entry number: ", i ," in the FIFO:"))
-                fifo1_word = self.mpa.fc7.read("ctrl_phy_SLVS_compare_read_data1_fifo")
-                fifo2_word = self.mpa.fc7.read("ctrl_phy_SLVS_compare_read_data2_fifo")
-                fifo3_word = self.mpa.fc7.read("ctrl_phy_SLVS_compare_read_data3_fifo")
-                fifo4_word = self.mpa.fc7.read("ctrl_phy_SLVS_compare_read_data4_fifo")
+                fifo1_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data1_fifo")
+                fifo2_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data2_fifo")
+                fifo3_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data3_fifo")
+                fifo4_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data4_fifo")
                 print("MPA: BX counter, 0x0000, BX0 data (l4, l3, l2, l1, l0) and  BX1 data (l4, l3, l2, l1, l0)")
                 print("SSA: 0x0000, BX counter, 0x0000 and centroid data (l7, l6, l5, l4, l3, l2, l1, l0)")
                 print((self.parse_to_bin32(fifo4_word),self.parse_to_bin32(fifo3_word),self.parse_to_bin32(fifo2_word),self.parse_to_bin32(fifo1_word)))
@@ -516,8 +517,8 @@ class MPAFastInjectionMeasurement:
                 else:
                     print("CHIPTYPE UNKNOWN")
 
-        print("State of FSM after reading FIFOs: " , self.mpa.fc7.read("stat_phy_slvs_compare_state_machine"))
-        print("Fifo almost full: ", self.mpa.fc7.read("stat_phy_slvs_compare_fifo_almost_full"))
+        print("State of FSM after reading FIFOs: " , self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine"))
+        print("Fifo almost full: ", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.fifo_almost_full"))
 
     def ReadFIFOsL1(self, n = 16386, verbose = 1):
         #print "!!!!!!!!!!!!!!!!!!!START READING FIFO NOW!!!!!!!!!!!!!!!!!!!!!!"
@@ -526,15 +527,15 @@ class MPAFastInjectionMeasurement:
         t0 = time.time()
         i = 0
         for i in range (0,n):
-                fifo1_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data1_fifo")
-                fifo2_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data2_fifo")
-                fifo3_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data3_fifo")
-                fifo4_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data4_fifo")
-                fifo5_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data5_fifo")
-                fifo6_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data6_fifo")
-                fifo7_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data7_fifo")
-                fifo8_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data8_fifo")
-                fifo9_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data9_fifo")
+                fifo1_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data1_fifo")
+                fifo2_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data2_fifo")
+                fifo3_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data3_fifo")
+                fifo4_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data4_fifo")
+                fifo5_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data5_fifo")
+                fifo6_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data6_fifo")
+                fifo7_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data7_fifo")
+                fifo8_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data8_fifo")
+                fifo9_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data9_fifo")
                 if (verbose):
                     print("--------------------------")
                     print(("Entry number: ", i ," in the FIFO:"))
@@ -552,35 +553,37 @@ class MPAFastInjectionMeasurement:
     def writeFIFO_L1(self, n = 16386, filename = "test_L1.csv"):
         f = open(filename, 'w')
         for i in range (0,n):
-            fifo1_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data1_fifo")
-            fifo2_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data2_fifo")
-            fifo3_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data3_fifo")
-            fifo4_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data4_fifo")
-            fifo5_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data5_fifo")
-            fifo6_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data6_fifo")
-            fifo7_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data7_fifo")
-            fifo8_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data8_fifo")
-            fifo9_word = self.mpa.fc7.read("ctrl_phy_l1_SLVS_compare_read_data9_fifo")
+            fifo1_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data1_fifo")
+            fifo2_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data2_fifo")
+            fifo3_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data3_fifo")
+            fifo4_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data4_fifo")
+            fifo5_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data5_fifo")
+            fifo6_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data6_fifo")
+            fifo7_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data7_fifo")
+            fifo8_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data8_fifo")
+            fifo9_word = self.mpa.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data9_fifo")
             message = str(fifo8_word) + ", " + str(fifo9_word & 0x000001FF) + ", " + str((fifo7_word & 0x3FE00000)>>21) + ", " + str(self.parse_to_bin32(fifo7_word) + self.parse_to_bin32(fifo6_word) + self.parse_to_bin32(fifo5_word) + self.parse_to_bin32(fifo4_word) + self.parse_to_bin32(fifo3_word) + self.parse_to_bin32(fifo2_word) + self.parse_to_bin32(fifo1_word)) +"\n"
             f.write(message);
         f.close
 
 
     def Run(self, col, row, width, strip, timer_data_taking = 5, offset = 5, cal_pulse_period = 10, l1a_period = 101, latency = 100, diff = 2, skip = 1, verbose = 0, print_file = 0, runname =  "../cernbox/SEU_results/", iteration = 0):
-        ()
+        self.mpa.reset()
         time.sleep(0.1)
-        self.FC7.reset()
+        self.mpa.fc7.reset()
         time.sleep(0.1)
-        self.fc7.SendCommand_CTRL("fast_fast_reset")
+        self.mpa.fc7.SendCommand_CTRL("fast_fast_reset")
         time.sleep(0.1)
         self.configureChip( latency = latency - diff,  offset = offset, analog_injection = 0)
         time.sleep(0.1)
-        self.mpa.ctrl_base.align_out(0)
+        #self.mpa.ctrl_base.align_out(verbose =1)
+        self.mpa.ctrl_base.align_out_all(pattern = 0b10100000)
         if (skip == 0):
             Configure_TestPulse_MPA(delay_after_fast_reset = 512, delay_after_test_pulse = latency, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_L1 = 1, enable_rst = 0, enable_init_rst = 1)
         else:
-            Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0)
+            self.mpa.fc7.Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0)
         self.configurePixel(col,  row, width, strip, runname = runname, iteration = iteration, print_file = print_file, analog_injection = 0, verbose = verbose)
+        utils.print_info("-> Fast injection configuration completed")
         wrong, good, wrong_L1, good_L1 = self.RunStateMachine(runname = runname, iteration = iteration, print_file = print_file, timer_data_taking = timer_data_taking, latency = latency)
         return wrong, good, wrong_L1, good_L1
 

@@ -287,6 +287,18 @@ class fc7_com():
         self.fc7_if.write("fc7_daq_ctrl.mpa_ssa_board_block.reset", 1)
         time.sleep(0.1)
 
+    def Configure_SEU(self, cal_pulse_period, l1a_period, number_of_cal_pulses, initial_reset = 0):
+        self.fc7_if.write('fc7_daq_ctrl.fast_command_block.control.reset', 1)
+        time.sleep(0.10); self.fc7_if.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", initial_reset)
+        time.sleep(0.01); self.fc7_if.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", cal_pulse_period)
+        time.sleep(0.01); self.fc7_if.write("fc7_daq_cnfg.fast_command_block.seu_ntriggers_to_skip", l1a_period)
+        time.sleep(0.01); self.fc7_if.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", number_of_cal_pulses)
+        time.sleep(0.01); self.fc7_if.write("fc7_daq_cnfg.fast_command_block.trigger_source", 9)
+        time.sleep(0.1)
+        self.SendCommand_CTRL("load_trigger_config")
+        time.sleep(0.1)
+        utils.print_info("-> FC7 configured for SEU")
+
     def Send_MPA_SSA_I2C_Command(self, slave_id, board_id, read, register_address, data, verbose = 1, note = ''):
         # this peace of code just shifts the data, also checks if it fits the field
         # general

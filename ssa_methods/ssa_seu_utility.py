@@ -84,7 +84,7 @@ class SSA_SEU_utilities():
 		 # Configure_SEU(1, 39,0,1)
 		time.sleep(0.01); self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", 1) #1
 		time.sleep(0.01); self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", cal_pulse_period)
-		time.sleep(0.01); self.fc7.write("cnfg_fast_seu_ntriggers_to_skip", l1a_period)
+		time.sleep(0.01); self.fc7.write("fc7_daq_cnfg.fast_command_block.seu_ntriggers_to_skip", l1a_period)
 		time.sleep(0.01); self.fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", 0)
 		time.sleep(0.01); self.fc7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_after_fast_reset", delay_after_fast_reset)
 		time.sleep(0.01); self.fc7.write("fc7_daq_cnfg.fast_command_block.trigger_source", 9)
@@ -120,7 +120,7 @@ class SSA_SEU_utilities():
 	##############################################################
 	def RunStateMachine_L1_and_Stubs(self, check_stub=True, check_l1=True, check_lateral=True, timer_data_taking = 30, display = 2, stop_if_fifo_full = True, show_every=1):
 		time.sleep(0.1)
-		FSM = self.fc7.read("stat_phy_slvs_compare_state_machine")
+		FSM = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")
 		time.sleep(0.01); self.fc7.write('cnfg_fast_timeout_enable', 0)
 		if(display > 1):
 			print("State of FSM before starting: "   + str( FSM))
@@ -134,14 +134,14 @@ class SSA_SEU_utilities():
 			self.fc7.write("ctrl_phy_SLVS_compare_start",1)
 		timer_init = time.time()
 		self.fc7.SendCommand_CTRL("start_trigger")
-		state = self.fc7.read("stat_phy_slvs_compare_state_machine")
+		state = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")
 		FIFO_almost_full_stub = self.fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 		if(display > 1):
 			print("State of FSM after starting: "   + str( state ))
 			print("Almost full flag of FIFO after starting: "   + str( FIFO_almost_full ))
 		#start taking data and check the 80% full threshold of the FIFO
 		FIFO_almost_full_stub = self.fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-		FIFO_almost_full_L1   = self.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+		FIFO_almost_full_L1   = self.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
 		timer = 0
 		timer_prev = 0
 		stop_condition = True
@@ -150,7 +150,7 @@ class SSA_SEU_utilities():
 			timer = time.time()-timer_init
 			message = "Time: {:3.3f}s / {:3.3f}".format(timer, timer_data_taking)
 			FIFO_almost_full_stub = self.fc7.read("stat_phy_slvs_compare_fifo_almost_full")
-			FIFO_almost_full_L1 = self.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+			FIFO_almost_full_L1 = self.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
 
 			if(stop_if_fifo_full):
 				stop_condition_stub = ((FIFO_almost_full_stub == 1) and check_stub)
@@ -167,7 +167,7 @@ class SSA_SEU_utilities():
 						message=message, display=display, header=1)
 					seucounter = self.ssa.ctrl.read_seu_counter(display=True, printmode='log', sync=1, async=0)
 
-		self.fc7.write("ctrl_phy_SLVS_compare_stop",1)
+		self.fc7.write("fc7_daq_ctrl.physical_interface_block.slvs_compare.stop",1)
 		timer = time.time()-timer_init
 		self.fc7.SendCommand_CTRL("stop_trigger")
 		if(show_every>0):
@@ -175,7 +175,7 @@ class SSA_SEU_utilities():
 				check_stub=check_stub, check_l1=check_l1, check_lateral=check_lateral,
 				message=message, display=display, header=1)
 		#time.sleep(0.1); self.fc7.SendCommand_CTRL("stop_trigger")
-		#print("State of FSM after stopping: " , self.fc7.read("stat_phy_slvs_compare_state_machine"))
+		#print("State of FSM after stopping: " , self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine"))
 		if(display>-1):
 			utils.print_log("________________________________________________________________________________________\n")
 			if(timer >= timer_data_taking and FIFO_almost_full_stub == 0):
@@ -365,7 +365,7 @@ class SSA_SEU_utilities():
 
 	##############################################################
 	def Stub_RunStateMachine(self, display = 2, run_time = 10):
-		FSM = self.fc7.read("stat_phy_slvs_compare_state_machine")
+		FSM = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")
 		if(display>1): print("  \tState of FSM before starting: " + str(FSM))
 		if (FSM == 4):
 			print("-X  \tError in FSM")
@@ -374,7 +374,7 @@ class SSA_SEU_utilities():
 		if(display>1):
 			print("->  Almost full flag of FIFO before starting: " + str( rp ))
 		self.fc7.write("ctrl_phy_SLVS_compare_start",1)
-		state = self.fc7.read("stat_phy_slvs_compare_state_machine")
+		state = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")
 		full = self.fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 		if(display>1):
 			print("->  State of FSM after starting: " + str(state))
@@ -390,8 +390,8 @@ class SSA_SEU_utilities():
 				self.Lateral_printinfo(display = display)
 			time.sleep(1)
 		if(display>0): print("____________________________________________________________________________")
-		self.fc7.write("ctrl_phy_SLVS_compare_stop",1)
-		if(display>1): print("State of FSM after stopping: " + str(self.fc7.read("stat_phy_slvs_compare_state_machine")))
+		self.fc7.write("fc7_daq_ctrl.physical_interface_block.slvs_compare.stop",1)
+		if(display>1): print("State of FSM after stopping: " + str(self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")))
 		if(timer == run_time and FIFO_almost_full == 0):
 			utils.print_log("->  SEU Stub-Data     -> data taking stopped because reached the adequate time")
 		elif(self.fc7.read("stat_phy_slvs_compare_number_good_data") > (2**31-3)):
@@ -436,18 +436,18 @@ class SSA_SEU_utilities():
 	##############################################################
 	def Stub_ReadFIFOs(self, nevents = 'all', filename = "SEU_TMP/SEU", runname = '', display = 0):
 		utils.print_info("->  Reading stub-data mismatches FIFO")
-		if(display>1): print("State of FSM before reading FIFOs: "  + str(self.fc7.read("stat_phy_slvs_compare_state_machine")))
-		stat_phy_slvs_compare_data_ready = self.fc7.read("stat_phy_slvs_compare_data_ready")
+		if(display>1): print("State of FSM before reading FIFOs: "  + str(self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")))
+		stat_phy_slvs_compare_data_ready = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.data_ready")
 		FIFO = np.full( [16386,10], np.NaN)
 		if(not isinstance(nevents, int)):
-			FIFO_depth = self.fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo")
+			FIFO_depth = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo")
 		else:
 			FIFO_depth = nevents
 		for i in range(0, FIFO_depth):
-				fifo1_word = self.fc7.read("ctrl_phy_SLVS_compare_read_data1_fifo")
-				fifo2_word = self.fc7.read("ctrl_phy_SLVS_compare_read_data2_fifo")
-				fifo3_word = self.fc7.read("ctrl_phy_SLVS_compare_read_data3_fifo")
-				fifo4_word = self.fc7.read("ctrl_phy_SLVS_compare_read_data4_fifo")
+				fifo1_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data1_fifo")
+				fifo2_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data2_fifo")
+				fifo3_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data3_fifo")
+				fifo4_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.slvs_compare_read_data4_fifo")
 				FIFO[i,0]  = fifo4_word #BX
 				FIFO[i,8]  = (fifo2_word & 0xff000000)>>24
 				FIFO[i,7]  = (fifo2_word & 0x00ff0000)>>16
@@ -472,7 +472,7 @@ class SSA_SEU_utilities():
 					print("SSA centroid l1: " + str( FIFO[i,2] ))
 					print("SSA centroid l0: " + str( FIFO[i,1] ))
 		if(display>0):
-			print("State of FSM after reading FIFOs: "  + str( self.fc7.read("stat_phy_slvs_compare_state_machine")))
+			print("State of FSM after reading FIFOs: "  + str( self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")))
 			print("Fifo almost full: "  + str( self.fc7.read("stat_phy_slvs_compare_fifo_almost_full")))
 		fo = ("../SSA_Results/" + filename + "__SEU__CLUSTER-FIFO__" + runname + ".csv")
 		dir = fo[:fo.rindex(os.path.sep)]
@@ -486,21 +486,21 @@ class SSA_SEU_utilities():
 		if(display>1): print("Now printing the data in the FIFO:")
 		FIFO = np.full( [16386,7], '', dtype ='|S256')
 		if(not isinstance(nevents, int)):
-			FIFO_depth = self.fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo")
+			FIFO_depth = self.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo")
 		else:
 			FIFO_depth = nevents
 		for i in range(0, FIFO_depth):
 				if(display>0): print("Entry number: ", i ," in the FIFO:")
-				#it increments location of the FIFO reading ctrl_phy_l1_SLVS_compare_read_data9_fifo
-				fifo1_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data1_fifo")
-				fifo2_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data2_fifo")
-				fifo3_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data3_fifo")
-				fifo4_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data4_fifo")
-				fifo5_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data5_fifo")
-				fifo6_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data6_fifo")
-				fifo7_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data7_fifo")
-				fifo8_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data8_fifo")
-				fifo9_word = self.fc7.read("ctrl_phy_l1_SLVS_compare_read_data9_fifo")
+				#it increments location of the FIFO reading fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data9_fifo
+				fifo1_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data1_fifo")
+				fifo2_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data2_fifo")
+				fifo3_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data3_fifo")
+				fifo4_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data4_fifo")
+				fifo5_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data5_fifo")
+				fifo6_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data6_fifo")
+				fifo7_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data7_fifo")
+				fifo8_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data8_fifo")
+				fifo9_word = self.fc7.read("fc7_daq_ctrl.physical_interface_block.l1_slvs_compare_read_data9_fifo")
 				if(display>1):
 					print("Full l1 data package without the header (MSB downto LSB): ")
 
@@ -581,8 +581,8 @@ class SSA_SEU_utilities():
 	##############################################################
 	def L1_printInfo(self, message = '', display = 2, header = 0, correction = 0, intermediate=0):
 		state      = self.fc7.read("stat_phy_l1_slvs_compare_state_machine")
-		full       = self.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
-		n_in_fifo  = self.fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo") - correction
+		full       = self.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
+		n_in_fifo  = self.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo") - correction
 		n_correct  = self.fc7.read("stat_phy_l1_slvs_compare_number_good_data")
 		n_triggers = self.fc7.read("stat_phy_l1_slvs_compare_number_l1_triggers") - 1
 		n_headers  = self.fc7.read("stat_phy_l1_slvs_compare_number_l1_headers_found")
@@ -609,9 +609,9 @@ class SSA_SEU_utilities():
 
 	##############################################################
 	def Stub_printinfo(self, message = '', display = 2, header = 0, logmode='log'):
-		CntBad  = self.fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo")
+		CntBad  = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo")
 		CntGood = self.fc7.read("stat_phy_slvs_compare_number_good_data")
-		state   = (self.fc7.read("stat_phy_slvs_compare_state_machine"))
+		state   = (self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine"))
 		full    = (self.fc7.read("stat_phy_slvs_compare_fifo_almost_full"))
 		if(header and display>0):
 			utils.print("________________________________________________________________________________________", logmode)
@@ -670,17 +670,17 @@ class SSA_SEU_utilities():
 		if(display > 1):
 			self.L1_printInfo("AFTER START TRIGGER:")
 		#start taking data and check the 80% full threshold of the FIFO
-		FIFO_almost_full = self.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+		FIFO_almost_full = self.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
 		timer = 0
 		while(FIFO_almost_full != 1 and timer < timer_data_taking):
-			FIFO_almost_full = self.fc7.read("stat_phy_l1_slvs_compare_fifo_almost_full")
+			FIFO_almost_full = self.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
 			timer = timer + 1
 			message =  "Timer at: ", timer, "/", timer_data_taking
 			self.L1_printInfo(message)
 			time.sleep(1)
 		self.fc7.SendCommand_CTRL("stop_trigger")
 		time.sleep(1)
-		self.fc7.write("ctrl_phy_SLVS_compare_stop",1)
+		self.fc7.write("fc7_daq_ctrl.physical_interface_block.slvs_compare.stop",1)
 		self.L1_printInfo("STATE MACHINE AND TRIGGER STOPPED:")
 		if(timer == timer_data_taking and FIFO_almost_full == 0):
 			utils.print_log("data taking stopped because reached the adequate time")
@@ -702,7 +702,7 @@ class SSA_SEU_utilities():
 		time.sleep(0.1); self.Stub_RunStateMachine(run_time = run_time, display = display)
 		time.sleep(0.1); self.fc7.SendCommand_CTRL("stop_trigger")
 		time.sleep(0.1);
-		CntBad  = self.fc7.read("stat_phy_slvs_compare_numbere_events_written_to_fifo")
+		CntBad  = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo")
 		CntGood = self.fc7.read("stat_phy_slvs_compare_number_good_data")
 		self.Stub_printinfo('SUMMARY', display = display, header = 1)
 		self.Lateral_printinfo(display = display)
@@ -741,7 +741,7 @@ class SSA_SEU_utilities():
 		## self.fc7.SendCommand_CTRL("stop_trigger")
 		#self.L1_ReadFIFOs(nevents = 5)878
 		self.L1_printInfo('        SUMMARY        ')
-		n_in_fifo  = self.fc7.read("stat_phy_l1_slvs_compare_numbere_events_written_to_fifo")
+		n_in_fifo  = self.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo")
 		n_correct  = self.fc7.read("stat_phy_l1_slvs_compare_number_good_data")
 		n_triggers = self.fc7.read("stat_phy_l1_slvs_compare_number_l1_triggers")
 		n_headers  = self.fc7.read("stat_phy_l1_slvs_compare_number_l1_headers_found")
