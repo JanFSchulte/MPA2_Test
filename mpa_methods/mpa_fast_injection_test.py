@@ -19,7 +19,6 @@ import matplotlib.axes as ax
 #from myScripts import *
 import time
 
-from myScripts.Utilities import *
 from utilities.i2c_conf import *
 from utilities.power_utility import *
 from myScripts.Utilities import *
@@ -129,7 +128,7 @@ class MPAFastInjectionMeasurement:
         self.mpa.i2c.row_write('MemoryControl_1', 0, latency)
         time.sleep(0.01)
         if (latency > 255):
-            self.mpa.i2c.row_write('MemoryControl_2', 0, 1)
+            self.mpa.i2c.row_write('MemoryControl_2', 0, 1) ## Memory Gating bit 2?
         time.sleep(0.01)
         self.mpa.i2c.peri_write('EdgeSelT1Raw', 0)
         time.sleep(0.01)
@@ -408,7 +407,7 @@ class MPAFastInjectionMeasurement:
             return
         self.mpa.fc7.write("fc7_daq_ctrl.physical_interface_block.slvs_compare.start",1)
 
-        #start taking data and check the 80% full threshold of the FIFO
+        #start taking data and check the 80% full threshold of the FIFO (on FC7?)
         FIFO_almost_full = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.fifo_almost_full")
         FIFO_almost_full_L1 = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
         timer = 0
@@ -439,7 +438,7 @@ class MPAFastInjectionMeasurement:
         if ((n > l1_limit ) and print_file):
             filename = str(runname) + "Error/Iter_" + str(iteration)+ "_L1" +  ".csv"
             self.writeFIFO_L1(n, filename)
-        return 	self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo"), self.mpa.fc7.read("stat_phy_slvs_compare_number_good_data"), self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo"), self.mpa.fc7.read("stat_phy_l1_slvs_compare_number_good_data")
+        return 	self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo"), self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare_number_good_data"), self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo"), self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare_number_good_data")
 
     def writeFIFO(self, n = 16386, filename = "test.log"):
         f = open(filename, 'w')

@@ -128,8 +128,8 @@ class MPAwp:
         self.scanchain = MPA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
 
         try:
-            #multimeter = keithley_multimeter()
-            multimeter = Instruments_Keithley_Multimeter_7510_LAN()
+            multimeter = keithley_multimeter()
+            #multimeter = Instruments_Keithley_Multimeter_7510_LAN()
             self.bias = mpa_bias_utility(self.chip, self.i2c, FC7, multimeter, self.peri_reg_map, self.row_reg_map, self.pixel_reg_map)
         except ImportError:
             self.bias = False

@@ -108,9 +108,9 @@ class TIDMeasurement:
         return self.Flag
 
     def colprint(self, text):
-    	sys.stdout.write("\033[1;31m")
-    	print((str(text)))
-    	sys.stdout.write("\033[0;0m")
+        sys.stdout.write("\033[1;31m")
+        print((str(text)))
+        sys.stdout.write("\033[0;0m")
         self.LogFile.write(str(text)+"\n")
 
     def colprint_general(self, text):

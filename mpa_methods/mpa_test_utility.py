@@ -11,6 +11,8 @@ import inspect
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+from utilities.fc7_daq_methods import *
+
 
 
 class mpa_test_utility():
@@ -322,12 +324,12 @@ class mpa_test_utility():
             self.i2c.pixel_write('PixelEnables', r_rnd, p_rnd, 0x20)
         else:
             self.mpa.ctrl_pix.enable_pix_LevelBRcal(r_rnd ,p_rnd, polarity = "rise")
-        #time.sleep(0.001)
+        time.sleep(0.01)
         self.fc7.SendCommand_CTRL("start_trigger")
 
         return p_rnd, r_rnd
 
-    def rnd_test(self, n_tests = 1000, latency = 255, delay = [10], diff = 2, print_log = 0, filename =  "../cernbox_anvesh/MPA_Results/rnd_test.log", dig_inj = 1, gate = 0, verbose = 1):
+    def rnd_test(self, n_tests = 1000, latency = 255, delay = [10], diff = 3, print_log = 0, filename =  "../cernbox_anvesh/MPA_Results/rnd_test.log", dig_inj = 1, gate = 0, verbose = 1):
         """
 
         :param n_tests: Number of random pixel tests  (Default value = 1000)
@@ -351,27 +353,35 @@ class mpa_test_utility():
         if print_log:
             f = open(filename, 'w')
             f.write("Starting Test:\n")
-
+        self.fc7.write("fc7_daq_cnfg.physical_interface_block.slvs_debug.SSA_first_counter_del", 100)
+        self.fc7.activate_I2C_chip(verbose=0)
         self.mpa.ctrl_base.activate_sync()
         self.mpa.ctrl_base.activate_pp()
-        self.i2c.row_write('L1Offset_1', 0,  latency - diff)
-        self.i2c.row_write('L1Offset_2', 0,  0)
-        self.i2c.row_write('MemGatEn', 0,  gate)
+        self.i2c.peri_write('Mask', 0b00011100)
+        self.i2c.peri_write('Control', 0b00000100)
+        self.i2c.row_write('Mask', 0,  0b11111111)
+        self.i2c.row_write('MemoryControl_1', 0,  latency - diff)
+        self.i2c.row_write('Mask', 0,  0b00000001)
+        self.i2c.row_write('MemoryControl_2', 0,  0)
+        self.i2c.row_write('Mask', 0,  0b00000010)
+        self.i2c.row_write('MemoryControl_2', 0,  gate)
+        self.i2c.row_write('Mask', 0,  0b11111111)
         self.i2c.pixel_write('DigPattern', 0, 0,  0b00000001)
+
         self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
         self.mpa.ctrl_pix.disable_pixel(0,0)
-
         stuck = 0; i2c_issue = 0; error = 0
-
-        Configure_TestPulse_MPA(delay_after_fast_reset = delay[0] + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 200, number_of_test_pulses = 1, enable_L1 = 1, enable_rst = 1, enable_init_rst = 1)
-
+        Configure_TestPulse_MPA(delay_after_fast_reset = delay[0] + 512, delay_after_test_pulse = latency, delay_before_next_pulse = 25, number_of_test_pulses = 500, enable_L1 = 1, enable_rst = 0, enable_init_rst = 0)
+        time.sleep(0.01)
+        #self.fc7.SendCommand_CTRL("fast_fast_reset")
         for n in range(0, n_tests):
             #time.sleep(0.1)
-
+            self.fc7.SendCommand_CTRL("fast_fast_reset")
+            time.sleep(0.001)
             # trigger test pulse for random pixel and get injection coordinate
             p, r = self.rnd_pixel(dig_inj = 1)
-
-            strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z  = self.mpa.rdo.read_L1(verbose)
+            time.sleep(0.01)
+            strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z, bx, l1_id = self.mpa.rdo.read_L1(verbose)
             found = 0
 
             for i in range(0, int(pixel_counter)):
@@ -390,10 +400,10 @@ class mpa_test_utility():
                 if verbose: print(error_message)
                 if print_log: f.write(error_message)
 
-        utils.print_info("->  Number of tests: ", n_tests)
-        utils.print_info("->  Number of error: ", error)
-        utils.print_info("->  Number of stucks: ", stuck)
-        utils.print_info("->  Number of I2C issues: ", i2c_issue)
+        utils.print_info(f"->  Number of tests:         {n_tests}")
+        utils.print_info(f"->  Number of error:         {error}")
+        utils.print_info(f"->  Number of stucks:        {stuck}")
+        utils.print_info(f"->  Number of I2C issues:    {i2c_issue}")
 
         if print_log:
             f.write("Test Completed:\n")
@@ -474,7 +484,7 @@ class mpa_test_utility():
             #	I2C.peri_write('EdgeSelT1Raw', 0)
             #time.sleep(1)
             for r in row:
-                self.fc7.SendCommand_CTRL("fast_fast_reset")
+                self.fc7.SendCommand_CTRL("fast_fast_reset") #why after switching row?
                 for p in pixel:
                     #try:
                     strip_counter, pixel_counter, pos_strip, width_strip, MIP, pos_pixel, width_pixel, Z, bx, l1_id  = self.memory_test(latency = latency, row = r, pixel = p, diff = diff, dig_inj = dig_inj, verbose = 0)

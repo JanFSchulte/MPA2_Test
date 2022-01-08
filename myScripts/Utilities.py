@@ -67,8 +67,8 @@ class Utilities:
         #if(self.errorlog): self.errorlog.close()
         self.logfile = logfile
         self.errorlog = errorlog
-        fo = open(logfile, "w");  fo.close()
-        fo = open(errorlog, "w"); fo.close()
+        fo = open(logfile, "a");  fo.close()
+        fo = open(errorlog, "a"); fo.close()
 
     def close_log_files(self):
         #if(self.logfile): self.logfile.close()

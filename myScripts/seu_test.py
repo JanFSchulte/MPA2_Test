@@ -411,7 +411,7 @@ def printInfo(message):
 	print "State of FSM: " , fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.state_machine")
 	print "FIFO almost full: " , fc7.read("stat_phy_slvs_compare_fifo_almost_full")
 	print "number of events written to FIFO", fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo")
-	print "Number of good 2xBX STUBS: ", fc7.read("stat_phy_slvs_compare_number_good_data")
+	print "Number of good 2xBX STUBS: ", fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare_number_good_data")
 	print
 	print "*** L1 ***"
 	print "State of FSM: " , fc7.read("stat_phy_l1_slvs_compare_state_machine")
@@ -419,7 +419,7 @@ def printInfo(message):
 	print "Header # ", fc7.read("stat_phy_l1_slvs_compare_number_l1_headers_found")
 	print "Trigger # ", fc7.read("stat_phy_l1_slvs_compare_number_l1_triggers")
 	print "number of events written to FIFO", fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo")
-	print "number of matched events:", fc7.read("stat_phy_l1_slvs_compare_number_good_data")
+	print "number of matched events:", fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare_number_good_data")
 	print "*************************"
 
 def RunStateMachine(runname, iteration, print_file, timer_data_taking, latency):
@@ -496,7 +496,7 @@ def RunStateMachine(runname, iteration, print_file, timer_data_taking, latency):
 	if ((n > l1_limit ) and print_file):
 		filename = str(runname) + "Error/Iter_" + str(iteration)+ "_L1" +  ".csv"
 		writeFIFO_L1(n, filename)
-	return 	fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo"), fc7.read("stat_phy_slvs_compare_number_good_data"), fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo"), fc7.read("stat_phy_l1_slvs_compare_number_good_data")
+	return 	fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.numbere_events_written_to_fifo"), fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare_number_good_data"), fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo"), fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare_number_good_data")
 
 def writeFIFO(n = 16386, filename = "test.log"):
 	f = open(filename, 'w')

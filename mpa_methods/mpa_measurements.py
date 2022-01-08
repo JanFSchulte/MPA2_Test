@@ -132,3 +132,43 @@ class MPAMeasurements():
         self.bias.select_block(1,0,0)
         val = self.bias.adc_measure()
         return val
+
+    def adc_measure_all(self, DIR=0):
+        data_bias_blocks = np.zeros((7, 8), dtype=np.int) # 7 bias blocks, 8 test points
+        data_other_blocks = np.zeros((7,), dtype=np.float) # blocks 8 to 14
+
+        self.mpa.ctrl_base.disable_test()
+        for block in range(1,8):
+            for test_point in range(0,8):
+                self.bias.select_block(block, test_point, 0)
+                time.sleep(0.01)
+                try:
+                    data_bias_blocks[block-1, test_point] = self.bias.adc_measure()
+                except:
+                    utils.print_error(f"-> ADC measurement error: Block {block}, TP {test_point}.")
+                    data_bias_blocks[block-1, test_point] = -1000
+                
+        for block in range(8,15):
+            self.bias.select_block(block, 0, 0)
+            time.sleep(0.01)
+            try:
+                data_other_blocks[block-8] = self.bias.adc_measure()
+            except:
+                utils.print_error(f"-> ADC measurement error: Block {block}.")
+                data_other_blocks[block-8] = -1000
+        if(DIR):
+            np.savetxt(f"{DIR}ADC_bias_blocks.csv", data_bias_blocks, delimiter=",")
+            np.savetxt(f"{DIR}ADC_other_blocks.csv", data_other_blocks, delimiter=",")
+        return data_bias_blocks, data_other_blocks
+
+    def measure_gnd(self):
+        """Measures and returns GND voltage averaged over all seven bias blocks. """
+        self.mpa.ctrl_base.disable_test()
+        data = np.zeros((7, ), dtype=np.float)
+        for block in range(0,7):
+            self.select_block(block+1, 7, 1) # 7 to select GND
+            data[block] = self.multimeter.measure()
+        self.mpa.ctrl_base.disable_test()
+        utils.print_info(f"Measured Avg GND:{np.mean(data)}")
+        return np.mean(data)
+        

@@ -5,7 +5,7 @@ except ImportError:
 	print("->  Impossible to access GPIB instruments")
 
 class Instruments_Keithley_Multimeter_2000_GPIB():
-	def __init__(self, connect=False, avg = 5, address = 16):
+	def __init__(self, connect=True, avg = 5, address = 16):
 		if(connect):
 			self.connect(avg=avg, address=address)
 

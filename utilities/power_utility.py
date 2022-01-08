@@ -414,7 +414,8 @@ class PowerUtility:
             utils.print_log('->  MPA enabled ')
 
     def __enable_disable_chip(self):
-        val = (self.mpaid << 5) | (self.ssaid << 1) | (self.ssastate << 0) + (self.mpastate << 4)
+        #val = (self.mpaid << 5) | (self.ssaid << 1) | (self.ssastate << 0) + (self.mpastate << 4)
+        val = (self.mpaid << 5) | (self.mpastate << 4)
         utils.print_enable(False)
         time.sleep(0.01); self.fc7.Configure_MPA_SSA_I2C_Master(1, 2);
         time.sleep(0.01); self.fc7.Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574

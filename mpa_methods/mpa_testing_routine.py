@@ -57,6 +57,7 @@ class MainTestsMPA():
             self.runtest.set_enable('Shift', 'ON')
             self.runtest.set_enable('Calibrate Bias', 'ON')
             self.runtest.set_enable('Calibrate VREF', 'ON')
+            self.runtest.set_enable('ADC Measure', 'ON')
             self.runtest.set_enable('DACs', 'ON')
             self.runtest.set_enable('S-Curve', 'ON')
             self.runtest.set_enable('Analog Pixel', 'ON')
@@ -108,6 +109,7 @@ class MainTestsMPA():
         # Analog Tests
         self.test_routine_calibrate_bias(filename=fo)
         self.test_routine_calibrate_vref(filename=fo)
+        self.test_routine_measure_adc(filename=fo)
         self.test_routine_dacs(filename=fo)
         self.test_routine_analog(filename=fo)
         # Digital Tests
@@ -198,8 +200,8 @@ class MainTestsMPA():
         en = self.runtest.is_active('Calibrate Bias')
         while (en and wd < 3):
             try:
-                gnd = self.bias.measure_gnd()
                 bg = self.bias.measure_bg()
+                gnd = self.bias.measure_gnd()
                 r1 = self.bias.calibrate_chip(gnd_corr = gnd, print_file = 1, filename = filename+"bias_calibration")
                 r1 = round(np.mean(r1),1)
                 self.summary.set('avg_GND',gnd*1000 ,'mV', '',  runname)
@@ -233,6 +235,33 @@ class MainTestsMPA():
                 if(wd>=3): 
                     self.summary.set('VREF_DAC',-1000, '', '',  runname)
                     self.test_good = False
+
+
+    def test_routine_measure_adc(self, filename = "default", runname = ''):
+        filename = self.summary.get_file_name(filename)
+        time_init = time.time()
+        wd = 0
+        en = self.runtest.is_active('ADC Measure')
+        while (en and wd < 3):
+            try:
+                adc_msr_good = 1
+                utils.print_info("-> Measuring all ADC points.")
+                bias_blocks, other_blocks = self.mpa.measure.adc_measure_all(filename)
+                if (np.any(bias_blocks==0)) or (np.any(bias_blocks==-1000)) or (np.any(other_blocks==0)) or (np.any(other_blocks==-1000)):
+                    adc_msr_good = 0
+                    utils.print_error("-> ADC measurement failed.")
+                else:
+                    utils.print_good("-> ADC measurement passed.")
+                self.summary.set('ADC_MSR', int(adc_msr_good), '', '',  runname)
+                break
+            except(KeyboardInterrupt): break
+            except:
+                self.print_exception("-> ADC measurement error. Reiterating...")
+                wd +=1;
+                if(wd>=3): 
+                    self.summary.set('ADC_MSR',-1000, '', '',  runname)
+                    self.test_good = False
+
 
     def test_routine_save_config(self, filename = 'default', runname = ''):
         filename = self.summary.get_file_name(filename)
@@ -442,7 +471,7 @@ class MainTestsMPA():
         while (en and wd < 3):
             try:
                 #self.mpa.pwr.set_dvdd(voltage/100.0)
-                self.mpa.init(reset_chip = 1, reset_board = 1, display = 0)
+                self.mpa.init( reset_board = 1, reset_chip = 1, display = 0)
                 bad_pix, error, stuck, i2c_issue, missing = self.test.mem_test(print_log=1, filename = filename + "LogMemTest_100.txt", verbose = 0)
                 mempix = []
                 mempix.append(bad_pix)
