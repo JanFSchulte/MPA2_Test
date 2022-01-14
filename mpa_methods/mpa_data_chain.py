@@ -114,6 +114,7 @@ class MPATestDataChain():
         # enable sending of SSA emulator data
         self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.l1_data", 1)  
         self.fc7.write("fc7_daq_cnfg.physical_interface_block.l1_data.HIP_data_format", 0x000000)
+        # trig data delay, either 40MHz or 320 MHz?
         self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.trig_data_delay", 14)
 
         # 120 bits unsparsified strip hits, 8 MSB unused

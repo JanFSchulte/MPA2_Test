@@ -152,6 +152,7 @@ class MPAReadout():
                     print("Header found at BX:")
                     print(i)
                 header = l1[i-1] << 11 | l1[i-1] << 3 | ((l1[i+1] & 0b11100000) >> 5)
+                # error flag shows if ssa input is missing
                 error = ((l1[i+1] & 0b00011000) >> 3)
                 L1_ID = ((l1[i+1] & 0b00000111) << 6) | ((l1[i+2] & 0b11111100) >> 2)
                 strip_counter = ((l1[i+2] & 0b00000001) << 4) | ((l1[i+3] & 0b11110000) >> 4)

@@ -8,10 +8,15 @@
 #   FIM = FIT.FastInjectionMeasurement("../TestFolder")
 #   FIM.RunRandomTest8p8s(n = 5, timer_data_taking = 5, cal_pulse_period = 1, l1a_period = 39, latency = 500, runname = "Test")
 
+#
+# >>> wrong, good, wrong_L1, good_L1 = mpa.fastinj.Run(col = [1, 25, 50, 75, 100 ], row = [1,3,5,7,9], width = [1,1,1,1,1 ], strip = [ 1, 25, 50, 75, 100 ], timer_data_taking = 20, offset = 5, cal_pulse_period = 1, l1a_period =40, latency = 500, print_file = 1, runname = "../myTest/", iteration = 1, verbose = 1, skip = 1)
+#
+
 import csv
 import numpy
 import time
 import sys
+import math
 import random
 import matplotlib.pyplot as plt
 import matplotlib.axes as ax
@@ -37,14 +42,23 @@ class MPAFastInjectionMeasurement:
         self.test = test
         self.bias = bias
 
-    def RunRandomTest8p8s(self, n = 5, timer_data_taking = 5, cal_pulse_period = 1, l1a_period = 39, latency = 500, runname = "Test"):
+    def RunRandomTest8p8s(self, n = 5, timer_data_taking = 20, cal_pulse_period = 1, l1a_period = 40, latency = 500, runname = "../myTest", skip = 1):
         t0 = time.time()
         folder = self.DIR + "/" + str(runname) + "/"
-        os.mkdir(folder)
+        try: 
+            os.mkdir(folder)
+        except Exception as e:
+            print(e)
         folder = self.DIR + "/" + str(runname) + "/Patterns/"
-        os.mkdir(folder)
+        try: 
+            os.mkdir(folder)
+        except Exception as e:
+            print(e)
         folder = self.DIR + "/" + str(runname) + "/Error/"
-        os.mkdir(folder)
+        try: 
+            os.mkdir(folder)
+        except Exception as e:
+            print(e)
         folder = self.DIR + "/" + str(runname) + "/"
         logname = folder + "RandomTest_8p8s.log"
         f = open(logname, 'w')
@@ -52,6 +66,7 @@ class MPAFastInjectionMeasurement:
         good_tot = 		np.zeros(n, dtype = np.int )
         wrong_tot_L1 = 	np.zeros(n, dtype = np.int )
         good_tot_L1 = 	np.zeros(n, dtype = np.int )
+
         plt.title("On-line check")
         plt.xlim(0, n)
         plt.ion()
@@ -60,7 +75,7 @@ class MPAFastInjectionMeasurement:
             print("-------------------------------- ITERATION ", str(i), " ---------------------------------------------")
             row_1 = random.sample(list(range(1,9)), 4)
             row_2 = random.sample(list(range(9,17)), 4)
-            row = np.sort(np.append(row_1, row_2 ))
+            row = np.sort(np.append(row_1, row_2 )).astype(int)
             llim = 1
             col = np.zeros(8, dtype = np.int )
             for j in range(0,8):
@@ -70,7 +85,7 @@ class MPAFastInjectionMeasurement:
             corr = 0
             if (i%2 == 0): corr = 1
             #col = np.array(random.sample(range(1+corr,120,2), 8))
-            width = 8*[1]
+            width = 8* [1]
             strip_64 = np.sort(random.sample(list(range(1+corr,60,2)), 4))
             strip_128 = np.array(random.sample(list(range(61-corr,120,2)), 4))
             strip_128 = -np.sort(-strip_128)
@@ -79,8 +94,7 @@ class MPAFastInjectionMeasurement:
             #print col
             #print row
             #print strip
-            
-            wrong, good, wrong_L1, good_L1 = self.Run(col, row, width, strip, timer_data_taking = timer_data_taking, offset = 5, cal_pulse_period = cal_pulse_period, l1a_period = l1a_period, latency = latency, print_file = 1, runname = folder, iteration = i, verbose = 0)
+            wrong, good, wrong_L1, good_L1 = self.Run(col, row, width, strip, timer_data_taking = timer_data_taking, offset = 5, cal_pulse_period = cal_pulse_period, l1a_period = l1a_period, latency = latency, print_file = 1, runname = folder, iteration = i, verbose = 1, skip = skip)
             if ((wrong > 100) and (wrong_L1 > 100)): self.Flag = 0
             message = str(row) + ", "; f.write(message)
             message = str(col) + ", "; f.write(message)
@@ -119,10 +133,13 @@ class MPAFastInjectionMeasurement:
         self.GeneralLogFile.write(str(text)+"\n")
 
     def configureChip(self, latency, offset = 5, analog_injection = 0):
-        self.mpa.pwr.set_dvdd(1.2)
+        #self.mpa.pwr.set_dvdd(1.2) ; #MPA1
         #I2C configuration
-        self.mpa.fc7.activate_I2C_chip(frequency = 4, verbose = 0)
+        #self.mpa.fc7.activate_I2C_chip(frequency = 4, verbose = 0)
+        self.mpa.fc7.activate_I2C_chip(verbose = 0)
         time.sleep(0.01)
+        self.mpa.i2c.peri_write('Mask', 0b11111111)
+        self.mpa.i2c.row_write('Mask', 0,  0b11111111)
         self.mpa.ctrl_pix.disable_pixel(0,0)
         time.sleep(0.01)
         self.mpa.i2c.row_write('MemoryControl_1', 0, latency)
@@ -130,13 +147,13 @@ class MPAFastInjectionMeasurement:
         if (latency > 255):
             self.mpa.i2c.row_write('MemoryControl_2', 0, 1) ## Memory Gating bit 2?
         time.sleep(0.01)
-        self.mpa.i2c.peri_write('EdgeSelT1Raw', 0)
-        time.sleep(0.01)
-        self.mpa.i2c.peri_write('EdgeSelTrig', 0) # 1 = rising
-        time.sleep(0.01)
+        #self.mpa.i2c.peri_write('EdgeSelT1Raw', 0)
+        #time.sleep(0.01)
+        #self.mpa.i2c.peri_write('EdgeSelTrig', 0) # 1 = rising
+        #time.sleep(0.01)
         #self.mpa.i2c.peri_write('ECM',  0)
-        alignStub = 4
-        alignL1 = 3
+        alignStub = 6
+        alignL1 = 6
         align = 0b00000000 | (alignStub << 3) | alignL1
         self.mpa.i2c.peri_write('LatencyRx320', align)
         #self.mpa.i2c.peri_write('LatencyRx320', 0b00101111) # Trigger line aligned with FC7
@@ -145,18 +162,26 @@ class MPAFastInjectionMeasurement:
         #self.mpa.i2c.peri_write('LatencyRx320', 0b00011111) # Setup Test Chip #20
         # Stub Strip Input
         time.sleep(0.01)
-        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.l1_data", 1)
+        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.l1_data", 0)
         time.sleep(0.01)
-        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.trig_data_delay",7)
+        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.trig_data_delay",13)
         time.sleep(0.01)
         self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.l1_data.SSA_BX_cnt_format", 0)
         time.sleep(0.01)
+        #self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.stub_data_delay",7)
         #self.mpa.fc7.write("ctrl_phy_ssa_gen_trig_phase",42)
         time.sleep(0.01)
         #self.mpa.i2c.peri_write("SSAOffset_1", offset)
-        self.mpa.i2c.peri_write("ConfSLVS", 0b00111111)
+        self.mpa.fc7.activate_I2C_chip(verbose = 0)
+        #time.sleep(0.01)
+        #self.mpa.i2c.peri_write("ConfSLVS", 0b00111111)
         time.sleep(0.01)
-
+        self.mpa.i2c.peri_write("Control", 0b00001100) # no change
+        self.mpa.i2c.peri_write("InSetting_1_0", 0b00001000)
+        self.mpa.i2c.peri_write("InSetting_3_2", 0b00100001)
+        self.mpa.i2c.peri_write("InSetting_5_4", 0b01000011)
+        self.mpa.i2c.peri_write("InSetting_7_6", 0b01100101)
+        self.mpa.i2c.peri_write("InSetting_8",   0b00000111)
         if (analog_injection):
             self.mpa.ctrl_base.set_calibration(100)
             self.mpa.ctrl_base.set_threshold(200)
@@ -166,7 +191,7 @@ class MPAFastInjectionMeasurement:
             #set_threshold(200)
         time.sleep(0.01)
         utils.print_info("-> Chip configured for SEU")
-        #activate_pp()
+        #self.mpa.ctrl_base.activate_pp()
 
     def parse_to_bin32(self, input):
         return bin(to_number(input,32,0)).lstrip('-0b').zfill(32)
@@ -222,6 +247,7 @@ class MPAFastInjectionMeasurement:
             strip_2 = 0
             strip_3 = 0
             for i in range(0, n_sclust):
+                #self.test.strip_in_def( line = 2 ,strip = 8*[pixel[i]+8])
                 self.test.strip_in_def( line = i ,strip = 8*[pixel[i]+8])
                 if (strip[i] <= 32):
                     strip_3 = strip_3 | (1 << strip[i]-1)
@@ -242,7 +268,7 @@ class MPAFastInjectionMeasurement:
 
         # Pattern preparation stubs
         # BX0
-        #count = 0
+        count = 0
         if verbose:
             print(" Injected pixels: ", pixel)
             print(" Injected row: ", row)
@@ -312,8 +338,14 @@ class MPAFastInjectionMeasurement:
         self.loadCheckPatternOnFC7(int(pattern1, 2), int(pattern2, 2), int(pattern3, 2))
 
         # Pattern preparation L1
-        payload = bin(2).lstrip('-0b').zfill(2) +  bin(0).lstrip('-0b').zfill(9) + "0" + bin(n_sclust).lstrip('-0b').zfill(5) + bin(n_pclust).lstrip('-0b').zfill(5) + "0" + scluster + pcluster  + bin(cluster_col[n_pclust-1] & 0b1111110).lstrip('-0b').zfill(7)+ bin(0).lstrip('-0b').zfill(32)
-        #+ bin(cluster_col[n_pclust-1] & 0b1111000).lstrip('-0b').zfill(7)
+        #payload = bin(2).lstrip('-0b').zfill(2) +  bin(0).lstrip('-0b').zfill(9) + "0" + bin(n_sclust).lstrip('-0b').zfill(5) + bin(n_pclust).lstrip('-0b').zfill(5) + "0" + scluster + pcluster  + bin(cluster_col[n_pclust-1] & 0b1111110).lstrip('-0b').zfill(7)+ bin(0).lstrip('-0b').zfill(32)
+        ##+ bin(cluster_col[n_pclust-1] & 0b1111000).lstrip('-0b').zfill(7)
+        ## Complete:
+        #payload = bin(2).lstrip('-0b').zfill(2) +  bin(0).lstrip('-0b').zfill(9) + "0" + bin(n_sclust).lstrip('-0b').zfill(5) + bin(n_pclust).lstrip('-0b').zfill(5) + "0" + scluster + pcluster + bin(0).lstrip('-0b').zfill(128)   ;#+ bin(cluster_col[n_pclust-1] & 0b1111000).lstrip('-0b').zfill(7)
+        # without strips:
+        payload = bin(2).lstrip('-0b').zfill(2) +  bin(0).lstrip('-0b').zfill(9) + "0" + bin(0).lstrip('-0b').zfill(5) + bin(n_pclust).lstrip('-0b').zfill(5) + "0" + pcluster + bin(0).lstrip('-0b').zfill(128)   ;#+ bin(cluster_col[n_pclust-1] & 0b1111000).lstrip('-0b').zfill(7)
+        
+        
         if print_file:
             f.write("L1 pattern check:\n")
             f.write(payload)
@@ -369,7 +401,7 @@ class MPAFastInjectionMeasurement:
 
     def delayDataTaking(self):
         #below register can be used to check in which BX the centroid data is coming (even or odd) and can be used later in "self.mpa.fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns3",0 or 1)" to configure if the state machine has to wait 1 clk cycle
-        print("BX indicator for SSA centroid data:", self.mpa.fc7.read("stat_phy_slvs_compare_fifo_bx_indicator"))
+        print("BX indicator for SSA centroid data:", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.bx_indicator"))
         #self.mpa.fc7.write("cnfg_phy_MPA_SSA_SEU_check_patterns3",0 or 1)
         time.sleep(1)
 
@@ -387,8 +419,9 @@ class MPAFastInjectionMeasurement:
         print("Fifo almost full: ", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full"))
         print("Header # ", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare_number_l1_headers_found"))
         print("Trigger # ", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare_number_l1_triggers"))
-        print("number of events written to FIFO", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare_number_good_data"))
+        print("number of events written to FIFO", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.numbere_events_written_to_fifo"))
         print("number of matched events:", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare_number_good_data"))
+
         print("*************************")
 
     def RunStateMachine(self, runname, iteration, print_file, timer_data_taking, latency):
@@ -405,14 +438,20 @@ class MPAFastInjectionMeasurement:
             print("-----------------------------")
             print("-----------------------------")
             return
-        self.mpa.fc7.write("fc7_daq_ctrl.physical_interface_block.slvs_compare.start",1)
 
+        #while (1):
+        #    print("Trigger SLVS compare# ", self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare_number_l1_triggers"))
+        #    print("Trigger counter# ", self.mpa.fc7.read("fc7_daq_stat.fast_command_block.trigger_in_counter"))
+        #    time.sleep(0.001)
+
+        self.mpa.fc7.write("fc7_daq_ctrl.physical_interface_block.slvs_compare.start",1)
+        
         #start taking data and check the 80% full threshold of the FIFO (on FC7?)
         FIFO_almost_full = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.fifo_almost_full")
         FIFO_almost_full_L1 = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
         timer = 0
         time.sleep(1)
-        self.mpa.fc7.activate_I2C_chip(verbose = 0)
+        #self.mpa.fc7.activate_I2C_chip(verbose = 0)
         while(FIFO_almost_full != 1 and FIFO_almost_full_L1 != 1 and timer < timer_data_taking):
             FIFO_almost_full = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.fifo_almost_full")
             FIFO_almost_full_L1 = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
@@ -421,7 +460,7 @@ class MPAFastInjectionMeasurement:
             self.printInfo(message)
             time.sleep(5)
         self.mpa.fc7.write("fc7_daq_ctrl.physical_interface_block.slvs_compare.stop",1)
-        time.sleep(0.01)
+        time.sleep(0.1)
         self.mpa.fc7.SendCommand_CTRL("stop_trigger")
         FIFO_almost_full = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.fifo_almost_full")
         FIFO_almost_full_L1 = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
@@ -566,25 +605,88 @@ class MPAFastInjectionMeasurement:
         f.close
 
 
-    def Run(self, col, row, width, strip, timer_data_taking = 5, offset = 5, cal_pulse_period = 10, l1a_period = 101, latency = 100, diff = 2, skip = 1, verbose = 0, print_file = 0, runname =  "../cernbox/SEU_results/", iteration = 0):
-        self.mpa.reset()
-        time.sleep(0.1)
-        self.mpa.fc7.reset()
-        time.sleep(0.1)
-        self.mpa.fc7.SendCommand_CTRL("fast_fast_reset")
-        time.sleep(0.1)
+    def Run(self, col, row, width, strip, timer_data_taking = 5, offset = 5, cal_pulse_period = 10, l1a_period = 101, latency = 100, diff = 2, skip = 1, verbose = 1, print_file = 1, runname =  "../cernbox/SEU_results/", iteration = 0):
+        #self.mpa.reset()
+        #time.sleep(0.1)
+        #self.mpa.fc7.reset()
+        #time.sleep(0.1)
+        #self.mpa.fc7.SendCommand_CTRL("fast_fast_reset")
+        #time.sleep(0.1)
+        self.mpa.init(reset_board = 1, reset_chip =1) ; # new
         self.configureChip( latency = latency - diff,  offset = offset, analog_injection = 0)
         time.sleep(0.1)
         #self.mpa.ctrl_base.align_out(verbose =1)
-        self.mpa.ctrl_base.align_out_all(pattern = 0b10100000)
+        #self.mpa.ctrl_base.align_out_all(pattern = 0b10100000)
+        
         if (skip == 0):
-            Configure_TestPulse_MPA(delay_after_fast_reset = 512, delay_after_test_pulse = latency, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_L1 = 1, enable_rst = 0, enable_init_rst = 1)
+            Configure_TestPulse_MPA(delay_after_fast_reset = 0, delay_after_test_pulse = latency + 1, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_L1 = 1, enable_rst = 0, enable_init_rst = 0)
         else:
-            self.mpa.fc7.Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0)
+            self.mpa.fc7.Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses = 0, initial_reset = 1)
         self.configurePixel(col,  row, width, strip, runname = runname, iteration = iteration, print_file = print_file, analog_injection = 0, verbose = verbose)
         utils.print_info("-> Fast injection configuration completed")
         wrong, good, wrong_L1, good_L1 = self.RunStateMachine(runname = runname, iteration = iteration, print_file = print_file, timer_data_taking = timer_data_taking, latency = latency)
         return wrong, good, wrong_L1, good_L1
+
+    def align_L1(self, latency, reset_chip = 1, reset_board = 1):
+        self.mpa.init(reset_chip =reset_chip, reset_board = reset_board)
+        alignL1 = latency
+        align = 0b00000000 | (alignL1 << 3) | alignL1
+        self.mpa.i2c.peri_write("InSetting_1_0", 0b00001000)
+        time.sleep(0.1)
+        self.mpa.i2c.peri_write("InSetting_3_2", 0b00100001)
+        time.sleep(0.1)
+        self.mpa.i2c.peri_write("InSetting_5_4", 0b01000011)
+        time.sleep(0.1)
+        self.mpa.i2c.peri_write("InSetting_7_6", 0b01100101)
+        time.sleep(0.1)
+        self.mpa.i2c.peri_write("InSetting_8",   0b00000111)
+        #time.sleep(0.1)
+        #self.mpa.i2c.peri_write('EdgeSelT1Raw', 0b10)
+        #time.sleep(0.01)
+        #self.mpa.i2c.peri_write('EdgeSelTrig', 0b00000000) # 1 = rising
+        time.sleep(0.01)
+        self.mpa.i2c.peri_write('LatencyRx320', align)
+        time.sleep(0.1)
+        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.l1_data", 1)
+        time.sleep(0.1)
+        #self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.l1_data.format_3",0)
+        #time.sleep(0.1)
+        #self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.l1_data.format_2",0)
+        #time.sleep(0.1)
+        #self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.l1_data.format_1",0)
+        #time.sleep(0.1)
+        #self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.l1_data.HIP_data_format",0b10000000000000000000000000000001)
+        time.sleep(0.1)
+        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.l1_data.format_3",0b10000000000000000000011111111111)
+        time.sleep(0.1)
+        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.trig_data_delay",1)
+        time.sleep(0.1)
+        stop = 0
+        i=0
+        while ((stop == 0) & (i < 31)):
+        #while ((i < 31)):
+            self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.trig_data_delay",i)
+            time.sleep(0.01)
+            if( self.mpa.fc7.read("fc7_daq_cnfg.physical_interface_block.ssa_gen.trig_data_delay") != i):
+                stop = 1
+                print("FC7 ERROR")
+            self.mpa.fc7.send_resync()
+            time.sleep(0.01)
+            self.mpa.fc7.send_trigger()
+            time.sleep(0.01)
+            res = self.mpa.rdo.read_L1()
+            print(res[9])
+            time.sleep(0.01)
+            res_i2c = self.mpa.i2c.peri_read("L1_miss_strip")
+            print(res_i2c)
+            res_i2c2 = self.mpa.i2c.peri_read("ErrorL1")
+            print(res_i2c)
+            time.sleep(0.01)
+            if (res[9] != res_i2c):
+                stop=1
+            i+=1
+            print(i)
+
 
 if __name__ == '__main__': # TEST
     TEST = MPAFastInjectionMeasurement(sys.argv[1])

@@ -281,7 +281,7 @@ def Configure_TestPulse_MPA(delay_after_fast_reset, delay_after_test_pulse, dela
   FC7.SendCommand_CTRL("load_trigger_config")
   time.sleep(0.1)
 
-def Configure_SEU(cal_pulse_period, l1a_period, number_of_cal_pulses, initial_reset = 0):
+def Configure_SEU_old(cal_pulse_period, l1a_period, number_of_cal_pulses, initial_reset = 0):
   FC7.write('fc7_daq_ctrl.fast_command_block.control.reset', 1)
   time.sleep(0.10); FC7.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", initial_reset)
   time.sleep(0.01); FC7.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", cal_pulse_period)
