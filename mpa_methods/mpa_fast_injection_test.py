@@ -30,6 +30,8 @@ from myScripts.Utilities import *
 # from mpa_methods.fast_readout_utility import *
 from mpa_methods.mpa_bias_utility import *
 
+# mpa.fastinj.RunRandomTest8p8s(n = 5, timer_data_taking = 30, cal_pulse_period = 1, l1a_period = 40, latency = 500, runname = "../myTest_DC", skip = 1):
+
 class MPAFastInjectionMeasurement:
     def __init__(self, mpa, bias, test, DIR):
         self.start = time.time()
@@ -95,6 +97,8 @@ class MPAFastInjectionMeasurement:
             #print row
             #print strip
             wrong, good, wrong_L1, good_L1 = self.Run(col, row, width, strip, timer_data_taking = timer_data_taking, offset = 5, cal_pulse_period = cal_pulse_period, l1a_period = l1a_period, latency = latency, print_file = 1, runname = folder, iteration = i, verbose = 1, skip = skip)
+            self.read_config_seu(col, row, width, filename=f"{folder}/I2C_test.csv")
+            self.checkSEU(filename=f"{folder}/SEUcnt.csv")
             if ((wrong > 100) and (wrong_L1 > 100)): self.Flag = 0
             message = str(row) + ", "; f.write(message)
             message = str(col) + ", "; f.write(message)
@@ -115,6 +119,8 @@ class MPAFastInjectionMeasurement:
             plt.pause(0.1)
             t1 = time.time()
             print("Elapsed Time: " + str(t1 - t0))
+        self.mpa.init(reset_board = 1, reset_chip =1)
+        self.checkI2C_dyn(n = 1000, filename = folder + "I2C_dynamic_test.log")
         f.close()
         self.end = time.time()
         self.colprint("TOTAL TIME:")
@@ -162,9 +168,9 @@ class MPAFastInjectionMeasurement:
         #self.mpa.i2c.peri_write('LatencyRx320', 0b00011111) # Setup Test Chip #20
         # Stub Strip Input
         time.sleep(0.01)
-        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.l1_data", 0)
+        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.l1_data", 1)
         time.sleep(0.01)
-        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.trig_data_delay",13)
+        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.trig_data_delay",11)
         time.sleep(0.01)
         self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.l1_data.SSA_BX_cnt_format", 0)
         time.sleep(0.01)
@@ -341,9 +347,9 @@ class MPAFastInjectionMeasurement:
         #payload = bin(2).lstrip('-0b').zfill(2) +  bin(0).lstrip('-0b').zfill(9) + "0" + bin(n_sclust).lstrip('-0b').zfill(5) + bin(n_pclust).lstrip('-0b').zfill(5) + "0" + scluster + pcluster  + bin(cluster_col[n_pclust-1] & 0b1111110).lstrip('-0b').zfill(7)+ bin(0).lstrip('-0b').zfill(32)
         ##+ bin(cluster_col[n_pclust-1] & 0b1111000).lstrip('-0b').zfill(7)
         ## Complete:
-        #payload = bin(2).lstrip('-0b').zfill(2) +  bin(0).lstrip('-0b').zfill(9) + "0" + bin(n_sclust).lstrip('-0b').zfill(5) + bin(n_pclust).lstrip('-0b').zfill(5) + "0" + scluster + pcluster + bin(0).lstrip('-0b').zfill(128)   ;#+ bin(cluster_col[n_pclust-1] & 0b1111000).lstrip('-0b').zfill(7)
+        payload = bin(2).lstrip('-0b').zfill(2) +  bin(0).lstrip('-0b').zfill(9) + "0" + bin(n_sclust).lstrip('-0b').zfill(5) + bin(n_pclust).lstrip('-0b').zfill(5) + "0" + scluster + pcluster + bin(0).lstrip('-0b').zfill(128)   ;#+ bin(cluster_col[n_pclust-1] & 0b1111000).lstrip('-0b').zfill(7)
         # without strips:
-        payload = bin(2).lstrip('-0b').zfill(2) +  bin(0).lstrip('-0b').zfill(9) + "0" + bin(0).lstrip('-0b').zfill(5) + bin(n_pclust).lstrip('-0b').zfill(5) + "0" + pcluster + bin(0).lstrip('-0b').zfill(128)   ;#+ bin(cluster_col[n_pclust-1] & 0b1111000).lstrip('-0b').zfill(7)
+        #payload = bin(2).lstrip('-0b').zfill(2) +  bin(0).lstrip('-0b').zfill(9) + "0" + bin(0).lstrip('-0b').zfill(5) + bin(n_pclust).lstrip('-0b').zfill(5) + "0" + pcluster + bin(0).lstrip('-0b').zfill(128)   ;#+ bin(cluster_col[n_pclust-1] & 0b1111000).lstrip('-0b').zfill(7)
         
         
         if print_file:
@@ -604,6 +610,103 @@ class MPAFastInjectionMeasurement:
             f.write(message);
         f.close
 
+    def read_config_seu(self, col, row, width, filename):
+        f = open(filename, 'a')
+        for key, value in self.mpa.i2c.peri_reg_map.items():
+            if(key is not "Async_SEUcntPeri") and (key is not "Sync_SEUcntPeri"):
+                message = f"{self.mpa.i2c.peri_read(key)}, "
+                f.write(message)
+        for key, value in self.mpa.i2c.mpa_row_reg_map.items():
+            for i in range(1,17):
+                if(key is not "Async_SEUcntPixels") and (key is not "Sync_SEUcntRow"):
+                    message = f"{self.mpa.i2c.row_read(key, i)}, "
+                    f.write(message)
+        for i in range(0,len(col)):
+            for j in range(0, width[i]):
+                message = str(self.mpa.i2c.pixel_read('PixelEnables', row[i], col[i] + j)) +", "; f.write(message)
+                message = str(self.mpa.i2c.pixel_read('DigPattern', row[i], col[i] + j)) +", "; f.write(message)
+
+    def checkI2C_dyn(self, n = 1, filename = "../cernbox/SEU_results/I2C_dynamic_test.csv"):
+        t0 = time.time()
+        print("Starting Dynamic I2C test")
+        self.mpa.fc7.activate_I2C_chip(frequency = 4, verbose = 0)
+        f = open(filename, 'w')
+        self.mpa.i2c.row_write("Mask",0,255)
+        base = 0b1000100000000000
+        for i in range(0,n):
+            slave = random.randint(0,2)
+            if (slave == 0):
+                reg = random.randint(0,28)
+                adr = reg | base
+            elif (slave == 1):
+                reg = random.randint(0,9)
+                row = random.randint(1,16)
+                pixel_id = 0b1111001
+                adr  = ((row & 0x0001f) << 11 ) | ((reg & 0x000f) << 7 ) | (pixel_id & 0xfffffff)
+            elif (slave == 2):
+                reg = random.randint(0,2)
+                row = random.randint(1,16)
+                pixel_id = random.randint(1,120)
+                adr  = ((row & 0x0001f) << 11 ) | ((reg & 0x000f) << 7 ) | (pixel_id & 0xfffffff)
+            self.mpa.i2c.write_I2C('MPA', adr, 255)
+            max_value = self.mpa.i2c.read_I2C('MPA', adr)
+            if (max_value != None):
+                value = random.randint(0, max_value)
+                self.mpa.i2c.write_I2C('MPA', adr, value)
+                check = self.mpa.i2c.read_I2C('MPA', adr)
+                if ( check != value):
+                    if (check != None):
+                        message = "Error in slave " + str(slave) + " reg: " + str(reg) + " Write " + str(bin(value)) + " Read " + str(bin(check))
+                        f.write(message); f.write("\n")
+                        print(message)
+                    else:
+                        message = "I2C op failed  in slave " + str(slave) + " reg: " + str(reg) + " Write " + str(bin(value))
+                        f.write(message); f.write("\n")
+                        print(message)
+            else:
+                message = "Error in slave " + str(slave) + " reg: " + str(reg) + " max value --> " + str(max_value)
+                f.write(message); f.write("\n")
+                print(message)
+        f.close()
+        t1 = time.time()
+        print("Test Completed")
+        print(f"Elapsed Time: {str(t1 - t0)}")
+
+    def checkI2C(self, col, row, width, filename = "../cernbox/SEU_results/I2C_test.csv"):
+        f = open(filename, 'a')
+        base = 0b1000100000000000
+        for i in range(0,136):
+            adr = i | base
+            message = str(self.mpa.i2c.read_I2C('MPA', adr)) + ", "
+            f.write(message);
+            print(message)
+        
+        for i in range(0,len(col)):
+            for j in range(0, width[i]):
+                message = str(self.mpa.i2c.pixel_read('PixelEnables', row[i], col[i] + j)) +", "; f.write(message)
+                message = str(self.mpa.i2c.pixel_read('DigPattern', row[i], col[i] + j)) +", "; f.write(message)
+                #MPA1
+                #message = str(self.i2c.pixel_read('ModeSel', row[i], col[i] + j)) +", "; f.write(message) 
+                #message = str(self.i2c.pixel_read('ClusterCut', row[i], col[i] + j)) +", "; f.write(message)
+        print()
+        f.write("\n")
+        f.close()
+
+    def checkSEU(self, filename = "../cernbox/SEU_results/SEUcnt_test.csv"):
+        cnt = 0
+        f = open(filename, 'a')
+        seu_async = self.mpa.i2c.peri_read("Async_SEUcntPeri")
+        seu_sync = self.mpa.i2c.peri_read("Sync_SEUcntPeri")
+        message = f"{str(seu_async)}, {str(seu_sync)}, "
+        f.write(message)
+        for i in range(1,17):
+            seu_async = self.mpa.i2c.row_read("Async_SEUcntPixels", i)
+            seu_sync = self.mpa.i2c.row_read("Sync_SEUcntRow", i) 
+            message = f"{str(seu_async)}, {str(seu_sync)}, "
+            f.write(message)
+        f.write("\n")
+        f.close()
+        return cnt
 
     def Run(self, col, row, width, strip, timer_data_taking = 5, offset = 5, cal_pulse_period = 10, l1a_period = 101, latency = 100, diff = 2, skip = 1, verbose = 1, print_file = 1, runname =  "../cernbox/SEU_results/", iteration = 0):
         #self.mpa.reset()
@@ -684,8 +787,35 @@ class MPAFastInjectionMeasurement:
             time.sleep(0.01)
             if (res[9] != res_i2c):
                 stop=1
-            i+=1
+            else:
+                i+=1
             print(i)
+        #self.mpa.init(reset_chip = 1)
+
+        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.trig_data_delay",i-1)
+        time.sleep(0.01)
+        self.mpa.fc7.send_resync()
+        time.sleep(0.01)
+        self.mpa.fc7.send_trigger()
+        time.sleep(0.01)
+        res = self.mpa.rdo.read_L1()
+        time.sleep(0.01)
+        res_i2c = self.mpa.i2c.peri_read("L1_miss_strip")
+        print(res_i2c)
+        res_i2c2 = self.mpa.i2c.peri_read("ErrorL1")
+        print(res_i2c)
+        self.mpa.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_gen.trig_data_delay",i)
+        time.sleep(0.01)
+        self.mpa.fc7.send_resync()
+        time.sleep(0.01)
+        self.mpa.fc7.send_trigger()
+        time.sleep(0.01)
+        res = self.mpa.rdo.read_L1()
+        res_i2c = self.mpa.i2c.peri_read("L1_miss_strip")
+        print(res_i2c)
+        res_i2c2 = self.mpa.i2c.peri_read("ErrorL1")
+        print(res_i2c)
+        
 
 
 if __name__ == '__main__': # TEST

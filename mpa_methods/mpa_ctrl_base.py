@@ -329,25 +329,6 @@ class mpa_ctrl_base:
                 print("Lot N:", lot, "; Wafer N:", wafer_n, "; Position: ", pos, "; Status: ", status, "; Process bin: ", process, "; ADC reference: ", adc_ref, ";" )
 
         return pos, wafer_n, lot, status, process, adc_ref
-    
-    def checkI2C(self, col, row, width, filename = "../cernbox/SEU_results/I2C_test.csv"):
-        f = open(filename, 'a')
-        base = 0b1000100000000000
-        for i in range(0,136):
-            adr = i | base
-            message = str(self.i2c.read_I2C('MPA', adr, 0.001)) + ", "
-            f.write(message);
-        for i in range(0,len(col)):
-            for j in range(0, width[i]):
-                message = str(self.i2c.pixel_read('PixelEnables', row[i], col[i] + j)) +", "; f.write(message)
-                message = str(self.i2c.pixel_read('DigPattern', row[i], col[i] + j)) +", "; f.write(message)
-
-                #MPA1
-                #message = str(self.i2c.pixel_read('ModeSel', row[i], col[i] + j)) +", "; f.write(message) 
-                #message = str(self.i2c.pixel_read('ClusterCut', row[i], col[i] + j)) +", "; f.write(message)
-               
-        f.write("\n")
-        f.close()
 #	    def save_configuration(self, file = '../MPA_Results/Configuration.csv', display=True):
 #		registers = []
 #		for reg in self.mpa_peri_reg_map:
