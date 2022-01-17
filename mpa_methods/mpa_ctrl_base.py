@@ -45,8 +45,10 @@ class mpa_ctrl_base:
         self.i2c.peri_write('ECM',0b10000001)
         self.i2c.peri_write("Mask", 0b11111111)
     def activate_ss(self):
+        self.i2c.peri_write("Mask", 0b11111111)
         self.i2c.peri_write('ECM',0b01000001)
     def activate_ps(self):
+        self.i2c.peri_write("Mask", 0b11111111)
         self.i2c.peri_write('ECM',0b00001000)
 
     def ro_peri(self, duration = 100, verbose = 0):
@@ -327,8 +329,7 @@ class mpa_ctrl_base:
                 print("Lot N:", lot, "; Wafer N:", wafer_n, "; Position: ", pos, "; Status: ", status, "; Process bin: ", process, "; ADC reference: ", adc_ref, ";" )
 
         return pos, wafer_n, lot, status, process, adc_ref
-        
-#	def save_configuration(self, file = '../MPA_Results/Configuration.csv', display=True):
+#	    def save_configuration(self, file = '../MPA_Results/Configuration.csv', display=True):
 #		registers = []
 #		for reg in self.mpa_peri_reg_map:
 #			tmp = [-1, -1, reg, self.i2c.peri_read(reg)]

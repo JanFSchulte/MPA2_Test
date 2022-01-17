@@ -289,6 +289,13 @@ class fc7_com():
 
     def Configure_SEU(self, cal_pulse_period, l1a_period, number_of_cal_pulses, initial_reset = 0):
         self.fc7_if.write('fc7_daq_ctrl.fast_command_block.control.reset', 1)
+        # added for MPA2
+        self.fc7_if.write("fc7_daq_cnfg.sync_block.enable", 1)
+        self.fc7_if.write("fc7_daq_cnfg.sync_block.is_bc0_enable", 1)
+        self.fc7_if.write("fc7_daq_cnfg.sync_block.num_triggers", 510)
+        self.fc7_if.write("fc7_daq_cnfg.sync_block.delay", 20)
+        ###
+        time.sleep(0.10); self.fc7_if.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
         time.sleep(0.10); self.fc7_if.write("fc7_daq_cnfg.fast_command_block.misc.initial_fast_reset_enable", initial_reset)
         time.sleep(0.01); self.fc7_if.write("fc7_daq_cnfg.fast_command_block.test_pulse.delay_before_next_pulse", cal_pulse_period)
         time.sleep(0.01); self.fc7_if.write("fc7_daq_cnfg.fast_command_block.seu_ntriggers_to_skip", l1a_period)

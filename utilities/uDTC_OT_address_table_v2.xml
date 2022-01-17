@@ -12,7 +12,16 @@
     <node id="user_stat" address ="0x40000000" permission="r" mode="block" size="0x0000000F">
     </node>
 
+    <!-- snyc block added Jan 2022 for SEU Testing -->
     <node id="fc7_daq_cnfg" address="0x40010000" permission="rw" >
+        <node id="sync_block"            address="0xC000">
+            <node id="enable"            address="0x000" mask="0x00000001"/>
+            <node id="is_bc0_enable"     address="0x000" mask="0x00000002"/>
+            <node id="is_resync_enable"  address="0x000" mask="0x00000004"/>
+            <node id="delay"             address="0x000" mask="0x000FFFF0"/>
+            <node id="num_triggers"      address="0x000" mask="0x1FF00000"/>
+        </node>
+
     <node id="stub_debug"			address="0x0008000">
 	    <node id="enable"			mask="0x00000001"/>
 	</node>
@@ -127,7 +136,7 @@
             </node>
             <!--Manually added, Nov 2021-->
             <node id="ssa_gen"            description="control for trigger data to inject into MPA" address="0x004">
-                <node id ="trig_data_delay"                 mask="0x00001f00"/>
+                <node id ="trig_data_delay"                 mask="0x00001f00"   description="For testing of the single MPA chip. Register controls the delay (25ns units) with which the fake SSA like l1 data is send with respect to the l1 trigger."/>
                 <node id ="stub_data_delay"                 mask="0x001f0000"/>
                 <node id ="l1_data"                         mask="0x01000000"/>
             </node>
@@ -433,6 +442,7 @@
             <node id="slvs_compare_read_data1_fifo"                 address="0x006"/>
             <node id="slvs_compare_read_data2_fifo"                 address="0x007"/>
             <node id="slvs_compare_read_data3_fifo"                 address="0x008"/>
+            <node id="slvs_compare_read_data4_fifo"                 address="0x009"/>
             <node id="l1_slvs_compare_read_data1_fifo"              address="0x00a"/>
             <node id="l1_slvs_compare_read_data2_fifo"              address="0x00b"/>
             <node id="l1_slvs_compare_read_data3_fifo"              address="0x00c"/>
@@ -471,6 +481,8 @@
         <node id="fine_phase_tune"     address="0x3003">
             <node id="control"                      address="0x000">
                 <node id="toggle_phase"             mask="0x000000FF"/>
+                <node id="trig_phase"               mask="0x0000FF00"/>
+                <node id="stub_phase"               mask="0x00FF0000"/>
             </node>
         </node>
 
@@ -627,7 +639,7 @@
                 <node id="fifo_empty"                           mask="0x00000080"/>
                 <node id="numbere_events_written_to_fifo"       mask="0x003fff00"/>
             </node>
-            <node id="l1_slvs_compare_number_good_data"  address="0x006"/>
+            <node id="l1_slvs_compare_number_good_data"         address="0x006"/>
             <node id="l1_slvs_compare_number_l1_headers_found"  address="0x008"/>
             <node id="l1_slvs_compare_number_l1_triggers"       address="0x007"/>
             <node id="cic_decoder"              address="0x00C">
