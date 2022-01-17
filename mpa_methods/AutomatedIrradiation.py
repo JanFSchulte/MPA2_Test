@@ -81,8 +81,11 @@ class TID_control:
 
             # Keep Logic busy, configure pixel, trigger, cal_pulse
             if (first):
-                rnd_ret = self.chip.test.rnd_test(n_tests=500)
-                self.log.print_info(f"RND_tests at {round((int(time.time())- self.InitialTime)/60,2)} min.: {rnd_ret}")
+                try:
+                    rnd_ret = self.chip.test.rnd_test(n_tests=500)
+                    self.log.print_info(f"RND_tests at {round((int(time.time())- self.InitialTime)/60,2)} min.: {rnd_ret}")
+                except:
+                    self.print_exception(f"-> Busy logic error at {datetime.datetime.now()}")
             # Run standard test procedure
             time_now=time.time()
             if (first == 0) | ((time_now - test_time)> self.interval): # 30 min passed?
@@ -95,7 +98,6 @@ class TID_control:
                     ChipStatus = self.NEXT(TargetTID)
                     self.log.print_info(f"-> Measurement: {bool(ChipStatus)}")
                 except:
-                    self.log.print_error()
                     self.print_exception(f"-> Measurement error at {datetime.datetime.now()}")
 
                 if ChipStatus == 0:
