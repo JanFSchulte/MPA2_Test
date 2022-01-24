@@ -82,7 +82,7 @@ class fc7_com():
         return self.fc7AddrTable.getItem(mask_name).shiftDataFromMask(data)
 
     def update_active_readout_chip(self):
-        self.active_chip = self.read("cnfg_phy_slvs_chip_switch")
+        self.active_chip = self.read("fc7_daq_cnfg.physical_interface_block.slvs_debug.chip_select")
         return self.active_chip
 
     def get_active_readout_chip(self):
@@ -90,7 +90,7 @@ class fc7_com():
 
     def set_active_readout_chip(self, ID, display=True):
         if(ID != self.active_chip):
-            self.write("cnfg_phy_slvs_chip_switch", ID)
+            self.write("fc7_daq_cnfg.physical_interface_block.slvs_debug.chip_select", ID)
             self.update_active_readout_chip()
             if(display): print("->  Readout switched to SSA-{:d}".format(ID))
         return self.active_chip
@@ -246,7 +246,9 @@ class fc7_com():
         cnt = 0; ex = '';
         while cnt < 4:
             try:
-                return self.fc7_if.fifoRead(p1, p2, p3)
+                # fifoRead and blockRead should be identical with uHal
+                # only difference is address table entry
+                return self.fc7_if.blockRead(p1, p2, p3)
             except:
                 ex = sys.exc_info()
                 utils.print_error('=>  \tFC7 Communication error - fc7_read_fifo')
@@ -540,7 +542,7 @@ class fc7_com():
         status = np.array(status)
         return status
 
-    def CheckLineDone(self, hybrid_id, chip_id, line_id, display=False, return_full_status=False):
+    def CheckLineDone(self, hybrid_id, chip_id, line_id, display=True, return_full_status=False):
         # shifting
         hybrid_raw = (hybrid_id & 0xF) << 28
         chip_raw = (chip_id & 0xF) << 24

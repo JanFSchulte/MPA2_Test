@@ -53,6 +53,10 @@ else
 	#./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
 	source ~/Ph2_ACF/setup.sh
 	fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i SSAx1_SEU_oldFW_newPhT.bit
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_SSA2_ProtoDev_1261423d.bin
+	
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i ssa2_on_l12_051121.bin
+
 	#./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit   # the SEU firmware
 	#./bin/fc7-d19c.exe  -i $IP -n SSAx1_SEU_oldFW_newPhT.bit -f ~/MPA-SSA_Test/bitfiles/SSAx1_SEU_oldFW_newPhT_14092020.bit
 

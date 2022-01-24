@@ -6,9 +6,9 @@ source ./FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export LC_ALL=C; unset LANGUAGE
 
-BOARD_MAC="08:00:30:00:22:5d"
+BOARD_MAC="08:00:30:00:22:f0"
 
-file="./utilities/ipaddr_mpa.dat"
+file="./utilities/ipaddr.dat"
 while IFS= read -r line
 do
 	IP=$line
@@ -21,11 +21,11 @@ printf '______________________________________________________\n'
 printf '             Starting SSA Test System                 \n'
 printf '                                                      \n'
 
-echo ""
-echo "from d19cScripts import *" >  LaunchPy.py
-echo "from myScripts import *" >> LaunchPy.py
-echo "from ssa_methods import *" >> LaunchPy.py
+echo "from utilities import *" >  LaunchPy.py
+#echo "from myScripts import *" >> LaunchPy.py
+echo "from main import *" >> LaunchPy.py
 #echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('ssa') "  >> LaunchPy.py
+echo "from utilities import tbconfig " >  utilities/tbsettings.py
 echo "from utilities import tbconfig " >  utilities/tbsettings.py
 echo "tbconfig.VERSION['SSA'] = 2" >> utilities/tbsettings.py
 echo "tbconfig.VERSION['MPA'] = 1" >> utilities/tbsettings.py

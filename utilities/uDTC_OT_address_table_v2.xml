@@ -115,24 +115,28 @@
             </node>
         </node>
 
-        <node id="physical_interface_block"     address="0x3000">
-            <node id="ssa_stub_data"            description="stub data to inject into MPA">
-                <node id ="format_0_0"              address="0x006"/>
-                <node id ="format_0_1"              address="0x007"/>
-                <node id ="format_1_0"              address="0x008"/>
-                <node id ="format_1_1"              address="0x009"/>
-                <node id ="format_2_0"              address="0x00a"/>
-                <node id ="format_2_1"              address="0x00b"/>
-                <node id ="format_3_0"              address="0x00c"/>
-                <node id ="format_3_1"              address="0x00d"/>
-                <node id ="format_4_0"              address="0x00e"/>
-                <node id ="format_4_1"              address="0x00f"/>
-                <node id ="format_5_0"              address="0x010"/>
-                <node id ="format_5_1"              address="0x011"/>
-                <node id ="format_6_0"              address="0x012"/>
-                <node id ="format_6_1"              address="0x013"/>
-                <node id ="format_7_0"              address="0x014"/>
-                <node id ="format_7_1"              address="0x015"/>
+        <node id="physical_interface_block" address="0x3000">
+            <node id="ssa_stub_data" description="stub data to inject into MPA">
+                <node id ="lateral_format"   address="0x005">
+                    <node id ="left"   mask="0x000000ff"/>
+                    <node id ="right"  mask="0x0000ff00"/>
+                </node>
+                <node id ="format_0_0"            address="0x006"/>
+                <node id ="format_0_1"            address="0x007"/>
+                <node id ="format_1_0"            address="0x008"/>
+                <node id ="format_1_1"            address="0x009"/>
+                <node id ="format_2_0"            address="0x00a"/>
+                <node id ="format_2_1"            address="0x00b"/>
+                <node id ="format_3_0"            address="0x00c"/>
+                <node id ="format_3_1"            address="0x00d"/>
+                <node id ="format_4_0"            address="0x00e"/>
+                <node id ="format_4_1"            address="0x00f"/>
+                <node id ="format_5_0"            address="0x010"/>
+                <node id ="format_5_1"            address="0x011"/>
+                <node id ="format_6_0"            address="0x012"/>
+                <node id ="format_6_1"            address="0x013"/>
+                <node id ="format_7_0"            address="0x014"/>
+                <node id ="format_7_1"            address="0x015"/>
             </node>
             <!--Manually added, Nov 2021-->
             <node id="ssa_gen"            description="control for trigger data to inject into MPA" address="0x004">
@@ -730,8 +734,7 @@
             </node>
             <node id="stub_debug"                address="0x042" description="stub scoping " mode="incremental" size="80"/>
             <node id="l1a_debug"                address="0x010" description="l1a scoping " mode="incremental" size="50"/>
-
-
+            <node id="lateral_0"                address="0x092" description="ssa Lateral data" mode="incremental" size="20"/>
 
             <!-- debug counters -->
             <node id="debug_blk_counter00"                address="0x0BD" mask="0xFFFFFFFF" description="counter on debug block input line 00"/>

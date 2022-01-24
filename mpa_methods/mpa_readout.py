@@ -16,7 +16,7 @@ from utilities.tbsettings import *
 fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
 mpa_l1_data = fc7.blockRead("fc7_daq_stat.physical_interface_block.l1a_debug", 50, 0)
 mpa_stub_data = fc7.blockRead("fc7_daq_stat.physical_interface_block.stub_debug", 80, 0)
-lateral_data = fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
+lateral_data = fc7.blockRead("fc7_daq_stat.physical_interface_block.lateral_0", 20, 0)
 fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
 '''
 
@@ -357,7 +357,7 @@ class MPAReadout():
         status = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
         ssa_l1_data = self.fc7.blockRead("fc7_daq_stat.physical_interface_block.l1a_debug", 50, 0)
         ssa_stub_data = self.fc7.blockRead("fc7_daq_stat.physical_interface_block.stub_debug", 80, 0)
-        lateral_data = self.fc7.blockRead("stat_slvs_debug_lateral_0", 20, 0)
+        lateral_data = self.fc7.blockRead("fc7_daq_stat.physical_interface_block.lateral_0", 20, 0)
         utils.print_log("--> Status: ")
         utils.print_log("---> MPA L1 Data Ready: " + str((status & 0x00000001) >> 0))
         utils.print_log("---> MPA Stub Data Ready: " + str((status & 0x00000002) >> 1))

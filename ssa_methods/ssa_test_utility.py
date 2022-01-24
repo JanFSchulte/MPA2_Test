@@ -56,16 +56,17 @@ class SSA_test_utility():
 
 
 	##############################################################
-	def cluster_data(self, mode = "digital",  nstrips = 'random', min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = True, word_alignment='auto'):
+	def cluster_data(self, mode = "digital",  nstrips = 'random', min_clsize = 1, max_clsize = 4, nruns = 100, shift = 'default', display=False, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '', stop_on_error = False, lateral = False, word_alignment='auto'):
 		fo = open(file + "readout_cluster-data_" + mode + ".csv", filemode)
 		stexpected = ''; stfound = '';
 		utils.activate_I2C_chip(self.fc7)
-		SendCommand_CTRL("stop_trigger")
+		self.fc7.SendCommand_CTRL("stop_trigger")
 		if (init):
 			self.ssa.init(reset_board = False, reset_chip = False, display = False)
 		if( (word_alignment=='auto' and (not self.ssa.cl_word_aligned())) or (word_alignment==True) or (word_alignment==1)):
 			self.ssa.alignment_cluster_data_word()
-			self.ssa.alignment_lateral_input()
+			if(lateral):
+				self.ssa.alignment_lateral_input()
 		time.sleep(0.1)
 		#self.ssa.ctrl.set_sampling_deskewing_coarse(value = 0)
 		#self.ssa.ctrl.set_sampling_deskewing_fine(value = 0, enable = True, bypass = True)
@@ -169,7 +170,7 @@ class SSA_test_utility():
 		return rt
 
 	##############################################################
-	def l1_data(self, mode = "digital", nstrips='random', nruns = 100, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '',profile=False):
+	def l1_data(self, mode = "digital", nstrips='random', nruns = 100, calpulse = [100, 200], threshold = [20, 120], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '',profile=False):
 		fo = open(file + "readout_L1-data_" + mode + ".csv", filemode)
 		counter = [[0,0],[0,0], [0,0]]
 		utils.activate_I2C_chip(self.fc7)
@@ -493,19 +494,19 @@ class SSA_test_utility():
 		#utils.print_log(self.striplist)
 		hiplist = self.striplist
 		display = 0 if display_errors else -1
-		sleep(0.01); SendCommand_CTRL("global_reset")
-		sleep(0.01);  SendCommand_CTRL("fast_fast_reset")
+		sleep(0.01); self.fc7.SendCommand_CTRL("global_reset")
+		sleep(0.01); self.fc7.SendCommand_CTRL("fast_fast_reset")
 		sleep(0.01); self.seuutil.ssa.init(edge = 'negative', display = False, slvs_current=slvs_current)
 		s1, s2, s3 = self.seuutil.Stub_Evaluate_Pattern(striplist)
 		p1, p2, p3, p4, p5, p6, p7 = self.seuutil.L1_Evaluate_Pattern(striplist, hiplist)
 		sleep(0.01); self.seuutil.Configure_Injection(strip_list = striplist, hipflag_list = hiplist, analog_injection = 0, latency = 501, create_errors = False)
 		sleep(0.01); self.seuutil.Stub_loadCheckPatternOnFC7(pattern1 = s1, pattern2 = s2, pattern3 = 1, lateral = s3, display = 0)
-		sleep(0.01); Configure_SEU(1, int(40000.0/L1_rate-1), number_of_cal_pulses = 0, initial_reset = 1)
-		sleep(0.01); fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
+		sleep(0.01); self.fc7.Configure_SEU(1, int(40000.0/L1_rate-1), number_of_cal_pulses = 0, initial_reset = 1)
+		sleep(0.01); self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
 		sleep(0.01); self.seuutil.fc7.write("cnfg_phy_SSA_SEU_CENTROID_WAITING_AFTER_RESYNC", 73)
-		sleep(0.01); SendCommand_CTRL("start_trigger")
+		sleep(0.01); self.fc7.SendCommand_CTRL("start_trigger")
 		sleep(0.50); pw = self.pwr.get_power(display = False, return_all = True)
-		sleep(0.01); SendCommand_CTRL("stop_trigger")
+		sleep(0.01); self.fc7.SendCommand_CTRL("stop_trigger")
 		return pw
 
 	##############################################################
@@ -862,12 +863,12 @@ class SSA_test_utility():
 			self.fc7.write("fc7_daq_cnfg.fast_command_block.triggers_to_accept", npulses)
 			#self.fc7.write("fc7_daq_ctrl.fast_command_block.control.fast_duration", l1_duration) ### doesn't work
 			#sleep(0.1); self.fc7.write("fc7_daq_ctrl.fast_command_block", fc7AddrTable.getItem("fc7_daq_ctrl.fast_command_block.control.fast_duration").shiftDataToMask(l1_duration) ); sleep(0.1);
-			sleep(0.1);	SendCommand_CTRL("load_trigger_config"); sleep(0.1);
+			sleep(0.1);	self.fc7.SendCommand_CTRL("load_trigger_config"); sleep(0.1);
 		self.ssa.inject.digital_pulse(hit_list = patternL, hip_list = patternH, initialise = False, sequence = sequence)
 		sleep(0.001)
 
 		#send_trigger(0)
-		SendCommand_CTRL("start_trigger")
+		self.fc7.SendCommand_CTRL("start_trigger")
 		rt = self.ssa.readout.l1_data(display = display, initialise = False, mipadapterdisable = False, trigger = 0, multi = True, display_raw = display_raw)
 		dstr = '';
 		for res in rt:

@@ -15,7 +15,7 @@ SSA_ADR_0="0b0100000"
 SSA_ADR_1="0b0100111"
 CHIP_SELECT="SSA"
 
-file="./utilities/ipaddr_mpa.dat"
+file="./utilities/ipaddr.dat"
 while IFS= read -r line
 do
 	IP=$line
@@ -25,13 +25,13 @@ done <"$file"
 eth=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
 
 printf '______________________________________________________\n'
-printf '             Starting MPA2 Test System                 \n'
+printf '             Starting SSA2 Test System                 \n'
 printf '                                                      \n'
 
 echo ""
-
-echo "from d19cScripts import *" >  LaunchPy.py
-echo "from myScripts import *" >> LaunchPy.py
+echo ""
+echo "from utilities import *" >  LaunchPy.py
+#echo "from myScripts import *" >> LaunchPy.py
 echo "from main import *" >> LaunchPy.py
 #echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('ssa') "  >> LaunchPy.py
 echo "from utilities import tbconfig " >  utilities/tbsettings.py
@@ -46,7 +46,7 @@ echo "tbconfig.SSA_ADR[1] = $SSA_ADR_1" >> utilities/tbsettings.py
 
 
 
-cp $file d19cScripts/ipaddr.dat
+#cp $file d19cScripts/ipaddr.dat
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 

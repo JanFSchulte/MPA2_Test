@@ -426,7 +426,7 @@ class ssa_ctrl_base:
 		fwdel = delay + 20 + fc7_correction
 		if(fwdel >= 255):
 			utils.print_error('->  The counters delay value selected is not supposrted by the firmware [> 255]')
-		self.fc7.write("cnfg_phy_slvs_ssa_first_counter_del", fwdel & 0xff)
+		self.fc7.write("fc7_daq_cnfg.physical_interface_block.slvs_debug.SSA_first_counter_del", fwdel & 0xff)
 
 	#####################################################################
 	def activate_readout_shift(self):
@@ -675,15 +675,15 @@ class ssa_ctrl_base:
 	#####################################################################
 	def set_lateral_data_phase(self, left, right):
 		self.setup_readout_chip_id()
-		
+
 		self.fc7.write("ctrl_phy_ssa_gen_lateral_phase_1", right)
 		self.fc7.write("ctrl_phy_ssa_gen_lateral_phase_2", left)
 
 	#####################################################################
 	def set_lateral_data(self, left, right):
 		self.setup_readout_chip_id()
-		self.fc7.write("cnfg_phy_SSA_gen_right_lateral_data_format", right)
-		self.fc7.write("cnfg_phy_SSA_gen_left_lateral_data_format", left)
+		self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.lateral_format.right", right)
+		self.fc7.write("fc7_daq_cnfg.physical_interface_block.ssa_stub_data.lateral_format.left", left)
 
 	#####################################################################
 	def read_fuses(self, pulse = True, display = True, expected=False):

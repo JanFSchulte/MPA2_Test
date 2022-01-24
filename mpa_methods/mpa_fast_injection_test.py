@@ -44,20 +44,20 @@ class MPAFastInjectionMeasurement:
         self.test = test
         self.bias = bias
 
-    def RunRandomTest8p8s(self, n = 5, timer_data_taking = 20, cal_pulse_period = 1, l1a_period = 40, latency = 500, runname = "../myTest", skip = 1):
+    def RunRandomTest8p8s(self, n = 6, timer_data_taking = 60, cal_pulse_period = 1, l1a_period = 40, latency = 500, runname = "../myTest", skip = 1):
         t0 = time.time()
         folder = self.DIR + "/" + str(runname) + "/"
-        try: 
+        try:
             os.mkdir(folder)
         except Exception as e:
             print(e)
         folder = self.DIR + "/" + str(runname) + "/Patterns/"
-        try: 
+        try:
             os.mkdir(folder)
         except Exception as e:
             print(e)
         folder = self.DIR + "/" + str(runname) + "/Error/"
-        try: 
+        try:
             os.mkdir(folder)
         except Exception as e:
             print(e)
@@ -108,7 +108,7 @@ class MPAFastInjectionMeasurement:
             message = str(good) + ", "; f.write(message)
             message = str(wrong_L1) + ", "; f.write(message)
             message = str(good_L1) + ", "; f.write(message)
-
+            f.write("\n")
             wrong_tot[i] = wrong
             wrong_tot_L1[i] = wrong_L1
             good_tot[i] = good
@@ -121,6 +121,7 @@ class MPAFastInjectionMeasurement:
             print("Elapsed Time: " + str(t1 - t0))
         self.mpa.init(reset_board = 1, reset_chip =1)
         self.checkI2C_dyn(n = 1000, filename = folder + "I2C_dynamic_test.log")
+
         f.close()
         self.end = time.time()
         self.colprint("TOTAL TIME:")
@@ -158,8 +159,8 @@ class MPAFastInjectionMeasurement:
         #self.mpa.i2c.peri_write('EdgeSelTrig', 0) # 1 = rising
         #time.sleep(0.01)
         #self.mpa.i2c.peri_write('ECM',  0)
-        alignStub = 6
-        alignL1 = 6
+        alignStub = 5
+        alignL1 = 5
         align = 0b00000000 | (alignStub << 3) | alignL1
         self.mpa.i2c.peri_write('LatencyRx320', align)
         #self.mpa.i2c.peri_write('LatencyRx320', 0b00101111) # Trigger line aligned with FC7
@@ -350,8 +351,8 @@ class MPAFastInjectionMeasurement:
         payload = bin(2).lstrip('-0b').zfill(2) +  bin(0).lstrip('-0b').zfill(9) + "0" + bin(n_sclust).lstrip('-0b').zfill(5) + bin(n_pclust).lstrip('-0b').zfill(5) + "0" + scluster + pcluster + bin(0).lstrip('-0b').zfill(128)   ;#+ bin(cluster_col[n_pclust-1] & 0b1111000).lstrip('-0b').zfill(7)
         # without strips:
         #payload = bin(2).lstrip('-0b').zfill(2) +  bin(0).lstrip('-0b').zfill(9) + "0" + bin(0).lstrip('-0b').zfill(5) + bin(n_pclust).lstrip('-0b').zfill(5) + "0" + pcluster + bin(0).lstrip('-0b').zfill(128)   ;#+ bin(cluster_col[n_pclust-1] & 0b1111000).lstrip('-0b').zfill(7)
-        
-        
+
+
         if print_file:
             f.write("L1 pattern check:\n")
             f.write(payload)
@@ -451,7 +452,7 @@ class MPAFastInjectionMeasurement:
         #    time.sleep(0.001)
 
         self.mpa.fc7.write("fc7_daq_ctrl.physical_interface_block.slvs_compare.start",1)
-        
+
         #start taking data and check the 80% full threshold of the FIFO (on FC7?)
         FIFO_almost_full = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.slvs_compare.fifo_almost_full")
         FIFO_almost_full_L1 = self.mpa.fc7.read("fc7_daq_stat.physical_interface_block.l1_slvs_compare.fifo_almost_full")
@@ -625,6 +626,8 @@ class MPAFastInjectionMeasurement:
             for j in range(0, width[i]):
                 message = str(self.mpa.i2c.pixel_read('PixelEnables', row[i], col[i] + j)) +", "; f.write(message)
                 message = str(self.mpa.i2c.pixel_read('DigPattern', row[i], col[i] + j)) +", "; f.write(message)
+        f.write("\n")
+        f.close()
 
     def checkI2C_dyn(self, n = 1, filename = "../cernbox/SEU_results/I2C_dynamic_test.csv"):
         t0 = time.time()
@@ -635,6 +638,10 @@ class MPAFastInjectionMeasurement:
         base = 0b1000100000000000
         for i in range(0,n):
             slave = random.randint(0,2)
+            if (i%2000 == 0):
+                # added because there there was i2c stuck after 2048 i2c read/writes
+                print("Reset I2C")
+                self.mpa.fc7.activate_I2C_chip(frequency = 4, verbose = 0)
             if (slave == 0):
                 reg = random.randint(0,28)
                 adr = reg | base
@@ -664,7 +671,7 @@ class MPAFastInjectionMeasurement:
                         f.write(message); f.write("\n")
                         print(message)
             else:
-                message = "Error in slave " + str(slave) + " reg: " + str(reg) + " max value --> " + str(max_value)
+                message = f"Error in slave {str(slave)} reg: {str(reg)} max value --> {str(max_value)} n: {i}"
                 f.write(message); f.write("\n")
                 print(message)
         f.close()
@@ -680,13 +687,13 @@ class MPAFastInjectionMeasurement:
             message = str(self.mpa.i2c.read_I2C('MPA', adr)) + ", "
             f.write(message);
             print(message)
-        
+
         for i in range(0,len(col)):
             for j in range(0, width[i]):
                 message = str(self.mpa.i2c.pixel_read('PixelEnables', row[i], col[i] + j)) +", "; f.write(message)
                 message = str(self.mpa.i2c.pixel_read('DigPattern', row[i], col[i] + j)) +", "; f.write(message)
                 #MPA1
-                #message = str(self.i2c.pixel_read('ModeSel', row[i], col[i] + j)) +", "; f.write(message) 
+                #message = str(self.i2c.pixel_read('ModeSel', row[i], col[i] + j)) +", "; f.write(message)
                 #message = str(self.i2c.pixel_read('ClusterCut', row[i], col[i] + j)) +", "; f.write(message)
         print()
         f.write("\n")
@@ -701,7 +708,7 @@ class MPAFastInjectionMeasurement:
         f.write(message)
         for i in range(1,17):
             seu_async = self.mpa.i2c.row_read("Async_SEUcntPixels", i)
-            seu_sync = self.mpa.i2c.row_read("Sync_SEUcntRow", i) 
+            seu_sync = self.mpa.i2c.row_read("Sync_SEUcntRow", i)
             message = f"{str(seu_async)}, {str(seu_sync)}, "
             f.write(message)
         f.write("\n")
@@ -720,7 +727,7 @@ class MPAFastInjectionMeasurement:
         time.sleep(0.1)
         #self.mpa.ctrl_base.align_out(verbose =1)
         #self.mpa.ctrl_base.align_out_all(pattern = 0b10100000)
-        
+
         if (skip == 0):
             Configure_TestPulse_MPA(delay_after_fast_reset = 0, delay_after_test_pulse = latency + 1, delay_before_next_pulse = cal_pulse_period, number_of_test_pulses = 0, enable_L1 = 1, enable_rst = 0, enable_init_rst = 0)
         else:
@@ -815,7 +822,7 @@ class MPAFastInjectionMeasurement:
         print(res_i2c)
         res_i2c2 = self.mpa.i2c.peri_read("ErrorL1")
         print(res_i2c)
-        
+
 
 
 if __name__ == '__main__': # TEST
