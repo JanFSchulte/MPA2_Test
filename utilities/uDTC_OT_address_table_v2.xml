@@ -438,6 +438,10 @@
             </node>
 	        <node id="fifo1_data"                address="0x001" permission="r" mode="non-incremental"/>
 	        <node id="fifo2_data"                address="0x002" permission="r" mode="non-incremental"/>
+            <node id="ssa_gen"              address="0x004">
+                <node id="lateral_phase_1"                        mask="0x000000ff"/>
+                <node id="lateral_phase_2"                         mask="0x0000ff00"/>
+            </node>           
             <node id="slvs_compare"              address="0x005">
                 <node id="start"                        mask="0x001"/>
                 <node id="stop"                         mask="0x002"/>

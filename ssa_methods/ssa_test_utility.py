@@ -523,7 +523,7 @@ class SSA_test_utility():
 	def shift(self, pattern = 0b00011000):
 		self.ssa.ctrl.activate_readout_shift()
 		self.ssa.ctrl.set_shift_pattern_all(pattern)
-		self.ssa.readout.all_lines(trigger = True, configure = True, cluster = True, l1data = False, lateral = False)
+		self.ssa.readout.all_lines_debug(trigger = True, configure = True, cluster = True, l1data = False, lateral = False)
 
 	##############################################################
 	def ring_oscillators_vs_dvdd(self,

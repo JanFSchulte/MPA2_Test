@@ -120,12 +120,15 @@ class SSA_ASIC:
 
 	####### Data alignment functions ################################
 
-	def alignment_all(self, display = False, file = False):
+	def alignment_all(self, display = False, file = False, lateral=True):
 		r1 = self.init(reset_board = False, reset_chip = False, display = display)
 		time.sleep(0.1)
 		r2 = self.alignment_cluster_data_word(display=display)
 		time.sleep(0.1)
-		r3, r4 = self.alignment_lateral_input(file = file)
+		if(lateral):
+			r3, r4 = self.alignment_lateral_input(file = file)
+		else:
+			r3, r4 = False, False
 		time.sleep(0.1)
 		rpst = "initialize={:0b}, stub-data={:0b}, left={:0b}, right={:0b}".format(r1,r2,r3,r4)
 		if(r1 and r2 and r3 and r4):

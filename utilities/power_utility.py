@@ -20,11 +20,11 @@ class PowerUtility:
 
     def set_clock_source(self, value = 'internal'):
         if(value == 'internal' or value == 0):
-            self.fc7.write("cnfg_clock_ext_clk_en", 0)
-            rp = self.fc7.read("cnfg_clock_ext_clk_en")
+            self.fc7.write("fc7_daq_cnfg.clock.ext_clk_en", 0)
+            rp = self.fc7.read("fc7_daq_cnfg.clock.ext_clk_en")
         elif (value == 'external' or value == 1):
-            self.fc7.write("cnfg_clock_ext_clk_en", 1)
-            rp = self.fc7.read("cnfg_clock_ext_clk_en")
+            self.fc7.write("fc7_daq_cnfg.clock.ext_clk_en", 1)
+            rp = self.fc7.read("fc7_daq_cnfg.clock.ext_clk_en")
         else:
             rp = -1
         return rp
@@ -415,7 +415,8 @@ class PowerUtility:
 
     def __enable_disable_chip(self):
         #val = (self.mpaid << 5) | (self.ssaid << 1) | (self.ssastate << 0) + (self.mpastate << 4)
-        val = (self.mpaid << 5) | (self.mpastate << 4)
+        val = (self.ssaid << 1) | (self.ssastate << 0)
+        #val = (self.mpaid << 5) | (self.mpastate << 4)
         utils.print_enable(False)
         time.sleep(0.01); self.fc7.Configure_MPA_SSA_I2C_Master(1, 2);
         time.sleep(0.01); self.fc7.Send_MPA_SSA_I2C_Command(self.pcbi2cmux, 0, self.pcbwrite, 0, 0x02); # route to 2nd PCF8574
