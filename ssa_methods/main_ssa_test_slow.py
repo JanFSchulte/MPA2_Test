@@ -28,7 +28,7 @@ try:
 except:
 	ssa = False
 
-class MainTests():
+class main_ssa_test_slow():
 
 	def __init__(self, tag="ChipN_0", runtest='default', directory='../SSA_Results/TEST/', chip = ssa, mode_2xSSA=False):
 		self.mode_2xSSA = mode_2xSSA
@@ -48,7 +48,7 @@ class MainTests():
 			self.runtest.set_enable('Calibrate', 'ON')
 			self.runtest.set_enable('Bias', 'ON')
 			self.runtest.set_enable('alignment', 'ON')
-			self.runtest.set_enable('Lateral_In', 'ON')
+			self.runtest.set_enable('Lateral_In', 'OFF')
 			self.runtest.set_enable('Cluster_Data', 'ON')
 			self.runtest.set_enable('Pulse_Injection', 'ON')
 			self.runtest.set_enable('L1_Data', 'ON')
@@ -58,7 +58,7 @@ class MainTests():
 			self.runtest.set_enable('DACs', 'ON')
 			self.runtest.set_enable('ADC', 'OFF')
 			self.runtest.set_enable('Configuration', 'ON')
-			self.runtest.set_enable('ring_oscillators', 'ON') 
+			self.runtest.set_enable('ring_oscillators', 'ON')
 			self.runtest.set_enable('stub_l1_max_speed', 'ON')
 		else:
 			self.runtest = runtest
@@ -242,7 +242,7 @@ class MainTests():
 					self.ssa.reset(); time.sleep(0.5)
 					utils.print_info('->  DVDD set to {:0.3f}'.format(vvv))
 					self.ssa.resync();
-					r1,r2,r3,r4 = self.ssa.chip.alignment_all(display = False)
+					r1,r2,r3,r4 = self.ssa.chip.alignment_all(display = False, lateral = False)
 					if(en):
 						self.summary.set('alignment_cluster_data_{:3.1f}'.format(vvv),  int(r2), '', '',  runname)
 						self.summary.set('alignment_lateral_left_{:3.1f}'.format(vvv),  int(r3), '', '',  runname)
@@ -517,7 +517,7 @@ class MainTests():
 		while (en and wd < 3):
 			try:
 				rp = self.measure.scurve_trim_gain_noise(
-					
+
 					charge_fc_trim = 2.5,           # Input charge in fC
 					charge_fc_test = 1.2,           # Input charge in fC
 					threshold_mv_trim = 'mean',  # Threshold in mV

@@ -27,9 +27,10 @@ from ssa_methods.ssa_seu_utility import *
 
 # SSA Test procedures
 from ssa_methods.ssa_test_climatic_chamber import *
-from ssa_methods.main_ssa_test_1 import *
-from ssa_methods.main_ssa_test_2 import *
-from ssa_methods.main_ssa_test_3 import *
+from ssa_methods.main_ssa_test_1_old import *
+from ssa_methods.main_ssa_test_2_old import *
+from ssa_methods.main_ssa_test_slow  import *
+from ssa_methods.main_ssa_test_fast  import *
 from ssa_methods.ssa_test_2xSSA2 import *
 from ssa_methods.ssa_scanchain_test import *
 from ssa_methods.ssa_test_xray import *
@@ -77,13 +78,15 @@ class SSAwp:
         self.measure       = SSA_measurements(self.chip, self.i2c, FC7, self.cal, self.ana_mux_map, self.pwr, self.seuutil, self.biascal)
 
         # init top level test suites
-        self.main_test_1   = main_ssa_test_1(self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure.fe)
-        self.seu           = SSA_SEU(self.chip, self.seuutil, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
-        self.main_test_2   = main_ssa_test_2(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
-        self.main_test_3   = MainTests(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
-        self.xray          = SSA_test_xray(self.main_test_3, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
-        self.climatic      = SSA_test_climatic_chamber(self.main_test_3, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
-        self.scanchain     = SSA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
+
+        self.seu            = SSA_SEU(self.chip, self.seuutil, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
+        self.main_test_1    = main_ssa_test_1(self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test, self.measure.fe)
+        self.main_test_2    = main_ssa_test_2(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
+        self.main_test_slow = main_ssa_test_slow(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
+        self.main_test_fast = main_ssa_test_fast(chip=self, tag="ChipN_{:d}".format(self.index), directory='../SSA_Results/temp/', mode_2xSSA=self.index)
+        self.xray           = SSA_test_xray(self.main_test_slow, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
+        self.climatic       = SSA_test_climatic_chamber(self.main_test_slow, self.chip, self.i2c, FC7, self.cal, self.biascal, self.pwr, self.test)
+        self.scanchain      = SSA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
 
         # init top function to characterise SSA
         self.anl           = SSA_Analise_Test_results(self.main_test_1, self.test, self.measure.fe, self.biascal)
@@ -113,10 +116,10 @@ class MPAwp:
         self.pwr           = PowerUtility(self.i2c, FC7, index)
         self.chip          = MPA_ASIC(self.i2c, FC7, self.pwr, self.peri_reg_map, self.row_reg_map, self.pixel_reg_map)
         self.cal           = mpa_cal_utility(self.chip, self.i2c, FC7)
-        
+
         # base functionality tests
         self.test          = mpa_test_utility(self.chip, self.i2c, FC7)
-    
+
         self.init          = self.chip.init
         self.inject        = self.chip.inject
 
@@ -128,13 +131,13 @@ class MPAwp:
         self.scanchain = MPA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
 
         try:
-            #multimeter = keithley_multimeter()
-            multimeter = Instruments_Keithley_Multimeter_7510_LAN()
+            multimeter = keithley_multimeter()
+            #multimeter = Instruments_Keithley_Multimeter_7510_LAN()
             self.bias = mpa_bias_utility(self.chip, self.i2c, FC7, multimeter, self.peri_reg_map, self.row_reg_map, self.pixel_reg_map)
         except ImportError:
             self.bias = False
             print("- Impossible to access GPIB instruments")
-        
+
         # additional characterizations
         self.dc            = MPATestDataChain(self.chip, self.i2c, FC7)
         self.measure       = MPAMeasurements(self.chip, self.bias)
