@@ -35,7 +35,7 @@ class SSA_measurements_fe():
 
 	###########################################################
 	def scurve_trim_gain_noise(self,
-		charge_fc_trim = 2.0,
+		charge_fc_trim = 3.0,
 		charge_fc_test = 1.0,
 		threshold_mv_trim = 'mean',
 		iterative_step_trim = 1,
@@ -46,7 +46,7 @@ class SSA_measurements_fe():
 		filename = '../SSA_Results/TestLogs/Chip_0_',
 		display = False
 		):
-		"""Generate scurve data. 
+		"""Generate scurve data.
 
 		Parameters
 		----------
@@ -75,7 +75,7 @@ class SSA_measurements_fe():
 		-------
 		[type]
 			[description]
-		"""		
+		"""
 
 		charge_fc_trim= np.float(charge_fc_trim)
 		charge_fc_test= np.float(charge_fc_test)
@@ -104,7 +104,7 @@ class SSA_measurements_fe():
 		cal_ampl = self.cal.evaluate_caldac_ampl(charge_fc_test, t_caldac)
 		scurves['l_trim'] = self.cal.scurves(
 			cal_ampl = cal_ampl, nevents = nevents,
-			display = display, plot = False, speeduplevel = 2, countershift = 'auto',
+			display = display, plot = True, speeduplevel = 2, countershift = 'auto',
 			filename = False, mode = 'all', rdmode = 'fast')
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_trim))
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_test))
@@ -410,7 +410,8 @@ class SSA_measurements_fe():
 			cnt += 1
 		leg = ax1.legend(fontsize = 16, )
 		leg.get_frame().set_linewidth(0.0)
-		plt.show()
+		plt.savefig(filename+"frontend_Q_{c:1.3f}_scurve_trim.png".format(c=charge), bbox_inches="tight")
+		#plt.show()
 
 
 #fpl = self.path + 'ANALYSIS/S-Curve_Threshold_Trimming'+self.pltname+'.png'

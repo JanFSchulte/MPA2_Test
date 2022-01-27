@@ -564,11 +564,13 @@ class SSA_cal_utility():
 		sct = curve;
 		err = True;	itr = 0;
 		erret = (-1, [-1, -1, -1])
-		ckr = range(nevents, nevents+1)
+		ckr = range(nevents, nevents+2)
 
 		if( np.size(np.where( curve > (nevents-1) )) < 1):
 			#utils.print_log("Fitting Zeros " + errmsg)
 			return erret
+
+		#plt.plot(sct); plt.show();
 		# get read of the noise peack
 		try:
 			while ( not ((sct[0] in ckr) and (sct[1] in ckr) and (sct[2] in ckr) and (sct[3] in ckr) and (sct[4] in ckr) and (sct[5] in ckr) ) ):
@@ -579,6 +581,7 @@ class SSA_cal_utility():
 			utils.print_log(curve)
 		for i in range(0, len(curve)-len(sct)):
 			sct = np.insert(sct, 0, nevents)
+		#plt.plot(sct); plt.show();
 
 		# find a first guess for the scurve mean value
 		if(expected == 'autodefine'):
