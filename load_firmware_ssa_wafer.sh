@@ -52,10 +52,17 @@ else
 	cd ~/Ph2_ACF
 	#./bin/fc7-d19c.exe  -i $IP -n SSA_SEU_11.bin
 	source ~/Ph2_ACF/setup.sh
-	fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_SSA2_26012022_2.bin
-	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_SSA2_26012022.bin
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i SSAx1_SEU_oldFW_newPhT.bit
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_SSA2_ProtoDev_1261423d.bin
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_SSA2_26012022.bin
+	
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i d19c_ssa_none_16052019.bit
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i d19c_ssa_none_16052019_v2.bit
+	fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i d19c_ssa_none_17052019.bit
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_SSA2_wafer_2021.01.27.bin
+
+	
+	
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_SSA_25012022.bin 
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i ssa2_on_l12_051121.bin
 

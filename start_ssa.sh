@@ -33,6 +33,7 @@ echo ""
 echo "from utilities import *" >  LaunchPy.py
 #echo "from myScripts import *" >> LaunchPy.py
 echo "from main import *" >> LaunchPy.py
+echo "FC7.activate_I2C_chip(verbose=0)" >> LaunchPy.py
 #echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('ssa') "  >> LaunchPy.py
 echo "from utilities import tbconfig " >  utilities/tbsettings.py
 
@@ -43,6 +44,7 @@ echo "tbconfig.BOARD_SELECT = '$BOARD_MAC'" >> utilities/tbsettings.py
 echo "tbconfig.MPA_ADR[0] = $MPA_ADR_0" >> utilities/tbsettings.py
 echo "tbconfig.SSA_ADR[0] = $SSA_ADR_0" >> utilities/tbsettings.py
 echo "tbconfig.SSA_ADR[1] = $SSA_ADR_1" >> utilities/tbsettings.py
+
 
 
 
