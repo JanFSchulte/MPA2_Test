@@ -58,8 +58,11 @@ else
 	
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i d19c_ssa_none_16052019.bit
 	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i d19c_ssa_none_16052019_v2.bit
-	fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i d19c_ssa_none_17052019.bit
-	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_SSA2_wafer_2021.01.27.bin
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i d19c_ssa_none_17052019.bit
+	fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_SSA2_wafer_2021.01.28a.bin
+	#fpgaconfig -c FC7/D19C_MPA_PreCalib.xml -i uDTC_SSA2_wafer_2021.01.28b.bin
+	
+	
 
 	
 	

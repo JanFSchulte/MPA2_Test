@@ -39,7 +39,7 @@ class main_ssa_test_fast():
 			self.tag = tag
 			self.Configure(directory=directory, runtest=runtest)
 
-	def Configure(self, directory = '../SSA_Results/Wafer0/', runtest = 'default'):
+	def Configure(self, directory = '../SSA_Results/Wafer0/', runtest = 'default', tag=False):
 		self.DIR = directory
 		self.dvdd_curr = self.dvdd
 		if(runtest == 'default'):
@@ -62,6 +62,8 @@ class main_ssa_test_fast():
 			self.runtest.set_enable('stub_l1_max_speed', 'ON')
 		else:
 			self.runtest = runtest
+		if(tag):
+			self.tag = tag
 
 
 	def RUN(self, runname='default', write_header=True):
@@ -167,12 +169,22 @@ class main_ssa_test_fast():
 				self.measure.adc.mesure_vref(filename=filename, runname='', chip='ADC_VREF/Test_')
 				r1 = self.biascal.calibrate_to_nominals(measure=False)
 				self.summary.set('Calibration', int(r1), '', '',  runname)
+				self.adc_ref_voltage_for_fuses = r1[3]
 				break
 			except(KeyboardInterrupt): break
 			except:
 				self.print_exception("->  Bias Calibration error. Reiterating...")
 				wd +=1;
 				if(wd>=3): self.test_good = False
+
+	def write_fuses(self, filename = 'default', runname = ''):
+		filename = self.summary.get_file_name(filename)
+		time_init = time.time()
+		wd = 0
+		en = self.runtest.is_active('write_fuses')
+		while (en and wd < 3):
+			self.ctrl.write_fuses( dac )
+			r1 = self.biascal.calibrate_to_nominals(measure=False)
 
 	def test_routine_measure_bias(self, filename = 'default', runname = '', mode = '', nsamples=1000):
 		filename = self.summary.get_file_name(filename)
@@ -388,7 +400,7 @@ class main_ssa_test_fast():
 		while (en and wd < 3):
 			try:
 				results = self.test.ring_oscillators_vs_dvdd(
-					dvdd_step=0.05, dvdd_max=1.3, dvdd_min=0.8, plot=False, printmode='log',
+					dvdd_step=0.05, dvdd_max=1.3, dvdd_min=0.8, plot_save=True, plot_show=False, printmode='log',
 					filename = filename + '_ring_oscillator_vs_dvdd/', filemode='w', runname = '')
 
 				self.summary.set('Ring_INV_BR', results[4][1], 'MHz', '',  runname)
@@ -451,7 +463,7 @@ class main_ssa_test_fast():
 		en = self.runtest.is_active('DACs')
 		while (en and wd < 3):
 			try:
-				self.thdac = self.measure.dac_linearity(name = 'Bias_THDAC', eval_inl_dnl = False, nbits = 8, npoints = 10, filename = filename, plot = False, filemode = 'a', runname = runname)
+				self.thdac = self.measure.dac_linearity(name = 'Bias_THDAC', eval_inl_dnl = False, nbits = 8, npoints = 10, filename = filename, plot_save = True, plot_show=False, filemode = 'a', runname = runname)
 				self.summary.set('Bias_THDAC_GAIN'    , self.thdac[0], '', '',  runname)
 				self.summary.set('Bias_THDAC_OFFS'    , self.thdac[1], '', '',  runname)
 				break
@@ -463,7 +475,7 @@ class main_ssa_test_fast():
 		wd = 0
 		while (en and wd < 3):
 			try:
-				self.caldac = self.measure.dac_linearity(name = 'Bias_CALDAC', eval_inl_dnl = False, nbits = 8, npoints = 10, filename = filename, plot = False, filemode = 'a', runname = runname)
+				self.caldac = self.measure.dac_linearity(name = 'Bias_CALDAC', eval_inl_dnl = False, nbits = 8, npoints = 10, filename = filename, plot_show = False, plot_save = True, filemode = 'a', runname = runname)
 				self.summary.set('Bias_CALDAC_GAIN'    , self.caldac[0], '', '',  runname)
 				self.summary.set('Bias_CALDAC_OFFS'    , self.caldac[1], '', '',  runname)
 				break
@@ -476,7 +488,7 @@ class main_ssa_test_fast():
 		en = self.runtest.is_active('ADC')
 		while (en and wd < 3):
 			try:
-				r_adc = self.measure.adc.measure_curve(nsamples=1, npoints=2**10, directory=(filename), plot=False)
+				r_adc = self.measure.adc.measure_curve(nsamples=1, npoints=2**10, directory=(filename), plot=False, plot_save = True)
 				self.summary.set('ADC_GAIN'    , r_adc[0], '', '',  runname)
 				self.summary.set('ADC_OFFS'    , r_adc[1], '', '',  runname)
 				break
@@ -523,7 +535,7 @@ class main_ssa_test_fast():
 					caldac = self.caldac,           # 'default' | 'evaluate' | value [gain, offset]
 					thrdac = self.thdac,            # 'default' | 'evaluate' | value [gain, offset]
 					nevents = 1000,                 # Number of calibration pulses
-					plot = False,                    # Fast plot of the results
+					plot = True,                    # Fast plot of the results
 					filename = filename)
 
 				if(rp):

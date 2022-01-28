@@ -119,7 +119,7 @@ class ssa_calibration():
 			return data
 
 
-	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot = True, average = 5, runname = '', filemode = 'w'):
+	def measure_dac_linearity(self, name, nbits, filename = False, filename2 = "", plot_save=True, plot_show=True, average = 5, runname = '', filemode = 'w'):
 		# ['Bias_D5BFEED'] ['Bias_D5PREAMP']['Bias_D5TDR']['Bias_D5ALLV']['Bias_D5ALLI']
 		# ['Bias_CALDAC']['Bias_BOOSTERBASELINE']['Bias_THDAC']['Bias_THDACHIGH']['Bias_D5DAC8']
 		if(not name in self.analog_mux_map):
@@ -152,7 +152,7 @@ class ssa_calibration():
 		utils.print_log("->  INL MAX = {:6.3f} cnts  ".format(inl_max))
 		utils.print_log("->  DNL INL = {:6.3f} cnts  ".format(dnl_max))
 		utils.print_log("")
-		if(plot):
+		if(plot_save or plot_show):
 			plt.clf()
 			plt.figure(1)
 			plt.subplot(211)
@@ -162,6 +162,10 @@ class ssa_calibration():
 			plt.plot(range(0,fullscale),[-1]*fullscale, 'r')
 			plt.subplot(212)
 			plt.plot(range(0,fullscale), data, '-x')
+			if(plot_save):
+				plt.savefig(fo+".png")
+			if(plot_show):
+				plt.show()
 			#if( isinstance(filename, str) ):
 			#	plt.savefig(fo+".pdf")
 			#else:

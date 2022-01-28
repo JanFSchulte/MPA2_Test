@@ -259,8 +259,8 @@ class SSA_test_utility():
 					l1counterref, stexpected, flagexpected, ' '*26, l1counterout, stfound, flagfound
 				)
 				fstr = "[{:3d}][{:3s}][{:3s}];   \t[{:3d}][{:3s}][{:3s}]".format(
-				        (L1_counter_init+1)&l1_counter_mask,  str(cl_hits),  str(H),
-				        L1_counter,  ', '.join(map(str, l1hitlist)),  ', '.join(map(str, hiplist)))
+						(L1_counter_init+1)&l1_counter_mask,  str(cl_hits),  str(H),
+						L1_counter,  ', '.join(map(str, l1hitlist)),  ', '.join(map(str, hiplist)))
 				l1hitlistprev = l1hitlist
 				hiplistprev   = hiplist
 				L1_counter_init = L1_counter-1
@@ -403,6 +403,27 @@ class SSA_test_utility():
 			shift = shift, init = init, file = file,
 			filemode = filemode, runname = runname)
 
+
+	def dll_basic_test(self):
+		self.fc7.activate_I2C_chip(verbose = 0)
+		self.mpa.ctrl_base.set_peri_mask()
+		self.mpa.i2c.peri_write('BypassMode', 0b00000100)
+		self.mpa.i2c.peri_write('ConfDLL', 0b00110001)
+		self.fc7.send_trigger()
+		l1, stub = self.mpa.rdo.read_regs(verbose = 0)
+		fail = 0
+		if ( l1[0] == 4042322160): utils.print_good("->  DLL at 0 - test passed")
+		else: utils.print_error("->  DLL at 1 - test failed", print(l1[0])); fail = 1
+		self.mpa.i2c.peri_write('ConfDLL', 0b00111111)
+		self.fc7.send_trigger()
+		l1, stub = self.mpa.rdo.read_regs(verbose = 0)
+		if ( l1[0] == 2021161080): utils.print_good("->  DLL at 31 - test passed")
+		else: utils.print_error("->  DLL at 31 - test failed",  print(l1[0])); fail = 1
+		self.mpa.i2c.peri_write('ConfDLL', 0b00110001)
+		self.mpa.i2c.peri_write('BypassMode', 0b00000000)
+		return fail
+
+
 	##############################################################
 	def l1_data_basic(self, mode = "digital", nruns = 1, calpulse = [100, 200], threshold = [20, 150], shift = 0, display = False, latency = 50, init = False, hfi = True, file = '../SSA_Results/TestLogs/Chip-0', filemode = 'w', runname = '',profile=False):
 		fo = open(file + "readout_L1-data_" + mode + ".csv", filemode)
@@ -459,8 +480,8 @@ class SSA_test_utility():
 						(L1_counter_init+1)&l1_counter_mask,  str(i),  str(H),
 						L1_counter, BX_counter, ', '.join(map(str, l1hitlist)),  ', '.join(map(str, hiplist)))
 				fstr = "[{:3d}][{:3s}][{:3s}];   \t[{:3d}][{:3s}][{:3s}]".format(
-				        (L1_counter_init+1)&l1_counter_mask,  str(i),  str(H),
-				        L1_counter,  ', '.join(map(str, l1hitlist)),  ', '.join(map(str, hiplist)))
+						(L1_counter_init+1)&l1_counter_mask,  str(i),  str(H),
+						L1_counter,  ', '.join(map(str, l1hitlist)),  ', '.join(map(str, hiplist)))
 				l1hitlistprev = l1hitlist
 				hiplistprev   = hiplist
 				####### L1_counter_init = L1_counter
@@ -527,7 +548,7 @@ class SSA_test_utility():
 
 	##############################################################
 	def ring_oscillators_vs_dvdd(self,
-		dvdd_step=0.05, dvdd_max=1.3, dvdd_min=0.8, plot=False,
+		dvdd_step=0.05, dvdd_max=1.3, dvdd_min=0.8, plot_save=True, plot_show=True,
 		filename = '../SSA_Results/ring_oscillator_vs_dvdd/', filemode='w', runname = '', printmode='info'):
 		result = []
 		if not os.path.exists(filename): os.makedirs(filename)
@@ -552,13 +573,13 @@ class SSA_test_utility():
 		time.sleep(0.5)
 		self.ssa.reset()
 		time.sleep(0.5)
-		if(plot):
-			self.ring_oscillators_vs_dvdd_plot()
+		if(plot_save or plot_show):
+			self.ring_oscillators_vs_dvdd_plot(filename=filename, plot_save=plot_save,  plot_show=plot_show)
 		return result
 
 	##############################################################
 	def ring_oscillators_vs_dvdd_plot(self,
-		filename = '../SSA_Results/ring_oscillator_vs_dvdd/', runname = '', label=''):
+		filename = '../SSA_Results/ring_oscillator_vs_dvdd/', runname = '', label='', plot_save=False, plot_show=True):
 
 		fout = filename + "ring_oscillator_vs_dvdd.csv"
 		res = CSV.csv_to_array(filename = fout)
@@ -598,7 +619,8 @@ class SSA_test_utility():
 			else:
 				plt.yticks(range(10,36,2), fontsize=12)
 			plt.savefig(filename+'/ring_oscillator_vs_dvdd_{:s}.png'.format(mode), bbox_inches="tight");
-		plt.show()
+		if(plot_show):
+			plt.show()
 
 	##############################################################
 	def SRAM_BIST(self, nruns=3, display=1, note=''):

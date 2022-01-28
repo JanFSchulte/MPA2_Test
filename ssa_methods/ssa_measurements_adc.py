@@ -91,7 +91,7 @@ class SSA_measurements_adc():
 			inlh[i] = inl
 			fo.write("{:8d}, {:9.6f}, {:9.6f}, {:9.6f}\n".format(i, dnl, inl, float(adchist[i])) )
 		fo.close()
-		plt.clf() 
+		plt.clf()
 		color=iter(sns.color_palette('deep'))
 		if(plot):
 			fig = plt.figure(figsize=(18,6))
@@ -167,7 +167,7 @@ class SSA_measurements_adc():
 		plt.plot(data[:,1]	, data[:,2], 'x')
 
 	#####################################################################################################
-	def measure_curve(self, nsamples=10, npoints=2**16, directory='../SSA_Results/ADC/', plot=True, start_point=-0.005, end_point=0.9, note=''):
+	def measure_curve(self, nsamples=10, npoints=2**16, directory='../SSA_Results/ADC/', plot=True, plot_save = True, start_point=-0.005, end_point=0.9, note=''):
 		vrange = np.linspace(start_point, end_point, npoints+1)
 		rcode = []
 		time.sleep(0.1)
@@ -206,9 +206,12 @@ class SSA_measurements_adc():
 		gain, ofs, sigma = utils.linear_fit(fitvect[:,0], fitvect[:,1])
 		utils.print_good("->  Gain({:12s}) = {:9.3f} mV/cnt".format('ADC', gain*1.0E3))
 		utils.print_good("->  Offs({:12s}) = {:9.3f} mV    ".format('ADC', ofs*1.0E3))
-		if(plot):
+		if(plot or plot_save):
 			plt.plot(rtvect[:,0], rtvect[:,1], 'x', c='blue')
 			plt.plot(np.array([0,0.9]), gain*np.array([0,0.9])+ofs, '-', c='red')
+		if(plt_save):
+			plt.savefig((directory+'ssa_adc_measurements'+note+'.png'), bbox_inches="tight");
+		if(plot):
 			plt.show()
 		return [gain, ofs, sigma]
 
@@ -278,10 +281,10 @@ class SSA_measurements_adc():
 		VBG = self.bias.get_voltage('VBG')
 		vref = self.dac_linearity(
 			name = 'ADC_VREF', eval_inl_dnl = True, nbits = 5, npoints = -1,return_raw=True,
-			filename = filename+chip, plot = False, filemode = 'a', runname = runname)
+			filename = filename+chip, plot_show = False, plot_save = False, filemode = 'a', runname = runname)
 		iref = self.dac_linearity(
 			name = 'ADC_IREF', eval_inl_dnl = True, nbits = 5, npoints = -1, return_raw=True,
-			filename = filename+chip, plot = False, filemode = 'a', runname = runname)
+			filename = filename+chip, plot_show = False, plot_save = False, filemode = 'a', runname = runname)
 		[vref_DNL, vref_INL, vref_gain, vref_ofs, vref_raw]  = vref
 		[iref_DNL, iref_INL, iref_gain, iref_ofs, iref_raw]  = iref
 		vref_min =   vref_raw[1][0]; vref_max =   vref_raw[1][-1]
@@ -440,7 +443,7 @@ class SSA_measurements_adc():
 		plt.show()
 
 	###########################################################
-	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, eval_inl_dnl = True, npoints = 10, average=10, filename = 'temp/temp', plot = True, filemode = 'w', runname = '', return_raw=False):
+	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, eval_inl_dnl = True, npoints = 10, average=10, filename = 'temp/temp', plot_save=True, plot_show=True, filemode = 'w', runname = '', return_raw=False):
 		utils.activate_I2C_chip(self.fc7)
 		if(self.bias == False): return False, False
 		if(not (name in self.muxmap)): return False, False
@@ -450,7 +453,7 @@ class SSA_measurements_adc():
 		if(eval_inl_dnl):
 			nlin_params, nlin_data, fit_params, raw = self.bias.measure_dac_linearity(
 				name = name, nbits = nbits,	filename = fo,	filename2 = "",
-				plot = False, average = 1, runname = runname, filemode = filemode)
+				plot_save=plot_save, plot_show=False, average = 1, runname = runname, filemode = filemode)
 			g, ofs, sigma = fit_params
 			DNL, INL = nlin_data
 			DNLMAX, INLMAX = nlin_params
@@ -466,7 +469,7 @@ class SSA_measurements_adc():
 			baseline = 0
 		else:
 			return False
-		if plot:
+		if (plot_save or plot_show):
 			plt.clf()
 			plt.figure(1)
 			#plt.plot(x, f_line(x, ideal_gain/1000, ideal_offset/1000), '-b', linewidth=5, alpha = 0.5)
@@ -475,7 +478,11 @@ class SSA_measurements_adc():
 				plt.figure(2); plt.ylim(-1, 1); plt.bar( x, DNL, color='b', edgecolor = 'b', align='center')
 				plt.figure(3); plt.ylim(-1, 1); plt.bar( x, INL, color='r', edgecolor = 'r', align='center')
 				plt.figure(4); plt.ylim(-1, 1); plt.plot(x, INL, color='r')
-			plt.show()
+			if (plot_show):
+				plt.show()
+			#if(plot_save):
+				#plt.savefig(filename+'/ring_oscillator_vs_dvdd_{:s}.png'.format(mode), bbox_inches="tight");
+
 		#return DNL, INL, x, data
 		if(eval_inl_dnl):
 			if(return_raw): return [DNLMAX, INLMAX, g, ofs, raw]

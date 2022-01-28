@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 import time
 from mpa_methods.mpa_testing_routine import *
-from ssa_methods.main_ssa_test_2 import *
+from ssa_methods.main_ssa_test_fast import *
 
 '''
 It runs the automatic wafer probing procedure
@@ -34,7 +34,7 @@ class tmperrgpib:
 
 class AUTOPROBER():
 
-    def __init__(self, wafer, chip='MPA', mpa=False, dryRun = False, exclude = [], mode = "test"):
+    def __init__(self, wafer, chip_name='MPA', chip=False, dryRun = False, exclude = [], mode = "test"):
         self.wafer = wafer
         try:
             self.ProbeStation = Gpib.Gpib(1, 22)
@@ -45,9 +45,9 @@ class AUTOPROBER():
         self.ProbeStation.write("*RST")
         time.sleep(0.1)
         #self.ConnToPS()
-        self.mpa = mpa
+        self.chip_object = chip
         self.dryRun = dryRun
-        self.chip = chip
+        self.chip_name = chip_name
         self.DieNumber = 0
         self.exclude = exclude
         self.mode = mode
@@ -83,8 +83,8 @@ class AUTOPROBER():
 
     def MSR_ALL(self, N='default'):
         if(N=='default'):
-            if(self.chip=='SSA'): nchips = 90
-            elif(self.chip=='MPA'): nchips = 187
+            if(self.chip_name=='SSA'): nchips = 90
+            elif(self.chip_name=='MPA'): nchips = 187
         else: nchips = N
         self.DieNumber = 0
         self.DieR = 0
@@ -115,7 +115,7 @@ class AUTOPROBER():
         #time.sleep(0.25)
 
     def NEWCHIPMSR(self, inf):
-        if (self.chip == 'MPA'):
+        if (self.chip_name == 'MPA'):
             if self.mode == "efuse":  # Efuse Block#
                 print(f"### Efuse write procedure: {inf}")
                 df = pd.read_csv('yield3.csv', sep=',')
@@ -131,39 +131,39 @@ class AUTOPROBER():
                 adc_ref = vref
                 if vref == -1000:
                     adc_ref = 0
-                self.mpa.pwr.set_supply(mode='on', display=False, d=1.0, a=1.2, p=1.2)
-                self.mpa.init()
+                self.chip_object.pwr.set_supply(mode='on', display=False, d=1.0, a=1.2, p=1.2)
+                self.chip_object.init()
                 #### Change according to wafer number !!!!!
                 mpa.chip.ctrl_base.fuse_write(lot=1, wafer_n=3, pos=int(self.DieNumber), process=0, adc_ref = int(adc_ref), status = status, pulse=1 , confirm=1)
-                self.mpa.pwr.set_supply(mode='off', display=False)
+                self.chip_object.pwr.set_supply(mode='off', display=False)
                 return True
             elif self.mode == "scanchain":
                 print(f"### Scanchain mode")
-                self.mpa.pwr.set_supply(mode='on', display=False, d=1.0, a=1.2, p=1.2)
-                sc = self.mpa.scanchain.launch_all_scanchain_all_vectors(chip_N = self.DieNumber)
+                self.chip_object.pwr.set_supply(mode='on', display=False, d=1.0, a=1.2, p=1.2)
+                sc = self.chip_object.scanchain.launch_all_scanchain_all_vectors(chip_N = self.DieNumber)
                 print(sc)
                 print(self.DieNumber)
                 self.sc_res[int(self.DieNumber)-1] = len(sc)
-                self.mpa.pwr.set_supply(mode='off', display=False)
+                self.chip_object.pwr.set_supply(mode='off', display=False)
                 return True
             else: # Standard functionality test block
-                PCM = MainTestsMPA(directory = f"../MPA2_AutoProbe_results/Wafer_{self.wafer}/", tag = self.DieNumber, chip = self.mpa)
+                PCM = MainTestsMPA(directory = f"../MPA2_AutoProbe_results/Wafer_{self.wafer}/", tag = self.DieNumber, chip = self.chip_object)
                 if self.efuse:
                     PCM.runtest.set_enable('efuse', 'ON')
                     PCM.wafer = 2
                     PCM.lot = 1 
                 else:
                     PCM.runtest.set_enable('efuse', 'OFF')
-                #PCM= MPAProbeTest("../MPA2_Results/Lot1_Wafer6/", self.chip, self.i2c, FC7, self.cal, self.test, self.bias)
+                #PCM= MPAProbeTest("../MPA2_Results/Lot1_Wafer6/", self.chip_name, self.i2c, FC7, self.cal, self.test, self.bias)
                 return PCM.RUN(runname = inf, write_header=False)
 
-        #elif(self.chip == 'SSA'):
+        elif(self.chip_name == 'SSA'):
             # WIP
-            #PCM = SSA_Measurements(
-            #tag = (self.name+"_"+str(self.DieNumber)),
-            #runtest = 'default',
-            #directory = '../SSA_Results/Wafer_' + str(self.wafer)
-            #return PCM.RUN(inf)
+            tag = f"ChipN_{str(self.DieNumber)}"
+            runtest = 'default'
+            directory = f"../SSA2_AutoProbe_results/Wafer_{self.wafer}/"
+            PCM = main_ssa_test_fast(directory = directory, tag = tag, chip = self.chip_object, runtest = runtest, mode_2xSSA=False)
+            return PCM.RUN()
 
     def NEXT(self, N):
         self.ProbeStation.write("GetDieDataAsNum")

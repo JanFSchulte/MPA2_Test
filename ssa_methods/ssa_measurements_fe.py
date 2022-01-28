@@ -104,7 +104,7 @@ class SSA_measurements_fe():
 		cal_ampl = self.cal.evaluate_caldac_ampl(charge_fc_test, t_caldac)
 		scurves['l_trim'] = self.cal.scurves(
 			cal_ampl = cal_ampl, nevents = nevents,
-			display = display, plot = True, speeduplevel = 2, countershift = 'auto',
+			display = display, plot = False, speeduplevel = 2, countershift = 'auto',
 			filename = False, mode = 'all', rdmode = 'fast')
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_trim))
 		fo.append(filename + "frontend_Q_{c:1.3f}_scurve_trim-done.csv".format(c=charge_fc_test))
@@ -115,7 +115,7 @@ class SSA_measurements_fe():
 			output_file = (filename),
 			nevents=nevents,
 			thdac_gain = np.abs(t_thrdac[0]),
-			plot = False )
+			plot = plot )
 		calpulses, thresholds, noise, thmean, sigmamean, gains, gains_mVfC, offsets = rp
 		threshold_std_init  = np.std(thstd[0])
 		threshold_std_trim  = np.std(thresholds[str(charge_fc_trim)])
@@ -246,6 +246,7 @@ class SSA_measurements_fe():
 		CSV.array_to_csv(gains_mV_fC, output_file + 'frontend_gain_mVfC.csv')
 		CSV.array_to_csv([gainmean],  output_file + 'frontend_gain-mean.csv')
 		CSV.array_to_csv(offsets,     output_file + 'frontend_offset.csv')
+		plt.savefig((output_file + 'frontend_Q-{:1.3f}_scurves.png'.format(cal)), bbox_inches="tight")
 		return calpulses, thresholds, noise, thmean, sigmamean, gains, gains_mV_fC, offsets
 
 	####################################################################################
@@ -657,7 +658,7 @@ class SSA_measurements_fe():
 		return peakingTime
 
 	###########################################################
-	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, eval_inl_dnl = True, npoints = 10, average=10, filename = 'temp/temp', plot = True, filemode = 'w', runname = '', return_raw=False):
+	def dac_linearity(self, name = 'Bias_THDAC', nbits = 8, eval_inl_dnl = True, npoints = 10, average=10, filename = 'temp/temp', plot_save=True, plot_show=True, filemode = 'w', runname = '', return_raw=False):
 		utils.activate_I2C_chip(self.fc7)
 		if(self.bias == False): return False, False
 		if(not (name in self.muxmap)): return False, False
@@ -666,7 +667,7 @@ class SSA_measurements_fe():
 		if(eval_inl_dnl):
 			nlin_params, nlin_data, fit_params, raw = self.bias.measure_dac_linearity(
 				name = name, nbits = nbits,	filename = fo,	filename2 = "",
-				plot = False, average = 1, runname = runname, filemode = filemode)
+				plot_save=plot_save, plot_show=False, average = 1, runname = runname, filemode = filemode)
 			g, ofs, sigma = fit_params
 			DNL, INL = nlin_data
 			DNLMAX, INLMAX = nlin_params
@@ -682,7 +683,7 @@ class SSA_measurements_fe():
 			baseline = 0
 		else:
 			return False
-		if plot:
+		if (plot_save or plot_show):
 			plt.clf()
 			plt.figure(1)
 			#plt.plot(x, f_line(x, ideal_gain/1000, ideal_offset/1000), '-b', linewidth=5, alpha = 0.5)
@@ -691,7 +692,11 @@ class SSA_measurements_fe():
 				plt.figure(2); plt.ylim(-1, 1); plt.bar( x, DNL, color='b', edgecolor = 'b', align='center')
 				plt.figure(3); plt.ylim(-1, 1); plt.bar( x, INL, color='r', edgecolor = 'r', align='center')
 				plt.figure(4); plt.ylim(-1, 1); plt.plot(x, INL, color='r')
-			plt.show()
+			if (plot_show):
+				plt.show()
+			#if(plot_save):
+				#plt.savefig(filename+'/ring_oscillator_vs_dvdd_{:s}.png'.format(mode), bbox_inches="tight");
+
 		#return DNL, INL, x, data
 		if(eval_inl_dnl):
 			if(return_raw): return [DNLMAX, INLMAX, g, ofs, raw]
