@@ -8,9 +8,8 @@ source ./FC7/sw/fc7/setup.sh
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export LC_ALL=C; unset LANGUAGE
 
-BOARD_MAC="08:00:30:00:22:f0"
-#BOARD_MAC="08:00:30:00:22:5d"
-MPA_ADR_0="0b1000000"
+BOARD_MAC='08:00:30:00:29:61'
+MPA_ADR_0=0b1000000
 SSA_ADR_0="0b0100000"
 SSA_ADR_1="0b0100111"
 CHIP_SELECT="MPA"
@@ -34,6 +33,8 @@ echo "from utilities import *" >  LaunchPy.py
 echo "from main import *" >> LaunchPy.py
 #echo "ipaddr, fc7AddrTable, fc7 = SelectBoard('ssa') "  >> LaunchPy.py
 echo "from utilities import tbconfig " >  utilities/tbsettings.py
+
+
 
 # override default values
 echo "tbconfig.VERSION['SSA'] = 2" >> utilities/tbsettings.py
