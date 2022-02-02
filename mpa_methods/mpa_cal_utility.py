@@ -8,7 +8,6 @@ import time
 import sys
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
 from scipy.special import erfc
 from scipy.special import erf
 import matplotlib.cm as cm
@@ -27,41 +26,33 @@ class mpa_cal_utility():
     # Math functions
     def errorf(self, x, *p):
         """
-
         :param x:
         :param *p:
-
         """
         a, mu, sigma = p
         return 0.5*a*(1.0+erf((x-mu)/sigma))
     def line(self, x, *p):
         """
-
         :param x:
         :param *p:
-
         """
         g, offset = p
         return  np.array(x) *g + offset
     def gauss(self, x, *p):
         """
-
         :param x:
         :param *p:
-
         """
         A, mu, sigma = p
         return A*np.exp(-(x-mu)**2/(2.*sigma**2))
     def errorfc(self, x, *p):
         """
-
         :param x:
         :param *p:
-
         """
         a, mu, sigma = p
         return a*0.5*erfc((x-mu)/sigma)
-    def plot_extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, start, stop, extract, plot):
+    def plot_extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, start, stop, extract, plot=False):
         """takes scurve data and extracts threshold and noise data. If
         plot = 1, it also plots scurves and histograms
 
@@ -176,9 +167,6 @@ class mpa_cal_utility():
         # print(count)
         return failed, count
     
-    # Test S-curve (~10 secs):
-    # a = cal.s_curve( n_pulse = 1000, s_type = "CAL", rbr = 0, ref_val = 150, row = range(1,17), step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = 0, extract = 0, plot = 1, print_file =0 )
-    # NB: product n_pulse*pulse_delay > 500e3 to avoid communication problem (IP bus related?)
     def s_curve(self, n_pulse = 1000, s_type = "THR", rbr = 0, ref_val = 50, row = list(range(1,17)), step = 1, start = 0, stop = 256, pulse_delay = 200, extract_val = 0, extract = 1, plot = 1, print_file =1, filename = "../cernbox/MPA_Results/scurve_fr_"):
         """[summary]
 
@@ -277,8 +265,133 @@ class mpa_cal_utility():
         if extract: return data_array, th_array, noise_array
         else: return data_array
 
-    ### Trimming routine
-    def trimming_step(self, pix_out = [["Row", "Pixel", "DAC"]], n_pulse = 1000, s_type = "THR", ref_val = 10, iteration = 1, nominal_DAC = 110, data_array = np.zeros(2040, dtype = np.int ), plot = 1,  stop = 150, ratio = 3.90, row = list(range(1,17)), pixel = list(range(1,120))):
+        # pixel alive: FNAL addition
+        def pixelalive(self, 
+                       n_pulse = 100, 
+                       ref_valCAL = 200, 
+                       ref_valTHR = 200, 
+                       row = [],  
+                       col = [], 
+                       plot = 1, 
+                       save_plot = 0, 
+                       print_file =1, 
+                       printout = 0, 
+                       pulse_delay = 200, 
+                       extract = 1, 
+                       filename = "../Results_MPATesting/pixelalivetest_fr_"
+                       ,israw=False):
+            return self.maskorpixelalive_test(mask = False, n_pulse = n_pulse, ref_valCAL = ref_valCAL, ref_valTHR = ref_valTHR, row = row,  col = col, plot = plot, save_plot = save_plot, print_file =print_file, printout = printout, extract = extract, pulse_delay = pulse_delay, filename = filename,israw=israw)
+
+        # mask test: FNAL addition
+        def mask_test(self, 
+                      n_pulse = 1, 
+                      ref_valCAL = 200, 
+                      ref_valTHR = 200, 
+                      row = [],  
+                      col = [], 
+                      plot = 1, 
+                      save_plot = 0, 
+                      print_file =1, 
+                      printout = 0, 
+                      pulse_delay = 200, 
+                      extract = 1, 
+                      filename = "../Results_MPATesting/masktest_fr_",
+                      israw=False):
+            return self.maskorpixelalive_test(mask = True, n_pulse = n_pulse, ref_valCAL = ref_valCAL, ref_valTHR = ref_valTHR, row = row,  col = col, plot = plot, save_plot=save_plot, print_file =print_file, printout = printout,  extract = extract, pulse_delay = pulse_delay, filename = filename,israw=israw)
+
+        # Mask or Pixel alive: FNAL addition
+        def maskorpixelalive_test(self, 
+                                  mask = False, 
+                                  n_pulse = 100, 
+                                  ref_valCAL = 200, 
+                                  ref_valTHR = -1, 
+                                  row = [],  
+                                  col = [], 
+                                  plot = 1, 
+                                  save_plot = 1, 
+                                  print_file =1, 
+                                  printout = 0, 
+                                  extract = 1, 
+                                  pulse_delay = 200, 
+                                  filename = "../Results_MPATesting/masktest_fr_"
+                                  ,israw=False):#I don't know what ref_val THR and CAL should be ... to be determined
+            t0 = time.time()
+            row,col,rawrow,rawcol = self.conf.getNomAndRawRowsCols(row,col,israw)
+            self.fc7.clear_counters(8)
+            self.mpa.ctrl_base.activate_async()
+            if ref_valCAL >=0: self.mpa.ctrl_base.set_calibration(ref_valCAL)
+            if ref_valTHR >=0: self.mpa.ctrl_base.set_threshold(ref_valTHR)
+            count = 0
+            count_err = 0
+            self.fc7.write("cnfg_fast_backpressure_enable", 0)
+            #Configure_TestPulse_MPA(200, int(pulse_delay/2), 1250, n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
+            Configure_TestPulse_MPA(self.conf.delayresetafter, pulse_delay, self.conf.delaypulsebefore, n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
+            self.utils.ShowPercent(count, len(row)*len(col), "")
+            self.mpa.ctrl_pix.disable_all_pixels()
+            if mask:
+                self.mpa.inject.send_pulses_fast_withMasking(n_pulse, -1, -1, ref_valCAL)
+            else:
+                if rawrow == self.conf.rowsraw and  (rawcol == self.conf.colsraw or rawcol == self.conf.colsraweff):
+                    self.mpa.inject.send_pulses_fast_allenable(n_pulse, ref_valCAL)
+                else:
+                    self.mpa.inject.send_pulses_fast_multiplepixel(n_pulse, rawrow, rawcol, ref_valCAL)
+            fail, temp = self.ReadoutCounters()
+            if fail: fail, temp = self.ReadoutCounters()
+            tempnom = self.conf.convertRawToNomPixmap(temp)
+            data_array = tempnom
+            count += 1
+            self.fc7.clear_counters(8)
+            sleep(0.001)
+            self.fc7.clear_counters(8)
+            if (count_err == 10):
+                print ("Pixel Alive failed")
+                return "exit at pixel alive"
+            if print_file:
+                #CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + str(ref_val) + ".csv")
+                CSV.ArrayToCSV (data_array, str(filename) + ".csv")
+                if extract:
+                    unmaskablepixels = []
+                    deadpixels = []
+                    ineffpixels = []
+                    noisypixels = []
+                    for p in range(0,len(data_array)):
+                        if mask:
+                            if data_array[p]!=0:
+                                if printout:
+                                    print("Unmasked pixel: row = "+str(self.conf.rowfrompixnom(p))+", column = "+str(self.conf.colfrompixnom(p))+" --> recorded hits: "+str(data_array[p]))
+                                unmaskablepixels.append(p)
+                        else:
+                            if data_array[p]!=n_pulse:
+                                if printout:
+                                    print("Strange pixel: row = "+str(self.conf.rowfrompixnom(p))+", column = "+str(self.conf.colfrompixnom(p))+" --> recorded hits (should be "+str(n_pulse)+"): "+str(data_array[p]))
+                                if data_array[p] == 0: 
+                                    deadpixels.append(p)
+                                elif data_array[p] < n_pulse:
+                                    ineffpixels.append(p)
+                                elif data_array[p] > n_pulse: 
+                                    noisypixels.append(p)
+                    self.utils.plot_2D_map_list(dataarray = data_array, data_label="", nfig=7,hmin=-1,hmax=-1, plotAverage = True, identifier="", xlabel="row", ylabel="column",isChip=True,israw=False,filename=filename, show_plot=plot, save_plot=save_plot)
+                    if mask:
+                        if printout:
+                            if len(unmaskablepixels): print("Unmaskable Pixels:",len(unmaskablepixels),"("+conf.getPercentage(unmaskablepixels)+")")
+                        else: print("All pixels are maskable")
+                        return data_array, unmaskablepixels
+
+                return data_array
+
+    def trimming_step(self, 
+                      pix_out = [["Row", "Pixel", "DAC"]], 
+                      n_pulse = 1000, 
+                      s_type = "THR", 
+                      ref_val = 10, 
+                      iteration = 1, 
+                      nominal_DAC = 110, 
+                      data_array = np.zeros(2040, dtype = np.int ), 
+                      plot = 1,  
+                      stop = 150, 
+                      ratio = 3.90, 
+                      row = list(range(1,17)), 
+                      pixel = list(range(1,120))):
         """
 
         :param pix_out:  (Default value = [["Row")
@@ -388,7 +501,7 @@ class mpa_cal_utility():
             t1 = time.time()
             print("END")
             print("Trimming Elapsed Time: " + str(t1 - t0))
-            plt.show()
+#            plt.show()
             if print_file:
                 CSV.ArrayToCSV (data_array, str(filename) + "_trimVal" + ".csv")
                 CSV.ArrayToCSV (scurve, str(filename) + "_scurve" + ".csv")
@@ -520,3 +633,111 @@ class mpa_cal_utility():
         t1 = time.time()
         utils.print_log(f"->  Total Trimming Elapsed Time: {str(t1 - t0)}")
         return scurve, th, noise, trim, count
+
+        # Bad bump test: FNAL addition
+        def BumpBonding(self, 
+                        s_type="CAL", 
+                        n_pulse=1000, 
+                        ref_val = 250, 
+                        trim_ampl = -1, 
+                        rbr = 0, 
+                        plot = 0,
+                        show_plot = 0,
+                        print_out =False, 
+                        returnAll = False, 
+                        filename="../Results_MPATesting/bumpbonding_", 
+                        offset = True,
+                        allowForSkipping=True):
+            if print_out: 
+                print("Bump Bonding Test at",s_type+"="+str(ref_val))
+
+            extract_val = int(ref_val * 95./218.)
+            scurvebb, thbb, noisebb, offsetbb = [],[],[],[]
+            if offset:
+                scurvebb, thbb, noisebb, offsetbb = self.single_scurve( n_pulse = n_pulse, s_type = s_type, rbr = rbr, ref_val = ref_val, row = self.conf.rowsnom, col = self.conf.colsnom, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = extract_val, extract = 1, plot = show_plot, print_file =0,israw=False, printout = print_out, offset = True,allowForSkipping=allowForSkipping )
+            else:
+                scurvebb, thbb, noisebb = self.single_scurve( n_pulse = n_pulse, s_type = s_type, rbr = rbr, ref_val = ref_val, row = self.conf.rowsnom, col = self.conf.colsnom, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = extract_val, extract = 1, plot = show_plot, print_file =0,israw=False, printout = print_out, offset = False,allowForSkipping=allowForSkipping )
+            #remove bad pixels, defined pixels where extract_value is 3*std away from thbb mean
+            #remove edge pixels
+
+            badpixels = []
+            edgepixels = []
+            thbb_clean = [th for th in thbb if th != 0]
+            for index in range(len(thbb_clean)):
+                if self.conf.colfrompixnom(index)==0 or self.conf.colfrompixnom(index)==self.conf.ncolsnom-1:
+                    edgepixels.append(index)
+                elif math.fabs(thbb[index]-np.mean(thbb))>3*np.std(thbb):
+                    badpixels.append(index)
+                #elif math.fabs(noisebb[index])>30:#define fit range < 30 - am I allowed to do it
+                #badpixels.append(index)
+
+            noisebb_forfitting = [noisebb[index] for index in range(len(noisebb)) if (index not in badpixels and index not in edgepixels)]
+            noisebb_edgefitting = [noisebb[index] for index in edgepixels]
+
+            (nom_mu,nom_sigma) = norm.fit(noisebb_forfitting,loc=min(20.,np.mean(noisebb_forfitting)),scale=min(5.,np.std(noisebb_forfitting)))
+            if print_out: print("Noise Peak:",nom_mu,    " (",np.mean(noisebb_forfitting),")")
+            if print_out: print("Noise Width",nom_sigma, " (",np.std( noisebb_forfitting),")")
+
+            (edge_mu,edge_sigma) = norm.fit(noisebb_edgefitting,loc=np.mean(noisebb_edgefitting),scale=np.std(noisebb_edgefitting))
+            if print_out: print("Edge Noise Peak:",edge_mu,    " (",np.mean(noisebb_edgefitting),")")
+            if print_out: print("Edge Noise Width",edge_sigma, " (",np.std( noisebb_edgefitting),")")
+
+            badbumps = []
+            badbumpsNonEdge = []
+            badbumpmap = []
+            badbumpsVCal3 = []
+            badbumpmapVCal3 = []
+            badbumpsVCal5 = []
+            badbumpmapVCal5 = []
+            for index in range(len(noisebb)):#maybe also define here edge pixels as good bumps ??
+                if self.conf.colfrompixnom(index)==0 or self.conf.colfrompixnom(index)==(self.conf.ncolsnom-1):
+                    mu = edge_mu
+                    sigma = edge_sigma
+                else:
+                    mu = nom_mu
+                    sigma = nom_sigma
+                if math.fabs(noisebb[index]-mu)>5.*sigma:
+                    badbumps.append(index)
+                    if not (self.conf.colfrompixnom(index)==0 or self.conf.colfrompixnom(index)==(self.conf.ncolsnom-1)):
+                        badbumpsNonEdge.append(index)
+                    badbumpmap.append(1)
+                else:
+                    badbumpmap.append(0)
+                if noisebb[index]<=3:
+                    badbumpsVCal3.append(index)
+                    badbumpmapVCal3.append(1)
+                else:
+                    badbumpmapVCal5.append(0)
+
+        self.utils.plot_2D_map_list(dataarray = badbumpmap, data_label="", nfig=13,hmin=-1,hmax=-1, plotAverage = False, identifier="Bad Bump Map Fit", xlabel="row", ylabel="column",isChip=True,israw=False,filename=filename+"plotFit",show_plot=show_plot,save_plot=save_plot)
+        self.utils.plot_2D_map_list(dataarray = badbumpmapVCal3, data_label="", nfig=14,hmin=-1,hmax=-1, plotAverage = False, identifier="Bad Bump Map Noise <3", xlabel="row", ylabel="column",isChip=True,israw=False,filename=filename+"plotVCal3",show_plot=show_plot,save_plot=save_plot)
+        self.utils.plot_2D_map_list(dataarray = badbumpmapVCal5, data_label="", nfig=15,hmin=-1,hmax=-1, plotAverage = False, identifier="Bad Bump Map Noise <5", xlabel="row", ylabel="column",isChip=True,israw=False,filename=filename+"plotVCal5",show_plot=show_plot,save_plot=save_plot)
+        self.utils.plot_2D_map_list(dataarray = noisebb, data_label="", nfig=16,hmin=-1,hmax=-1, plotAverage = False, identifier="Noise Map for bumpbonding", xlabel="row", ylabel="column",isChip=True,israw=False,filename=filename+"_SCurveRMS",show_plot=show_plot,save_plot=save_plot)
+
+        # Write out all the files
+        CSV.ArrayToCSV (badbumps, str(filename) + "_BadBumps" + ".csv")
+        CSV.ArrayToCSV (badbumpmap, str(filename) + "_BadBumpMap" + ".csv")
+        CSV.ArrayToCSV (badbumpmapVCal3, str(filename) + "_BadBumpVCal3" + ".csv")
+        CSV.ArrayToCSV (badbumpsVCal5, str(filename) + "_BadBumpVCal5" + ".csv")
+        CSV.ArrayToCSV (noisebb, str(filename) + "_Noise_BadBump" + ".csv")
+        CSV.ArrayToCSV (scurvebb, str(filename) + "_SCurve_BadBump" + ".csv")
+        if offset:
+            CSV.ArrayToCSV (offsetbb, str(filename) + "_Offset_BadBump" + ".csv")
+
+        bin_width = 0.1
+        bin_round = int(max(0,-math.log10(bin_width)))
+        bin_min = max(0,round(min(noisebb_forfitting+noisebb_edgefitting)-bin_width,bin_round))
+        bin_max = min(30,round(max(noisebb_forfitting+noisebb_edgefitting)+bin_width,bin_round))
+        num_binsbb = np.arange(bin_min,bin_max,bin_width)
+
+        if print_out:
+            print("Total BadBumps fit non-edge:",len(badbumpsNonEdge),conf.getPercentage(badbumpsNonEdge))
+            print("Total BadBumps fit:",len(badbumps),conf.getPercentage(badbumps))
+            print("Total BadBumps VCal < 3:",len(badbumpsVCal3),conf.getPercentage(badbumpsVCal3))
+            print("Total BadBumps VCal < 5:",len(badbumpsVCal5),conf.getPercentage(badbumpsVCal5))
+
+        if returnAll:
+                return badbumps, badbumpsNonEdge, badbumpsVCal3, badbumpsVCal5
+        return badbumps
+
+

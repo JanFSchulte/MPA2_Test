@@ -122,9 +122,9 @@ class MPAwp:
 #ssa1 = SSAwp(1, 0b111)
 #ssa  = ssa0
 mpa  = MPAwp(address = 0b000)
-print("Turn on")
-mpa.on()
-print("Turned on")
+print("Start reset")
+mpa.reset_mpa()
+print("Stop reset")
 
 #read_regs     = mpa.chip.rdo.read_regs
 #read_L1       = mpa.chip.rdo.read_L1

@@ -132,9 +132,9 @@ class PowerUtility:
 
     def get_power(self, display = True, return_all = False, chip = False, fast=False):
         chip = self.chip if not chip else chip
-        Pd, Vd, Id = self.get_power_digital(display, False, True, chip = chip, fast=fast)
-        Pa, Va, Ia = self.get_power_analog(display, False, True, chip = chip, fast=fast)
-        Pp, Vp, Ip = self.get_power_pads(display, False, True, chip = chip, fast=fast)
+        Pd, Vd, Id = self.get_power_digital(display, False, True, chip = chip) #, fast=fast)
+        Pa, Va, Ia = self.get_power_analog(display, False, True, chip = chip) #, fast=fast)
+        Pp, Vp, Ip = self.get_power_pads(display, False, True, chip = chip) #, fast=fast)
         if(display):
             utils.print_log('->  Total: %7.3fmW  [             I=%7.3fmA]' % (Pd+Pa+Pp, Id+Ia+Ip ))
         utils.activate_I2C_chip(self.fc7)
