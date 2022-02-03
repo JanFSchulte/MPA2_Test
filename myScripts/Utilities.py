@@ -11,7 +11,10 @@ test_data_path = "../cernbox_anvesh/MPA_test_data/"
 if(sys.version_info[0] < 3):
     print('\n\n\x1b[1;37;41m The MPA-SSA Test bench requires python > 3.5. Compatibility with python 2.8 is not anymore guaranteed. \x1b[0m \n\n')
 
+import tkinter
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.use('TkAgg')
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from scipy.special import erfc
@@ -26,7 +29,7 @@ import matplotlib.mlab as mlab
 #from myScripts.BasicD19c import *
 from myScripts.ArrayToCSV import *
 from sympy.combinatorics.graycode import GrayCode
-
+from myScripts.mpa_configurations import *
 
 class FuncThread(threading.Thread):
     def __init__(self, target, *args):
@@ -47,6 +50,7 @@ class Utilities:
         self.errorlog = False
         self.generic_parameters = {}
         p = []
+        self.conf = conf
 
     class cl_clustdispl(float):
         def __repr__(self):
@@ -161,6 +165,99 @@ class Utilities:
     def PltClose(self):
         for i in p:
             i.join()
+
+    # FNAL addition
+    def plot_2D_map_list(self, 
+                         dataarray = [], 
+                         data_label="", 
+                         row = [],col = [],
+                         nfig=5,hmin=-1,hmax=-1, 
+                         plotAverage = True, 
+                         identifier="", 
+                         xlabel="column", ylabel="row",
+                         isChip=True, israw = False, 
+                         filename="../Results_MPATesting/plot_2D_map_list", 
+                         show_plot=True, 
+                         save_plot=True):
+
+        if len(row)==0:
+            row = self.conf.rowsnom
+        if len(col)==0:
+            col = self.conf.colsnom
+        if isChip and israw:
+            if row == self.conf.rowsnom: row = self.conf.rowsraw
+            if col == self.conf.colsnom: col = self.conf.colsraw
+
+        y = np.array([])
+        x = np.array([])
+        w = np.array([])
+        #print type(dataarray)
+        #print dataarray
+        for c in col:
+            for r in row:
+                #print (r-1)*120+c
+                y = np.append(y,r)
+                x = np.append(x,c)
+                pixelid = self.conf.pixelidraw(r,c) if israw else self.conf.pixelidnom(r,c)
+                w = np.append(w,dataarray[pixelid])
+                #y = np.append(y,np.arange(0, 17,1))
+                #x = np.append(x,np.repeat(c,17))
+        maximum = hmax if hmax >=0 else max(0,np.max(w))
+        minimum = hmin if hmin >=0 else max(0,np.min(w))
+        if plotAverage:
+            minimum = max(0,np.mean(w) - 5*np.std(w))
+            maximum = max(0,np.mean(w) + 5*np.std(w))
+        #print "y",y
+        #print "x",x
+        #print "w",w
+        if isChip:
+            fig = plt.figure(nfig,figsize=(5,7.5))#just an identifier
+        else:
+            fig = plt.figure(nfig)#just an identifier
+        plt.hist2d(x,y,weights=w,bins=(len(col),len(row)),cmin=minimum,cmax=maximum,range=[[col[0], col[-1]+1 ],[row[0], row[-1]+1 ] ] )
+        cbar = plt.colorbar()
+        cbar.set_label(data_label)
+        yl = plt.ylabel(ylabel)
+        xl = plt.xlabel(xlabel)
+        #zl = plt.clabel(str(data_type))
+        plt.text(1,122,identifier)#identifier is for chip ID
+        if plotAverage:
+            plt.text(10,122,"Average %.2f +/- %.2f" % (np.mean(w), np.std(w)))
+        plt.grid()
+        if save_plot: plt.savefig(filename+".png")
+        if save_plot: plt.savefig(filename+".pdf")
+        if show_plot: plt.show()
+        if save_plot: plt.close()
+        return True
+        
+    # FNAL addition
+    def create_logfile(self,path="../Results_MPATesting/",mapsaid="mpa_test_AssemblyX_ChipY",logfile_prefix="log_"):
+        log_filename = path+logfile_prefix+mapsaid+".log"
+        if os.path.isfile(log_filename):
+            copyfilename = path+"SafetyCopy_"+logfile_prefix+mapsaid+timestamp+".log"
+            os.rename(log_filename, copyfilename)
+        with open(log_filename,"w") as logfile:
+            logfile.write("Start log for "+mapsaid+"\n")
+        return log_filename
+
+    # FNAL addition
+    def write_to_logfile(self,message,logfilename="",printout=False):
+        #print message
+        #print logfilename
+        #print printout
+        if logfilename == "":
+            print("logfilename was not specified.")
+            return
+        if not os.path.isfile(logfilename):
+            print("logfile "+logfilename+" does not exist.")
+            return
+        with open(logfilename,"a+") as logfile:
+            if printout: print(message)
+            logfile.write(message+"\n")
+        return
+
+
+
 
     def print_enable(self, ctr = True):
         if(ctr):
