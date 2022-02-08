@@ -8,6 +8,12 @@ import inspect
 import numpy as np
 import matplotlib.pyplot as plt
 
+class bcolors:
+    OK = '\033[92m' #GREEN                                                                                                                                                                                     
+    WARNING = '\033[93m' #YELLOW                                                                                                                                                                               
+    FAIL = '\033[91m' #RED                                                                                                                                                                                      
+    RESET = '\033[0m' #RESET COLOR
+
 class mpa_ctrl_base:
     def __init__(self, i2c, fc7, pwr, mpa_peri_reg_map, mpa_row_reg_map, mpa_pixel_reg_map):
         self.mpa_peri_reg_map = mpa_peri_reg_map
@@ -226,7 +232,7 @@ class mpa_ctrl_base:
         for line in range(0,6):
             self.fc7.TuneLine(line, np.array(pattern), 8, True, False)
             if self.fc7.CheckLineDone(0,0,line) != 1:
-                print(f"Failed tuning line {line}")
+                print(bcolors.FAIL + f"Failed tuning line {line}" + bcolors.RESET)
                 state = False
         return state;
 

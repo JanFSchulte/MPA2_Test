@@ -272,144 +272,126 @@ class mpa_cal_utility():
         else: return data_array
 
     # pixel alive: FNAL addition
-    def pixelalive(self, 
-                   n_pulse = 100, 
-                   ref_valCAL = 200, 
-                   ref_valTHR = 200, 
-                   row = [],  
-                   col = [], 
-                   plot = 1, 
-                   save_plot = 0, 
-                   print_file =1, 
-                   printout = 0, 
-                   pulse_delay = 200, 
-                   extract = 1, 
-                   filename = "../Results_MPATesting/pixelalivetest_fr_"
-                   ,israw=False):
-        return self.maskorpixelalive_test(mask = False, 
-                                          n_pulse = n_pulse, 
-                                          ref_valCAL = ref_valCAL, 
-                                          ref_valTHR = ref_valTHR, 
-                                          row = row,  col = col, 
-                                          plot = plot, 
-                                          save_plot = save_plot, 
-                                          print_file =print_file, 
-                                          printout = printout, 
-                                          extract = extract, 
-                                          pulse_delay = pulse_delay, 
-                                          filename = filename,israw=israw)
-
-    # mask test: FNAL addition
-    def mask_test(self, 
-                  n_pulse = 1, 
-                  ref_valCAL = 200, 
-                  ref_valTHR = 200, 
-                  row = [],  
-                  col = [], 
-                  plot = 1, 
-                  save_plot = 0, 
-                  print_file =1, 
-                  printout = 0, 
-                  pulse_delay = 200, 
-                  extract = 1, 
-                  filename = "../Results_MPATesting/masktest_fr_",
-                  israw=False):
-        return self.maskorpixelalive_test(mask = True, 
-                                          n_pulse = n_pulse, 
-                                          ref_valCAL = ref_valCAL, 
-                                          ref_valTHR = ref_valTHR, 
-                                          row = row,  col = col, 
-                                          plot = plot, 
-                                          save_plot=save_plot, 
-                                          print_file =print_file, 
-                                          printout = printout,  
-                                          extract = extract, 
-                                          pulse_delay = pulse_delay, 
-                                          filename = filename,israw=israw)
-
-    # Mask or Pixel alive: FNAL addition
-    def maskorpixelalive_test(self, 
-                              mask = False, 
-                              n_pulse = 100, 
-                              ref_valCAL = 200, 
-                              ref_valTHR = -1, 
-                              row = [],  
-                              col = [], 
-                              plot = 1, 
-                              save_plot = 0, 
-                              print_file =1, 
-                              printout = 0, 
-                              extract = 1, 
-                              pulse_delay = 200, 
-                              filename = "../Results_MPATesting/masktest_fr_",
-                              israw=False):
+    def pixel_alive(self, 
+                    n_pulse = 100, 
+                    s_type = "CAL", 
+                    ref_val = 200, 
+                    pulse_delay = 200,
+                    filename = "",
+                    plot = 0):
 
         t0 = time.time()
-        row,col,rawrow,rawcol = self.conf.getNomAndRawRowsCols(row,col,israw)
         self.fc7.clear_counters(8)
+        data_array = np.zeros((2040,), dtype = np.int16 )
+        self.I2C.peri_write('Mask', 0b11111111)
+        self.I2C.row_write('Mask', 0, 0b11111111)
         self.mpa.ctrl_base.activate_async()
-        if ref_valCAL >=0: self.mpa.ctrl_base.set_calibration(ref_valCAL)
-        if ref_valTHR >=0: self.mpa.ctrl_base.set_threshold(ref_valTHR)
+        if s_type == "THR":     self.mpa.ctrl_base.set_calibration(ref_val)
+        elif s_type == "CAL":   self.mpa.ctrl_base.set_threshold(ref_val)
+        else: return "S-Curve type not recognized"
         count = 0
-        count_err = 0
-
         self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
-        #Configure_TestPulse_MPA(200, int(pulse_delay/2), 1250, n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
-#        Configure_TestPulse_MPA(self.conf.delayresetafter, pulse_delay, self.conf.delaypulsebefore, n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
         Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
-#        self.utils.ShowPercent(count, len(row)*len(col), "")
-        self.mpa.ctrl_pix.disable_all_pixels()
-        if mask:
-            self.mpa.inject.send_pulses_fast_withMasking(n_pulse, -1, -1, ref_valCAL)
-        else:
-            print("DOING IT")
-            self.mpa.inject.send_pulses_fast(n_pulse, 0, 0, ref_valCAL)
+        failed = 0
 
-        fail, temp = self.ReadoutCounters()
-        print(fail, sum(temp), temp)
+        if s_type == "CAL":     
+            self.mpa.ctrl_base.set_calibration(ref_val)
+        elif s_type == "THR":   
+            self.mpa.ctrl_base.set_threshold(ref_val)
 
-        if fail: fail, temp = self.ReadoutCounters()
-        tempnom = self.conf.convertRawToNomPixmap(temp)
-        data_array = tempnom
-        count += 1
+        # INJECT CHARGE
+        self.mpa.inject.send_pulses_fast(n_pulse, 0, 0, ref_val)
+        fail, temp = self.ReadoutCounters(raw_mode_en=0)
+        if fail: fail, temp = self.ReadoutCounters(raw_mode_en=0)
+        data_array = temp
+
         self.fc7.clear_counters(8)
         time.sleep(0.001)
         self.fc7.clear_counters(8)
-        if (count_err == 10):
-            print ("Pixel Alive failed")
-            return "exit at pixel alive"
-        if print_file:
-            #CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + str(ref_val) + ".csv")
-            CSV.ArrayToCSV (data_array, str(filename) + ".csv")
-            if extract:
-                unmaskablepixels = []
-                deadpixels = []
-                ineffpixels = []
-                noisypixels = []
-                for p in range(0,len(data_array)):
-                    if mask:
-                        if data_array[p]!=0:
-                            if printout:
-                                print("Unmasked pixel: row = "+str(self.conf.rowfrompixnom(p))+", column = "+str(self.conf.colfrompixnom(p))+" --> recorded hits: "+str(data_array[p]))
-                            unmaskablepixels.append(p)
-                    else:
-                        if data_array[p]!=n_pulse:
-                            if printout:
-                                print("Strange pixel: row = "+str(self.conf.rowfrompixnom(p))+", column = "+str(self.conf.colfrompixnom(p))+" --> recorded hits (should be "+str(n_pulse)+"): "+str(data_array[p]))
-                            if data_array[p] == 0: 
-                                deadpixels.append(p)
-                            elif data_array[p] < n_pulse:
-                                ineffpixels.append(p)
-                            elif data_array[p] > n_pulse: 
-                                noisypixels.append(p)
-                self.utils.plot_2D_map_list(dataarray = data_array, data_label="", nfig=7,hmin=-1,hmax=-1, plotAverage = True, identifier="", xlabel="row", ylabel="column",isChip=True,israw=False,filename=filename, show_plot=plot, save_plot=save_plot)
-                if mask:
-                    if printout:
-                        if len(unmaskablepixels): print("Unmaskable Pixels:",len(unmaskablepixels),"("+self.conf.getPercentage(unmaskablepixels)+")")
-                    else: print("All pixels are maskable")
-                    return data_array, unmaskablepixels
+        if failed == 1:
+            print ("Pixel alive failed")
+            return "exit"
 
-            return data_array
+        deadpixels = []
+        ineffpixels = []
+        noisypixels = []
+        for p in range(0,len(data_array)):
+            if data_array[p]!=n_pulse:
+                if data_array[p] == 0: 
+                    deadpixels.append(p)
+                elif data_array[p] < n_pulse: 
+                    ineffpixels.append(p)
+                elif data_array[p] > n_pulse:
+                    noisypixels.append(p)
+
+        if len(filename) > 0:
+            CSV.ArrayToCSV (data_array, str(filename) + ".csv")
+
+        if plot:
+            self.utils.plot_2D_map_list(dataarray = data_array, 
+                                        data_label="", 
+                                        nfig=7,
+                                        hmin=-1,hmax=-1, 
+                                        plotAverage = True, 
+                                        identifier="", 
+                                        xlabel="row", ylabel="column",
+                                        isChip=True,
+                                        israw=False,
+                                        show_plot=1, 
+                                        save_plot=0)
+
+        t1 = time.time()
+        return data_array, deadpixels, ineffpixels, noisypixels
+
+    # mask test: FNAL addition
+    def mask_test(self,
+                  n_pulse = 1,
+                  s_type = "CAL",
+                  ref_val = 200,
+                  pulse_delay = 200,
+                  filename = ""):
+        
+        t0 = time.time()
+        self.fc7.clear_counters(8)
+        data_array = np.zeros((2040,), dtype = np.int16 )
+        self.I2C.peri_write('Mask', 0b11111111)
+        self.I2C.row_write('Mask', 0, 0b11111111)
+        self.mpa.ctrl_base.activate_async()
+        if s_type == "THR":     self.mpa.ctrl_base.set_calibration(ref_val)
+        elif s_type == "CAL":   self.mpa.ctrl_base.set_threshold(ref_val)
+        else: return "S-Curve type not recognized"
+        count = 0
+        self.fc7.write("fc7_daq_cnfg.fast_command_block.misc.backpressure_enable", 0)
+        Configure_TestPulse_MPA(200, int(pulse_delay/2), int(pulse_delay/2), n_pulse, enable_L1 = 0, enable_rst = 0, enable_init_rst = 0)
+        failed = 0
+
+        if s_type == "CAL":
+            self.mpa.ctrl_base.set_calibration(ref_val)
+        elif s_type == "THR":
+            self.mpa.ctrl_base.set_threshold(ref_val)
+
+        # INJECT CHARGE                                                                                                                                                                                     
+        self.mpa.inject.send_pulses_fast_withMasking(n_pulse, 0, 0, ref_val)
+        fail, temp = self.ReadoutCounters(raw_mode_en=0)
+        if fail: fail, temp = self.ReadoutCounters(raw_mode_en=0)
+        data_array = temp
+
+        self.fc7.clear_counters(8)
+        time.sleep(0.001)
+        self.fc7.clear_counters(8)
+        if failed == 1:
+            print ("Pixel mask test failed")
+            return "exit"
+
+        if len(filename) > 0:
+            CSV.ArrayToCSV (data_array, str(filename) + ".csv")
+
+        unmaskablepixels = []
+        for p in range(0,len(data_array)):
+            if data_array[p]!=0:
+                unmaskablepixels.append(p)
+
+        return data_array, unmaskablepixels
 
     def trimming_step(self, 
                       pix_out = [["Row", "Pixel", "DAC"]], 
@@ -546,7 +528,7 @@ class mpa_cal_utility():
         print("Trimming Elapsed Time: " + str(t1 - t0))
         return data_array, pix_out
 # scurve, th, noise, trim, count = cal.trimming_new()
-    def trimming_new(self, ref = 40, low = 80, req = 130, high = 180, nominal_ref = 15, nominal_req = 85 , trim_ampl = -1, rbr = 0, plot = 1):
+    def trimming_new(self, ref = 40, low = 80, req = 130, high = 180, nominal_ref = 15, nominal_req = 85 , trim_ampl = -1, rbr = 0, plot = 0, filename = ""):
         """
 
         :param ref:  (Default value = 40)
@@ -596,6 +578,9 @@ class mpa_cal_utility():
             scurve, th, noise = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = nominal_ref, row = list(range(1,17)), step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = nominal_req, extract = 1, plot = plot, print_file =0 )
         else:
             print("Error")
+
+        CSV.ArrayToCSV (trim, str(filename) + "_trimbits.csv")
+        
         t1 = time.time()
         print("Trimming Elapsed Time: " + str(t1 - t0))
         return scurve, th, noise, trim, count

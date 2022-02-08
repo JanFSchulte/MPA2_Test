@@ -1,5 +1,7 @@
 import json
 import time
+import random
+
 ##from myScripts.BasicD19c import *
 from myScripts.Utilities import *
 from utilities.tbsettings import *
@@ -476,3 +478,92 @@ class I2CConf:
             return int(value, base)
         else:
             return value
+
+    # FNAL addition
+    def test_peri(self, printout=False):
+        t0 = time.time()
+        utils.activate_I2C_chip(self.fc7)
+        read_reg = ['SEUcntPeri', 'ErrorL1', 'OFcnt', 'EfuseValue0', 'EfuseValue1','EfuseValue2','EfuseValue3', 'test']
+        cnt = 0
+        regcnt=0
+        for reg in self.peri_reg_map.keys():
+            if all(reg_check != reg for reg_check in read_reg ):
+                regcnt += 1
+                if regcnt%18==0:
+                    utils.activate_I2C_chip(self.fc7) # a hack as else things fail
+        value = self.peri_read(reg)
+        self.peri_write(reg, 255)
+        max_value = self.peri_read(reg)
+        if (max_value == 0):
+            cnt += 1 #added by HJ
+        elif(max_value == None):
+            cnt += 1 #added by HJ
+        else:
+            randominteger = random.randint(0,max_value)
+            self.peri_write(reg, randominteger)
+            check = self.peri_read(reg)
+            if (check != randominteger):
+                cnt += 1
+        self.peri_write(reg, value)
+
+        t1 = time.time()
+        return cnt
+
+    def test_row(self, printout=False):
+        t0 = time.time()
+        utils.activate_I2C_chip(self.fc7)
+        read_reg = ['SEUcntRow', 'test']
+        cnt = 0
+        regcnt = 0
+        for row in range(1,17):
+            for reg in self.mpa_row_reg_map.keys():
+                if all(reg_check != reg for reg_check in read_reg ):
+                    regcnt += 1
+                    if regcnt%18==0:
+                        utils.activate_I2C_chip(self.fc7) # a hack as else things fail
+        value = self.row_read(reg, row)
+        self.row_write(reg, row, 255)
+        max_value = self.row_read(reg, row)
+        if (max_value == 0):
+            cnt += 1 #added by HJ
+        elif(max_value == None):
+            cnt += 1 #added by HJ
+        else:
+            randominteger = random.randint(0,max_value)
+            self.row_write(reg, row,  randominteger)
+            check = self.row_read(reg, row)
+            if (check != randominteger):
+                cnt += 1
+        self.row_write(reg, row, value)
+
+        t1 = time.time()
+        return cnt
+
+    def test_pixel(self,printout=False):
+        t0 = time.time()
+        utils.activate_I2C_chip(self.fc7)
+        read_reg = ['ReadCounter_LSB', 'ReadCounter_MSB', 'test']
+        cnt = 0
+        for row in range(1,17):
+            for pixel in range(1,121):
+                for reg in self.mpa_pixel_reg_map.keys():
+                    if all(reg_check != reg for reg_check in read_reg ):
+                        value = self.pixel_read(reg, row, pixel)
+                        self.pixel_write(reg, row, pixel, 255)
+                        max_value = self.pixel_read(reg, row, pixel)
+                        if (max_value == 0):
+                            cnt += 1 #added by HJ
+                            self.pixel_write(reg, row, pixel, value)
+                        elif(max_value == None):
+                            cnt += 1 #added by HJ 
+                        else:
+                            randominteger = random.randint(0,max_value)
+                            self.pixel_write(reg, row, pixel, randominteger)
+                            check = self.pixel_read(reg, row, pixel)
+                            if (check != randominteger):
+                                cnt += 1
+                            self.pixel_write(reg, row, pixel, value)
+
+        t1 = time.time()
+        return cnt
+

@@ -156,13 +156,15 @@ def mpa_test(basepath="../Results_MPATesting/",
 #    status = hvsupply.setVoltageSlow(vbias,-10,0.25)
 #    utils.write_to_logfile("Bias voltage set to BV="+str(int(hvsupply.getData()[0]))+"V, I = "+str(hvsupply.getData()[1]*1000000)+" muA", logfilename, True)
 #    status = hvsupply.startReadout()
-    utils.write_to_logfile("Test decoding:", logfilename, True)
+
     badanalogpix, baddigitalpix = [], []
 
     # Test decoding 
     if testdecoding:
-        badanalogpix = test.analog_pixel_test(row=test.conf.rowsraw,pixel=test.conf.colsraweff,print_log=1,filename=path+mapsaid+"_analog_test.log")
-        baddigitalpix = test.digital_pixel_test(row=test.conf.rowsraw,pixel=test.conf.colsraweff,print_log=1,filename=path+mapsaid+"_digital_test.log")
+        utils.write_to_logfile("Test decoding:", logfilename, True)
+
+        badanalogpix = mpa.test.analog_pixel_test(row=mpa.test.conf.rowsraw,pixel=mpa.test.conf.colsraweff,print_log=1,filename=path+mapsaid+"_analog_test.log")
+        baddigitalpix = mpa.test.digital_pixel_test(row=mpa.test.conf.rowsraw,pixel=mpa.test.conf.colsraweff,print_log=1,filename=path+mapsaid+"_digital_test.log")
         utils.write_to_logfile("Total analog errors:  "+str(len(badanalogpix)), logfilename, True)
         utils.write_to_logfile("Total digital errors: "+str(len(baddigitalpix)), logfilename, True)
         utils.write_to_logfile("Total errors:         "+str(len(badanalogpix)+len(baddigitalpix)), logfilename, True)
@@ -192,23 +194,23 @@ def mpa_test(basepath="../Results_MPATesting/",
         utils.write_to_logfile("Skipped registers", logfilename, True)
 
     # Strip test ##################################
-    utils.write_to_logfile("Strip In Test:", logfilename, True)
     StripIn = 0
 
     if teststrips:
-        StripIn = test.strip_test(filenamebase=path+mapsaid,printout=0)
+        utils.write_to_logfile("Strip In Test:", logfilename, True)
+        StripIn = mpa.test.strip_test(filenamebase=path+mapsaid,printout=0)
+        if StripIn==0: utils.write_to_logfile("  Strip Input scan passed"                       , logfilename, True)
+        if StripIn==1: utils.write_to_logfile("  Strip Input scan passed (after changing edge)" , logfilename, True)
+        if StripIn==2: utils.write_to_logfile("  Strip Input scan failed"                       , logfilename, True)
     else:
         utils.write_to_logfile("Skipped strips", logfilename, True)
 
-    if StripIn==0: utils.write_to_logfile("  Strip Input scan passed"                       , logfilename, True)
-    if StripIn==1: utils.write_to_logfile("  Strip Input scan passed (after changing edge)" , logfilename, True)
-    if StripIn==2: utils.write_to_logfile("  Strip Input scan failed"                       , logfilename, True)
+    # Memory test ##################################
     BadPixM12, error12, stuck12, i2c_issue12, missing12, Mem12 = [], -1, -1, -1, -1, -1
     BadPixM10, error10, stuck10, i2c_issue10, missing10, Mem10 = [], -1, -1, -1, -1, -1
 
-    # Memory test ##################################
     if testmemory:
-        BadPixM12, error12, stuck12, i2c_issue12, missing12, Mem12 = test.memory_test_full(125,filenamebase=path+mapsaid,printout=0)
+        BadPixM12, error12, stuck12, i2c_issue12, missing12, Mem12 = mpa.test.memory_test_full(125,filenamebase=path+mapsaid,printout=0)
         BadPixM10, error10, stuck10, i2c_issue10, missing10, Mem10 = [], -1, -1, -1, -1, -1
 
         utils.write_to_logfile("Memory test at 1.2:", logfilename, True)
@@ -222,7 +224,7 @@ def mpa_test(basepath="../Results_MPATesting/",
         else:
             utils.write_to_logfile("   Succeeded at 1.2 V." , logfilename, True)
             utils.write_to_logfile("Memory test at 1.0:", logfilename, True)
-            BadPixM10, error10, stuck10, i2c_issue10, missing10, Mem10 = test.memory_test_full(105,filenamebase=path+mapsaid,printout=0)
+            BadPixM10, error10, stuck10, i2c_issue10, missing10, Mem10 = mpa.test.memory_test_full(105,filenamebase=path+mapsaid,printout=0)
             utils.write_to_logfile("   Number of error:      " + str(error12)     , logfilename, True)
             utils.write_to_logfile("   Number of stucks:     " + str(stuck12)     , logfilename, True)
             utils.write_to_logfile("   Number of I2C issues: " + str(i2c_issue12) , logfilename, True)
@@ -236,15 +238,16 @@ def mpa_test(basepath="../Results_MPATesting/",
 
     # Test masking and pixel alive ##################################
 #    mpa.ctrl_pix.reset_trim(0)
-    utils.write_to_logfile("Test pixel masking:", logfilename, True)
+
     pixel_mask, unmaskablepixels = [],[]
     pixel_alive, deadpixels, ineffpixels, noisypixels = [], [], [], []
     if testmaskpalive:
-        pixel_mask, unmaskablepixels = mpa.cal.mask_test(ref_valCAL=250, ref_valTHR=250, filename=path+mapsaid+"_mask_test", plot=0, save_plot=0)
+        utils.write_to_logfile("Test pixel masking:", logfilename, True)
+        pixel_mask, unmaskablepixels = mpa.cal.mask_test(ref_val=250, filename=path+mapsaid+"_mask_test")
         utils.write_to_logfile( "Unmaskable Pixels:  "+str(len(unmaskablepixels))+" ("+conf.getPercentage(unmaskablepixels)+")", logfilename, True)
         utils.write_to_logfile("Test pixel alive:", logfilename, True)
 
-        pixel_alive, deadpixels, ineffpixels, noisypixels = mpa.cal.pixelalive(ref_valCAL=250, ref_valTHR=250, filename=path+mapsaid+"_pixelalive", plot=0, save_plot=0)
+        pixel_alive, deadpixels, ineffpixels, noisypixels = mpa.cal.pixel_alive(ref_val=250, filename=path+mapsaid+"_pixelalive", plot=0)
         utils.write_to_logfile( "Dead Pixels:        "+str(len(deadpixels ))+" ("+conf.getPercentage(deadpixels )+")", logfilename, True)
         utils.write_to_logfile( "Inefficient Pixels: "+str(len(ineffpixels))+" ("+conf.getPercentage(ineffpixels)+")", logfilename, True)
         utils.write_to_logfile( "Noisy Pixels:       "+str(len(noisypixels))+" ("+conf.getPercentage(noisypixels)+")", logfilename, True)
@@ -267,7 +270,7 @@ def mpa_test(basepath="../Results_MPATesting/",
 
     # Perform trimming ################################## 
     if testtrim:
-        trim_bits = mpa.cal.trimming_new(filename=path+mapsaid+"_Trim", plot=0, save_plot=0, print_out=False, printout=False)
+        trim_bits = mpa.cal.trimming_new(filename=path+mapsaid+"_Trim")
     else:
         utils.write_to_logfile("Skipped trimming", logfilename, True)
         
@@ -325,21 +328,29 @@ def mpa_test(basepath="../Results_MPATesting/",
     print(len(badanalogpix))
     print(len(baddigitalpix))
     print(len(badanalogpix)+len(baddigitalpix))
-    print(str(len(unmaskablepixels))+" \t"+conf.getPercentage(unmaskablepixels))
-    print(str(len(deadpixels ))+" \t"+conf.getPercentage(deadpixels ))
-    print(str(len(ineffpixels))+" \t"+conf.getPercentage(ineffpixels))
-    print(str(len(noisypixels))+" \t"+conf.getPercentage(noisypixels))
-    print('%7.2f \t%7.2f' % (np.mean(THR_pre [1]), np.std(THR_pre [1])))
-    print('%7.2f \t%7.2f' % (np.mean(THR_pre [2]), np.std(THR_pre [2])))
-    print('%7.2f \t%7.2f' % (np.mean(CAL_pre [1]), np.std(CAL_pre [1])))
-    print('%7.2f \t%7.2f' % (np.mean(CAL_pre [2]), np.std(CAL_pre [2])))
-    print('%7.2f \t%7.2f' % (np.mean(THR_post[1]), np.std(THR_post[1])))
-    print('%7.2f \t%7.2f' % (np.mean(THR_post[2]), np.std(THR_post[2])))
-    print('%7.2f \t%7.2f' % (np.mean(CAL_post[1]), np.std(CAL_post[1])))
-    print('%7.2f \t%7.2f' % (np.mean(CAL_post[2]), np.std(CAL_post[2])))
-    print(str(len(badbumps     ))+" \t"+conf.getPercentage(badbumps     ))
-    print(str(len(badbumpsVCal3))+" \t"+conf.getPercentage(badbumpsVCal3))
-    print(str(len(badbumpsVCal5))+" \t"+conf.getPercentage(badbumpsVCal5))
+
+    if testmaskpalive:
+        print(str(len(unmaskablepixels))+" \t"+conf.getPercentage(unmaskablepixels))
+        print(str(len(deadpixels ))+" \t"+conf.getPercentage(deadpixels ))
+        print(str(len(ineffpixels))+" \t"+conf.getPercentage(ineffpixels))
+        print(str(len(noisypixels))+" \t"+conf.getPercentage(noisypixels))
+
+    if testpretrim:
+        print('%7.2f \t%7.2f' % (np.mean(THR_pre [1]), np.std(THR_pre [1])))
+        print('%7.2f \t%7.2f' % (np.mean(THR_pre [2]), np.std(THR_pre [2])))
+        print('%7.2f \t%7.2f' % (np.mean(CAL_pre [1]), np.std(CAL_pre [1])))
+        print('%7.2f \t%7.2f' % (np.mean(CAL_pre [2]), np.std(CAL_pre [2])))
+
+    if testtrim and testposttrim:
+        print('%7.2f \t%7.2f' % (np.mean(THR_post[1]), np.std(THR_post[1])))
+        print('%7.2f \t%7.2f' % (np.mean(THR_post[2]), np.std(THR_post[2])))
+        print('%7.2f \t%7.2f' % (np.mean(CAL_post[1]), np.std(CAL_post[1])))
+        print('%7.2f \t%7.2f' % (np.mean(CAL_post[2]), np.std(CAL_post[2])))
+
+    if testbb:
+        print(str(len(badbumps     ))+" \t"+conf.getPercentage(badbumps     ))
+        print(str(len(badbumpsVCal3))+" \t"+conf.getPercentage(badbumpsVCal3))
+        print(str(len(badbumpsVCal5))+" \t"+conf.getPercentage(badbumpsVCal5))
 
     if doIVscan:
         print("You chose to do an IV scan - doing it now")
@@ -381,7 +392,7 @@ def IVpoff():
     return
 
 def pa():
-    pixel_alive = mpa.cal.pixelalive(ref_valCAL=250, ref_valTHR=250)
+    pixel_alive = mpa.cal.pixel_alive(plot=1)
     return
 
 def jennet():
@@ -394,10 +405,10 @@ def jennet():
              testdecoding=False,
              teststrips=False,
              testmemory=False,
-             testmaskpalive=False,
+             testmaskpalive=True,
              testpretrim=True,
-             testtrim=False,
-             testposttrim=False,
+             testtrim=True,
+             testposttrim=True,
              testbb=False,
              vbias=0,
              bbvbias=0,

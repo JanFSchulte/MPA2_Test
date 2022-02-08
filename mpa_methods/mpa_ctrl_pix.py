@@ -22,10 +22,6 @@ class mpa_ctrl_pix:
         self.I2C.pixel_write('PixelEnables', r, p, 0x00)
         #self.I2C.pixel_write('ModeSel', r, p, 0x00)
 
-    # FNAL addition
-    def disable_all_pixels(self): 
-        self.disable_pixel(0,0)#so far 0,0 means all
-
     # Pixel mode selection
     # FNAL addition
     def enable_all_pix_counters(self): 

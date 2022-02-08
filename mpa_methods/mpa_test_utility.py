@@ -1,4 +1,3 @@
-
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from main import *
@@ -13,7 +12,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utilities.fc7_daq_methods import *
 
-
+# FNAL addition:                                                                                                                                                                                              
+from myScripts.mpa_configurations import *
 
 class mpa_test_utility():
     """ """
@@ -21,6 +21,9 @@ class mpa_test_utility():
         self.mpa = mpa
         self.i2c = I2C
         self.fc7 = fc7
+
+        # FNAL addition                                                                                                                                                                                     
+        self.conf = conf
 
     def shift(self, verbose = 0):
         """
@@ -307,6 +310,28 @@ class mpa_test_utility():
         utils.print_log("-> Strip In Test Elapsed Time: " + str(t1 - t0))
         return data_array
 
+    def strip_test(self,filenamebase="./",printout=0, signal_integrity_limit=0.99):
+        # Input Strip Test:
+        strip_in = self.strip_in_scan(print_file = 1, filename = filenamebase + "_striptest", probe=1)
+        good_si = 0
+        StripIn = -1
+        for i in range(0,8):
+            if (strip_in[i,:].all() > signal_integrity_limit): good_si = 1
+        if good_si:
+            StripIn = 0
+        else:
+            strip_in = self.strip_in_scan(print_file = 1, edge = 1, filename = filenamebase + "_striptestv2", probe=1)
+            good_si = 0
+            for i in range(0,8):
+                if (strip_in[i,:].all() > signal_integrity_limit): good_si = 1
+            if good_si:
+                StripIn = 1
+            else:
+                StripIn = 2
+        return StripIn
+
+
+
     def rnd_pixel(self, row = [1,16], pixel = [1,120], dig_inj = 1, verbose = 1):
         """ Returns one random pixel coordinate in given range and passes it to memory_test
 
@@ -440,7 +465,11 @@ class mpa_test_utility():
         time.sleep(0.001)
         return self.mpa.rdo.read_L1(verbose)
 
-    def mem_test(self, latency = 255, delay = [10], row = list(range(1,17)), pixel = list(range(1,121)), diff = 3, print_log = 0, filename =  "../cernbox/MPA_Results/digital_mem_test.log", dig_inj =1, gate = 0, verbose = 1):
+    def mem_test(self, latency = 255, delay = [10], 
+                 row = list(range(1,17)), pixel = list(range(1,121)), 
+                 diff = 3, print_log = 0, 
+                 filename =  "../cernbox/MPA_Results/digital_mem_test.log", 
+                 dig_inj =1, gate = 0, verbose = 1):
         """
         :param latency:  (Default value = 255)
         :param delay:  (Default value = [10])
@@ -1005,4 +1034,48 @@ class mpa_test_utility():
                 else:
                     res[c_idx, d_idx] = tmp[0][0]
         return res
-        
+     
+    # FNAL addition
+    def memory_test_full(self, voltage, filenamebase="./",printout=0):
+        self.mpa.pwr.set_dvdd(voltage/10)
+        self.mpa.reset()
+        self.mpa.init()
+        bad_pix, error, stuck, i2c_issue, missing = self.mem_test(print_log=1, filename = filenamebase + "_LogMemTest_" + str(voltage) + ".txt", verbose = 0)
+        mempix = []
+        mempix.append(bad_pix)
+        if len(mempix[0]) > 0:
+            time.sleep(1)
+            bad_pix, error, stuck, i2c_issue, missing = self.mem_test(print_log=1, filename = filenamebase + "_LogMemTest_" + str(voltage) + "_bis.txt", verbose = 0)
+            mempix.append(bad_pix)
+
+        BadPixM = mempix[0]
+        goodpix = []
+        for i in range(1, len(mempix)):
+            for j in BadPixM:
+                if j not in mempix[i]:
+                    goodpix.append(j)
+        for i in BadPixM:
+            BadPixM.remove(i)
+
+        if printout: print(str(len(BadPixM)) + " Bad Pixels (Mem)")
+
+        # Write Failing Pixel
+        with open(filenamebase+"_BadPixelsM_" + str(voltage) + ".csv", 'wb') as csvfile:
+            CVwriter = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            for i in BadPixM: CVwriter.writerow(i)
+
+        # Save Statistics
+        with open(filenamebase+"_Mem" + str(voltage) + "_Summary.csv", 'wb') as csvfile:
+            CVwriter = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            Memory12Flags = [len(BadPixM), stuck, i2c_issue, missing]
+            CVwriter.writerow(Memory12Flags)
+
+        # Set Flags for final summary
+        self.mpa.pwr.set_dvdd(1.2)
+        flag = -1
+        if ((len(BadPixM)<10) and (stuck <10) and (i2c_issue < 10) and (missing <10)): 
+            flag = 0
+        else:
+            flag = 1
+
+        return BadPixM, error, stuck, i2c_issue, missing, flag

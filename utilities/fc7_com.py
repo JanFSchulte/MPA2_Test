@@ -21,6 +21,12 @@ from utilities.tbsettings import *
 from utilities.ErrorHandler import *
 fc7ErrorHandler = ErrorHandler()
 
+class bcolors:
+    OK = '\033[92m' #GREEN                                                                                                                                                                                     
+    WARNING = '\033[93m' #YELLOW                                                                                                                                                                              
+    FAIL = '\033[91m' #RED                                                                                                                                                                                     
+    RESET = '\033[0m' #RESET COLOR 
+
 class I2C_MainSlaveMapItem:
     def __init__(self):
         self.i2c_address = 0
@@ -558,7 +564,7 @@ class fc7_com():
         if(return_full_status): line_done = line_status[1]
         else: line_done = line_status
         if line_done >= 0:pass
-        else: print("Tuning Failed or Wrong Status")
+        else: print(bcolors.FAIL + "Tuning failed or wrong status" + bcolors.RESET)
         if(return_full_status): return line_status
         else: return line_done
 
@@ -588,10 +594,10 @@ class fc7_com():
             done = (data & 0x1<<14) >> 14
             wa_fsm_state = (data & 0xF<<7) >> 7
             pa_fsm_state = (data & 0xF<<0) >> 0
-            if printStatus:
-                print("Line Status: ")
-                print("\tTuning done/applied: "+ str(done))
-                print("\tLine ID: "+str(line_id)+ ",\tIdelay: " +str(delay)+ ",\tBitslip: " +str(bitslip)+ ",\tWA FSM State: " +str(wa_fsm_state)+ ",\tPA FSM State: "+str( pa_fsm_state))
+#            if printStatus:
+#                print("Line Status: ")
+#                print("\tTuning done/applied: "+ str(done))
+#                print("\tLine ID: "+str(line_id)+ ",\tIdelay: " +str(delay)+ ",\tBitslip: " +str(bitslip)+ ",\tWA FSM State: " +str(wa_fsm_state)+ ",\tPA FSM State: "+str( pa_fsm_state))
             if(not return_full_status):
                 return done
             else:

@@ -33,16 +33,14 @@ class mpa_inject():
             self.fc7.open_shutter(8)
         except ChipsException:
             print("Error ChipsException, repeat command")
-            time.sleep (0.001)
+            sleep (0.001)
             self.fc7.open_shutter(8)
         if (cal != 0):
-            print("CAL",cal)
             self.fc7.SendCommand_CTRL("start_trigger")
             test = self.fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
             if not test: self.fc7.SendCommand_CTRL("start_trigger")
             test = 1
             while (test):
-                print(test)
                 test = self.fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
                 time.sleep(0.001)
         else:
@@ -51,7 +49,7 @@ class mpa_inject():
             self.fc7.close_shutter(8)
         except ChipsException:
             print("Error ChipsException, repeat ccommand")
-            time.sleep (0.001)
+            sleep (0.001)
             self.fc7.close_shutter(8)
 
     def send_pulses_fast_all(self, n_pulse, row, pixel, cal):
@@ -112,17 +110,14 @@ class mpa_inject():
 
     # FNAL Addition
     def send_pulses_fast_withMasking(self, n_pulse, row, pixel, cal):
-        self.ctrl_pix.disable_all_pixels()
-        if row >=0 and pixel >=0:
-            self.ctrl_pix.enable_pix_counter(row, pixel)#enable one pixel
+        self.ctrl_pix.disable_pixel(0,0)
 
         try:
             self.fc7.open_shutter(8)
         except ChipsException:
             print("Error ChipsException, repeat command")
-            time.sleep (0.001)
+            sleep (0.001)
             self.fc7.open_shutter(8)
-            
         if (cal != 0):
             self.fc7.SendCommand_CTRL("start_trigger")
             test = self.fc7.read("fc7_daq_stat.fast_command_block.general.fsm_state")
@@ -133,13 +128,9 @@ class mpa_inject():
                 time.sleep(0.001)
         else:
             time.sleep(0.000001*n_pulse)
-
         try:
             self.fc7.close_shutter(8)
         except ChipsException:
             print("Error ChipsException, repeat ccommand")
-            time.sleep(0.001)
+            sleep (0.001)
             self.fc7.close_shutter(8)
-
-        if row >=0 and pixel >=0:
-            self.ctrl_pix.disable_pixel(row,pixel)
