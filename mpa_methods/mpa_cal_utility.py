@@ -74,26 +74,28 @@ class mpa_cal_utility():
         :param plot:
 
         """
-        th_array = np.zeros(2040, dtype = np.int )
-        noise_array = np.zeros(2040, dtype = np.float )
+        th_array = np.zeros(self.conf.npixsnom, dtype = np.int )
+        noise_array = np.zeros(self.conf.npixsnom, dtype = np.float )
         for r in row:
             for p in pixel:
+                pixelid = self.conf.pixelidnom(r,p)
+
                 if plot:
                     plt.plot(list(range(start,stop)), scurve[(r-1)*120+p,0:(stop-start)],'-')
             # Noise and Spread study
                 if extract:
                     try:
                         if s_type == "THR":
-                            start_DAC = np.argmax(scurve[(r-1)*120+p,:]) + 10
-                            par, cov = curve_fit(self.errorfc, list(range(start_DAC, (stop-start))), scurve[(r-1)*120+p,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
+                            start_DAC = np.argmax(scurve[pixelid,:])+10
+                            par, cov = curve_fit(self.errorfc, list(range(start_DAC, (stop-start))), scurve[pixelid,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
                         elif s_type == "CAL":
                             start_DAC = 0
-                            par, cov = curve_fit(self.errorf, list(range(start_DAC, (stop-start))), scurve[(r-1)*120+p,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
-                        th_array[(r-1)*120+p] = int(round(par[1]))
-                        noise_array[(r-1)*120+p] = par[2]
+                            par, cov = curve_fit(self.errorf, list(range(start_DAC, (stop-start))), scurve[pixelid,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, nominal_DAC, 2])
+                        th_array[pixelid] = int(round(par[1]))
+                        noise_array[pixelid] = par[2]
                     except RuntimeError or TypeError:
-                        utils.print_error(f"Fitting failed on pixel {p}  row: {r}")
-                        th_array[(r-1)*120+p] = nominal_DAC
+#                        utils.print_error(f"Fitting failed on pixel {p}  row: {r}")
+                        th_array[pixelid] = nominal_DAC
         th_array = [a for a in th_array if a != 0]
         noise_array = [b for b in noise_array if b != 0]
         if plot:
@@ -173,7 +175,7 @@ class mpa_cal_utility():
         # print(count)
         return failed, count
     
-    def s_curve(self, n_pulse = 1000, s_type = "THR", rbr = 0, ref_val = 50, row = list(range(1,17)), step = 1, start = 0, stop = 256, pulse_delay = 200, extract_val = 0, extract = 1, plot = 1, print_file =1, filename = "Results_MPATesting/scurve_fr_"):
+    def s_curve(self, n_pulse = 1000, s_type = "THR", rbr = 0, ref_val = 50, row = [], step = 1, start = 0, stop = 256, pulse_delay = 200, extract_val = 0, extract = 1, plot = 1, print_file =1, filename = "Results_MPATesting/scurve_fr_"):
         """[summary]
 
         Parameters
@@ -215,10 +217,10 @@ class mpa_cal_utility():
 
         t0 = time.time()
         self.fc7.clear_counters(8)
-        row = np.array(row)
-        nrow = int(row.shape[0])
+        row = self.conf.rowsnom
+        nrow = self.conf.nrowsnom 
         nstep = int((stop-start)/step+1)
-        data_array = np.zeros((2040, nstep), dtype = np.int16 )
+        data_array = np.zeros((self.conf.npixsnom, nstep), dtype = np.int16 )
         self.I2C.peri_write('Mask', 0b11111111)
         self.I2C.row_write('Mask', 0, 0b11111111)
         self.mpa.ctrl_base.activate_async()
@@ -242,7 +244,8 @@ class mpa_cal_utility():
             else: self.mpa.inject.send_pulses_fast(n_pulse, 0, 0, cur_val)
             fail, temp = self.ReadoutCounters(raw_mode_en=0)
             if fail: fail, temp = self.ReadoutCounters(raw_mode_en=0)
-            data_array [:, count]= temp
+            tempnom = self.conf.convertRawToNomPixmap(temp)
+            data_array [:, count]= tempnom
             count += 1
             cur_val += step
             if (count_err == 10):
@@ -261,9 +264,9 @@ class mpa_cal_utility():
             if extract_val == 0:
                 if s_type == "THR":     extract_val = ref_val*1.66+70
                 elif s_type == "CAL":   extract_val = ref_val/1.66-40
-            th_array, noise_array = self.plot_extract_scurve(row = row, pixel = list(range(2,120)), s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, plot = plot, extract = extract)
+            th_array, noise_array = self.plot_extract_scurve(row = row, pixel = self.conf.colsnom, s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, plot = plot, extract = extract)
         elif plot:
-            self.plot_extract_scurve(row = row, pixel = list(range(2,120)), s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, extract = 0, plot = plot)
+            self.plot_extract_scurve(row = row, pixel = self.conf.colsnom, s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, extract = 0, plot = plot)
         t1 = time.time()
         if plot or extract:
             plt.show()
@@ -303,7 +306,9 @@ class mpa_cal_utility():
         self.mpa.inject.send_pulses_fast(n_pulse, 0, 0, ref_val)
         fail, temp = self.ReadoutCounters(raw_mode_en=0)
         if fail: fail, temp = self.ReadoutCounters(raw_mode_en=0)
-        data_array = temp
+
+        tempnom = self.conf.convertRawToNomPixmap(temp)
+        data_array = tempnom
 
         self.fc7.clear_counters(8)
         time.sleep(0.001)
@@ -370,11 +375,12 @@ class mpa_cal_utility():
         elif s_type == "THR":
             self.mpa.ctrl_base.set_threshold(ref_val)
 
-        # INJECT CHARGE                                                                                                                                                                                     
+        # INJECT CHARGE                                                                                                  
         self.mpa.inject.send_pulses_fast_withMasking(n_pulse, 0, 0, ref_val)
         fail, temp = self.ReadoutCounters(raw_mode_en=0)
         if fail: fail, temp = self.ReadoutCounters(raw_mode_en=0)
-        data_array = temp
+        tempnom = self.conf.convertRawToNomPixmap(temp)
+        data_array = tempnom
 
         self.fc7.clear_counters(8)
         time.sleep(0.001)
@@ -460,7 +466,8 @@ class mpa_cal_utility():
                         self.I2C.pixel_write("TrimDAC", r, p, new_DAC)
                         data_array[(r-1)*120+p] = new_DAC
                     except RuntimeError or TypeError:
-                        utils.print_error(f"Fitting failed on pixel {p}  row: {r}")
+                        donothingbecausethisprintstatementannoysjennet = 1
+#                        utils.print_error(f"Fitting failed on pixel {p}  row: {r}")
             if (i != iteration - 1):
                 try: scurve = self.s_curve(n_pulse = n_pulse, s_type = s_type, rbr = 0, ref_val = ref_val, row = row, step = 1, start = 0, stop = stop, pulse_delay = 200, extract = 0, plot = 0, print_file =0)
                 except TypeError: return
@@ -542,7 +549,10 @@ class mpa_cal_utility():
         :param plot:  (Default value = 1)
 
         """
+
         t0 = time.time()
+        row = self.conf.rowsnom
+
         if trim_ampl > -1:
             for block in range(0,7):
                 self.I2C.peri_write("C"+str(block), trim_ampl)
@@ -551,10 +561,11 @@ class mpa_cal_utility():
         print("Trimming LSB", trm_LSB, "mV")
         print("Trimming DAC MIN scurve...")
         self.mpa.ctrl_pix.reset_trim(0)
-        scurveL, thL, noiseL = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = ref, row = list(range(1,17)), step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = low, extract = 1, plot = 0, print_file =0 )
+        scurveL, thL, noiseL = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = ref, row = row, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = low, extract = 1, plot = 0, print_file =0 )
         print("Trimming DAC MAX scurve...")
         self.mpa.ctrl_pix.reset_trim(31)
-        scurveH, thH, noiseH = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = ref, row = list(range(1,17)), step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = high, extract = 1, plot = 0, print_file =0 )
+        scurveH, thH, noiseH = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = ref, row = row, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = high, extract = 1, plot = 0, print_file =0 )
+
         thL = np.array(thL); thH = np.array(thH);
         print("Not Trimmerable Pixel", np.size(np.where(thL > req)) + np.size(np.where(thH < req)))
         trim = np.round((req - thL*1.0)/(thH - thL)*32.0)
@@ -563,7 +574,7 @@ class mpa_cal_utility():
             count = self.mpa.ctrl_pix.load_trim(trim)
             print("Trimmed scurve...")
             print("Not Trimmerable Pixel", count)
-            scurveT, thT, noiseT = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = nominal_ref, row = list(range(1,17)), step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = nominal_req, extract = 1, plot = 0, print_file =0 )
+            scurveT, thT, noiseT = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = nominal_ref, row = row, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = nominal_req, extract = 1, plot = 0, print_file =0 )
         else:
             print("Error")
         # Incremental second step?
@@ -575,7 +586,7 @@ class mpa_cal_utility():
             count = self.mpa.ctrl_pix.load_trim(trim)
             print("Nominal scurve...")
             print("Not Trimmerable Pixel", count)
-            scurve, th, noise = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = nominal_ref, row = list(range(1,17)), step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = nominal_req, extract = 1, plot = plot, print_file =0 )
+            scurve, th, noise = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = nominal_ref, row = row, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = nominal_req, extract = 1, plot = plot, print_file =0 )
         else:
             print("Error")
 

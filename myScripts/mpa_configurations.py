@@ -3,7 +3,7 @@ class mpa_configurations():
     def __init__(self):
         self.nrowsraw = 17
         self.ncolsraw = 120
-        self.npixsraw = 2040
+        self.npixsraw = 1920
         self.rowOneraw = 1  # not that row 0 does NOT exist
         self.colOneraw = 2  # not that column 0 and 1 still exist
         self.rowsraw = range(1, 18)
@@ -61,9 +61,7 @@ class mpa_configurations():
         return pixelidnom(row, col)
 
     def convertRawToNomPixmap(self, data):
-        print("Shape of raw data is")
-        print(data.shape)
-        print(data)
+        
         if isinstance(data, list) and len(data) < self.npixsraw:
             print(
                 "Input is not a raw pixel map for sure, too short list - return original list")
@@ -74,6 +72,7 @@ class mpa_configurations():
             if self.colfrompixraw(p) == 0 or self.colfrompixraw(p) == 1:
                 continue
             nomdata.append(data[p])
+            
         return nomdata
 
     def convertNomToRawPixmap(self, data):

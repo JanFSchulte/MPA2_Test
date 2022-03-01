@@ -61,7 +61,7 @@ class mpa_test_utility():
         self.fc7.send_test(8)
         return self.mpa.rdo.read_stubs(fast = 1)
 
-    def digital_pixel_test(self, row = list(range(1,17)), pixel = list(range(1,121)), print_log = 1, filename =  "../cernbox/MPA_Results/digital_pixel_test.log"):
+    def digital_pixel_test(self, row = conf.rowsraw, pixel = conf.colsraweff, print_log = 1, filename =  "../cernbox/MPA_Results/digital_pixel_test.log"):
         """
         :param row:  (Default value = list(range(1)
         :param pixel:  (Default value = list(range(1)
@@ -74,6 +74,7 @@ class mpa_test_utility():
         if print_log:
             f = open(filename, 'w')
             f.write("Starting Test:\n")
+
         self.i2c.peri_write('Mask', 0b11111111)
         self.i2c.row_write('Mask', 0, 0b11111111)
         self.mpa.ctrl_base.activate_sync()
@@ -93,20 +94,36 @@ class mpa_test_utility():
                 check_pix = 0
                 check_row = 0
                 err = 0
+                print(nst)
+                print(pos)
+                print(Z)
+                print(bend)
                 for centr in pos[:,0]:
-                    if (centr == p*2): check_pix += 1
-                    elif (centr != 0): err =+ 1
+                    if (centr == p*2): 
+                        check_pix += 1
+                        print(1)
+                    elif (centr != 0): 
+                        err =+ 1
+                        print(2)
                 for row in Z[:,0]:
                     if (row == r-1):
-                        if (r-1 == 0): 	check_row = 1
-                        else: check_row += 1
-                    elif (row != 0): err =+ 1
+                        if (r-1 == 0): 	
+                            check_row = 1
+                            print(3)
+                        else: 
+                            check_row += 1
+                            print(4)
+                    elif (row != 0): 
+                        err =+ 1
+                        print(5)
                 if ((check_pix != 1) or (check_row != 1) or (err != 0)):
                     error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(check_pix) + " " +  str(check_row) + " " + str(err) + "\n"
                     OutputBadPix.append([p,r])
                     print(error_message)
                     if print_log:
                         f.write(error_message)
+                else:
+                    print("ok")
         self.mpa.ctrl_pix.disable_pixel(0,0)
         if print_log:
             f.write("Test Completed")
@@ -153,18 +170,25 @@ class mpa_test_utility():
                 check_row = 0
                 err = 0
                 for centr in pos[:,0]:
-                    if (centr == p*2): check_pix += 1
-                    elif (centr != 0): err =+ 1
+                    if (centr == p*2): 
+                        check_pix += 1
+                    elif (centr != 0): 
+                        err =+ 1
                 for row in Z[:,0]:
                     if (row == r-1):
-                        if (r-1 == 0): check_row = 1
-                        else: check_row += 1
-                    elif (row != 0): err =+ 1
+                        if (r-1 == 0): 
+                            check_row = 1
+                        else: 
+                            check_row += 1
+                    elif (row != 0): 
+                        err =+ 1
                 if ((check_pix != 1) or (check_row != 1) or (err != 0)):
                     error_message = "ERROR in Pixel: " + str(p) + " of Row: " + str(r) + ". Error " + str(check_pix) + " " +  str(check_row) + " " + str(err) + "\n"
                     OutputBadPix.append([p,r])
-                    if verbose: print(error_message)
-                    if print_log: f.write(error_message)
+                    if verbose: 
+                        print(error_message)
+                    if print_log: 
+                        f.write(error_message)
         self.mpa.ctrl_pix.disable_pixel(0,0)
         if print_log:
             f.write("Test Completed")
@@ -298,10 +322,15 @@ class mpa_test_utility():
 
         for i in range(0,8):
             latency = (i  << 3) | i
-            if verbose: utils.print_info("->  Testing Latency ", i)
-            if (edge == "falling" ): temp = self.strip_in_test(n_pulse = n_pulse, latency = latency , edge = 0)
-            elif (edge == "rising" ): temp = self.strip_in_test(n_pulse = n_pulse, latency = latency , edge = 255)
-            else: utils.print_info("->  Edge not recognized"); return
+            if verbose: 
+                utils.print_info("->  Testing Latency ", i)
+            if (edge == "falling" ): 
+                temp = self.strip_in_test(n_pulse = n_pulse, latency = latency , edge = 0)
+            elif (edge == "rising" ): 
+                temp = self.strip_in_test(n_pulse = n_pulse, latency = latency , edge = 255)
+            else: 
+                utils.print_info("->  Edge not recognized")
+                return
             for line in range(0,8):
                 data_array[i, line ] = np.average(temp[line])/(n_pulse*8)
         if print_file:
@@ -311,19 +340,24 @@ class mpa_test_utility():
         return data_array
 
     def strip_test(self,filenamebase="./",printout=0, signal_integrity_limit=0.99):
+
         # Input Strip Test:
-        strip_in = self.strip_in_scan(print_file = 1, filename = filenamebase + "_striptest", probe=1)
+        # Using falling edge 
+        strip_in = self.strip_in_scan(print_file = 0, probe=1)
         good_si = 0
         StripIn = -1
         for i in range(0,8):
-            if (strip_in[i,:].all() > signal_integrity_limit): good_si = 1
+            if (strip_in[i,:].all() > signal_integrity_limit): 
+                good_si = 1
         if good_si:
             StripIn = 0
         else:
-            strip_in = self.strip_in_scan(print_file = 1, edge = 1, filename = filenamebase + "_striptestv2", probe=1)
+            # Using rising edge
+            strip_in = self.strip_in_scan(print_file = 0, edge = "rising", filename = filenamebase + "_striptestv2", probe=1)
             good_si = 0
             for i in range(0,8):
-                if (strip_in[i,:].all() > signal_integrity_limit): good_si = 1
+                if (strip_in[i,:].all() > signal_integrity_limit): 
+                    good_si = 1
             if good_si:
                 StripIn = 1
             else:
@@ -1038,8 +1072,9 @@ class mpa_test_utility():
     # FNAL addition
     def memory_test_full(self, voltage, filenamebase="./",printout=0):
         self.mpa.pwr.set_dvdd(voltage/10)
-        self.mpa.reset()
-        self.mpa.init()
+#        self.mpa.reset()
+#        self.mpa.init()
+
         bad_pix, error, stuck, i2c_issue, missing = self.mem_test(print_log=1, filename = filenamebase + "_LogMemTest_" + str(voltage) + ".txt", verbose = 0)
         mempix = []
         mempix.append(bad_pix)
@@ -1079,3 +1114,146 @@ class mpa_test_utility():
             flag = 1
 
         return BadPixM, error, stuck, i2c_issue, missing, flag
+
+    # FNAL addition                                                                                                                                                                                        
+    def writeread_allregs_peri(self, printout=False):
+        t0 = time.time()
+
+        self.fc7.activate_I2C_chip(verbose=0)
+        self.mpa.ctrl_base.activate_sync()
+        self.mpa.ctrl_base.activate_pp()
+
+        # Don't test these registers, which are read-only                                                                                                                                                         
+        read_reg = ['test', '-',
+#                    'ADC_output_MSB', 'ADC_output_LSB',
+                    'Async_SEUcntPeri', 'Sync_SEUcntPeri',
+                    'ErrorL1', 'L1_miss_pixel', 'L1_miss_strip', 'L1_OF_FIFO_pixel', 'L1_OF_FIFO_strip',
+                    'Ofcnt', 'OF_out_count', 'OF_stub_count',
+                    'EfuseValue0', 'EfuseValue1','EfuseValue2','EfuseValue3',
+#                    'RO_Inv_LSB','RO_Inv_MSB','RO_Del_LSB','RO_Del_MSB']
+        ]
+
+        cnt = 0
+        regcnt=0
+
+        for reg in self.i2c.peri_reg_map.keys():
+            if all(reg_check != reg for reg_check in read_reg):
+                regcnt += 1
+                #               if regcnt%18==0:
+                #                   utils.activate_I2C_chip(self.fc7) # a hack as else things fail                                                                                                                                 
+ 
+                value = self.i2c.peri_read(reg)
+ 
+                self.i2c.peri_write(reg, 255)
+                max_value = self.i2c.peri_read(reg)
+
+                if (max_value == 0):
+                    cnt += 1 #added by HJ                                                                                                                                                         
+                    print("Peri reg fail 0 ", reg)
+                    self.i2c.peri_write(reg, value)
+                elif(max_value == None):
+                    cnt += 1 #added by HJ         
+                    print("Peri reg fail None ", reg)
+                else:
+                    randominteger = random.randint(0,max_value)
+                    self.i2c.peri_write(reg, randominteger)
+                    check = self.i2c.peri_read(reg)
+                    if (check != randominteger):
+                        print("Peri reg fail other", reg, check, randominteger)
+                        cnt += 1
+                    self.i2c.peri_write(reg, value)
+
+        t1 = time.time()
+        return cnt
+
+    # FNAL addition                                                                                                                                                                        
+    def writeread_allregs_row(self, printout=False):
+        t0 = time.time()
+ 
+        self.fc7.activate_I2C_chip(verbose=0)
+        self.mpa.ctrl_base.activate_sync()
+        self.mpa.ctrl_base.activate_pp()
+
+
+        # Don't test these registers, which are read-only                                                                                                                                           
+        read_reg = ['test', '-',
+                    'Async_SEUcntPixels', 'Sync_SEUcntRow',
+                    'SRAM_BIST', 'SRAM_BIST_done', 'SRAM_BIST_fail',
+                    'RowLogic_BIST', 'RowLogic_BIST_input_1', 'RowLogic_BIST_input_2', 'RowLogic_BIST_ref_output_1', 'RowLogic_BIST_ref_output_2', 'RowBIST_summary_reg',
+                    'BIST_SRAM_output_0', 'BIST_SRAM_output_1', 'BIST_SRAM_output_2', 'BIST_SRAM_output_3', 'BIST_SRAM_output_4', 'BIST_SRAM_output_5', 'BIST_SRAM_output_6',
+                    'BIST_SRAM_output_7', 'BIST_SRAM_output_8', 'BIST_SRAM_output_9', 'BIST_SRAM_output_10', 'BIST_SRAM_output_11', 'BIST_SRAM_output_12', 'BIST_SRAM_output_13',
+                    'BIST_SRAM_output_14', 'BIST_SRAM_output_15', #'MemoryControl_1', 'MemoryControl_2',                                                                                                          
+                    'RO_Row_Inv_LSB','RO_Row_Inv_MSB','RO_Row_Del_LSB','RO_Row_Del_MSB','RingOscillator'
+                    ]
+
+        cnt = 0
+        regcnt = 0
+        for row in range(1,17):
+            for reg in self.i2c.mpa_row_reg_map.keys():
+                if all(reg_check != reg for reg_check in read_reg):
+                    regcnt += 1
+#                    if regcnt%18==0:
+#                        utils.activate_I2C_chip(self.fc7) # a hack as else things fail                                                                                                                             
+                    value = self.i2c.row_read(reg, row)
+                    self.i2c.row_write(reg, row, 255)
+                    max_value = self.i2c.row_read(reg, row)
+                    #                    print(reg, value, max_value)
+                    if (max_value == 0):
+                        print("Row reg failure 0 ", reg)                                                                                                                                                          
+                        cnt += 1 #added by HJ                                                                                                                                                                      
+                        self.i2c.row_write(reg, row, value)
+                    elif(max_value == None):
+                        print("Row reg failure None ", reg)                                                                                                                                                       
+                        cnt += 1 #added by HJ                                                                                                                                                                      
+                    else:
+                        randominteger = random.randint(0,max_value)
+                        self.i2c.row_write(reg, row,  randominteger)
+                        check = self.i2c.row_read(reg, row)
+                        if (check != randominteger):
+                            cnt += 1
+                            print("Row reg failure other ", reg, check, randominteger)
+                        self.i2c.row_write(reg, row, value)
+
+        t1 = time.time()
+        return cnt
+
+    # FNAL addition                                                                                                                                                                                
+    def writeread_allregs_pixel(self,printout=False):
+        t0 = time.time()
+
+        self.fc7.activate_I2C_chip(verbose=0)
+        self.mpa.ctrl_base.activate_sync()
+        self.mpa.ctrl_base.activate_pp()
+
+        # Don't test these registers, which are read-only                                                                                        
+        read_reg = ['test', '-'] # 'AC_ReadCounterLSB', 'AC_ReadCounterMSB']
+
+        cnt = 0
+        for row in range(1,17):
+            for pixel in range(1,121):
+                for reg in self.i2c.mpa_pixel_reg_map.keys():
+                    if all(reg_check != reg for reg_check in read_reg):
+
+                        value = self.i2c.pixel_read(reg, row, pixel)
+                        self.i2c.pixel_write(reg, row, pixel, 255)
+                        max_value = self.i2c.pixel_read(reg, row, pixel)
+
+                        if (max_value == 0):
+                            #print("Pixel reg failure 0 ", reg)                                                                                                                                                    
+                            cnt += 1 #added by HJ                                                                                                                                                             
+                            self.i2c.pixel_write(reg, row, pixel, value)
+                        elif(max_value == None):
+                            #print("Pixel reg failure None ", reg)                                                                                                                                                 
+                            cnt += 1 #added by HJ                
+                        else:
+                            randominteger = random.randint(0,max_value)
+                            self.i2c.pixel_write(reg, row, pixel, randominteger)
+                            check = self.i2c.pixel_read(reg, row, pixel)
+                            if (check != randominteger):
+                                cnt += 1
+                                #print("Pixel reg failure other ", reg, check, randominteger)
+
+                            self.i2c.pixel_write(reg, row, pixel, value)
+
+        t1 = time.time()
+        return cnt

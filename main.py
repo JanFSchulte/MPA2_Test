@@ -15,10 +15,11 @@ from myScripts.keithley2410 import *
 from mpa_methods.mpa import *
 from mpa_methods.mpa_cal_utility import *
 from mpa_methods.mpa_test_utility import *
+
 from mpa_methods.mpa_data_chain import *
 from mpa_methods.mpa_bias_utility import *
 from mpa_methods.mpa_scanchain_test import *
-#from mpa_methods.mpa_measurements import MPAMeasurements
+from mpa_methods.mpa_measurements import MPAMeasurements
 #from mpa_methods.mpa_fast_injection_test import MPAFastInjectionMeasurement
 
 # MPA2 Test procedures
@@ -45,9 +46,9 @@ class MPAwp:
         self.inject        = self.chip.inject
 
         # faster access to readout methods
-#        self.read_regs     = self.chip.rdo.read_regs
-#        self.read_L1       = self.chip.rdo.read_L1
-#        self.read_Stubs    = self.chip.rdo.read_stubs
+        self.read_regs     = self.chip.rdo.read_regs
+        self.read_L1       = self.chip.rdo.read_L1
+        self.read_Stubs    = self.chip.rdo.read_stubs
 #        self.data_dir = "../cernbox_anvesh/MPA_test_data/"
 #        self.scanchain = MPA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
 
@@ -59,8 +60,8 @@ class MPAwp:
             print("- Impossible to access GPIB instruments")
 
         # additional characterizations
-#        self.dc            = MPATestDataChain(self.chip, self.i2c, FC7)
-#        self.measure       = MPAMeasurements(self.chip, self.bias)
+        self.dc            = MPATestDataChain(self.chip, self.i2c, FC7)
+        self.measure       = MPAMeasurements(self.chip, self.bias)
 
         # radiation testing
         #self.fastinj       = MPAFastInjectionMeasurement(self.chip, self.bias, self.test, "../MPA2_RadiationResults/.")
@@ -103,7 +104,6 @@ def pon():
     sleep(0.1)
     mpa.init()
     sleep(0.1)
-    print(mpa.test.shift())
     return mpa.test.shift()
 
 def poff():
@@ -118,9 +118,7 @@ def mpa_test(basepath="../Results_MPATesting/",
              chipid="ChipY",
              timestamp=True,
              testregister=True,
-             testdecoding=True, 
-             teststrips=True, 
-             testmemory=True,
+             testwaferroutine=True, 
              testmaskpalive=True,
              testpretrim=True, 
              testtrim=True, 
@@ -150,94 +148,45 @@ def mpa_test(basepath="../Results_MPATesting/",
     utils.write_to_logfile('P_ana: %7.3f mW  [V= %7.3f V - I= %7.3f mA]' % (powerresults[1], powerresults[4], powerresults[7]), logfilename, True)
     utils.write_to_logfile('P_pad: %7.3f mW  [V= %7.3f V - I= %7.3f mA]' % (powerresults[2], powerresults[5], powerresults[8]), logfilename, True)
     utils.write_to_logfile('Total: %7.3f mW  [I= %7.3f mA]' % (powerresults[0]+powerresults[1]+powerresults[2], powerresults[6]+powerresults[7]+powerresults[8] ), logfilename, True)
-#    hvsupply = keithley2410()
-#    status = hvsupply.enableOutput()
+    #    hvsupply = keithley2410()
+    #    status = hvsupply.enableOutput()
+    
+    #    status = hvsupply.setVoltageSlow(vbias,-10,0.25)
+    #    utils.write_to_logfile("Bias voltage set to BV="+str(int(hvsupply.getData()[0]))+"V, I = "+str(hvsupply.getData()[1]*1000000)+" muA", logfilename, True)
+    #    status = hvsupply.startReadout()
 
-#    status = hvsupply.setVoltageSlow(vbias,-10,0.25)
-#    utils.write_to_logfile("Bias voltage set to BV="+str(int(hvsupply.getData()[0]))+"V, I = "+str(hvsupply.getData()[1]*1000000)+" muA", logfilename, True)
-#    status = hvsupply.startReadout()
+    if testwaferroutine:    
+        # Anvesh
+        probe = MainTestsMPA(tag = mapsaid, chip = mpa, directory=outputdir)
+        probe.RUN()
 
-    badanalogpix, baddigitalpix = [], []
-
-    # Test decoding 
-    if testdecoding:
-        utils.write_to_logfile("Test decoding:", logfilename, True)
-
-        badanalogpix = mpa.test.analog_pixel_test(row=mpa.test.conf.rowsraw,pixel=mpa.test.conf.colsraweff,print_log=1,filename=path+mapsaid+"_analog_test.log")
-        baddigitalpix = mpa.test.digital_pixel_test(row=mpa.test.conf.rowsraw,pixel=mpa.test.conf.colsraweff,print_log=1,filename=path+mapsaid+"_digital_test.log")
-        utils.write_to_logfile("Total analog errors:  "+str(len(badanalogpix)), logfilename, True)
-        utils.write_to_logfile("Total digital errors: "+str(len(baddigitalpix)), logfilename, True)
-        utils.write_to_logfile("Total errors:         "+str(len(badanalogpix)+len(baddigitalpix)), logfilename, True)
-        utils.write_to_logfile("Test I2C communication:", logfilename, True)
-    else:
-        utils.write_to_logfile("Skipped decoding", logfilename, True)
-
-
+    """
+    
     # Register test ##################################
-    chip_errors  = -1#mpa.i2c.test_peri( False)
-    row_errors   = -1#mpa.i2c.test_row(  False)
-    pixel_errors = -1#mpa.i2c.test_pixel(False)
-    total_errors = chip_errors + row_errors + pixel_errors
-
+    chip_errors  = -1
+    row_errors   = -1
+    pixel_errors = -1
+    total_errors = -1
+    
     if testregister: 
-        chip_errors  = mpa.i2c.test_peri( False)
-        row_errors   = mpa.i2c.test_row(  False)
-        pixel_errors = mpa.i2c.test_pixel(False)
-
-        total_errors = chip_errors + row_errors + pixel_errors
-        utils.write_to_logfile("Total MPA errors:   "+str(chip_errors)  , logfilename, True)
-        utils.write_to_logfile("Total row errors:   "+str(row_errors)   , logfilename, True)
-        utils.write_to_logfile("Total pixel errors: "+str(pixel_errors) , logfilename, True)
-        utils.write_to_logfile("Total errors:       "+str(total_errors) , logfilename, True)
-
+    utils.write_to_logfile("Test I2C communication (write/read registers):", logfilename, True)
+    chip_errors  = mpa.test.writeread_allregs_peri( False)
+    row_errors   = mpa.test.writeread_allregs_row(False)
+    pixel_errors = mpa.test.writeread_allregs_pixel(False)
+    total_errors = chip_errors + row_errors + pixel_errors
+    
+    utils.write_to_logfile("Total MPA errors:   "+str(chip_errors)  , logfilename, True)
+    utils.write_to_logfile("Total row errors:   "+str(row_errors)   , logfilename, True)
+    utils.write_to_logfile("Total pixel errors: "+str(pixel_errors) , logfilename, True)
+    utils.write_to_logfile("Total errors:       "+str(total_errors) , logfilename, True)
+    
     else:
-        utils.write_to_logfile("Skipped registers", logfilename, True)
-
-    # Strip test ##################################
-    StripIn = 0
-
-    if teststrips:
-        utils.write_to_logfile("Strip In Test:", logfilename, True)
-        StripIn = mpa.test.strip_test(filenamebase=path+mapsaid,printout=0)
-        if StripIn==0: utils.write_to_logfile("  Strip Input scan passed"                       , logfilename, True)
-        if StripIn==1: utils.write_to_logfile("  Strip Input scan passed (after changing edge)" , logfilename, True)
-        if StripIn==2: utils.write_to_logfile("  Strip Input scan failed"                       , logfilename, True)
-    else:
-        utils.write_to_logfile("Skipped strips", logfilename, True)
-
-    # Memory test ##################################
-    BadPixM12, error12, stuck12, i2c_issue12, missing12, Mem12 = [], -1, -1, -1, -1, -1
-    BadPixM10, error10, stuck10, i2c_issue10, missing10, Mem10 = [], -1, -1, -1, -1, -1
-
-    if testmemory:
-        BadPixM12, error12, stuck12, i2c_issue12, missing12, Mem12 = mpa.test.memory_test_full(125,filenamebase=path+mapsaid,printout=0)
-        BadPixM10, error10, stuck10, i2c_issue10, missing10, Mem10 = [], -1, -1, -1, -1, -1
-
-        utils.write_to_logfile("Memory test at 1.2:", logfilename, True)
-        utils.write_to_logfile("   Number of error:      " + str(error12)     , logfilename, True)
-        utils.write_to_logfile("   Number of stucks:     " + str(stuck12)     , logfilename, True)
-        utils.write_to_logfile("   Number of I2C issues: " + str(i2c_issue12) , logfilename, True)
-        utils.write_to_logfile("   Number of missing:    " + str(missing12)   , logfilename, True)
-
-        if Mem12:
-            utils.write_to_logfile("   Fail at 1.2 V. Not running test at 1 V" , logfilename, True)
-        else:
-            utils.write_to_logfile("   Succeeded at 1.2 V." , logfilename, True)
-            utils.write_to_logfile("Memory test at 1.0:", logfilename, True)
-            BadPixM10, error10, stuck10, i2c_issue10, missing10, Mem10 = mpa.test.memory_test_full(105,filenamebase=path+mapsaid,printout=0)
-            utils.write_to_logfile("   Number of error:      " + str(error12)     , logfilename, True)
-            utils.write_to_logfile("   Number of stucks:     " + str(stuck12)     , logfilename, True)
-            utils.write_to_logfile("   Number of I2C issues: " + str(i2c_issue12) , logfilename, True)
-            utils.write_to_logfile("   Number of missing:    " + str(missing12)   , logfilename, True)
-            if Mem10:
-                utils.write_to_logfile("   Fail at 1.0 V." , logfilename, True)
-            else:
-                utils.write_to_logfile("   Succeeded at 1.0 V." , logfilename, True)
-    else:
-        utils.write_to_logfile("Skipped memory", logfilename, True)
+    utils.write_to_logfile("Skipped test of I2C communication (registers)", logfilename, True)
+    
+    """    
 
     # Test masking and pixel alive ##################################
-#    mpa.ctrl_pix.reset_trim(0)
+    #    mpa.ctrl_pix.reset_trim(0)
 
     pixel_mask, unmaskablepixels = [],[]
     pixel_alive, deadpixels, ineffpixels, noisypixels = [], [], [], []
@@ -321,13 +270,10 @@ def mpa_test(basepath="../Results_MPATesting/",
     print('%7.3f \t%7.3f' % (powerresults[1],powerresults[7]))
     print('%7.3f \t%7.3f' % (powerresults[2],powerresults[8]))
     print('%7.3f \t%7.3f' % (powerresults[0]+powerresults[1]+powerresults[2],powerresults[6]+powerresults[7]+powerresults[8]))
-    print(chip_errors)
-    print(row_errors)
-    print(pixel_errors)
-    print(total_errors)
-    print(len(badanalogpix))
-    print(len(baddigitalpix))
-    print(len(badanalogpix)+len(baddigitalpix))
+#    print(chip_errors)
+#    print(row_errors)
+#    print(pixel_errors)
+#    print(total_errors)
 
     if testmaskpalive:
         print(str(len(unmaskablepixels))+" \t"+conf.getPercentage(unmaskablepixels))
@@ -399,12 +345,10 @@ def jennet():
 
     mpa_test(basepath="../Results_MPATesting/",
              mapsaid="Single",
-             chipid="Chip182",
+             chipid="Chip183",
              timestamp=True,
              testregister=False,
-             testdecoding=False,
-             teststrips=False,
-             testmemory=False,
+             testwaferroutine=True,
              testmaskpalive=True,
              testpretrim=True,
              testtrim=True,
@@ -454,6 +398,8 @@ def scan_side(basepath="../Results_MPATesting/",
               mapsaid="AssemblyX",
               side=1):
 
+    import beepy
+
     # mapsa name = input argument 
     mapsa_name = mapsaid
     print(bcolors.OK + "Testing MaPSA " + mapsa_name + bcolors.RESET)
@@ -466,6 +412,7 @@ def scan_side(basepath="../Results_MPATesting/",
         start_MPA = 8
     else:
         print(bcolors.FAIL + "Invalid MaPSA side: must be 1 or 2 " + bcolors.RESET)
+        beepy.beep(1)
         return
 
     # Open connection to message server
@@ -480,6 +427,7 @@ def scan_side(basepath="../Results_MPATesting/",
         
         if not good_contact:
             print(bcolors.FAIL + "Could not get good contact on MPA " + str(nMPA) + bcolors.RESET)
+            beepy.beep(1)
             step(1)
             nMPA += 1
             continue
@@ -489,9 +437,11 @@ def scan_side(basepath="../Results_MPATesting/",
         if not successful_test and test_tries < 1:
             print(bcolors.FAIL + "Test failed on MPA " + str(nMPA) + bcolors.RESET)
             test_tries += 1
+            beepy.beep(1)
             continue
         elif not successful_test:
             print(bcolors.FAIL + "Test failed again on MPA " + str(nMPA) + bcolors.RESET)
+            beepy.beep(1)
             step(1)
             nMPA += 1
             test_tries = 0
@@ -505,6 +455,7 @@ def scan_side(basepath="../Results_MPATesting/",
                 print(bcolors.OK + "IV Scan succeeded on MPA " + str(nMPA) + bcolors.RESET)
             else:
                 print(bcolors.FAIL + "IV Scan failed on MPA " + str(nMPA) + bcolors.RESET)
+                beepy.beep(1)
                 break
 
         step(1)

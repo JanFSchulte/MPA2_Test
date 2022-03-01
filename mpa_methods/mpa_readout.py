@@ -75,6 +75,8 @@ class MPAReadout():
     def read_stubs(self, raw = 0, fast = 0):
         status = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
         mpa_stub_data = self.fc7.blockRead("fc7_daq_stat.physical_interface_block.stub_debug", 80, 0)
+#        print(mpa_stub_data)
+
         stubs = np.zeros((5,40), dtype = np.uint8)
         line = 0
         cycle = 0
@@ -88,16 +90,17 @@ class MPAReadout():
                 if cycle == 40:
                     line += 1
                     cycle = 0
-        nst = np.zeros((20,), dtype = np.uint8)
-        pos = np.zeros((20,5), dtype = np.uint8)
-        row = np.zeros((20,5), dtype = np.uint8)
-        cur = np.zeros((20,5), dtype = np.uint8)
+        nst = np.zeros((40,), dtype = np.uint8)
+        pos = np.zeros((40,5), dtype = np.uint8)
+        row = np.zeros((40,5), dtype = np.uint8)
+        cur = np.zeros((40,5), dtype = np.uint8)
         cycle = 0
 
         if raw:
             return stubs
         elif fast:
             for i in range(0,39):
+#                print(cycle, i)
                 if ((stubs[0,i] & 0b10000000) == 128):
                     j = i+1
                     nst[cycle]   = ((stubs[1,i] & 0b10000000) >> 5) | ((stubs[2,i] & 0b10000000) >> 6) | ((stubs[3,i] & 0b10000000) >> 7)
@@ -115,6 +118,7 @@ class MPAReadout():
             return nst,  pos, row, cur
         else:
             for i in range(0,39):
+#                print(cycle, i)
                 if ((stubs[0,i] & 0b10000000) == 128):
                     j = i+1
                     nst[cycle]   = ((stubs[1,i] & 0b10000000) >> 5) | ((stubs[2,i] & 0b10000000) >> 6) | ((stubs[3,i] & 0b10000000) >> 7)
@@ -134,11 +138,14 @@ class MPAReadout():
                     cur[cycle,3] = ((stubs[3,j] & 0b00010000) >> 2) | ((stubs[4,j] & 0b00010000) >> 3) | ((stubs[0,j] & 0b00001000) >> 3)
                     cur[cycle,4] = ((stubs[3,j] & 0b00000010) << 1) | ((stubs[4,j] & 0b00000010) >> 0) | ((stubs[0,j] & 0b00000001) >> 0)
                     cycle += 1
-        return nst,  pos, row, cur
+        return nst, pos, row, cur
 
     def read_L1(self, verbose = 1):
         status = self.fc7.read("fc7_daq_stat.physical_interface_block.slvs_debug")
         mpa_l1_data = self.fc7.blockRead("fc7_daq_stat.physical_interface_block.l1a_debug", 50, 0)
+
+#        print(mpa_l1_data)
+
         l1 = np.zeros((200,), dtype = np.uint8)
         cycle = 0
         for word in mpa_l1_data:
