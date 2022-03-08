@@ -45,7 +45,7 @@ class MPA_ASIC:
         if(reset_board):
             self.fc7.write("fc7_daq_ctrl.command_processor_block.global.reset", 1)
         if(reset_chip):
-            self.ctrl_base.reset(display=False)
+            self.ctrl_base.reset(display=True)
         utils.activate_I2C_chip(self.fc7)
         self.i2c.peri_write("Mask", 0b11111111); time.sleep(0.1)
         self.ctrl_base.set_out_mapping_probing()

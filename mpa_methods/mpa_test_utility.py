@@ -761,7 +761,7 @@ class mpa_test_utility():
 
     def row_bist(self, row = range(1,17), vector_fail=0, verbose = 0, sram_test = 1):
         t0 = time.time()
-        self.mpa.init(reset_chip=1, display= 0)
+        self.mpa.init(reset_chip=1, display= 1)
         self.fc7.activate_I2C_chip(verbose = 0)
         self.mpa.ctrl_base.set_row_mask()
         fail = np.zeros(16)

@@ -230,7 +230,7 @@ class mpa_ctrl_base:
         # tune all lines
         state = True
         for line in range(0,6):
-            self.fc7.TuneLine(line, np.array(pattern), 8, True, False)
+            self.fc7.TuneLine(line, np.array(pattern), 8, True, True)
             if self.fc7.CheckLineDone(0,0,line) != 1:
                 print(bcolors.FAIL + f"Failed tuning line {line}" + bcolors.RESET)
                 state = False

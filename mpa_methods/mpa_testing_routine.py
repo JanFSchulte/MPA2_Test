@@ -60,18 +60,21 @@ class MainTestsMPA():
 # FAILS
 #            self.runtest.set_enable('Calibrate Bias', 'ON')
 #            self.runtest.set_enable('Calibrate VREF', 'ON')
+            # Reads dependence on temperature
             self.runtest.set_enable('ADC Measure', 'ON')
+            # Also exists: function that directly reads temperature
+            # Updates potentially coming: ADC
 # FAILS but I will do it my own way
 #            self.runtest.set_enable('DACs', 'ON')
 #            self.runtest.set_enable('S-Curve', 'ON')
             self.runtest.set_enable('Analog Pixel', 'ON')
-# FAILS
             self.runtest.set_enable('Strip In', 'ON')
-#            self.runtest.set_enable('Memory', 'ON')
-# FAILS
-#            self.runtest.set_enable('BIST', 'ON')
+            self.runtest.set_enable('Memory', 'ON')
+            self.runtest.set_enable('BIST', 'ON')
             self.runtest.set_enable('Ring Oscillators', 'ON')
+            # Likely to be updated
             self.runtest.set_enable('DLL', 'ON')
+            # Also exists: time walk, not a priority
         else:
             self.runtest = runtest
 
@@ -440,7 +443,7 @@ class MainTestsMPA():
         anapix = []
         while (en and wd < 3):
             try:
-                strip_in = self.test.strip_in_scan(print_file = 1, filename = filename + "strip_input_scan_rising", probe=0, verbose = 1)
+                strip_in = self.test.strip_in_scan(print_file = 1, filename = filename + "strip_input_scan_rising", probe=1, verbose = 1)
                 #Check if any row (latency) is all 1
                 good_si = 0
                 for i in range(0,8):
@@ -451,7 +454,7 @@ class MainTestsMPA():
                     StripIn = 1
                 else:
                     utils.print_info("Changing edge")
-                    strip_in = self.test.strip_in_scan(print_file = 1, edge = "rising", filename = filename + "strip_input_scan_falling", probe=0, verbose = 1)
+                    strip_in = self.test.strip_in_scan(print_file = 1, edge = "rising", filename = filename + "strip_input_scan_falling", probe=1, verbose = 1)
                     StripIn = 0
                     for i in range(0,8):
                         if (strip_in[i,:].all() > self.signal_integrity_limit): good_si = 1

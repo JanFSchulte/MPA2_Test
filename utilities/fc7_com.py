@@ -594,10 +594,10 @@ class fc7_com():
             done = (data & 0x1<<14) >> 14
             wa_fsm_state = (data & 0xF<<7) >> 7
             pa_fsm_state = (data & 0xF<<0) >> 0
-#            if printStatus:
-#                print("Line Status: ")
-#                print("\tTuning done/applied: "+ str(done))
-#                print("\tLine ID: "+str(line_id)+ ",\tIdelay: " +str(delay)+ ",\tBitslip: " +str(bitslip)+ ",\tWA FSM State: " +str(wa_fsm_state)+ ",\tPA FSM State: "+str( pa_fsm_state))
+            if printStatus:
+                print("Line Status: ")
+                print("\tTuning done/applied: "+ str(done))
+                print("\tLine ID: "+str(line_id)+ ",\tIdelay: " +str(delay)+ ",\tBitslip: " +str(bitslip)+ ",\tWA FSM State: " +str(wa_fsm_state)+ ",\tPA FSM State: "+str( pa_fsm_state))
             if(not return_full_status):
                 return done
             else:
