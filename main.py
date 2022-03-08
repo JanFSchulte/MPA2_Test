@@ -52,12 +52,13 @@ class MPAwp:
 #        self.data_dir = "../cernbox_anvesh/MPA_test_data/"
 #        self.scanchain = MPA_scanchain_test(self.chip, self.i2c, FC7, self.pwr)
 
-        try:
-            multimeter = keithley_multimeter()
-            self.bias = mpa_bias_utility(self.chip, self.i2c, FC7, multimeter, self.peri_reg_map, self.row_reg_map, self.pixel_reg_map)
-        except ImportError:
-            self.bias = False
-            print("- Impossible to access GPIB instruments")
+# FNAL doesn't have this set up
+#        try:
+#            multimeter = keithley_multimeter()
+#            self.bias = mpa_bias_utility(self.chip, self.i2c, FC7, multimeter, self.peri_reg_map, self.row_reg_map, self.pixel_reg_map)
+#        except ImportError:
+#            self.bias = False
+#            print("- Impossible to access GPIB instruments")
 
         # additional characterizations
         self.dc            = MPATestDataChain(self.chip, self.i2c, FC7)
