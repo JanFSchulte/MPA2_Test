@@ -27,7 +27,7 @@ from mpa_methods.mpa_main_test import all
 probe = MainTestsMPA(tag = 187, chip = mpa)
 probe.RUN()
 
-If no directory name passed to MainTestsMPA, results will be located in ../MPA2_Results/TEST/
+If no directory name passed to MainTestsMPA, results will be located in ../Results_MPATesting
 
 '''
 try:
@@ -37,7 +37,7 @@ except:
 
 class MainTestsMPA():
 
-    def __init__(self, tag="ChipN_0", runtest='default', directory='../MPA2_Results/TEST/', logfile = "result.log", chip = mpa):
+    def __init__(self, tag="ChipN_0", runtest='default', directory='../Results_MPATesting/SomeMaPSA', logfile = "result.log", chip = mpa):
         if(chip):
             self._init(chip)
             self.summary = results()
@@ -49,7 +49,7 @@ class MainTestsMPA():
             self.lot = False
             self.Configure(directory=directory, runtest=runtest)
 
-    def Configure(self, directory = '../MPA2_Results/Wafer0/', runtest = 'default'):
+    def Configure(self, directory = '../Results_MPATesting/SomeMaPSA', runtest = 'default'):
         self.DIR = directory + '/'
         self.dvdd_curr = self.dvdd
         if(runtest == 'default'):
@@ -101,9 +101,9 @@ class MainTestsMPA():
                 fp.write( utils.date_time('csv') + '\n')
                 fp.close()
                 break
-        fo = curdir + "/Test_"
+        fo = curdir + "/"+ self.tag
         utils.close_log_files()
-        utils.set_log_files(curdir+'/OperationLog.txt',curdir+'/ErrorLog.txt')
+        utils.set_log_files(curdir+'/'+self.tag+'_OperationLog.txt',curdir+'/'+self.tag+'_ErrorLog.txt')
         utils.print_info('==============================================')
         utils.print_info('TEST ROUTINE {:s}\n'.format(str(runname)))
         utils.print_info("->  The log files are located in {:s}/ \n".format(curdir))

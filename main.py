@@ -139,7 +139,8 @@ def mpa_test(basepath="../Results_MPATesting/",
     path = outputdir + "/"
     if not os.path.isdir(outputdir): os.makedirs(outputdir)
     mapsaid = "mpa_test_"+mapsaid+"_"+chipid
-    if timestamp: mapsaid += "_" + time.strftime("%Y_%m_%d_%H_%M_%S")
+    if timestamp: 
+        mapsaid += "_" + time.strftime("%Y_%m_%d_%H_%M_%S")
     logfilename = utils.create_logfile(path,mapsaid)
     print(logfilename)
 
@@ -161,8 +162,6 @@ def mpa_test(basepath="../Results_MPATesting/",
         probe = MainTestsMPA(tag = mapsaid, chip = mpa, directory=outputdir)
         probe.RUN()
 
-    """
-    
     # Register test ##################################
     chip_errors  = -1
     row_errors   = -1
@@ -170,24 +169,21 @@ def mpa_test(basepath="../Results_MPATesting/",
     total_errors = -1
     
     if testregister: 
-    utils.write_to_logfile("Test I2C communication (write/read registers):", logfilename, True)
-    chip_errors  = mpa.test.writeread_allregs_peri( False)
-    row_errors   = mpa.test.writeread_allregs_row(False)
-    pixel_errors = mpa.test.writeread_allregs_pixel(False)
-    total_errors = chip_errors + row_errors + pixel_errors
-    
-    utils.write_to_logfile("Total MPA errors:   "+str(chip_errors)  , logfilename, True)
-    utils.write_to_logfile("Total row errors:   "+str(row_errors)   , logfilename, True)
-    utils.write_to_logfile("Total pixel errors: "+str(pixel_errors) , logfilename, True)
-    utils.write_to_logfile("Total errors:       "+str(total_errors) , logfilename, True)
+        utils.write_to_logfile("Test I2C communication (write/read registers):", logfilename, True)
+        chip_errors  = mpa.test.writeread_allregs_peri( False)
+        row_errors   = mpa.test.writeread_allregs_row(False)
+        pixel_errors = mpa.test.writeread_allregs_pixel(False)
+        total_errors = chip_errors + row_errors + pixel_errors
+        
+        utils.write_to_logfile("Total MPA errors:   "+str(chip_errors)  , logfilename, True)
+        utils.write_to_logfile("Total row errors:   "+str(row_errors)   , logfilename, True)
+        utils.write_to_logfile("Total pixel errors: "+str(pixel_errors) , logfilename, True)
+        utils.write_to_logfile("Total errors:       "+str(total_errors) , logfilename, True)
     
     else:
-    utils.write_to_logfile("Skipped test of I2C communication (registers)", logfilename, True)
+        utils.write_to_logfile("Skipped test of I2C communication (registers)", logfilename, True)
     
-    """    
-
     # Test masking and pixel alive ##################################
-    #    mpa.ctrl_pix.reset_trim(0)
 
     pixel_mask, unmaskablepixels = [],[]
     pixel_alive, deadpixels, ineffpixels, noisypixels = [], [], [], []
