@@ -60,6 +60,9 @@ class MPAwp:
 #            self.bias = False
 #            print("- Impossible to access GPIB instruments")
 
+            self.bias = False                                                                                                            
+            print("- Impossible to access GPIB instruments")  
+
         # additional characterizations
         self.dc            = MPATestDataChain(self.chip, self.i2c, FC7)
         self.measure       = MPAMeasurements(self.chip, self.bias)
