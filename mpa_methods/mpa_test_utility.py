@@ -1123,6 +1123,9 @@ class mpa_test_utility():
         self.mpa.ctrl_base.activate_sync()
         self.mpa.ctrl_base.activate_pp()
 
+        # READ AND PRINT THE EFUSE
+        print("Efuse", self.i2c.peri_read(reg))
+
         # Don't test these registers, which are read-only                                                                                                                                                         
         read_reg = ['test', '-',
 #                    'ADC_output_MSB', 'ADC_output_LSB',
