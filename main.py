@@ -124,7 +124,7 @@ def mpa_test(basepath="../Results_MPATesting/",
              testregister=True,
              testwaferroutine=True, 
              testmaskpalive=True,
-             testpretrim=True, 
+             testpretrim=False, 
              testtrim=True, 
              testposttrim=True, 
              testbb=True, 
@@ -341,13 +341,13 @@ def pa():
     pixel_alive = mpa.cal.pixel_alive(plot=1)
     return
 
-def jennet():
+def bare_mpa_test():
 
     mpa_test(basepath="../Results_MPATesting/",
              mapsaid="Single",
              chipid="Chip183",
              timestamp=True,
-             testregister=False,
+             testregister=True,
              testwaferroutine=True,
              testmaskpalive=True,
              testpretrim=True,

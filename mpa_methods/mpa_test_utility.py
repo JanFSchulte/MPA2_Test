@@ -1124,52 +1124,52 @@ class mpa_test_utility():
         self.mpa.ctrl_base.activate_pp()
 
         # READ AND PRINT THE EFUSE
-        print("Efuse", self.i2c.peri_read(reg))
+        print("Efuse", self.i2c.peri_read("EfuseValue0"))
+        print("Efuse", self.i2c.peri_read("EfuseValue1"))
+        print("Efuse", self.i2c.peri_read("EfuseValue2"))
+        print("Efuse", self.i2c.peri_read("EfuseValue3"))
 
-        # Don't test these registers, which are read-only                                                                                                                                                         
+        # Don't test these registers, which are read-only                                                                 
         read_reg = ['test', '-',
-#                    'ADC_output_MSB', 'ADC_output_LSB',
+                    'ADC_output_MSB', 'ADC_output_LSB', 'DLLlocked',
                     'Async_SEUcntPeri', 'Sync_SEUcntPeri',
                     'ErrorL1', 'L1_miss_pixel', 'L1_miss_strip', 'L1_OF_FIFO_pixel', 'L1_OF_FIFO_strip',
                     'Ofcnt', 'OF_out_count', 'OF_stub_count',
                     'EfuseValue0', 'EfuseValue1','EfuseValue2','EfuseValue3',
-#                    'RO_Inv_LSB','RO_Inv_MSB','RO_Del_LSB','RO_Del_MSB']
+                    'RO_Inv_LSB','RO_Inv_MSB','RO_Del_LSB','RO_Del_MSB']
         ]
 
         cnt = 0
         regcnt=0
 
         for reg in self.i2c.peri_reg_map.keys():
-            if all(reg_check != reg for reg_check in read_reg):
+           if all(reg_check != reg for reg_check in read_reg):
                 regcnt += 1
-                #               if regcnt%18==0:
-                #                   utils.activate_I2C_chip(self.fc7) # a hack as else things fail                                                                                                                                 
- 
                 value = self.i2c.peri_read(reg)
  
                 self.i2c.peri_write(reg, 255)
                 max_value = self.i2c.peri_read(reg)
 
                 if (max_value == 0):
-                    cnt += 1 #added by HJ                                                                                                                                                         
-                    print("Peri reg fail 0 ", reg)
+                    cnt += 1 #added by HJ                                                                            
+#                    print("Peri reg fail 0 ", reg)
                     self.i2c.peri_write(reg, value)
                 elif(max_value == None):
                     cnt += 1 #added by HJ         
-                    print("Peri reg fail None ", reg)
+#                    print("Peri reg fail None ", reg)
                 else:
                     randominteger = random.randint(0,max_value)
                     self.i2c.peri_write(reg, randominteger)
                     check = self.i2c.peri_read(reg)
                     if (check != randominteger):
-                        print("Peri reg fail other", reg, check, randominteger)
+#                        print("Peri reg fail other", reg, check, randominteger)
                         cnt += 1
                     self.i2c.peri_write(reg, value)
 
         t1 = time.time()
         return cnt
 
-    # FNAL addition                                                                                                                                                                        
+    # FNAL addition                                                                                                  
     def writeread_allregs_row(self, printout=False):
         t0 = time.time()
  
@@ -1177,15 +1177,14 @@ class mpa_test_utility():
         self.mpa.ctrl_base.activate_sync()
         self.mpa.ctrl_base.activate_pp()
 
-
-        # Don't test these registers, which are read-only                                                                                                                                           
+        # Don't test these registers, which are read-only                                                                                    
         read_reg = ['test', '-',
                     'Async_SEUcntPixels', 'Sync_SEUcntRow',
                     'SRAM_BIST', 'SRAM_BIST_done', 'SRAM_BIST_fail',
                     'RowLogic_BIST', 'RowLogic_BIST_input_1', 'RowLogic_BIST_input_2', 'RowLogic_BIST_ref_output_1', 'RowLogic_BIST_ref_output_2', 'RowBIST_summary_reg',
                     'BIST_SRAM_output_0', 'BIST_SRAM_output_1', 'BIST_SRAM_output_2', 'BIST_SRAM_output_3', 'BIST_SRAM_output_4', 'BIST_SRAM_output_5', 'BIST_SRAM_output_6',
                     'BIST_SRAM_output_7', 'BIST_SRAM_output_8', 'BIST_SRAM_output_9', 'BIST_SRAM_output_10', 'BIST_SRAM_output_11', 'BIST_SRAM_output_12', 'BIST_SRAM_output_13',
-                    'BIST_SRAM_output_14', 'BIST_SRAM_output_15', #'MemoryControl_1', 'MemoryControl_2',                                                                                                          
+                    'BIST_SRAM_output_14', 'BIST_SRAM_output_15', 
                     'RO_Row_Inv_LSB','RO_Row_Inv_MSB','RO_Row_Del_LSB','RO_Row_Del_MSB','RingOscillator'
                     ]
 
@@ -1195,19 +1194,18 @@ class mpa_test_utility():
             for reg in self.i2c.mpa_row_reg_map.keys():
                 if all(reg_check != reg for reg_check in read_reg):
                     regcnt += 1
-#                    if regcnt%18==0:
-#                        utils.activate_I2C_chip(self.fc7) # a hack as else things fail                                                                                                                             
+
                     value = self.i2c.row_read(reg, row)
                     self.i2c.row_write(reg, row, 255)
                     max_value = self.i2c.row_read(reg, row)
                     #                    print(reg, value, max_value)
                     if (max_value == 0):
-                        print("Row reg failure 0 ", reg)                                                                                                                                                          
-                        cnt += 1 #added by HJ                                                                                                                                                                      
+                        print("Row reg failure 0 ", reg)                                                                                                  
+                        cnt += 1 #added by HJ                                                                                         
                         self.i2c.row_write(reg, row, value)
                     elif(max_value == None):
-                        print("Row reg failure None ", reg)                                                                                                                                                       
-                        cnt += 1 #added by HJ                                                                                                                                                                      
+                        print("Row reg failure None ", reg)                                                                                       
+                        cnt += 1 #added by HJ                                                                                  
                     else:
                         randominteger = random.randint(0,max_value)
                         self.i2c.row_write(reg, row,  randominteger)
@@ -1220,7 +1218,7 @@ class mpa_test_utility():
         t1 = time.time()
         return cnt
 
-    # FNAL addition                                                                                                                                                                                
+    # FNAL addition                                                                                                                        
     def writeread_allregs_pixel(self,printout=False):
         t0 = time.time()
 
@@ -1242,11 +1240,11 @@ class mpa_test_utility():
                         max_value = self.i2c.pixel_read(reg, row, pixel)
 
                         if (max_value == 0):
-                            #print("Pixel reg failure 0 ", reg)                                                                                                                                                    
-                            cnt += 1 #added by HJ                                                                                                                                                             
+                            #print("Pixel reg failure 0 ", reg)                                                          
+                            cnt += 1 #added by HJ                                                                                             
                             self.i2c.pixel_write(reg, row, pixel, value)
                         elif(max_value == None):
-                            #print("Pixel reg failure None ", reg)                                                                                                                                                 
+                            #print("Pixel reg failure None ", reg)                                                                  
                             cnt += 1 #added by HJ                
                         else:
                             randominteger = random.randint(0,max_value)
@@ -1255,7 +1253,6 @@ class mpa_test_utility():
                             if (check != randominteger):
                                 cnt += 1
                                 #print("Pixel reg failure other ", reg, check, randominteger)
-
                             self.i2c.pixel_write(reg, row, pixel, value)
 
         t1 = time.time()
