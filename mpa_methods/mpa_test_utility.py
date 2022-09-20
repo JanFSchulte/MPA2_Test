@@ -1137,7 +1137,6 @@ class mpa_test_utility():
                     'Ofcnt', 'OF_out_count', 'OF_stub_count',
                     'EfuseValue0', 'EfuseValue1','EfuseValue2','EfuseValue3',
                     'RO_Inv_LSB','RO_Inv_MSB','RO_Del_LSB','RO_Del_MSB']
-        ]
 
         cnt = 0
         regcnt=0
@@ -1185,8 +1184,7 @@ class mpa_test_utility():
                     'BIST_SRAM_output_0', 'BIST_SRAM_output_1', 'BIST_SRAM_output_2', 'BIST_SRAM_output_3', 'BIST_SRAM_output_4', 'BIST_SRAM_output_5', 'BIST_SRAM_output_6',
                     'BIST_SRAM_output_7', 'BIST_SRAM_output_8', 'BIST_SRAM_output_9', 'BIST_SRAM_output_10', 'BIST_SRAM_output_11', 'BIST_SRAM_output_12', 'BIST_SRAM_output_13',
                     'BIST_SRAM_output_14', 'BIST_SRAM_output_15', 
-                    'RO_Row_Inv_LSB','RO_Row_Inv_MSB','RO_Row_Del_LSB','RO_Row_Del_MSB','RingOscillator'
-                    ]
+                    'RO_Row_Inv_LSB','RO_Row_Inv_MSB','RO_Row_Del_LSB','RO_Row_Del_MSB','RingOscillator']
 
         cnt = 0
         regcnt = 0
