@@ -667,24 +667,18 @@ class mpa_cal_utility():
                         s_type="CAL", 
                         n_pulse=1000, 
                         ref_val = 250, 
-                        trim_ampl = -1, 
                         rbr = 0, 
                         plot = 0,
                         show_plot = 0,
                         print_out =False, 
                         returnAll = False, 
-                        filename="../Results_MPATesting/bumpbonding_", 
-                        offset = True,
-                        allowForSkipping=True):
+                        filename="../Results_MPATesting/bumpbonding_"):
             if print_out: 
                 print("Bump Bonding Test at",s_type+"="+str(ref_val))
 
             extract_val = int(ref_val * 95./218.)
-            scurvebb, thbb, noisebb, offsetbb = [],[],[],[]
-            if offset:
-                scurvebb, thbb, noisebb, offsetbb = self.single_scurve( n_pulse = n_pulse, s_type = s_type, rbr = rbr, ref_val = ref_val, row = self.conf.rowsnom, col = self.conf.colsnom, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = extract_val, extract = 1, plot = show_plot, print_file =0,israw=False, printout = print_out, offset = True,allowForSkipping=allowForSkipping )
-            else:
-                scurvebb, thbb, noisebb = self.single_scurve( n_pulse = n_pulse, s_type = s_type, rbr = rbr, ref_val = ref_val, row = self.conf.rowsnom, col = self.conf.colsnom, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = extract_val, extract = 1, plot = show_plot, print_file =0,israw=False, printout = print_out, offset = False,allowForSkipping=allowForSkipping )
+            scurvebb, thbb, noisebb = self.s_curve(n_pulse = n_pulse,  s_type = s_type, rbr = 0, ref_val = ref_val, step = 1, start = 0, stop = stop, pulse_delay = 500, extract_val=extract_val, plot = 0, print_file =0)
+
             #remove bad pixels, defined pixels where extract_value is 3*std away from thbb mean
             #remove edge pixels
 
@@ -737,11 +731,6 @@ class mpa_cal_utility():
                 else:
                     badbumpmapVCal5.append(0)
 
-        self.utils.plot_2D_map_list(dataarray = badbumpmap, data_label="", nfig=13,hmin=-1,hmax=-1, plotAverage = False, identifier="Bad Bump Map Fit", xlabel="row", ylabel="column",isChip=True,israw=False,filename=filename+"plotFit",show_plot=show_plot,save_plot=save_plot)
-        self.utils.plot_2D_map_list(dataarray = badbumpmapVCal3, data_label="", nfig=14,hmin=-1,hmax=-1, plotAverage = False, identifier="Bad Bump Map Noise <3", xlabel="row", ylabel="column",isChip=True,israw=False,filename=filename+"plotVCal3",show_plot=show_plot,save_plot=save_plot)
-        self.utils.plot_2D_map_list(dataarray = badbumpmapVCal5, data_label="", nfig=15,hmin=-1,hmax=-1, plotAverage = False, identifier="Bad Bump Map Noise <5", xlabel="row", ylabel="column",isChip=True,israw=False,filename=filename+"plotVCal5",show_plot=show_plot,save_plot=save_plot)
-        self.utils.plot_2D_map_list(dataarray = noisebb, data_label="", nfig=16,hmin=-1,hmax=-1, plotAverage = False, identifier="Noise Map for bumpbonding", xlabel="row", ylabel="column",isChip=True,israw=False,filename=filename+"_SCurveRMS",show_plot=show_plot,save_plot=save_plot)
-
         # Write out all the files
         CSV.ArrayToCSV (badbumps, str(filename) + "_BadBumps" + ".csv")
         CSV.ArrayToCSV (badbumpmap, str(filename) + "_BadBumpMap" + ".csv")
@@ -749,8 +738,6 @@ class mpa_cal_utility():
         CSV.ArrayToCSV (badbumpsVCal5, str(filename) + "_BadBumpVCal5" + ".csv")
         CSV.ArrayToCSV (noisebb, str(filename) + "_Noise_BadBump" + ".csv")
         CSV.ArrayToCSV (scurvebb, str(filename) + "_SCurve_BadBump" + ".csv")
-        if offset:
-            CSV.ArrayToCSV (offsetbb, str(filename) + "_Offset_BadBump" + ".csv")
 
         bin_width = 0.1
         bin_round = int(max(0,-math.log10(bin_width)))

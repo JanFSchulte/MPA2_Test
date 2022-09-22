@@ -402,6 +402,9 @@ def step(n):
     print(bcolors.OK + "Advancing " + str(n) + " MPAs" + bcolors.RESET)
     return
 
+def is_separation_height():
+    return True
+
 def scan_side(basepath="../Results_MPATesting/",
               mapsaid="AssemblyX",
               side=1):
