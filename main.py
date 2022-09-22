@@ -135,6 +135,14 @@ def mpa_test(basepath="../Results_MPATesting/",
     print("Start testing.")
     print("At the end of the test, a summary is printed out.")
 
+    if len(mapsaid) < 1:
+        print("MaPSA ID " + mapsaid + " is too short.")
+        return
+
+    if len(chipid) < 1:
+        print("MPA ID " + chipid + " is too short.")
+        return
+
     mapsabaseid = mapsaid
     t0 = time.time()
 
@@ -395,9 +403,16 @@ def step(n):
     print(bcolors.OK + "Advancing " + str(n) + " MPAs" + bcolors.RESET)
     return
 
+def is_separation_height():
+    return True
+
 def scan_side(basepath="../Results_MPATesting/",
               mapsaid="AssemblyX",
               side=1):
+
+    if len(mapsaid) < 1:
+        print("MaPSA ID " + mapsaid + " is too short.")
+        return
 
     import beepy
 
