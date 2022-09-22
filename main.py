@@ -61,7 +61,7 @@ class MPAwp:
 #            print("- Impossible to access GPIB instruments")
 
         self.bias = False                                                                                                            
-        print("- Impossible to access GPIB instruments")  
+        #print("- Impossible to access GPIB instruments")  
 
         # additional characterizations
         self.dc            = MPATestDataChain(self.chip, self.i2c, FC7)
@@ -147,18 +147,19 @@ def mpa_test(basepath="../Results_MPATesting/",
     logfilename = utils.create_logfile(path,mapsaid)
     print(logfilename)
 
-    powerresults = mpa.pwr.get_power(False,True)
-    utils.write_to_logfile("Power reading:", logfilename, True)
-    utils.write_to_logfile('P_dig: %7.3f mW  [V= %7.3f V - I= %7.3f mA]' % (powerresults[0], powerresults[3], powerresults[6]), logfilename, True)
-    utils.write_to_logfile('P_ana: %7.3f mW  [V= %7.3f V - I= %7.3f mA]' % (powerresults[1], powerresults[4], powerresults[7]), logfilename, True)
-    utils.write_to_logfile('P_pad: %7.3f mW  [V= %7.3f V - I= %7.3f mA]' % (powerresults[2], powerresults[5], powerresults[8]), logfilename, True)
-    utils.write_to_logfile('Total: %7.3f mW  [I= %7.3f mA]' % (powerresults[0]+powerresults[1]+powerresults[2], powerresults[6]+powerresults[7]+powerresults[8] ), logfilename, True)
-    #    hvsupply = keithley2410()
-    #    status = hvsupply.enableOutput()
+    #Ginger:comment the following 6 lines out for testing bb
+    #powerresults = mpa.pwr.get_power(False,True)
+    #utils.write_to_logfile("Power reading:", logfilename, True)
+    #utils.write_to_logfile('P_dig: %7.3f mW  [V= %7.3f V - I= %7.3f mA]' % (powerresults[0], powerresults[3], powerresults[6]), logfilename, True)
+    #utils.write_to_logfile('P_ana: %7.3f mW  [V= %7.3f V - I= %7.3f mA]' % (powerresults[1], powerresults[4], powerresults[7]), logfilename, True)
+    #utils.write_to_logfile('P_pad: %7.3f mW  [V= %7.3f V - I= %7.3f mA]' % (powerresults[2], powerresults[5], powerresults[8]), logfilename, True)
+    #utils.write_to_logfile('Total: %7.3f mW  [I= %7.3f mA]' % (powerresults[0]+powerresults[1]+powerresults[2], powerresults[6]+powerresults[7]+powerresults[8] ), logfilename, True)
+    hvsupply = keithley2410()
+    status = hvsupply.enableOutput()
     
-    #    status = hvsupply.setVoltageSlow(vbias,-10,0.25)
-    #    utils.write_to_logfile("Bias voltage set to BV="+str(int(hvsupply.getData()[0]))+"V, I = "+str(hvsupply.getData()[1]*1000000)+" muA", logfilename, True)
-    #    status = hvsupply.startReadout()
+    status = hvsupply.setVoltageSlow(vbias,-10,0.25)
+    utils.write_to_logfile("Bias voltage set to BV="+str(int(hvsupply.getData()[0]))+"V, I = "+str(hvsupply.getData()[1]*1000000)+" muA", logfilename, True)
+    # status = hvsupply.startReadout()
 
     if testwaferroutine:    
         # Anvesh
@@ -206,11 +207,11 @@ def mpa_test(basepath="../Results_MPATesting/",
 
     # Pre-trim S-curves ################################## 
     if testpretrim:
-        THR_pre = mpa.cal.s_curve(s_type="THR", ref_val = 15, filename=path+mapsaid+"_PreTrim_THR", plot=0)
+        THR_pre = mpa.cal.s_curve(s_type="THR", ref_val = 15, filename=path+mapsaid+"_PreTrim_THR", plot=0,extract=1)
         utils.write_to_logfile('Pre- Trim THR Mean:  %7.2f +/- %7.2f' % (np.mean(THR_pre [1]), np.std(THR_pre [1])), logfilename, True)
         utils.write_to_logfile('Pre- Trim THR Noise: %7.2f +/- %7.2f' % (np.mean(THR_pre [2]), np.std(THR_pre [2])), logfilename, True)
         
-        CAL_pre = mpa.cal.s_curve(s_type="CAL", ref_val = 85, filename=path+mapsaid+"_PreTrim_CAL", plot=0)
+        CAL_pre = mpa.cal.s_curve(s_type="CAL", ref_val = 85, filename=path+mapsaid+"_PreTrim_CAL", plot=0,extract=1)
         utils.write_to_logfile('Pre- Trim CAL Mean:  %7.2f +/- %7.2f' % (np.mean(CAL_pre [1]), np.std(CAL_pre [1])), logfilename, True)
         utils.write_to_logfile('Pre- Trim CAL Noise: %7.2f +/- %7.2f' % (np.mean(CAL_pre [2]), np.std(CAL_pre [2])), logfilename, True)
 
@@ -225,11 +226,11 @@ def mpa_test(basepath="../Results_MPATesting/",
         
     # Post-trim S-curves ################################## 
     if testtrim and testposttrim:
-        THR_post = mpa.cal.s_curve(s_type="THR", ref_val = 15, filename=path+mapsaid+"_PostTrim_THR", plot=0)
+        THR_post = mpa.cal.s_curve(s_type="THR", ref_val = 15, filename=path+mapsaid+"_PostTrim_THR", plot=0,extract=1)
         utils.write_to_logfile('Post-Trim THR Mean:  %7.2f +/- %7.2f' % (np.mean(THR_post[1]), np.std(THR_post[1])), logfilename, True)
         utils.write_to_logfile('Post-Trim THR Noise: %7.2f +/- %7.2f' % (np.mean(THR_post[2]), np.std(THR_post[2])), logfilename, True)
 
-        CAL_post = mpa.cal.s_curve(s_type="CAL", ref_val = 85, filename=path+mapsaid+"_PostTrim_CAL", plot=0)
+        CAL_post = mpa.cal.s_curve(s_type="CAL", ref_val = 85, filename=path+mapsaid+"_PostTrim_CAL", plot=0,extract=1)
         utils.write_to_logfile('Post-Trim CAL Mean:  %7.2f +/- %7.2f' % (np.mean(CAL_post[1]), np.std(CAL_post[1])), logfilename, True)
         utils.write_to_logfile('Post-Trim CAL Noise: %7.2f +/- %7.2f' % (np.mean(CAL_post[2]), np.std(CAL_post[2])), logfilename, True)
 
@@ -239,14 +240,14 @@ def mpa_test(basepath="../Results_MPATesting/",
     # Bad bump test ################################## 
     badbumps, badbumpsNonEdge, badbumpsVCal3, badbumpsVCal5 = [], [], [], []
     badbumpsv2, badbumpsNonEdgev2, badbumpsVCal3v2, badbumpsVCal5v2 = [], [], [], []
-#    status = hvsupply.disableReadout()
-#    hvdata = hvsupply.getReadoutData()
-#    CSV.ArrayToCSV(hvdata, logfilename.replace(".log","_HV.csv"))
+    status = hvsupply.disableReadout()
+    hvdata = hvsupply.getReadoutData()
+    CSV.ArrayToCSV(hvdata, logfilename.replace(".log","_HV.csv"))
     if testbb:
         status = hvsupply.setVoltageSlow(bbvbias,10,0.25)
         utils.write_to_logfile("Bias voltage set to BV="+str(int(hvsupply.getData()[0]))+"V, I = "+str(hvsupply.getData()[1]*1000000)+" muA", logfilename, True)
         utils.write_to_logfile("Bad bump test at V = "+str(int(bbvbias))+"V:", logfilename, True)
-        badbumps, badbumpsNonEdge, badbumpsVCal3, badbumpsVCal5 = mpa.cal.BumpBonding(filename=path+mapsaid+"_BumpBonding", print_out=False, printout =False, returnAll = True, show_plot=0, save_plot=0,offset=False)
+        badbumps, badbumpsNonEdge, badbumpsVCal3, badbumpsVCal5 = mpa.cal.BumpBonding(filename=path+mapsaid+"_BumpBonding", print_out=False, returnAll = True, show_plot=0,offset=False)
         utils.write_to_logfile("Total BadBumps (org) fit:          " + str(len(badbumps       ))+" ("+conf.getPercentage(badbumps       )+")", logfilename, True)
         utils.write_to_logfile("Total BadBumps fit (org) non-edge: " + str(len(badbumpsNonEdge))+" ("+conf.getPercentage(badbumpsNonEdge)+")", logfilename, True)
         utils.write_to_logfile("Total BadBumps VCal < 3:           " + str(len(badbumpsVCal3  ))+" ("+conf.getPercentage(badbumpsVCal3  )+")", logfilename, True)
@@ -255,9 +256,9 @@ def mpa_test(basepath="../Results_MPATesting/",
         utils.write_to_logfile("Skipped bump bonding", logfilename, True)
         doBBv2 = "no"
 
-#    status = hvsupply.setVoltageSlow(0,10,0.25)
-#    utils.write_to_logfile("Bias voltage set to BV="+str(int(hvsupply.getData()[0]))+"V, I = "+str(hvsupply.getData()[1]*1000000)+" muA", logfilename, True)
-#    status = hvsupply.disableOutput()
+    status = hvsupply.setVoltageSlow(0,10,0.25)
+    utils.write_to_logfile("Bias voltage set to BV="+str(int(hvsupply.getData()[0]))+"V, I = "+str(hvsupply.getData()[1]*1000000)+" muA", logfilename, True)
+    status = hvsupply.disableOutput()
     if not doIVscan:
         poff()
         

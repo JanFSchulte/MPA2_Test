@@ -257,9 +257,9 @@ class mpa_cal_utility():
         if failed == 1:
             print ("S-Curve extraction failed")
             return "exit at scurve"
-        if print_file:
-            #CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + str(ref_val) + ".csv")
-            CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + ".csv")
+        # if print_file:
+        #    #CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + str(ref_val) + ".csv")
+        #     CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + ".csv")
         if extract:
             if extract_val == 0:
                 if s_type == "THR":     extract_val = ref_val*1.66+70
@@ -268,9 +268,15 @@ class mpa_cal_utility():
         elif plot:
             self.plot_extract_scurve(row = row, pixel = self.conf.colsnom, s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, extract = 0, plot = plot)
         t1 = time.time()
-        if plot or extract:
+        if plot: # or extract:
             plt.show()
-            utils.print_log("->  S-Curve Elapsed Time: " + str(t1 - t0))
+        utils.print_log("->  S-Curve Elapsed Time: " + str(t1 - t0))
+        if print_file:
+			#CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + str(ref_val) + ".csv")
+            CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + ".csv")
+            if extract:
+                CSV.ArrayToCSV (th_array, str(filename) + "_" + s_type + "_Mean.csv")
+                CSV.ArrayToCSV (noise_array, str(filename) + "_" + s_type + "_RMS.csv")
         if extract: return data_array, th_array, noise_array
         else: return data_array
 
@@ -662,80 +668,80 @@ class mpa_cal_utility():
         utils.print_log(f"->  Total Trimming Elapsed Time: {str(t1 - t0)}")
         return scurve, th, noise, trim, count
 
-        # Bad bump test: FNAL addition
-        def BumpBonding(self, 
-                        s_type="CAL", 
-                        n_pulse=1000, 
-                        ref_val = 250, 
-                        trim_ampl = -1, 
-                        rbr = 0, 
-                        plot = 0,
-                        show_plot = 0,
-                        print_out =False, 
-                        returnAll = False, 
-                        filename="../Results_MPATesting/bumpbonding_", 
-                        offset = True,
-                        allowForSkipping=True):
-            if print_out: 
-                print("Bump Bonding Test at",s_type+"="+str(ref_val))
+    # Bad bump test: FNAL addition
+    def BumpBonding(self, 
+                    s_type="CAL", 
+                    n_pulse=1000, 
+                    ref_val = 250, 
+                    trim_ampl = -1, 
+                    rbr = 0, 
+                    plot = 0,
+                    show_plot = 0,
+                    print_out =False, 
+                    returnAll = False, 
+                    filename="../Results_MPATesting/bumpbonding_", 
+                    offset = True,
+                    allowForSkipping=True):
+        if print_out: 
+            print("Bump Bonding Test at",s_type+"="+str(ref_val))
 
-            extract_val = int(ref_val * 95./218.)
-            scurvebb, thbb, noisebb, offsetbb = [],[],[],[]
-            if offset:
-                scurvebb, thbb, noisebb, offsetbb = self.single_scurve( n_pulse = n_pulse, s_type = s_type, rbr = rbr, ref_val = ref_val, row = self.conf.rowsnom, col = self.conf.colsnom, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = extract_val, extract = 1, plot = show_plot, print_file =0,israw=False, printout = print_out, offset = True,allowForSkipping=allowForSkipping )
+        extract_val = int(ref_val * 95./218.)
+        scurvebb, thbb, noisebb, offsetbb = [],[],[],[]
+        if offset:
+            scurvebb, thbb, noisebb, offsetbb = self.s_curve( n_pulse = n_pulse, s_type = s_type, rbr = rbr, ref_val = ref_val, row = self.conf.rowsnom, col = self.conf.colsnom, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = extract_val, extract = 1, plot = show_plot, print_file =0,israw=False, printout = print_out, offset = True,allowForSkipping=allowForSkipping )
+        else:
+            scurvebb, thbb, noisebb = self.s_curve( n_pulse = n_pulse, s_type = s_type, rbr = rbr, ref_val = ref_val, row = self.conf.rowsnom, col = self.conf.colsnom, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = extract_val, extract = 1, plot = show_plot, print_file =0,israw=False, printout = print_out, offset = False,allowForSkipping=allowForSkipping )
+        #remove bad pixels, defined pixels where extract_value is 3*std away from thbb mean
+        #remove edge pixels
+
+        badpixels = []
+        edgepixels = []
+        thbb_clean = [th for th in thbb if th != 0]
+        for index in range(len(thbb_clean)):
+            if self.conf.colfrompixnom(index)==0 or self.conf.colfrompixnom(index)==self.conf.ncolsnom-1:
+                edgepixels.append(index)
+            elif math.fabs(thbb[index]-np.mean(thbb))>3*np.std(thbb):
+                badpixels.append(index)
+            #elif math.fabs(noisebb[index])>30:#define fit range < 30 - am I allowed to do it
+            #badpixels.append(index)
+
+        noisebb_forfitting = [noisebb[index] for index in range(len(noisebb)) if (index not in badpixels and index not in edgepixels)]
+        noisebb_edgefitting = [noisebb[index] for index in edgepixels]
+
+        (nom_mu,nom_sigma) = norm.fit(noisebb_forfitting,loc=min(20.,np.mean(noisebb_forfitting)),scale=min(5.,np.std(noisebb_forfitting)))
+        if print_out: print("Noise Peak:",nom_mu,    " (",np.mean(noisebb_forfitting),")")
+        if print_out: print("Noise Width",nom_sigma, " (",np.std( noisebb_forfitting),")")
+
+        (edge_mu,edge_sigma) = norm.fit(noisebb_edgefitting,loc=np.mean(noisebb_edgefitting),scale=np.std(noisebb_edgefitting))
+        if print_out: print("Edge Noise Peak:",edge_mu,    " (",np.mean(noisebb_edgefitting),")")
+        if print_out: print("Edge Noise Width",edge_sigma, " (",np.std( noisebb_edgefitting),")")
+
+        badbumps = []
+        badbumpsNonEdge = []
+        badbumpmap = []
+        badbumpsVCal3 = []
+        badbumpmapVCal3 = []
+        badbumpsVCal5 = []
+        badbumpmapVCal5 = []
+        for index in range(len(noisebb)):#maybe also define here edge pixels as good bumps ??
+            if self.conf.colfrompixnom(index)==0 or self.conf.colfrompixnom(index)==(self.conf.ncolsnom-1):
+                mu = edge_mu
+                sigma = edge_sigma
             else:
-                scurvebb, thbb, noisebb = self.single_scurve( n_pulse = n_pulse, s_type = s_type, rbr = rbr, ref_val = ref_val, row = self.conf.rowsnom, col = self.conf.colsnom, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = extract_val, extract = 1, plot = show_plot, print_file =0,israw=False, printout = print_out, offset = False,allowForSkipping=allowForSkipping )
-            #remove bad pixels, defined pixels where extract_value is 3*std away from thbb mean
-            #remove edge pixels
-
-            badpixels = []
-            edgepixels = []
-            thbb_clean = [th for th in thbb if th != 0]
-            for index in range(len(thbb_clean)):
-                if self.conf.colfrompixnom(index)==0 or self.conf.colfrompixnom(index)==self.conf.ncolsnom-1:
-                    edgepixels.append(index)
-                elif math.fabs(thbb[index]-np.mean(thbb))>3*np.std(thbb):
-                    badpixels.append(index)
-                #elif math.fabs(noisebb[index])>30:#define fit range < 30 - am I allowed to do it
-                #badpixels.append(index)
-
-            noisebb_forfitting = [noisebb[index] for index in range(len(noisebb)) if (index not in badpixels and index not in edgepixels)]
-            noisebb_edgefitting = [noisebb[index] for index in edgepixels]
-
-            (nom_mu,nom_sigma) = norm.fit(noisebb_forfitting,loc=min(20.,np.mean(noisebb_forfitting)),scale=min(5.,np.std(noisebb_forfitting)))
-            if print_out: print("Noise Peak:",nom_mu,    " (",np.mean(noisebb_forfitting),")")
-            if print_out: print("Noise Width",nom_sigma, " (",np.std( noisebb_forfitting),")")
-
-            (edge_mu,edge_sigma) = norm.fit(noisebb_edgefitting,loc=np.mean(noisebb_edgefitting),scale=np.std(noisebb_edgefitting))
-            if print_out: print("Edge Noise Peak:",edge_mu,    " (",np.mean(noisebb_edgefitting),")")
-            if print_out: print("Edge Noise Width",edge_sigma, " (",np.std( noisebb_edgefitting),")")
-
-            badbumps = []
-            badbumpsNonEdge = []
-            badbumpmap = []
-            badbumpsVCal3 = []
-            badbumpmapVCal3 = []
-            badbumpsVCal5 = []
-            badbumpmapVCal5 = []
-            for index in range(len(noisebb)):#maybe also define here edge pixels as good bumps ??
-                if self.conf.colfrompixnom(index)==0 or self.conf.colfrompixnom(index)==(self.conf.ncolsnom-1):
-                    mu = edge_mu
-                    sigma = edge_sigma
-                else:
-                    mu = nom_mu
-                    sigma = nom_sigma
-                if math.fabs(noisebb[index]-mu)>5.*sigma:
-                    badbumps.append(index)
-                    if not (self.conf.colfrompixnom(index)==0 or self.conf.colfrompixnom(index)==(self.conf.ncolsnom-1)):
-                        badbumpsNonEdge.append(index)
-                    badbumpmap.append(1)
-                else:
-                    badbumpmap.append(0)
-                if noisebb[index]<=3:
-                    badbumpsVCal3.append(index)
-                    badbumpmapVCal3.append(1)
-                else:
-                    badbumpmapVCal5.append(0)
+                mu = nom_mu
+                sigma = nom_sigma
+            if math.fabs(noisebb[index]-mu)>5.*sigma:
+                badbumps.append(index)
+                if not (self.conf.colfrompixnom(index)==0 or self.conf.colfrompixnom(index)==(self.conf.ncolsnom-1)):
+                    badbumpsNonEdge.append(index)
+                badbumpmap.append(1)
+            else:
+                badbumpmap.append(0)
+            if noisebb[index]<=3:
+                badbumpsVCal3.append(index)
+                badbumpmapVCal3.append(1)
+            else:
+                badbumpmapVCal5.append(0)
 
         self.utils.plot_2D_map_list(dataarray = badbumpmap, data_label="", nfig=13,hmin=-1,hmax=-1, plotAverage = False, identifier="Bad Bump Map Fit", xlabel="row", ylabel="column",isChip=True,israw=False,filename=filename+"plotFit",show_plot=show_plot,save_plot=save_plot)
         self.utils.plot_2D_map_list(dataarray = badbumpmapVCal3, data_label="", nfig=14,hmin=-1,hmax=-1, plotAverage = False, identifier="Bad Bump Map Noise <3", xlabel="row", ylabel="column",isChip=True,israw=False,filename=filename+"plotVCal3",show_plot=show_plot,save_plot=save_plot)
@@ -765,7 +771,7 @@ class mpa_cal_utility():
             print("Total BadBumps VCal < 5:",len(badbumpsVCal5),self.conf.getPercentage(badbumpsVCal5))
 
         if returnAll:
-                return badbumps, badbumpsNonEdge, badbumpsVCal3, badbumpsVCal5
+            return badbumps, badbumpsNonEdge, badbumpsVCal3, badbumpsVCal5
         return badbumps
 
 

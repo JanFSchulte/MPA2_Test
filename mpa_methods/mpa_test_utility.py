@@ -1137,7 +1137,7 @@ class mpa_test_utility():
                     'Ofcnt', 'OF_out_count', 'OF_stub_count',
                     'EfuseValue0', 'EfuseValue1','EfuseValue2','EfuseValue3',
                     'RO_Inv_LSB','RO_Inv_MSB','RO_Del_LSB','RO_Del_MSB']
-        ]
+        
 
         cnt = 0
         regcnt=0
