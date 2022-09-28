@@ -4,7 +4,11 @@ from tkinter import filedialog
 
 from tkinter import ttk
 
-from guihelpers import *
+from utilities import *
+from main import *
+#from guihelpers import *
+
+from stepping import *
 
 logfilename = ""
 
@@ -92,7 +96,7 @@ gui.title("MPA testing")
 a_menu = tk.Menu(gui)
 
 action_menu = tk.Menu(a_menu, tearoff=0)
-action_menu.add_command(label="Runtime", command=dosomething)
+#action_menu.add_command(label="Runtime", command=dosomething)
 #action_menu.add_separator() 
 action_menu.add_command(label="Exit", command=lambda: quitanddestroy(gui))
 
@@ -169,19 +173,20 @@ tabControl.pack(expand=1, fill='both')
 
 # Define our switch function for pon/poff                                                                       
 def power_switch():
+
     global power_on
 
-    # if on turn off                                                                                           
+    # if on turn off                                                        
     if power_on:
-        buttonOn.config(bg="red",text="Power Off")
         poff()
         power_on = False
-
-    # if off turn on                                                                                            
-    else:
-
         buttonOn.config(bg="green",text="Power On")
-        power_on = pon()#True                                                                                        
+
+    # if off turn on                                                   
+    else:
+        power_on = pon()
+        if power_on:
+            buttonOn.config(bg="red",text="Power Off")
 
 power_on = False
 
@@ -199,37 +204,52 @@ buttonIVScan.grid(row=1, column=2, columnspan=1)
 
 # Probe station motion                                                                                                                      
 labelMotion = tk.Label(tab1,text="Probe station motion")                                                                                    
-labelMotion.grid(row=2, column=0, columnspan=1)                                                                                                   
+labelMotion.grid(row=2, column=0, columnspan=1)      
+
 # Define our switch function for needles up/down                                                                                                 
 def needles_switch():                                                                                                                             
     global needles_up                                                                                                                          
     # if up then lower                                                                                                                         
     if needles_up:                                                                                                                               
         buttonUp.config(bg="red",text="Raise Needles")                                                                                           
-        print("Add command to lower needles")                                                                                                    
+        lower_needles()
+        labelHeight.config(text="At contact height")
         needles_up = False                                                                                                                   
                                                                                                                                              
     # if down then raise                                                                                                                     
     else:                                                                                                                                   
         buttonUp.config(bg="green",text="Lower needles")                                                                                     
-        print("Add command to raise needles")                                                                                                   
+        lift_needles()
+        labelHeight.config(text="At separation height")
         needles_up = True                                                                                                                      
 
-needles_up = True # get real height from somewhere                                                                                               
-color = "red"                                                                                                                             
-  
-if needles_up:                                                                                                                                   
-    color = "green"                                                                                                                              
+lift_needles()
+labelHeight = tk.Label(tab1,text="At separation height")
+labelHeight.grid(row=3,column=1,columnspan=3)
+needles_up = True
 
-buttonUp = tk.Button(tab1,text='Lower Needles',bg=color,command=needles_switch)                                                             
+buttonUp = tk.Button(tab1,text='Lower Needles',bg="green",command=needles_switch)                                                             
 buttonUp.grid(row=3, column=0, columnspan=1) 
 
-buttonStep = tk.Button(tab1,text='Step 1 MPA', command=lambda: step(1))                                                                 
-buttonStep.grid(row=3, column=1, columnspan=1)  
+def step_one_mpa():
+
+    start_chip = MPAID.get()
+
+    if len(start_chip) < 1:
+        print("MPA ID " + start_chip + " is too short.")
+        return
+        
+    end_chip = step_nMPA(start_chip,1)
+    MPAID.delete(0,len(start_chip))
+    MPAID.insert(0,str(end_chip))
+    needles_switch()    
+
+buttonStep = tk.Button(tab1,text='Step 1 MPA', command=step_one_mpa)
+buttonStep.grid(row=4, column=0, columnspan=1)  
 
 # Define checkboxes for MPA tests
 labelTests = tk.Label(tab1,text="Select MPA tests to run")
-labelTests.grid(row=4, column=0, columnspan=1)
+labelTests.grid(row=5, column=0, columnspan=1)
 
 testRegister     = tk.IntVar(value=1)
 testWaferRoutine = tk.IntVar(value=1)
@@ -243,12 +263,12 @@ testMaskPAliveButton   = tk.Checkbutton(tab1, text='Mask/Alive',    variable=tes
 testPosttrimSButton    = tk.Checkbutton(tab1, text='Posttrim S',    variable=testPosttrimS,    onvalue=1, offvalue=0)
 testBBButton           = tk.Checkbutton(tab1, text='Bad Bump',      variable=testBB      ,     onvalue=1, offvalue=0)
 
-testRegisterButton.grid(row=5,column=0,columnspan=1)
-testWaferRoutineButton.grid(row=5,column=1,columnspan=1)
-testMaskPAliveButton.grid(row=5,column=2,columnspan=1)
+testRegisterButton.grid(row=6,column=0,columnspan=1)
+testWaferRoutineButton.grid(row=6,column=1,columnspan=1)
+testMaskPAliveButton.grid(row=6,column=2,columnspan=1)
 
-testPosttrimSButton.grid(row=6,column=1,columnspan=1)
-testBBButton.grid(row=6,column=2,columnspan=1)
+testPosttrimSButton.grid(row=7,column=1,columnspan=1)
+testBBButton.grid(row=7,column=2,columnspan=1)
 
 # This button runs the MPA test according to chechboxes
 buttonTestMPA = tk.Button(tab1,text='Test 1 MPA', bg="green", command=lambda: mpa_test(mapsaid=MaPSAID.get(),
@@ -261,7 +281,7 @@ buttonTestMPA = tk.Button(tab1,text='Test 1 MPA', bg="green", command=lambda: mp
                                                                                        testposttrim=testPosttrimS.get(),
                                                                                        testbb=testBB.get()))
 
-buttonTestMPA.grid(row=7, column=0, columnspan=1)
+buttonTestMPA.grid(row=8, column=0, columnspan=1)
 
 # Second tab: automated stepping across one side
 buttonAutomated = tk.Button(tab2,text='Test 8 MPA', bg="green", command=lambda: scan_side(mapsaid=MaPSAID.get()))

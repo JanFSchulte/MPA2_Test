@@ -1,11 +1,11 @@
 import _thread
 import time
-import visa
+import pyvisa
 
 class keithley2410:
     def __init__(self,device='ASRL5::INSTR',voltage=0,currentlimit=1E-4,speed=10):
-        self.rm = visa.ResourceManager() #Always create a resource manager. Don't question. Just do.
-        #print(self.rm.list_resources()) #Identify the address of your instrument.
+        self.rm = pyvisa.ResourceManager() #Always create a resource manager. Don't question. Just do.
+        print(self.rm.list_resources()) #Identify the address of your instrument.
         #self.keithley = self.rm.open_resource('ASRL5::INSTR') #Name and open a connection with your instrument.
         self.keithley = self.rm.open_resource(str(self.rm.list_resources()[-1])) #Name and open a connection with your instrument.
         self.keithley.timeout = 10000
