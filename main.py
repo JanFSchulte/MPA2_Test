@@ -255,7 +255,7 @@ def mpa_test(basepath="../Results_MPATesting/",
         status = hvsupply.setVoltageSlow(bbvbias,10,0.25)
         utils.write_to_logfile("Bias voltage set to BV="+str(int(hvsupply.getData()[0]))+"V, I = "+str(hvsupply.getData()[1]*1000000)+" muA", logfilename, True)
         utils.write_to_logfile("Bad bump test at V = "+str(int(bbvbias))+"V:", logfilename, True)
-        badbumps, badbumpsNonEdge, badbumpsVCal3, badbumpsVCal5 = mpa.cal.BumpBonding(filename=path+mapsaid+"_BumpBonding", print_out=False, returnAll = True, show_plot=0,offset=False)
+        badbumps, badbumpsNonEdge, badbumpsVCal3, badbumpsVCal5 = mpa.cal.BumpBonding(filename=path+mapsaid+"_BumpBonding", print_out=False, returnAll = True, show_plot=0)
         utils.write_to_logfile("Total BadBumps (org) fit:          " + str(len(badbumps       ))+" ("+conf.getPercentage(badbumps       )+")", logfilename, True)
         utils.write_to_logfile("Total BadBumps fit (org) non-edge: " + str(len(badbumpsNonEdge))+" ("+conf.getPercentage(badbumpsNonEdge)+")", logfilename, True)
         utils.write_to_logfile("Total BadBumps VCal < 3:           " + str(len(badbumpsVCal3  ))+" ("+conf.getPercentage(badbumpsVCal3  )+")", logfilename, True)
