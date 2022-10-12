@@ -122,13 +122,16 @@ myTerminal.configure(yscrollcommand=vsb.set)
 sys.stdout = TextRedirector(myTerminal, "stdout")
 sys.stderr = TextRedirector(myTerminal, "stderr")
 
-#CommandLinel = tk.Label (gui,text="Commandline:", bg="white", fg="black")
-#CommandLinel.grid(row=15, column=0, columnspan=2)
+def executecommand(event):
+    exec(str(myCommandLine.get()))
+    print("Command executed.")
 
-#myCommandLine = tk.Entry(gui)
-#CommandLine.bind("<Key>", executecommand)
-#myCommandLine.bind("<Return>", executecommand)
-#myCommandLine.grid(row=15, column=1, columnspan=5)
+CommandLinel = tk.Label (left,text="Commandline:", bg="white", fg="black")
+CommandLinel.grid(row=18, column=0, columnspan=1)
+
+myCommandLine = tk.Entry(left)
+myCommandLine.bind("<Return>", executecommand)
+myCommandLine.grid(row=18, column=1, columnspan=3)
 
 # Place to write in MaPSA ID
 MaPSAIDl = tk.Label (left,text="MaPSA ID:", bg="white", fg="black")
