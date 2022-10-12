@@ -94,10 +94,10 @@ class mpa_test_utility():
                 check_pix = 0
                 check_row = 0
                 err = 0
-                print(nst)
-                print(pos)
-                print(Z)
-                print(bend)
+#                print(nst)
+#                print(pos)
+#                print(Z)
+#                print(bend)
                 for centr in pos[:,0]:
                     if (centr == p*2): 
                         check_pix += 1
@@ -1116,7 +1116,7 @@ class mpa_test_utility():
         return BadPixM, error, stuck, i2c_issue, missing, flag
 
     # FNAL addition                                                                                                                                                                                        
-    def writeread_allregs_peri(self, printout=False):
+    def writeread_allregs_peri(self):
         t0 = time.time()
 
         self.fc7.activate_I2C_chip(verbose=0)
@@ -1142,7 +1142,7 @@ class mpa_test_utility():
         regcnt=0
 
         for reg in self.i2c.peri_reg_map.keys():
-           if all(reg_check != reg for reg_check in read_reg):
+            if all(reg_check != reg for reg_check in read_reg):
                 regcnt += 1
                 value = self.i2c.peri_read(reg)
  
@@ -1169,7 +1169,7 @@ class mpa_test_utility():
         return cnt
 
     # FNAL addition                                                                                                  
-    def writeread_allregs_row(self, printout=False):
+    def writeread_allregs_row(self):
         t0 = time.time()
  
         self.fc7.activate_I2C_chip(verbose=0)
@@ -1184,6 +1184,7 @@ class mpa_test_utility():
                     'BIST_SRAM_output_0', 'BIST_SRAM_output_1', 'BIST_SRAM_output_2', 'BIST_SRAM_output_3', 'BIST_SRAM_output_4', 'BIST_SRAM_output_5', 'BIST_SRAM_output_6',
                     'BIST_SRAM_output_7', 'BIST_SRAM_output_8', 'BIST_SRAM_output_9', 'BIST_SRAM_output_10', 'BIST_SRAM_output_11', 'BIST_SRAM_output_12', 'BIST_SRAM_output_13',
                     'BIST_SRAM_output_14', 'BIST_SRAM_output_15', 
+                    'MemoryControl_1','MemoryControl_2','PixelControl',
                     'RO_Row_Inv_LSB','RO_Row_Inv_MSB','RO_Row_Del_LSB','RO_Row_Del_MSB','RingOscillator']
 
         cnt = 0
@@ -1217,7 +1218,7 @@ class mpa_test_utility():
         return cnt
 
     # FNAL addition                                                                                                                        
-    def writeread_allregs_pixel(self,printout=False):
+    def writeread_allregs_pixel(self):
         t0 = time.time()
 
         self.fc7.activate_I2C_chip(verbose=0)
@@ -1225,7 +1226,7 @@ class mpa_test_utility():
         self.mpa.ctrl_base.activate_pp()
 
         # Don't test these registers, which are read-only                                                                                        
-        read_reg = ['test', '-'] # 'AC_ReadCounterLSB', 'AC_ReadCounterMSB']
+        read_reg = ['test', '-', 'AC_ReadCounterLSB', 'AC_ReadCounterMSB']
 
         cnt = 0
         for row in range(1,17):
@@ -1238,11 +1239,11 @@ class mpa_test_utility():
                         max_value = self.i2c.pixel_read(reg, row, pixel)
 
                         if (max_value == 0):
-                            #print("Pixel reg failure 0 ", reg)                                                          
+                            print("Pixel reg failure 0 ", reg)                                                          
                             cnt += 1 #added by HJ                                                                                             
                             self.i2c.pixel_write(reg, row, pixel, value)
                         elif(max_value == None):
-                            #print("Pixel reg failure None ", reg)                                                                  
+                            print("Pixel reg failure None ", reg)                                                                  
                             cnt += 1 #added by HJ                
                         else:
                             randominteger = random.randint(0,max_value)
@@ -1250,7 +1251,7 @@ class mpa_test_utility():
                             check = self.i2c.pixel_read(reg, row, pixel)
                             if (check != randominteger):
                                 cnt += 1
-                                #print("Pixel reg failure other ", reg, check, randominteger)
+                                print("Pixel reg failure other ", reg, check, randominteger)
                             self.i2c.pixel_write(reg, row, pixel, value)
 
         t1 = time.time()

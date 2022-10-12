@@ -2,7 +2,7 @@ from os import fpathconf
 from myScripts.ArrayToCSV import *
 from myScripts.Utilities import *
 from main import *
-from myScripts.Instruments_Keithley_Sourcemeter_2410_GPIB import Instruments_Keithley_Sourcemeter_2410_GPIB
+#from myScripts.Instruments_Keithley_Sourcemeter_2410_GPIB import Instruments_Keithley_Sourcemeter_2410_GPIB
 
 import seaborn as sns
 import pickle
@@ -19,12 +19,12 @@ class MPAMeasurements():
     def __init__(self, mpa, bias):
         self.mpa = mpa
         self.bias = bias
-        try:
-            self.sourcemeter = Instruments_Keithley_Sourcemeter_2410_GPIB()
-            self.sourcemeter.connect()
-        except Exception as e:
-            self.sourcemeter = False
-            utils.print_error("-> Sourcemeter not accessible!")
+#        try:
+#            self.sourcemeter = Instruments_Keithley_Sourcemeter_2410_GPIB()
+#            self.sourcemeter.connect()
+#        except Exception as e:
+#            self.sourcemeter = False
+#            utils.print_error("-> Sourcemeter not accessible!")
 
     # from SSA methods
     def dnl_inl_histogram_sample(self, runtime=3600, freq=0.1, show=0, directory='../MPA2_Results/adc_measurements/', filename='ADC_samples.csv', continue_on_same_file=1):

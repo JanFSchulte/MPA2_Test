@@ -7,10 +7,8 @@ class keithley2410:
         self.rm = pyvisa.ResourceManager() #Always create a resource manager. Don't question. Just do.
         print(self.rm.list_resources()) #Identify the address of your instrument.
         #self.keithley = self.rm.open_resource('ASRL5::INSTR') #Name and open a connection with your instrument.
-        self.keithley = self.rm.open_resource(str(self.rm.list_resources()[-1])) #Name and open a connection with your instrument.
+        self.keithley = self.rm.open_resource(str(self.rm.list_resources()[-1]),read_termination = '\r',write_termination = '\r')
         self.keithley.timeout = 10000
-        self.keithley.read_termination = '\r'
-        self.keithley.write_termination = '\r'
         print(self.keithley.query('*IDN?')) #Check that the instrument is the right one.
 
         self.keithley.write('*RST')
@@ -29,7 +27,7 @@ class keithley2410:
         self.readout = False
 
     def setVoltage(self,voltage=0):
-        return int(self.keithley.write(':SOUR:VOLT:LEV:IMM '+str(voltage))[1])
+        return int(self.keithley.write(':SOUR:VOLT:LEV:IMM '+str(voltage)))
 
     def setVoltageSlow(self,voltage=0,step=10,delay=0.25):
         data = self.getData()
@@ -55,7 +53,7 @@ class keithley2410:
         return status
 
     def setVoltageRange(self,voltage=1000):
-        return int(self.keithley.write(':SOUR:VOLT:RANG '+str(voltage))[1])
+        return int(self.keithley.write(':SOUR:VOLT:RANG '+str(voltage)))
 
     def getData(self):
         listData = self.keithley.query(':READ?').split(',')
@@ -63,23 +61,23 @@ class keithley2410:
         return Data
 
     def setCurrentProtection(self,value=.0001):
-        compliance = int(self.keithley.write(':SENS:CURR:PROT:LEV '+str(value))[1])
-        limit = int(self.keithley.write(':SENS:CURR:RANG '+str(value))[1])
+        compliance = int(self.keithley.write(':SENS:CURR:PROT:LEV '+str(value)))
+        limit = int(self.keithley.write(':SENS:CURR:RANG '+str(value)))
         return (compliance | limit)
 
     def checkCompliance(self):
         return int(self.keithley.query(':SENS:CURR:PROT:TRIP?'))
 
     def enableOutput(self):
-        return int(self.keithley.write(':OUTP:STAT ON')[1])
+        return int(self.keithley.write(':OUTP:STAT ON'))
 
     def disableOutput(self):
-        return int(self.keithley.write(':OUTP:STAT OFF')[1])
+        return int(self.keithley.write(':OUTP:STAT OFF'))
 
     def IVScan(self,VStart=0,VStop=-801,VStep=-10,delay=0.25):
         IVdata=[]
         self.setVoltageSlow(VStart)
-        for voltage in xrange(VStart,VStop,VStep):
+        for voltage in range(VStart,VStop,VStep):
             status = self.setVoltage(voltage)
             time.sleep(delay)
             data = self.getData()

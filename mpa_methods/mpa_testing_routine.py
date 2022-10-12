@@ -61,7 +61,7 @@ class MainTestsMPA():
 #            self.runtest.set_enable('Calibrate Bias', 'ON')
 #            self.runtest.set_enable('Calibrate VREF', 'ON')
             # Reads dependence on temperature
-            self.runtest.set_enable('ADC Measure', 'ON')
+            self.runtest.set_enable('ADC Measure', 'OFF')
             # Also exists: function that directly reads temperature
             # Updates potentially coming: ADC
 # FAILS but I will do it my own way
@@ -321,7 +321,11 @@ class MainTestsMPA():
         time_init = time.time()
         wd = 0
         if (self.thLSB == False) or (self.calLSB == False):
-            self.test_routine_dacs(filename=filename)
+            #self.test_routine_dacs(filename=filename)
+            print("Setting calLSB and thLSB to ideal vals")
+            self.calLSB = self.ideal_cl_LSB
+            self.thLSB = self.ideal_th_LSB
+
         en = self.runtest.is_active('S-Curve')
 
         while (en and wd < 3):
@@ -336,6 +340,11 @@ class MainTestsMPA():
                 self.mpa.chip.ctrl_base.disable_test()
                 self.mpa.init(display=0)
                 self.fc7.activate_I2C_chip(verbose=0)
+
+                print("JENNET HEY")
+                print(th_H,cal_H)
+                print(th_T,cal_T)
+                print(th_L,cal_L)
 
                 data_array,cal_A, noise_A, trim, pix_out = self.cal.trimming_probe(
                     ref = th_H, low = cal_H - self.high_cl_ofs, 
