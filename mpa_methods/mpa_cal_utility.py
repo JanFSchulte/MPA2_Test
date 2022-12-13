@@ -61,7 +61,7 @@ class mpa_cal_utility():
         a, mu, sigma = p
         return a*0.5*erfc((x-mu)/sigma)
 
-    def extract_scurve(self, row, pixel, s_type, scurve, n_pulse, nominal_DAC, start, stop, extract):
+    def extract_scurve(self, row, pixel, s_type, scurve, n_pulse, start, stop, extract):
         """takes scurve data and extracts threshold and noise data.
 
         :param row:
@@ -69,7 +69,6 @@ class mpa_cal_utility():
         :param s_type:
         :param scurve:
         :param n_pulse:
-        :param nominal_DAC:
         :param start:
         :param stop:
         :param extract:
@@ -255,16 +254,9 @@ class mpa_cal_utility():
         if failed == 1:
             print ("S-Curve extraction failed")
             return "exit at scurve"
-        # if print_file:
-        #    #CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + str(ref_val) + ".csv")
-        #     CSV.ArrayToCSV (data_array, str(filename) + "_" + s_type + ".csv")
+
         if extract:
-            if extract_val == 0:
-                if s_type == "THR":     
-                    extract_val = ref_val*1.66+70
-                elif s_type == "CAL":   
-                    extract_val = ref_val/1.66-40
-            th_array, noise_array = self.extract_scurve(row = row, pixel = self.conf.colsnom, s_type = s_type, scurve = data_array , n_pulse = n_pulse, nominal_DAC = extract_val, start = start, stop = stop, extract = extract)
+            th_array, noise_array = self.extract_scurve(row = row, pixel = self.conf.colsnom, s_type = s_type, scurve = data_array , n_pulse = n_pulse, start = start, stop = stop, extract = extract)
 
         t1 = time.time()
         utils.print_log("->  S-Curve Elapsed Time: " + str(t1 - t0))
@@ -274,8 +266,6 @@ class mpa_cal_utility():
                 CSV.ArrayToCSV (th_array, str(filename) + "_" + s_type + "_Mean.csv")
                 CSV.ArrayToCSV (noise_array, str(filename) + "_" + s_type + "_RMS.csv")
 
-#        print("Make sure this is not empty")
-#        print(data_array)
         if extract: 
             return data_array, th_array, noise_array
         else: 
@@ -413,7 +403,6 @@ class mpa_cal_utility():
 
     def trimming_probe(self, ref = 250, low = 120, high = 60, second_step = 1, nominal_ref = 150, nominal_req = 40, rbr = 0, plot = 0):
         """
-
         :param ref:  (Default value = 250)
         :param low:  (Default value = 120) - initial mu param value for s-curve fit with low trim bits
         :param high:  (Default value = 60) - initial mu param vailue for s-curve fit with high trim bits
@@ -422,19 +411,11 @@ class mpa_cal_utility():
         :param nominal_req:  (Default value = 40)
         :param rbr:  (Default value = 0)
         :param plot:  (Default value = 1)
-
         """
+
         t0 = time.time()
         self.I2C.peri_write('Mask', 0b11111111)
         self.I2C.row_write('Mask', 0, 0b11111111)
-#        if trim_ampl > -1:
-#            for block in range(0,7):
-#                self.I2C.peri_write("C"+str(block), trim_ampl)
-#        else: 
-#            trim_ampl = int(self.I2C.peri_read("C"+str(0)))
-
-#        trm_LSB = round(((0.172-0.048)/32.0*trim_ampl+0.048)/32.0*1000.0,2)
-#        utils.print_info(f"->  Trimming LSB {trm_LSB} mV, code: {trim_ampl}")
 
         utils.print_info("->  Trimming DAC MIN scurve...")
         self.mpa.ctrl_pix.reset_trim(0)
@@ -493,10 +474,8 @@ class mpa_cal_utility():
         utils.print_log(f"->  Total Trimming Elapsed Time: {str(t1 - t0)}")
         return scurve, th, noise, trim, count
 
-
-    def trimming_new(self, ref = 40, low = 80, req = 130, high = 180, ref_val = 15, nominal_req = 85 , trim_ampl = -1, rbr = 0, plot = 0, filename = ""):
+    def trimming_desy(self, ref = 40, low = 80, req = 130, high = 180, nominal_ref = 15, nominal_req = 85 , trim_ampl = -1, rbr = 0, plot = 0, filename = ""):
         """
-
         :param ref:  (Default value = 40)
         :param low:  (Default value = 80)
         :param req:  (Default value = 130)
@@ -505,8 +484,10 @@ class mpa_cal_utility():
         :param nominal_req:  (Default value = 85)
         :param trim_ampl:  (Default value = -1)
         :param rbr:  (Default value = 0)
-        :param plot:  (Default value = 0)
+        :param plot:  (Default value = 1)
         """
+
+        print("Trim using DESY implementation")
 
         t0 = time.time()
         row = self.conf.rowsnom
@@ -514,49 +495,62 @@ class mpa_cal_utility():
         if trim_ampl > -1:
             for block in range(0,7):
                 self.I2C.peri_write("C"+str(block), trim_ampl)
-        else:
-            trim_ampl = int(self.I2C.peri_read("C0"))
-#            print(trim_ampl)
-
+        else: trim_ampl = int(self.I2C.peri_read("C"+str(0)))
+        print("The current trim ampl is now: ", trim_ampl)
         trm_LSB = round(((0.172-0.048)/32.0*trim_ampl+0.048)/32.0*1000.0,2)
+        print("Trimming LSB", trm_LSB, "mV")
 
-        print("Trimming DAC MIN scurve...")
-        self.mpa.ctrl_pix.reset_trim(0)
-        scurveL, thL, noiseL = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val=ref_val, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = low, plot = 0, print_file =1, filename='../Results_MPATesting/AEM79L/trim0.csv' )
+        # Somewhat needed for setting trim dac value..... (added by DESY) Also done in Pretrim, was breaking when skipping pretrim
+        # Oct. 24 2022 !!!! Now that we added it here. we can skip pretrim for testing.
+        self.I2C.row_write('Mask', 0, 0b11111111)
+        
+        print("Trimming DAC 10 scurve...")
+        self.mpa.ctrl_pix.reset_trim(10)
+        scurveL, thL, noiseL = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = ref, row = row, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = low, extract = 1, plot = 0, print_file =1, filename=filename+'_trim10' )
+        print("Trimming DAC 21 scurve...") # was "DAC MAX"
+        self.mpa.ctrl_pix.reset_trim(21) # was 31 
+        scurveH, thH, noiseH = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = ref, row = row, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = high, extract = 1, plot = 0, print_file =1, filename=filename+'_trim21' )
 
-        print("Trimming DAC MAX scurve...")
-        self.mpa.ctrl_pix.reset_trim(31)
-        scurveH, thH, noiseH = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val=ref_val, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = high, plot = 0, print_file =1, filename='../Results_MPATesting/AEM79L/trim31.csv')
-
-#        print(np.mean(noiseH))
-
-        thL = np.array(thL)
-        thH = np.array(thH)
-
-#        print(len(thL),len(thH))
+        thL = np.array(thL); thH = np.array(thH);
         print("Not Trimmerable Pixel", np.size(np.where(thL > req)) + np.size(np.where(thH < req)))
-#        print("req:",np.size(req),"thL",np.size(thL),"thH",np.size(thH))
-        trim = np.round((req - thL*1.0)/(thH - thL)*32.0)
+        trim = np.round((req - thL*1.0)/(thH - thL)*12.0) # was 32 before changing it to 22
         trim = trim.astype(int)
+        trim[trim > 31] = 31
+        trim[trim < 0] = 0
         if np.size(trim) == 1888:
             count = self.mpa.ctrl_pix.load_trim(trim)
             print("Trimmed scurve...")
-#            print("Not Trimmerable Pixel", count)
-            scurveT, thT, noiseT = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = ref_val, row = row, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = nominal_req, plot = 0, print_file =0 )
+            print("Not Trimmerable Pixel", count)
+            scurveT, thT, noiseT = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = nominal_ref, row = row, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = nominal_req, extract = 1, plot = 0, print_file =0 )
         else:
             print("Error")
-
         # Incremental second step?
         thT = np.array(thT);
         trim_incr = np.round((nominal_req - thT)/trm_LSB)
         trim_incr = trim_incr.astype(int)
         trim = trim + trim_incr
-
+        trim[trim > 31] = 31
+        trim[trim < 0] = 0
         if np.size(trim) == 1888:
             count = self.mpa.ctrl_pix.load_trim(trim)
             print("Nominal scurve...")
-#            print("Not Trimmerable Pixel", count)
-            scurve, th, noise = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = ref_val, row = row, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = nominal_req, plot = 0, print_file =0 )
+            print("Not Trimmerable Pixel", count)
+            scurve, th, noise = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = nominal_ref, row = row, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = nominal_req, extract = 1, plot = plot, print_file =0 )
+        else:
+            print("Error")
+            
+         # Incremental third step?
+        thT = np.array(th);
+        trim_incr = np.round((nominal_req - th)/trm_LSB)
+        trim_incr = trim_incr.astype(int)
+        trim = trim + trim_incr
+        trim[trim > 31] = 31
+        trim[trim < 0] = 0
+        if np.size(trim) == 1888:
+            count = self.mpa.ctrl_pix.load_trim(trim)
+            print("Nominal 2nd scurve...")
+            print("Not Trimmerable Pixel", count)
+            scurve, th, noise = self.s_curve( n_pulse = 1000, s_type = "THR", rbr = rbr, ref_val = nominal_ref, row = row, step = 1, start = 0, stop = 256, pulse_delay = 500, extract_val = nominal_req, extract = 1, plot = plot, print_file =0 )
         else:
             print("Error")
 

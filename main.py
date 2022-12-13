@@ -230,7 +230,7 @@ def mpa_test(basepath="../Results_MPATesting/",
 
     # Perform trimming ################################## 
     if testtrim:
-        trim_bits = mpa.cal.trimming_probe()
+        trim_bits = mpa.cal.trimming_desy()
     else:
         utils.write_to_logfile("Skipped trimming", logfilename, True)
         
@@ -355,8 +355,17 @@ def IVScan(basepath="../Results_MPATesting/",mapsaid="AssemblyX",writecsv=True,V
 #    poff()
 #    return
 
-def pa():
-    pixel_alive = mpa.cal.pixel_alive(plot=1)
+def pa(cal=250, thr=250, delay=200, hv=-10):
+
+    hvsupply = keithley2410()
+    status = hvsupply.enableOutput()
+    status = hvsupply.setVoltageSlow(hv,-10,0.25)
+
+    pixel_alive = mpa.cal.pixel_alive(ref_cal=cal, ref_thr=thr, pulse_delay=delay, plot=1)
+
+    status = hvsupply.setVoltageSlow(0,10,0.25)
+    status = hvsupply.disableOutput()
+
     return
 
 def bare_mpa_test():
