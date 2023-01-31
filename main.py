@@ -127,7 +127,7 @@ def mpa_test(basepath="../Results_MPATesting/",
              testwaferroutine=True, 
              testmaskpalive=True,
              testpretrim=False, 
-             testtrim=True, 
+             testtrim=100, 
              testposttrim=True, 
              testbb=True, 
              vbias=-300, 
@@ -147,6 +147,10 @@ def mpa_test(basepath="../Results_MPATesting/",
 
     mapsabaseid = mapsaid
     t0 = time.time()
+
+    print("Reading EFuse")
+    efuse = mpa.chip.ctrl_base.read_fuses(verbose=1)
+    print(efuse)
 
     outputdir = basepath[:basepath.rfind("/")]+"/"+mapsaid
     path = outputdir + "/"
@@ -229,13 +233,13 @@ def mpa_test(basepath="../Results_MPATesting/",
         utils.write_to_logfile("Skipped scurves pre trimming", logfilename, True)
 
     # Perform trimming ################################## 
-    if testtrim:
-        trim_bits = mpa.cal.trimming_desy()
+    if testtrim > 0:
+        trim_bits = mpa.cal.trimming_desy(nominal_req=testtrim)
     else:
         utils.write_to_logfile("Skipped trimming", logfilename, True)
         
     # Post-trim S-curves ################################## 
-    if testtrim and testposttrim:
+    if testtrim > 0 and testposttrim:
         THR_post = mpa.cal.s_curve(s_type="THR", ref_val = 15, filename=path+mapsaid+"_PostTrim_THR",extract=1)
         utils.write_to_logfile('Post-Trim THR Mean:  %7.2f +/- %7.2f' % (np.mean(THR_post[1]), np.std(THR_post[1])), logfilename, True)
         utils.write_to_logfile('Post-Trim THR Noise: %7.2f +/- %7.2f' % (np.mean(THR_post[2]), np.std(THR_post[2])), logfilename, True)
@@ -298,7 +302,7 @@ def mpa_test(basepath="../Results_MPATesting/",
         print('%7.2f \t%7.2f' % (np.mean(CAL_pre [1]), np.std(CAL_pre [1])))
         print('%7.2f \t%7.2f' % (np.mean(CAL_pre [2]), np.std(CAL_pre [2])))
 
-    if testtrim and testposttrim:
+    if testtrim > 0 and testposttrim:
         print('%7.2f \t%7.2f' % (np.mean(THR_post[1]), np.std(THR_post[1])))
         print('%7.2f \t%7.2f' % (np.mean(THR_post[2]), np.std(THR_post[2])))
         print('%7.2f \t%7.2f' % (np.mean(CAL_post[1]), np.std(CAL_post[1])))
@@ -378,7 +382,7 @@ def bare_mpa_test():
              testwaferroutine=True,
              testmaskpalive=True,
              testpretrim=True,
-             testtrim=True,
+             testtrim=100,
              testposttrim=True,
              testbb=False,
              vbias=0,
@@ -419,7 +423,7 @@ def scan_side(basepath="../Results_MPATesting/",
              testwaferroutine=True,
              testmaskpalive=True,
              testpretrim=False,
-             testtrim=True,
+             testtrim=100,
              testposttrim=True,
              testbb=True):
 

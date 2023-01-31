@@ -11,6 +11,7 @@ from scipy.optimize import curve_fit
 from scipy.special import erfc
 from scipy.special import erf
 from scipy.stats import norm
+from scipy.stats import chisquare
 import matplotlib.cm as cm
 import seaborn as sns
 import math
@@ -77,6 +78,10 @@ class mpa_cal_utility():
 
         th_array = np.zeros(self.conf.npixsnom, dtype = np.int )
         noise_array = np.zeros(self.conf.npixsnom, dtype = np.float )
+        chi2_array = np.zeros(self.conf.npixsnom, dtype = np.float )
+
+        nfail = 0
+
         for r in row:
             for p in pixel:
                 pixelid = self.conf.pixelidnom(r,p)
@@ -90,24 +95,45 @@ class mpa_cal_utility():
                             noise_peak = np.argmax(scurve[pixelid,:])
                             start_DAC = noise_peak + np.where(scurve[pixelid,noise_peak:] <= n_pulse)[0][0]
                             middle = noise_peak + np.argmin(np.abs(scurve[pixelid,noise_peak:]-0.5*n_pulse))
-                            par, cov, info, mesg, ier = curve_fit(errorfc, list(range(start_DAC, stop)), scurve[pixelid,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, middle, 2], full_output = True, method='lm')
-                            
+                            par, cov, info, mesg, ier = curve_fit(self.errorfc, list(range(start_DAC, stop)), scurve[pixelid,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, middle, 2], full_output = True, method='lm')
+
+#                            observed = np.clip(scurve[pixelid,start_DAC+1:(stop-start_DAC)+1],1e-9,1000)
+#                            fitted = np.clip(self.errorfc(list(range(start_DAC+1,stop-start_DAC+1)),*par),1e-9,1000)
+#                            expected = np.sum(observed)/np.sum(fitted) * fitted
+
+#                            c, p = chisquare(observed, expected, ddof=len(par))
+
                         elif s_type == "CAL":
                             start_DAC = start
                             middle = np.argmin(np.abs(scurve[pixelid,:]-0.5*n_pulse))
-                            par, cov, info, mesg, ier = curve_fit(errorf, list(range(start_DAC, stop)), scurve[pixelid,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, middle, 2], full_output=True, method='lm')
+                            par, cov, info, mesg, ier = curve_fit(self.errorf, list(range(start_DAC, stop)), scurve[pixelid,start_DAC + 1 :(stop-start) + 1], p0= [n_pulse, middle, 2], full_output=True, method='lm')
+
+#                            observed = np.clip(scurve[pixelid,start_DAC+1:(stop-start_DAC)+1],1e-9,1000)
+#                            fitted = np.clip(self.errorf(list(range(start_DAC+1,stop-start_DAC+1)),*par),1e-9,1000)
+#                            expected = np.sum(observed)/np.sum(fitted) * fitted
+
+#                            c, p = chisquare(observed, expected, ddof=len(par))
                 
                         th_array[pixelid] = int(round(par[1]))
                         noise_array[pixelid] = par[2]
-                
+#                        chi2_array[pixelid] = c
+
+                        # some selection on p-value
+                        if par[0] > 2*n_pulse:
+                            nfail += 1
+                            th_array[pixelid] = -2
+                            noise_array[pixelid] = -2
+
                     # if the fit fails
                     except RuntimeError as e:
                         nfail += 1
                         th_array[pixelid] = -1
                         noise_array[pixelid] = -1
+#                        chi2_array[pixelid] = -1
 
+        print("Pixel fit failures: ",nfail)
         if extract:
-            return  th_array, noise_array
+            return  th_array, noise_array#, chi2_array
     
     # Readout Counters current method
     def ReadoutCounters(self, raw_mode_en = 0):

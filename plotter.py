@@ -81,53 +81,59 @@ def errorfc_woffset(x, *p):
 
 
 # Plot Chip maps + 1d histogram
-def draw_2D(mapsaid, chipid, key, cmd = ""):
+def draw_2D(mapsaid, chipid, keys, cmd = ""):
 
         if len(mapsaid) < 1 or len(chipid) < 1:
                 print("Device ID is too short")
                 return
 
-        print("Plotting 2D map of " + key)
+        for i, key in enumerate(keys):
 
-        if cmd == "":
+                print("Plotting 2D map of " + key)
+
                 cmd = 'ls ../Results_MPATesting/'+ mapsaid + '/mpa_test_'+mapsaid+'_' + chipid + '_*_' + key + '.csv'
-        filename = get_recent(cmd)
+                filename = get_recent(cmd)
+                print(filename)
 
-        df = pd.read_csv(filename, index_col=0)
-        a = df.to_numpy().reshape(16,118)
-        fig, ax = plt.subplots(1, 1)
-        im1 = ax.imshow(a, cmap='viridis', interpolation='none',aspect = 1446/100., origin="lower")
-        plt.set_xlabel('column')
-        plt.set_ylabel('row')
-        plt.suptitle(mapsaid + ' chip ' + chipid)
-        plt.colorbar(im1, ax=ax, label=key)
+                df = pd.read_csv(filename, index_col=0)
+                a = df.to_numpy().reshape(16,118)
+
+                fig, ax = plt.subplots(1, 1)
+                im1 = ax.imshow(a, cmap='viridis', interpolation='none', aspect='auto', origin="lower")
+                ax.set_xlabel('column')
+                ax.set_ylabel('row')
+                plt.colorbar(im1, ax=ax, label=key)
+                plt.suptitle(mapsaid + ' chip ' + chipid)
+
         plt.show()
 
-def draw_1D(mapsaid, chipid, key, cmd = ""):
+def draw_1D(mapsaid, chipid, keys, cmd = ""):
 
         if len(mapsaid) < 1 or len(chipid) < 1:
                 print("Device ID is too short")
                 return
 
-        print("Plotting 1D map of " + key)
+        for i, key in enumerate(keys):
 
-        if cmd=="":
-                cmd = 'ls ../Results_MPATesting/'+ mapsaid + '/mpa_test_'+mapsaid+'_' + chipid + '_*_' + key + '.csv'
-        filename = get_recent(cmd)
+                print("Plotting 1D map of " + key)
 
-        df = pd.read_csv(filename, index_col=0)
-        values = df.to_numpy()
+                if cmd=="":
+                        cmd = 'ls ../Results_MPATesting/'+ mapsaid + '/mpa_test_'+mapsaid+'_' + chipid + '_*_' + key + '.csv'
+                filename = get_recent(cmd)
 
-        fig, ax = plt.subplots(1, 1)
-        ax.hist(values,bins=100) #np.linspace(0,256,256))
-        ax.set_xlabel(key)
-        plt.suptitle(mapsaid + ' chip ' + chipid)
+                df = pd.read_csv(filename, index_col=0)
+                values = df.to_numpy()
 
-        # Draw mean value + labels
-        mean_value = np.mean(values)
-        rms_value = np.std(values)
-        ax.text(0.1,0.8,f"Mean: {np.round(mean_value,2)}",transform = ax.transAxes)
-        ax.text(0.1,0.7,f"RMS: {np.round(rms_value,2)}",transform = ax.transAxes)
+                fig, ax = plt.subplots(1, 1)
+                ax.hist(values,bins=25) #np.linspace(0,256,256))
+                ax.set_xlabel(key)
+                plt.suptitle(mapsaid + ' chip ' + chipid)
+
+                # Draw mean value + labels
+                mean_value = np.mean(values)
+                rms_value = np.std(values)
+                ax.text(0.1,0.8,f"Mean: {np.round(mean_value,2)}",transform = ax.transAxes)
+                ax.text(0.1,0.7,f"RMS: {np.round(rms_value,2)}",transform = ax.transAxes)
         plt.show()
 
 def draw_SCurve(mapsaid, chipid, key, single=-1, cmd = ""):

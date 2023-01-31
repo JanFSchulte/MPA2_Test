@@ -8,7 +8,7 @@ from utilities import *
 from main import *
 from plotter import *
 
-from stepping import *
+#from stepping import *
 
 logfilename = ""
 
@@ -166,19 +166,21 @@ height = 'UNKNOWN'
 powered = False
 
 # Define our switch function for needles up/down                                                                             
+# this function only works with remote probe station control
 def needles_switch():                                                                                       
+    print("Remote probe station control not enabled")
 
     # if up then lower                                                                                        
-    if check_height() != 'CONTACT':
-        lower_needles()
-        buttonUp.config(bg="red",text="Raise Needles")
+#    if check_height() != 'CONTACT':
+#        lower_needles()
+#        buttonUp.config(bg="red",text="Raise Needles")
 
     # if down then raise                                                                                       
-    else:
-        if powered:
-            poff()
-        lift_needles()
-        buttonUp.config(bg="green",text="Lower needles")
+#    else:
+#        if powered:
+#            poff()
+#        lift_needles()
+#        buttonUp.config(bg="green",text="Lower needles")
 
 buttonUp = tk.Button(tab1,text='Lower Needles',bg="green",command=needles_switch)
 buttonUp.grid(row=3, column=0, columnspan=1)
@@ -186,21 +188,23 @@ buttonUp.grid(row=3, column=0, columnspan=1)
 labelHeight = tk.Label(tab1,text="At "+height+" height")
 labelHeight.grid(row=3,column=1,columnspan=3)
 # once every second refresh the height                                                                                     
-def refresh_height():
-    current_height = check_height()
-    height = current_height
-    labelHeight.config(text="At "+height+" height")
+# this function only works with remote probe station control
+#def refresh_height():
+#    current_height = check_height()
+#    height = current_height
+#    labelHeight.config(text="At "+height+" height")
 
-    if height != 'CONTACT':
-        buttonUp.config(text='Lower Needles',bg="green")
-    else:
-        buttonUp.config(bg="red",text="Raise Needles")
+#    if height != 'CONTACT':
+#        buttonUp.config(text='Lower Needles',bg="green")
+#    else:
+#        buttonUp.config(bg="red",text="Raise Needles")
 
-    gui.after(1000, refresh_height) # run itself again after 1000 ms                                                          
-refresh_height()
+#    gui.after(1000, refresh_height) # run itself again after 1000 ms                                                          
+#refresh_height()
 
 # Start with needles up always
-lift_needles()
+# this line only works with remote probe station control
+#lift_needles()
 
 # Define our switch function for pon/poff                                                                       
 def power_switch():

@@ -46,6 +46,24 @@ def get_separation_height():
         contact, over, alignDist, sepDist, searchDist = velox.ReadChuckHeights('Y')
         return contact - sepDist
 
+def check_height():
+        with velox.MessageServerInterface(ipaddr='131.225.90.210',targetSocket=1422) as msgServer:
+
+                # Y = get distances in microns                                                                                        
+                contact, over, alignDist, sepDist, searchDist = velox.ReadChuckHeights('Y')
+
+                x,y,z = velox.ReadChuckPosition('Y')
+
+                if z == 0:
+                        return 'CONTACT'
+                elif z == 0 - alignDist:
+                        return 'ALIGNMENT'
+                elif z == 0 - sepDist:
+                        return 'SEPARATION'
+                else:
+                        return 'UNKNOWN'
+
+
 def step_nMPA(chipid,nMPA):
 
         with velox.MessageServerInterface(ipaddr='131.225.90.210',targetSocket=1422) as msgServer:
