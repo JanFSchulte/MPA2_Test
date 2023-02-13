@@ -22,8 +22,6 @@ from mpa_methods.mpa_scanchain_test import *
 from mpa_methods.mpa_measurements import MPAMeasurements
 #from mpa_methods.mpa_fast_injection_test import MPAFastInjectionMeasurement
 
-from stepping import *
-
 # MPA2 Test procedures
 from mpa_methods.mpa_testing_routine import *
 
@@ -160,6 +158,8 @@ def mpa_test(basepath="../Results_MPATesting/",
         mapsaid += "_" + time.strftime("%Y_%m_%d_%H_%M_%S")
     logfilename = utils.create_logfile(path,mapsaid)
     print(logfilename)
+
+    utils.write_to_logfile(str(efuse), logfilename, True)
 
     powerresults = mpa.pwr.get_power(False,True)
     utils.write_to_logfile("Power reading:", logfilename, True)
@@ -396,7 +396,8 @@ def bare_mpa_test():
 # This part is specific to the probe station at SiDet
 # You will need to make edits for another site
 
-def do_IV():
+def do_IV(mapsaid):
+    IVScan(mapsaid=mapsaid)
     # send command to run iv
     # If IV is really awful, quit
     return True
@@ -410,54 +411,54 @@ def reset_contact():
 
     return good_contact
 
-def test_contact():
+#def test_contact():
     # send command to raise and lower
     # run pon and check output
-    return pon()
+#    return pon()
 
-def scan_side(basepath="../Results_MPATesting/",
-             mapsaid="AssemblyX",
-             chipid="ChipY",
-             timestamp=True,
-             testregister=True,
-             testwaferroutine=True,
-             testmaskpalive=True,
-             testpretrim=False,
-             testtrim=100,
-             testposttrim=True,
-             testbb=True):
+#def scan_side(basepath="../Results_MPATesting/",
+#             mapsaid="AssemblyX",
+#             chipid="ChipY",
+#             timestamp=True,
+#             testregister=True,
+#             testwaferroutine=True,
+#             testmaskpalive=True,
+#             testpretrim=False,
+#             testtrim=100,
+#             testposttrim=True,
+#             testbb=True):
 
-    if len(mapsaid) < 1:
-        print("MaPSA ID " + mapsaid + " is too short.")
-        return
+#    if len(mapsaid) < 1:
+#        print("MaPSA ID " + mapsaid + " is too short.")
+#        return
 
-    if len(chipid) < 1:
-        print("MPA ID " + chipid + " is too short.")
-        return
+#    if len(chipid) < 1:
+#        print("MPA ID " + chipid + " is too short.")
+#        return
 
-    import beepy
+#    import beepy
 
     # mapsa name = input argument 
-    mapsa_name = mapsaid
-    print("Testing MaPSA " + mapsa_name)
+#    mapsa_name = mapsaid
+#    print("Testing MaPSA " + mapsa_name)
 
     # which side = input argument
-    start_MPA = int(chipid)
+#    start_MPA = int(chipid)
 
     # Open connection to message server
 
-    nMPA = start_MPA
-    test_tries = 0
+#    nMPA = start_MPA
+#    test_tries = 0
 
-    end_MPA = 8
-    if start_MPA > 8:
-        end_MPA = 16
+#    end_MPA = 8
+#    if start_MPA > 8:
+#        end_MPA = 16
 
-    while nMPA <= end_MPA:
-        print("Beginning test of MPA " + str(nMPA))
+#    while nMPA <= end_MPA:
+#        print("Beginning test of MPA " + str(nMPA))
 
-        lower_needles()
-        good_contact = test_contact()
+#        lower_needles()
+#        good_contact = test_contact()
         
 #        if not good_contact:
 #            print(bcolors.FAIL + "Could not get good contact on MPA " + str(nMPA) + bcolors.RESET)
@@ -465,22 +466,23 @@ def scan_side(basepath="../Results_MPATesting/",
 #            step(1)
 #            nMPA += 1
 #            continue
-          
-        successful_test = mpa_test(basepath=basepath,
-                                   mapsaid=mapsaid,
-                                   chipid=chipid,
-                                   testregister=testregister,
-                                   testwaferroutine=testwaferroutine,
-                                   testmaskpalive=testmaskpalive,
-                                   testpretrim=testpretrim,
-                                   testtrim=testtrim,
-                                   testposttrim=testposttrim,
-                                   testbb=testbb)
+#            return
 
-        if successful_test:
-            print("Test succeeded on MPA " + str(nMPA))
-        else:
-            print("Test failed on MPA " + str(nMPA))
+#        successful_test = mpa_test(basepath=basepath,
+#                                   mapsaid=mapsaid,
+#                                   chipid=chipid,
+#                                   testregister=testregister,
+#                                   testwaferroutine=testwaferroutine,
+#                                   testmaskpalive=testmaskpalive,
+#                                   testpretrim=testpretrim,
+#                                   testtrim=testtrim,
+#                                   testposttrim=testposttrim,
+#                                   testbb=testbb)
+
+#        if successful_test:
+#            print("Test succeeded on MPA " + str(nMPA))
+#        else:
+#            print("Test failed on MPA " + str(nMPA))
 
 #        if not successful_test and test_tries < 1:
 #            print(bcolors.FAIL + "Test failed on MPA " + str(nMPA) + bcolors.RESET)
@@ -495,9 +497,9 @@ def scan_side(basepath="../Results_MPATesting/",
 #            test_tries = 0
 #            continue
 
-        if nMPA == 1:
-            print("Here would do IV scan")
-#            good_iv = do_IV()
+#        if nMPA == 1:
+#            print("Here would do IV scan")
+#            good_iv = do_IV(mapsaid)
 #            if good_iv:
 #                print(bcolors.OK + "IV Scan succeeded on MPA " + str(nMPA) + bcolors.RESET)
 #            else:
@@ -505,11 +507,11 @@ def scan_side(basepath="../Results_MPATesting/",
 #                beepy.beep(1)
 #                break
 
-        lift_needles()
+#        lift_needles()
 
-        step_nMPA(nMPA,1)
-        nMPA += 1
-        test_tries = 0
+#        step_nMPA(nMPA,1)
+#        nMPA += 1
+#        test_tries = 0
 
-    return
+#    return
 
