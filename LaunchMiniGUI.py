@@ -222,7 +222,7 @@ def power_switch():
 #        if check_height() != 'CONTACT':
 #            print('Only power MPA if probe needles are in contact')
 #        else:
-        if test_contact():
+        if pon():
             powered = True
             buttonOn.config(bg="red",text="Power Off")
         else:
