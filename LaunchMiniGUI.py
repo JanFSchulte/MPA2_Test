@@ -219,16 +219,16 @@ def power_switch():
 
     # if off turn on                                                   
     else:
-        if check_height() != 'CONTACT':
-            print('Only power MPA if probe needles are in contact')
+#        if check_height() != 'CONTACT':
+#            print('Only power MPA if probe needles are in contact')
+#        else:
+        if test_contact():
+            powered = True
+            buttonOn.config(bg="red",text="Power Off")
         else:
-            if test_contact():
-                powered = True
-                buttonOn.config(bg="red",text="Power Off")
-            else:
-                powered = False
-                poff()
-                buttonOn.config(bg="green",text="Power On")
+            powered = False
+            poff()
+            buttonOn.config(bg="green",text="Power On")
 
 # power on button
 buttonOn = tk.Button(tab1,text='Power On', bg="green", command=power_switch)                                  
