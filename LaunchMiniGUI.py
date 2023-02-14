@@ -75,7 +75,7 @@ When finishing a test, power first OFF before moving to next chip.'
 ########################################################
 
 gui = tk.Tk()
-gui.geometry("1000x450") #You want the size of the app to be 500x500
+gui.geometry("600x400") #You want the size of the app to be 500x500
 gui.resizable(0, 0) #Don't allow resizing in the x or y direction
 #Open gui on front of all other windows
 gui.lift()
@@ -109,44 +109,44 @@ a_menu.add_cascade(label="Help", menu=info_menu)
 gui.config(menu=a_menu)
 
 left = tk.Frame(gui)
-left.grid(row=0, column=0, columnspan=7, rowspan=20)
+left.grid(row=0, column=0, columnspan=6, rowspan=3)
 
-myTerminal = tk.Text(left, wrap="word")
-myTerminal.grid(row=3, column=0, columnspan=7, rowspan=13)
-myTerminal.tag_configure("stderr", foreground="#b22222")
+right = tk.Frame(gui)
+right.grid(row=4, column=0, columnspan=6, rowspan=16)
 
-vsb = tk.Scrollbar(orient="vertical", command=myTerminal.yview)
-myTerminal.configure(yscrollcommand=vsb.set)
-sys.stdout = TextRedirector(myTerminal, "stdout")
-sys.stderr = TextRedirector(myTerminal, "stderr")
+#myTerminal = tk.Text(left, wrap="word")
+#myTerminal.grid(row=3, column=0, columnspan=1, rowspan=13)
+#myTerminal.tag_configure("stderr", foreground="#b22222")
+
+#vsb = tk.Scrollbar(orient="vertical", command=myTerminal.yview)
+#myTerminal.configure(yscrollcommand=vsb.set)
+#sys.stdout = TextRedirector(myTerminal, "stdout")
+#sys.stderr = TextRedirector(myTerminal, "stderr")
 
 def executecommand(event):
     exec(str(myCommandLine.get()))
     print("Command executed.")
 
-CommandLinel = tk.Label (left,text="Commandline:", bg="white", fg="black")
-CommandLinel.grid(row=18, column=0, columnspan=1)
-
-myCommandLine = tk.Entry(left)
-myCommandLine.bind("<Return>", executecommand)
-myCommandLine.grid(row=18, column=1, columnspan=3)
-
 # Place to write in MaPSA ID
 MaPSAIDl = tk.Label (left,text="MaPSA ID:", bg="white", fg="black")
-MaPSAIDl.grid(row=1, column=0, columnspan=2)
+MaPSAIDl.grid(row=1, column=0, columnspan=1)
 MaPSAID = tk.Entry(left)
-MaPSAID.grid(row=1, column=2, columnspan=3)
+MaPSAID.grid(row=1, column=1, columnspan=1)
 MaPSAID.insert(0, '')
 
 # Place to write in MPA ID
 MPAIDl = tk.Label (left,text="MPA:", bg="white", fg="black")
-MPAIDl.grid(row=1, column=5)
+MPAIDl.grid(row=1, column=2, columnspan=1)
 MPAID = tk.Entry(left)
-MPAID.grid(row=1, column=6)
+MPAID.grid(row=1, column=3,columnspan=1)
 MPAID.insert(0, '')
 
-right = tk.Frame(gui)
-right.grid(row=0, column=7, columnspan=7, rowspan=20)
+CommandLinel = tk.Label (left,text="Command line:", bg="white", fg="black")
+CommandLinel.grid(row=2, column=0, columnspan=1)
+
+myCommandLine = tk.Entry(left)
+myCommandLine.bind("<Return>", executecommand)
+myCommandLine.grid(row=2, column=1, columnspan=1)
 
 tabControl = ttk.Notebook(right)
 tab1 = tk.Frame(tabControl)
