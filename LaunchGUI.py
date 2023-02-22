@@ -8,6 +8,7 @@ from utilities import *
 from main import *
 from plotter import *
 
+import beepy
 from stepping import *
 
 logfilename = ""
@@ -218,7 +219,7 @@ def power_switch():
         if check_height() != 'CONTACT':
             print('Only power MPA if probe needles are in contact')
         else:
-            if test_contact():
+            if pon():
                 powered = True
                 buttonOn.config(bg="red",text="Power Off")
             else:
@@ -235,7 +236,7 @@ buttonPa = tk.Button(tab1,text='Pixel Alive', command=pa)
 buttonPa.grid(row=1, column=1, columnspan=1)                                                                        
 
 # IV scan button
-buttonIVScan = tk.Button(tab1,text='IV Scan', command=lambda: IVScan(mapsaid=MaPSAID.get()))                  
+buttonIVScan = tk.Button(tab1,text='IV Scan', command=lambda: IVScan(mapsaid=MaPSAID.get(),delay=5.0))                  
 buttonIVScan.grid(row=1, column=2, columnspan=1)   
 
 # Probe station motion                                                                                       
@@ -302,15 +303,139 @@ buttonTestMPA = tk.Button(tab1,text='Test 1 MPA', bg="green", command=lambda: mp
 buttonTestMPA.grid(row=11, column=0, columnspan=1)
 
 # Second tab: automated stepping across one side
+def scan_side(basepath="../Results_MPATesting/",
+              #mapsaid="AssemblyX",
+              #chipid="ChipY",
+              timestamp=True,
+              testregister=True,
+              testwaferroutine=True,
+              testmaskpalive=True,
+              testpretrim=False,
+              testtrim=100,
+              testposttrim=True,
+              testbb=True):
+
+    mapsaid=MaPSAID.get()
+    print("Testing MaPSA " + mapsaid)
+
+    start_chip = int(MPAID.get())
+
+    nchip = start_chip
+    test_tries = 0
+    max_tries = 1
+
+    end_chip = 8
+    if start_chip > 8:
+        end_chip = 16
+
+    while 1:
+
+        chipid = MPAID.get()
+        nchip = int(chipid)
+
+        print("Beginning test of MPA " + str(nchip))
+
+        lower_needles()
+        good_contact = pon()
+
+        if not good_contact:
+            print(bcolors.FAIL + "Could not get good contact on MPA " + str(nchip) + bcolors.RESET)
+            beepy.beep(3)
+            test_tries += 1
+            poff()
+            if test_tries < max_tries:
+                lift_needles()
+                lower_needles()
+                continue
+            else:
+                # step to next
+                # continue
+                return
+
+        try:
+            successful_test = mpa_test(basepath=basepath,
+                                       mapsaid=mapsaid,
+                                       chipid=chipid,
+                                       testregister=testregister,
+                                       testwaferroutine=testwaferroutine,
+                                       testmaskpalive=testmaskpalive,
+                                       testpretrim=testpretrim,
+                                       testtrim=testtrim,
+                                       testposttrim=testposttrim,
+                                       testbb=testbb)
+        except TypeError:
+            print("Lost contact")
+            beepy.beep(3)
+            test_tries += 1
+            poff()
+            if test_tries < max_tries:
+                lift_needles()
+                lower_needles()
+                continue
+            else:
+                # step to next                                                                                                              
+                # continue                                                                                                          
+                return
+
+        if successful_test:
+#            beepy.beep(6)
+            print("Test succeeded on MPA " + str(nchip))
+        else:
+            print("Test failed on MPA " + str(nchip))
+            beepy.beep(3)
+            test_tries += 1
+            poff()
+            if test_tries < max_tries:
+                lift_needles()
+                lower_needles()
+                continue
+            else:
+                # step to next                                                                                                
+                # continue                                                                                          
+                return
+
+        if nchip == 1:
+
+            IVScan(mapsaid=MaPSAID.get(),delay=5.0)
+
+            # Add in here some quick analysis of IV scan
+            good_iv = True
+
+
+            if good_iv:
+                print(bcolors.OK + "IV Scan succeeded on MPA " + str(nchip) + bcolors.RESET)
+            else:
+                print(bcolors.FAIL + "IV Scan failed on MPA " + str(nchip) + bcolors.RESET)
+                beepy.beep(3)
+                #                break          
+
+        if end_chip == nchip:
+            beepy.beep(6)
+            break
+        else:
+            lift_needles()
+            step_one_mpa()
+            test_tries = 0
+
+    return
+
+
+
 # Define checkboxes for MPA tests                                                                             
 labelTests2 = tk.Label(tab2,text="Select MPA tests to run")
 labelTests2.grid(row=1, column=0, columnspan=1)
 
-testWaferRoutineButton2 = tk.Checkbutton(tab2, text='Wafer Tests',    variable=testWaferRoutine, onvalue=1, offvalue=0)
-testMaskPAliveButton2   = tk.Checkbutton(tab2, text='Mask/Alive',    variable=testMaskPAlive,   onvalue=1, offvalue=0)
-testPretrimSButton2     = tk.Checkbutton(tab2, text='Pretrim S',     variable=testPretrimS,     onvalue=1, offvalue=0)
-testPosttrimSButton2    = tk.Checkbutton(tab2, text='Posttrim S',    variable=testPosttrimS,    onvalue=1, offvalue=0)
-testBBButton2           = tk.Checkbutton(tab2, text='Bad Bump',      variable=testBB      ,     onvalue=1, offvalue=0)
+testWaferRoutine2 = tk.IntVar(value=1)
+testMaskPAlive2   = tk.IntVar(value=1)
+testPretrimS2     = tk.IntVar(value=1)
+testPosttrimS2    = tk.IntVar(value=1)
+testBB2           = tk.IntVar(value=1)
+
+testWaferRoutineButton2 = tk.Checkbutton(tab2, text='Wafer Tests',    variable=testWaferRoutine2, onvalue=1, offvalue=0)
+testMaskPAliveButton2   = tk.Checkbutton(tab2, text='Mask/Alive',    variable=testMaskPAlive2,   onvalue=1, offvalue=0)
+testPretrimSButton2     = tk.Checkbutton(tab2, text='Pretrim S',     variable=testPretrimS2,     onvalue=1, offvalue=0)
+testPosttrimSButton2    = tk.Checkbutton(tab2, text='Posttrim S',    variable=testPosttrimS2,    onvalue=1, offvalue=0)
+testBBButton2           = tk.Checkbutton(tab2, text='Bad Bump',      variable=testBB2      ,     onvalue=1, offvalue=0)
 
 # Place to write in trim threshold                                                                                          
 Triml2 = tk.Label (tab2,text="Trim to [DAC]:", bg="white", fg="black")
@@ -325,11 +450,10 @@ testPretrimSButton2.grid(row=4,column=0,columnspan=1)
 testPosttrimSButton2.grid(row=5,column=0,columnspan=1)
 testBBButton2.grid(row=6,column=0,columnspan=1)
 
-buttonAutomated = tk.Button(tab2,text='Test 8 MPA', bg="green", command=lambda: scan_side(mapsaid=MaPSAID.get(),              
-                                                                                          chipid=MPAID.get(),                 
+buttonAutomated = tk.Button(tab2,text='Test 8 MPA', bg="green", command=lambda: scan_side(
                                                                                           testregister=False,
-                                                                                          testwaferroutine=testWaferRoutine2.get(),                                                                                      
-                                                                                          testmaskpalive=testMaskPAlive2.get(),                                                                                                                        
+                                                                                          testwaferroutine=testWaferRoutine2.get(),         
+                                                                                          testmaskpalive=testMaskPAlive2.get(),              
                                                                                           testpretrim=testPretrimS2.get(),   
                                                                                           testtrim=int(trim_to2.get()),
                                                                                           testposttrim=testPosttrimS2.get(),   
@@ -343,32 +467,33 @@ buttonDrawIVScan = tk.Button(tab3,text='Draw IV', command=lambda: draw_IVScan(ma
 buttonDrawIVScan.grid(row=1, column=0, columnspan=1)
 
 allkeys = ["pixelalive","mask_test","PostTrim_THR_THR_RMS", "PostTrim_THR_THR_Mean", "PostTrim_CAL_CAL_RMS","PostTrim_CAL_CAL_Mean","BumpBonding_Noise_BadBump","BumpBonding_BadBumpMap"]
-buttonDrawAll2D = tk.Button(tab3,text='Draw All 2D Plots', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=allkeys), bg="green")
+
+buttonDrawAll2D = tk.Button(tab3,text='Draw 2D summary plots', command=lambda: summary_plots(MaPSAID.get(),bases=allkeys), bg="green")
 buttonDrawAll2D.grid(row=2, column=0, columnspan=1)
 
 # Alive and mask                                                                                                                                      
-buttonDrawPixelAlive2D = tk.Button(tab3,text='Draw Pixel Alive 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["pixelalive"]))
-buttonDrawPixelAlive2D.grid(row=3, column=0, columnspan=1)
-buttonDrawPixelMask2D = tk.Button(tab3,text='Draw Pixel Mask 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["mask_test"]))
-buttonDrawPixelMask2D.grid(row=3, column=1, columnspan=1)
+#buttonDrawPixelAlive2D = tk.Button(tab3,text='Draw Pixel Alive 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["pixelalive"]))
+#buttonDrawPixelAlive2D.grid(row=3, column=0, columnspan=1)
+#buttonDrawPixelMask2D = tk.Button(tab3,text='Draw Pixel Mask 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["mask_test"]))
+#buttonDrawPixelMask2D.grid(row=3, column=1, columnspan=1)
 
 # THR S-curves
-buttonDrawTHRNoisePosttrim2D = tk.Button(tab3,text='Draw posttrim THR noise 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_THR_THR_RMS"]))
-buttonDrawTHRNoisePosttrim2D.grid(row=4, column=0, columnspan=1)
-buttonDrawTHRMeanPosttrim2D = tk.Button(tab3,text='Draw posttrim THR mean 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_THR_THR_Mean"]))
-buttonDrawTHRMeanPosttrim2D.grid(row=4, column=1, columnspan=1)
+#buttonDrawTHRNoisePosttrim2D = tk.Button(tab3,text='Draw posttrim THR noise 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_THR_THR_RMS"]))
+#buttonDrawTHRNoisePosttrim2D.grid(row=4, column=0, columnspan=1)
+#buttonDrawTHRMeanPosttrim2D = tk.Button(tab3,text='Draw posttrim THR mean 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_THR_THR_Mean"]))
+#buttonDrawTHRMeanPosttrim2D.grid(row=4, column=1, columnspan=1)
 
 # CAL S-curves  
-buttonDrawCALNoisePosttrim2D = tk.Button(tab3,text='Draw posttrim CAL noise 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_CAL_CAL_RMS"]))
-buttonDrawCALNoisePosttrim2D.grid(row=5, column=0, columnspan=1)
-buttonDrawCALMeanPosttrim2D = tk.Button(tab3,text='Draw posttrim CAL mean 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_CAL_CAL_Mean"]))
-buttonDrawCALMeanPosttrim2D.grid(row=5, column=1, columnspan=1)
+#buttonDrawCALNoisePosttrim2D = tk.Button(tab3,text='Draw posttrim CAL noise 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_CAL_CAL_RMS"]))
+#buttonDrawCALNoisePosttrim2D.grid(row=5, column=0, columnspan=1)
+#buttonDrawCALMeanPosttrim2D = tk.Button(tab3,text='Draw posttrim CAL mean 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_CAL_CAL_Mean"]))
+#buttonDrawCALMeanPosttrim2D.grid(row=5, column=1, columnspan=1)
 
 # Bad bump
-buttonDrawBadBumpNoise2D = tk.Button(tab3,text='Draw CAL noise at -2V 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["BumpBonding_Noise_BadBump"]))
-buttonDrawBadBumpNoise2D.grid(row=6, column=0, columnspan=1)
-buttonDrawBadBumpMap2D = tk.Button(tab3,text='Draw bad bump map 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["BumpBonding_BadBumpMap"]))
-buttonDrawBadBumpMap2D.grid(row=6, column=1, columnspan=1)
+#buttonDrawBadBumpNoise2D = tk.Button(tab3,text='Draw CAL noise at -2V 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["BumpBonding_Noise_BadBump"]))
+#buttonDrawBadBumpNoise2D.grid(row=6, column=0, columnspan=1)
+#buttonDrawBadBumpMap2D = tk.Button(tab3,text='Draw bad bump map 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["BumpBonding_BadBumpMap"]))
+#buttonDrawBadBumpMap2D.grid(row=6, column=1, columnspan=1)
 
 # THR S-curves 1D                                                                                                            
 buttonDrawTHRNoisePosttrim1D = tk.Button(tab3,text='Draw posttrim THR noise 1D', command=lambda: draw_1D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_THR_THR_RMS"]))

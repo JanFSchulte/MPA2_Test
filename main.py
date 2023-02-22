@@ -320,15 +320,13 @@ def mpa_test(basepath="../Results_MPATesting/",
 
 def IVScan(basepath="../Results_MPATesting/",mapsaid="AssemblyX",writecsv=True,VStart=0,VStop=-801,VStep=-10,delay=0.5,currentlimit=.0005):
 
-    if len(mapsaid) < 1:
-        print("MaPSA ID is too short")
-        return
+    print("Running IV scan for MaPSA " + mapsaid)
 
-    if mapsaid == "AssemblyX": 
+    if len(mapsaid) < 1 or mapsaid == "AssemblyX": 
         writecsv_ = False
         print("Not saving output: invalid MaPSA ID")
 
-    csvfilename = basepath[:basepath.rfind("/")]+"/"+mapsaid + "/IVScan_"+mapsaid+".csv"
+    csvfilename = basepath[:basepath.rfind("/")]+"/"+mapsaid + "/IVScan_"+mapsaid+"_"+time.strftime("%Y_%m_%d_%H_%M_%S")+".csv"
     hvsupply = keithley2410()
     status = hvsupply.enableOutput()
     status = hvsupply.setVoltageSlow(0)
@@ -390,128 +388,4 @@ def bare_mpa_test():
              doIVscan=False)
 
     return
-
-
-# Jennet's code for the automated stepping
-# This part is specific to the probe station at SiDet
-# You will need to make edits for another site
-
-def do_IV(mapsaid):
-    IVScan(mapsaid=mapsaid)
-    # send command to run iv
-    # If IV is really awful, quit
-    return True
-
-def reset_contact():  
-    good_contact = False
-    tries = 0
-    while not good_contact and tries < 3:
-        good_contact = test_contact()
-        tries += 1
-
-    return good_contact
-
-#def test_contact():
-    # send command to raise and lower
-    # run pon and check output
-#    return pon()
-
-#def scan_side(basepath="../Results_MPATesting/",
-#             mapsaid="AssemblyX",
-#             chipid="ChipY",
-#             timestamp=True,
-#             testregister=True,
-#             testwaferroutine=True,
-#             testmaskpalive=True,
-#             testpretrim=False,
-#             testtrim=100,
-#             testposttrim=True,
-#             testbb=True):
-
-#    if len(mapsaid) < 1:
-#        print("MaPSA ID " + mapsaid + " is too short.")
-#        return
-
-#    if len(chipid) < 1:
-#        print("MPA ID " + chipid + " is too short.")
-#        return
-
-#    import beepy
-
-    # mapsa name = input argument 
-#    mapsa_name = mapsaid
-#    print("Testing MaPSA " + mapsa_name)
-
-    # which side = input argument
-#    start_MPA = int(chipid)
-
-    # Open connection to message server
-
-#    nMPA = start_MPA
-#    test_tries = 0
-
-#    end_MPA = 8
-#    if start_MPA > 8:
-#        end_MPA = 16
-
-#    while nMPA <= end_MPA:
-#        print("Beginning test of MPA " + str(nMPA))
-
-#        lower_needles()
-#        good_contact = test_contact()
-        
-#        if not good_contact:
-#            print(bcolors.FAIL + "Could not get good contact on MPA " + str(nMPA) + bcolors.RESET)
-#            beepy.beep(1)
-#            step(1)
-#            nMPA += 1
-#            continue
-#            return
-
-#        successful_test = mpa_test(basepath=basepath,
-#                                   mapsaid=mapsaid,
-#                                   chipid=chipid,
-#                                   testregister=testregister,
-#                                   testwaferroutine=testwaferroutine,
-#                                   testmaskpalive=testmaskpalive,
-#                                   testpretrim=testpretrim,
-#                                   testtrim=testtrim,
-#                                   testposttrim=testposttrim,
-#                                   testbb=testbb)
-
-#        if successful_test:
-#            print("Test succeeded on MPA " + str(nMPA))
-#        else:
-#            print("Test failed on MPA " + str(nMPA))
-
-#        if not successful_test and test_tries < 1:
-#            print(bcolors.FAIL + "Test failed on MPA " + str(nMPA) + bcolors.RESET)
-#            test_tries += 1
-#            beepy.beep(1)
-#            continue
-#        elif not successful_test:
-#            print(bcolors.FAIL + "Test failed again on MPA " + str(nMPA) + bcolors.RESET)
-#            beepy.beep(1)
-#            step(1)
-#            nMPA += 1
-#            test_tries = 0
-#            continue
-
-#        if nMPA == 1:
-#            print("Here would do IV scan")
-#            good_iv = do_IV(mapsaid)
-#            if good_iv:
-#                print(bcolors.OK + "IV Scan succeeded on MPA " + str(nMPA) + bcolors.RESET)
-#            else:
-#                print(bcolors.FAIL + "IV Scan failed on MPA " + str(nMPA) + bcolors.RESET)
-#                beepy.beep(1)
-#                break
-
-#        lift_needles()
-
-#        step_nMPA(nMPA,1)
-#        nMPA += 1
-#        test_tries = 0
-
-#    return
 

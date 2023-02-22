@@ -347,32 +347,9 @@ buttonDrawIVScan = tk.Button(tab3,text='Draw IV', command=lambda: draw_IVScan(ma
 buttonDrawIVScan.grid(row=1, column=0, columnspan=1)
 
 allkeys = ["pixelalive","mask_test","PostTrim_THR_THR_RMS", "PostTrim_THR_THR_Mean", "PostTrim_CAL_CAL_RMS","PostTrim_CAL_CAL_Mean","BumpBonding_Noise_BadBump","BumpBonding_BadBumpMap"]
-buttonDrawAll2D = tk.Button(tab3,text='Draw All 2D Plots', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=allkeys), bg="green")
+
+buttonDrawAll2D = tk.Button(tab3,text='Draw 2D summary plots', command=lambda: summary_plots(MaPSAID.get(),bases=allkeys), bg="green")
 buttonDrawAll2D.grid(row=2, column=0, columnspan=1)
-
-# Alive and mask                                                                                                                                      
-buttonDrawPixelAlive2D = tk.Button(tab3,text='Draw Pixel Alive 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["pixelalive"]))
-buttonDrawPixelAlive2D.grid(row=3, column=0, columnspan=1)
-buttonDrawPixelMask2D = tk.Button(tab3,text='Draw Pixel Mask 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["mask_test"]))
-buttonDrawPixelMask2D.grid(row=3, column=1, columnspan=1)
-
-# THR S-curves
-buttonDrawTHRNoisePosttrim2D = tk.Button(tab3,text='Draw posttrim THR noise 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_THR_THR_RMS"]))
-buttonDrawTHRNoisePosttrim2D.grid(row=4, column=0, columnspan=1)
-buttonDrawTHRMeanPosttrim2D = tk.Button(tab3,text='Draw posttrim THR mean 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_THR_THR_Mean"]))
-buttonDrawTHRMeanPosttrim2D.grid(row=4, column=1, columnspan=1)
-
-# CAL S-curves  
-buttonDrawCALNoisePosttrim2D = tk.Button(tab3,text='Draw posttrim CAL noise 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_CAL_CAL_RMS"]))
-buttonDrawCALNoisePosttrim2D.grid(row=5, column=0, columnspan=1)
-buttonDrawCALMeanPosttrim2D = tk.Button(tab3,text='Draw posttrim CAL mean 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_CAL_CAL_Mean"]))
-buttonDrawCALMeanPosttrim2D.grid(row=5, column=1, columnspan=1)
-
-# Bad bump
-buttonDrawBadBumpNoise2D = tk.Button(tab3,text='Draw CAL noise at -2V 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["BumpBonding_Noise_BadBump"]))
-buttonDrawBadBumpNoise2D.grid(row=6, column=0, columnspan=1)
-buttonDrawBadBumpMap2D = tk.Button(tab3,text='Draw bad bump map 2D', command=lambda: draw_2D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["BumpBonding_BadBumpMap"]))
-buttonDrawBadBumpMap2D.grid(row=6, column=1, columnspan=1)
 
 # THR S-curves 1D                                                                                                            
 buttonDrawTHRNoisePosttrim1D = tk.Button(tab3,text='Draw posttrim THR noise 1D', command=lambda: draw_1D(mapsaid=MaPSAID.get(),chipid=MPAID.get(),keys=["PostTrim_THR_THR_RMS"]))
