@@ -234,7 +234,7 @@ def mpa_test(basepath="../Results_MPATesting/",
 
     # Perform trimming ################################## 
     if testtrim > 0:
-        trim_bits = mpa.cal.trimming_desy(nominal_req=testtrim)
+        trim_bits = mpa.cal.trimming_desy(nominal_req=testtrim,filename=path+mapsaid)
     else:
         utils.write_to_logfile("Skipped trimming", logfilename, True)
         
