@@ -21,3 +21,4 @@ ETHERS["08:00:30:00:22:5d"] = {'IP' : "192.168.1.81" , 'Description' : "fc7 boar
 ETHERS["08:00:30:00:23:05"] = {'IP' : "192.168.1.79" , 'Description' : "fc7 board 3 R2 labelled 154900006" }
 ETHERS["08:00:30:00:22:f0"] = {'IP' : "192.168.1.81" , 'Description' : "fc7 board 2 R1 labelled 154000033" }
 ETHERS["08:00:30:00:29:61"] = {'IP' : "192.168.0.8" , 'Description' : "fc7 at SiDet MaPSA probe station" }
+#ETHERS["08:00:30:00:28:1f"] = {'IP' : "192.168.0.9" , 'Description' : "Second fc7 at SiDet MaPSA probe station" }
