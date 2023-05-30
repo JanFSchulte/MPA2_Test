@@ -318,7 +318,7 @@ def mpa_test(basepath="../Results_MPATesting/",
 
     return True
 
-def IVScan(basepath="../Results_MPATesting/",mapsaid="AssemblyX",writecsv=True,VStart=0,VStop=-801,VStep=-10,delay=0.5,currentlimit=.0005):
+def IVScan(basepath="../Results_MPATesting/",mapsaid="AssemblyX",writecsv=True,VStart=0,VStop=-801,VStep=-10,delay=0.5,currentlimit=.0001):
 
     print("Running IV scan for MaPSA " + mapsaid)
 

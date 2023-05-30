@@ -13,8 +13,8 @@ if(sys.version_info[0] < 3):
 
 import tkinter
 import matplotlib
-import matplotlib.pyplot as plt
 matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from scipy.special import erfc
