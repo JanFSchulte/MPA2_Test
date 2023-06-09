@@ -200,6 +200,13 @@ def refresh_height():
     gui.after(1000, refresh_height) # run itself again after 1000 ms                                                          
 refresh_height()
 
+# refresh the flag
+def refresh_flag():
+    with open('gui_flag.txt','r') as flag_file:
+        flag = int(flag_file.read())
+        print("Checking flag. Flag = ",flag)
+    return flag
+
 # Start with needles up always
 lift_needles()
 
@@ -328,7 +335,8 @@ def scan_side(basepath="../Results_MPATesting/",
     if start_chip > 8:
         end_chip = 16
 
-    while 1:
+    flag = refresh_flag()
+    while flag > 0:
 
         chipid = MPAID.get()
         nchip = int(chipid)
@@ -409,13 +417,16 @@ def scan_side(basepath="../Results_MPATesting/",
                 beepy.beep(3)
                 #                break          
 
-        if end_chip == nchip:
-            beepy.beep(6)
-            break
-        else:
-            lift_needles()
-            step_one_mpa()
-            test_tries = 0
+        flag = refresh_flag()
+
+        if flag:
+            if end_chip == nchip:
+                beepy.beep(6)
+                break
+            else:
+                lift_needles()
+                step_one_mpa()
+                test_tries = 0
 
     return
 

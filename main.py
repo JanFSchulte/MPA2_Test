@@ -106,8 +106,11 @@ def pon():
     sleep(0.1)
     mpa.pwr.on()
     sleep(0.1)
-    mpa.init()
+    tuning = mpa.init()
     sleep(0.1)
+    if not tuning:
+        return False
+
     return mpa.test.shift()
 
 def poff():
@@ -318,7 +321,7 @@ def mpa_test(basepath="../Results_MPATesting/",
 
     return True
 
-def IVScan(basepath="../Results_MPATesting/",mapsaid="AssemblyX",writecsv=True,VStart=0,VStop=-801,VStep=-10,delay=0.5,currentlimit=.0001):
+def IVScan(basepath="../Results_MPATesting/",mapsaid="AssemblyX",writecsv=True,VStart=0,VStop=-801,VStep=-10,delay=1,currentlimit=.0001):
 
     print("Running IV scan for MaPSA " + mapsaid)
 
@@ -389,3 +392,39 @@ def bare_mpa_test():
 
     return
 
+def pa_pulse_delay_scan(basepath="../Results_MPATesting/",
+                        mapsaid="AssemblyX",
+                        chipid="ChipY",
+                        vbias=-300):
+
+    outputdir = basepath[:basepath.rfind("/")]+"/"+mapsaid
+    path = outputdir + "/"
+
+    hvsupply = keithley2410()
+    status = hvsupply.enltestableOutput()
+
+    status = hvsupply.setVoltageSlow(vbias,-10,0.25)
+    print("Bias voltage set to BV="+str(int(hvsupply.getData()[0]))+"V, I = "+str(hvsupply.getData()[1]*1000000)+" muA")
+
+    delays = [50*(i+1) for i in range(0,20)]
+    n_noisy = []
+    for d in delays:
+        print("delay = " + str(d))
+        outfile = path+mapsaid+"_"+chipid+"_pixelalive_delay"+str(d)
+
+        pixel_alive, deadpixels, ineffpixels, noisypixels = mpa.cal.pixel_alive(ref_cal=250, ref_thr=250, filename=outfile, pulse_delay = d)
+
+        n_noisy += [len(noisypixels)]
+
+        print(str(len(deadpixels ))+" \t"+conf.getPercentage(deadpixels ))
+        print(str(len(ineffpixels))+" \t"+conf.getPercentage(ineffpixels))
+        print(str(len(noisypixels))+" \t"+conf.getPercentage(noisypixels))
+
+
+    status = hvsupply.setVoltageSlow(0,10,0.25)
+    print("Bias voltage set to BV="+str(int(hvsupply.getData()[0]))+"V, I = "+str(hvsupply.getData()[1]*1000000)+" muA")
+    status = hvsupply.disableOutput()
+
+    import matplotlib.pyplot as plt
+    plt.plot(delays,n_noisy)
+    plt.show()

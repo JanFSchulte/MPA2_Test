@@ -346,7 +346,7 @@ buttonAutomated.grid(row=7, column=1, columnspan=1)
 buttonDrawIVScan = tk.Button(tab3,text='Draw IV', command=lambda: draw_IVScan(mapsaid=MaPSAID.get()))
 buttonDrawIVScan.grid(row=1, column=0, columnspan=1)
 
-allkeys = ["pixelalive","mask_test","PostTrim_THR_THR_RMS", "PostTrim_THR_THR_Mean", "PostTrim_CAL_CAL_RMS","PostTrim_CAL_CAL_Mean","BumpBonding_Noise_BadBump","BumpBonding_BadBumpMap"]
+allkeys = ["pixelalive","mask_test","PreTrim_THR_THR_RMS", "PreTrim_THR_THR_Mean", "PreTrim_CAL_CAL_RMS","PreTrim_CAL_CAL_Mean", "PreTrim_THR_THR_RMS", "PostTrim_THR_THR_Mean", 'trimbits', "PostTrim_CAL_CAL_RMS","PostTrim_CAL_CAL_Mean","BumpBonding_Noise_BadBump","BumpBonding_BadBumpMap"]
 
 buttonDrawAll2D = tk.Button(tab3,text='Draw 2D summary plots', command=lambda: summary_plots(MaPSAID.get(),bases=allkeys), bg="green")
 buttonDrawAll2D.grid(row=2, column=0, columnspan=1)

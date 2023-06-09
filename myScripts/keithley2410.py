@@ -62,7 +62,7 @@ class keithley2410:
 
     def setCurrentProtection(self,value=.0001):
         compliance = int(self.keithley.write(':SENS:CURR:PROT:LEV '+str(value)))
-        limit = int(self.keithley.write(':SENS:CURR:RANG '+str(0.0005)))
+        limit = int(self.keithley.write(':SENS:CURR:RANG '+str(value)))
         return (compliance | limit)
 
     def checkCompliance(self):

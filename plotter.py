@@ -32,19 +32,27 @@ def get_recent(cmd):
                 return files[maxidx]
 
 
-def draw_IVScan(mapsaid):
+def draw_IVScan(mapsaid, note=""):
 
         cmd = 'ls ../Results_MPATesting/'+ mapsaid + '/IVScan_'+mapsaid+'*.csv'
         filename = get_recent(cmd)
+        if filename=="0":
+                     filename="./dummy.csv"
 
         df = pd.read_csv(filename, header=0)
         df.plot.scatter(x=0,y=1)
         plt.xlabel('Voltage [V]')
         plt.ylabel('Current [uA]')
+        if note=="":
+            fname="IV"+mapsaid
+        else:
+            fname="IV"+mapsaid+note
+        plt.savefig("../Results_MPATesting/plots/"+fname+".png")
+        plt.savefig("../Results_MPATesting/plots/"+fname+".pdf")
         plt.show()
 
 # Plot Chip maps + 1d histogram
-def draw_2D(mapsaid, chipid, keys, cmd = ""):
+def draw_2D(mapsaid, chipid, keys, note="", cmd = ""):
 
         if len(mapsaid) < 1 or len(chipid) < 1:
                 print("Device ID is too short")
@@ -56,6 +64,8 @@ def draw_2D(mapsaid, chipid, keys, cmd = ""):
 
                 cmd = 'ls ../Results_MPATesting/'+ mapsaid + '/mpa_test_'+mapsaid+'_' + chipid + '_*_' + key + '.csv'
                 filename = get_recent(cmd)
+                if filename=="0":
+                     filename="./dummy.csv"
                 print(filename)
 
                 df = pd.read_csv(filename, index_col=0)
@@ -67,10 +77,15 @@ def draw_2D(mapsaid, chipid, keys, cmd = ""):
                 ax.set_ylabel('row')
                 plt.colorbar(im1, ax=ax, label=key)
                 plt.suptitle(mapsaid + ' chip ' + chipid)
-
+        if note=="":
+            fname="2D"+key+mapsaid
+        else:
+            fname="2D"+key+mapsaid+note
+        plt.savefig("../Results_MPATesting/plots/"+fname+".png")
+        plt.savefig("../Results_MPATesting/plots/"+fname+".pdf")
         plt.show()
 
-def draw_1D(mapsaid, chipid, keys, cmd = ""):
+def draw_1D(mapsaid, chipid, keys, note="", cmd = ""):
 
         if len(mapsaid) < 1 or len(chipid) < 1:
                 print("Device ID is too short")
@@ -83,6 +98,9 @@ def draw_1D(mapsaid, chipid, keys, cmd = ""):
                 if cmd=="":
                         cmd = 'ls ../Results_MPATesting/'+ mapsaid + '/mpa_test_'+mapsaid+'_' + chipid + '_*_' + key + '.csv'
                 filename = get_recent(cmd)
+                if filename=="0":
+                     filename="./dummy.csv"
+                     
 
                 df = pd.read_csv(filename, index_col=0)
                 values = df.to_numpy()
@@ -90,6 +108,8 @@ def draw_1D(mapsaid, chipid, keys, cmd = ""):
                 fig, ax = plt.subplots(1, 1)
                 ax.hist(values,bins=25) #np.linspace(0,256,256))
                 ax.set_xlabel(key)
+                if "RMS" in key:
+                    ax.set_yscale('log')
                 plt.suptitle(mapsaid + ' chip ' + chipid)
 
                 # Draw mean value + labels
@@ -97,9 +117,15 @@ def draw_1D(mapsaid, chipid, keys, cmd = ""):
                 rms_value = np.std(values)
                 ax.text(0.1,0.8,f"Mean: {np.round(mean_value,2)}",transform = ax.transAxes)
                 ax.text(0.1,0.7,f"RMS: {np.round(rms_value,2)}",transform = ax.transAxes)
+        if note=="":
+            fname="1D"+key+mapsaid+chipid
+        else:
+            fname="1D"+key+mapsaid+chipid+note
+        plt.savefig("../Results_MPATesting/plots/"+fname+".png")
+        plt.savefig("../Results_MPATesting/plots/"+fname+".pdf")
         plt.show()
 
-def draw_SCurve(mapsaid, chipid, key, single=-1, cmd = ""):
+def draw_SCurve(mapsaid, chipid, key, note="", single=-1, cmd = ""):
 
         if len(mapsaid) < 1 or len(chipid) < 1:
                 print("Device ID is too short")
@@ -110,39 +136,48 @@ def draw_SCurve(mapsaid, chipid, key, single=-1, cmd = ""):
         if cmd == "":
                 cmd = 'ls ../Results_MPATesting/'+ mapsaid + '/mpa_test_'+mapsaid+'_' + chipid + '_*_' + key + '.csv'
         filename = get_recent(cmd)
-        print(filename)
-
-        df = pd.read_csv(filename,index_col=0,header=0)
-        x =range(0,257)
-
-        if single < 0:
-                for index, row in df.iterrows():
-                        plt.plot(x,row)
-                plt.suptitle(key)
+        if filename=="0":
+                     print("no file")
         else:
-                plt.plot(x,df.iloc[single])
-                plt.suptitle(key + " pix " + str(single))
-                meanpath = filename.split('.csv')[0]+'_Mean.csv'
-                rmspath = filename.split('.csv')[0]+'_RMS.csv'
-                print(meanpath, rmspath)                                           
-#        mean_df = pd.read_csv(meanpath, index_col=0).iloc[args.pixel]          
-#        rms_df = pd.read_csv(rmspath, index_col=0).iloc[args.pixel]            
-#        mean=mean_df[0]                                                        
-#        rms=rms_df[0]                                                          
-#        rr = np.arange(0, 255, 0.1)                                            
-#        if "THR" in args.filename:                                             
-#            ampl=1000                                                          
-#            offset=0                                                           
-#        elif ("CAL" in args.filename or                                        
-#            "BumpBonding_SCurve" in args.filename):                            
-#            ampl=-1000                                                         
-#            offset=1000                                                        
-#        yy = [ errorfc_woffset(r,ampl,mean,rms,offset) for r in rr]            
-#        plt.plot(rr, yy, linestyle='--', label='Fit')                          
-#        plt.text(0.8,0.7,f"Mean: {np.round(mean,2)}\nRMS: {np.round(rms,2)}", transform=plt.gca().transAxes)        
+            print(filename)
 
-        plt.xlabel('DAC units')
-        plt.show()
+            df = pd.read_csv(filename,index_col=0,header=0)
+            x =range(0,257)
+
+            if single < 0:
+                    for index, row in df.iterrows():
+                            plt.plot(x,row)
+                    plt.suptitle(key)
+            else:
+                    plt.plot(x,df.iloc[single])
+                    plt.suptitle(key + " pix " + str(single))
+                    meanpath = filename.split('.csv')[0]+'_Mean.csv'
+                    rmspath = filename.split('.csv')[0]+'_RMS.csv'
+                    print(meanpath, rmspath)                                           
+    #        mean_df = pd.read_csv(meanpath, index_col=0).iloc[args.pixel]          
+    #        rms_df = pd.read_csv(rmspath, index_col=0).iloc[args.pixel]            
+    #        mean=mean_df[0]                                                        
+    #        rms=rms_df[0]                                                          
+    #        rr = np.arange(0, 255, 0.1)                                            
+    #        if "THR" in args.filename:                                             
+    #            ampl=1000                                                          
+    #            offset=0                                                           
+    #        elif ("CAL" in args.filename or                                        
+    #            "BumpBonding_SCurve" in args.filename):                            
+    #            ampl=-1000                                                         
+    #            offset=1000                                                        
+    #        yy = [ errorfc_woffset(r,ampl,mean,rms,offset) for r in rr]            
+    #        plt.plot(rr, yy, linestyle='--', label='Fit')                          
+    #        plt.text(0.8,0.7,f"Mean: {np.round(mean,2)}\nRMS: {np.round(rms,2)}", transform=plt.gca().transAxes)        
+
+            plt.xlabel('DAC units')
+            if note=="":
+                fname="SCURVE"+mapsaid+chipid
+            else:
+                fname="SCURVE"+mapsaid+chipid+note
+            plt.savefig("../Results_MPATesting/plots/"+fname+".png")
+            plt.savefig("../Results_MPATesting/plots/"+fname+".pdf")
+            plt.show()
 
 
     # Count out-of-range trimbits
@@ -233,7 +268,7 @@ def getColOfMPAinMaPSAs(mpa,col):
     return -1 #haha                                                                                                                                           
 
 def Plot_Module(inpath="./",mapsa="MaPSA",base="pixelalive",chips=[],s_type="THR",n_pulse=1000,nominal_DAC=-1,plotAverage = False, \
-hmax=-1,hmin=-1, percentile = 0.05, identifier="ID-Test",data_label="Label-Test",test_label="Label-Test"):
+hmax=-1,hmin=-1, percentile = 0.05, identifier="ID-Test",data_label="Label-Test",test_label="Label-Test",log=False):
 
     if len(chips) < 1:
         chips = [str(i) for i in range(1,17)]
@@ -256,9 +291,9 @@ hmax=-1,hmin=-1, percentile = 0.05, identifier="ID-Test",data_label="Label-Test"
             data_temp = loadValuesFromCSV(i)
             data_arrays.append(data_temp)
 
-    MakeModulePlot(arrays_of_data= data_arrays, row = [],col = [],hmin=hmin,hmax=hmax, percentile = percentile, plotAverage = plotAverage, identifier=identifier, data_label=data_label, test_label=test_label)
+    MakeModulePlot(arrays_of_data= data_arrays, row = [],col = [],hmin=hmin,hmax=hmax, percentile = percentile, plotAverage = plotAverage, identifier=identifier, data_label=data_label, test_label=test_label,log=log)
 
-def MakeModulePlot(arrays_of_data= [ [] ], row = [],col = [],hmin=-1,hmax=-1, percentile = 0.05, plotAverage = True, identifier="", xlabel="columns", data_label="", test_label=""):
+def MakeModulePlot(arrays_of_data= [ [] ], row = [],col = [],hmin=-1,hmax=-1, percentile = 0.05, plotAverage = True, identifier="", xlabel="columns", data_label="", test_label="", log=False):
                                                                                                                                      
     if len(arrays_of_data)!=16:
         print("A module consists out of 16 MPAs, not "+str(len(arrays_of_data))+"!")
@@ -309,7 +344,9 @@ def MakeModulePlot(arrays_of_data= [ [] ], row = [],col = [],hmin=-1,hmax=-1, pe
     if hmax<0 and hmin<0:
         minimum = max(0,max(np.mean(wa) - 4*np.std(wa),0.333*np.mean(wa)))
         maximum = max(0,min(np.mean(wa) + 4*np.std(wa),3.000*np.mean(wa)))
+    if log and minimum <= 0: minimum = 0.5
     for index in range(len(w)):
+
         if w[index]>maximum: w[index] = maximum
         if w[index]>0 and w[index]<minimum: w[index] = minimum
 
@@ -326,6 +363,8 @@ def MakeModulePlot(arrays_of_data= [ [] ], row = [],col = [],hmin=-1,hmax=-1, pe
     axy.set_ylabel("rows", labelpad=15,fontweight='bold')
     axy.set_yticks([0,5,10,15,18,23,28,33])
     axy.set_yticklabels(['0','5','10','15','15','10','5','0'])
+    if log:
+        axy.set_yscale('log')
     ax2 = axy.twiny()
 
     ax2.set_xticks([picx-0,picx-60,picx-119,picx-179,picx-238,picx-298,picx-357,picx-417,picx-476,picx-536,picx-595,picx-655,picx-714,picx-774,picx-833,picx-893,picx-951])
@@ -363,13 +402,18 @@ def MakeModulePlot(arrays_of_data= [ [] ], row = [],col = [],hmin=-1,hmax=-1, pe
 
     return 
 
-def summary_plots(mapsaid, bases):
+def summary_plots(mapsaid, bases, note=""):
 
-    allkeys = ["pixelalive","mask_test","PostTrim_THR_THR_RMS", "PostTrim_THR_THR_Mean", "PostTrim_CAL_CAL_RMS","PostTrim_CAL_CAL_Mean","BumpBonding_Noise_BadBump","BumpBonding_BadBumpMap"]
+    allkeys = ["pixelalive","mask_test","PreTrim_THR_THR_RMS", "PreTrim_THR_THR_Mean", "PreTrim_CAL_CAL_RMS","PreTrim_THR_THR_RMS", "PostTrim_THR_THR_Mean", "trimbits", "PostTrim_CAL_CAL_RMS","PostTrim_CAL_CAL_Mean","BumpBonding_Noise_BadBump","BumpBonding_BadBumpMap"]
 
     label = {}
     label["pixelalive"] = "Pixel alive test"
     label["mask_test"] = "Pixel masking test"
+    label["trimbits"] = "trim bit"
+    label["PreTrim_THR_THR_RMS"] = "rms of THR S Curve (pre trimming)"
+    label["PreTrim_THR_THR_Mean"] = "mean of THR S Curve (pre trimming)"
+    label["PreTrim_CAL_CAL_RMS"] = "rms of CAL S Curve (pre trimming)"
+    label["PreTrim_CAL_CAL_Mean"] = "rms of THR S Curve (pre trimming)"
     label["PostTrim_THR_THR_RMS"] = "rms of THR S Curve (post trimming)"
     label["PostTrim_THR_THR_Mean"] = "mean of THR S Curve (post trimming)"
     label["PostTrim_CAL_CAL_RMS"] = "rms of CAL S Curve (post trimming)"
@@ -380,6 +424,11 @@ def summary_plots(mapsaid, bases):
     zlabel = {}
     zlabel["pixelalive"] = "recorded pulses"
     zlabel["mask_test"] = "recorded pulses"
+    zlabel["trimbits"] = "trim bit"
+    zlabel["PreTrim_THR_THR_RMS"] = "rms [THR]"
+    zlabel["PreTrim_THR_THR_Mean"] = "mean [THR]"
+    zlabel["PreTrim_CAL_CAL_RMS"] = "rms [CAL]"
+    zlabel["PreTrim_CAL_CAL_Mean"] = "mean [CAL]"
     zlabel["PostTrim_THR_THR_RMS"] = "rms [THR]"
     zlabel["PostTrim_THR_THR_Mean"] = "mean [THR]"
     zlabel["PostTrim_CAL_CAL_RMS"] = "rms [CAL]"
@@ -387,18 +436,19 @@ def summary_plots(mapsaid, bases):
     zlabel["BumpBonding_Noise_BadBump"] = "noise [CAL] (at BV = -2V)"
     zlabel["BumpBonding_BadBumpMap"] = "is bad bump"
     
-    Averaged =  [False,False,False,False, True, True, True, True]
+    Averaged =  [False,False,False,False, False, True, True, True, True]
 
     for b in bases:
         mymax = -1
         if "Noise_BadBump" in b: mymax = 10.
         elif "_Noise_" in b: mymax = 30.
         elif "BadBump" in b: mymax = 1.
+        elif "trimbits" in b: mymax = 31
 
         doAverage=False
+        log = False
         if "RMS" in b or "Mean" in b:
             doAverage=True
-
         Plot_Module(inpath="../Results_MPATesting/"+mapsaid+"/",
                     mapsa=mapsaid,
                     base=b,
@@ -406,6 +456,13 @@ def summary_plots(mapsaid, bases):
                     test_label=label[b],
                     identifier=mapsaid,
                     plotAverage=doAverage,
-                    hmax=mymax)
-
+                    hmax=mymax,
+                    log=log)
+        if note=="":
+            fname="2D"+b+mapsaid
+        else:
+            fname="2D"+b+mapsaid+note
+            
+        plt.savefig("../Results_MPATesting/plots/"+fname+".png")
+        plt.savefig("../Results_MPATesting/plots/"+fname+".pdf")
     plt.show()
